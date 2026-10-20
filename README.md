@@ -6,11 +6,22 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PLATFORM-iOS%20%7C%20ANDROID%20%7C%20PWA-18181b?style=flat-square&labelColor=09090b" alt="Platform" />
-  <img src="https://img.shields.io/badge/DESIGN-DARK%20BRUTALIST-18181b?style=flat-square&labelColor=09090b" alt="Design" />
-  <img src="https://img.shields.io/badge/STORAGE-LOCALSTORAGE%20(OFFLINE)-18181b?style=flat-square&labelColor=09090b" alt="Storage" />
-  <img src="https://img.shields.io/badge/TELEMETRY-NONE%20(ZERO%20TRACKING)-18181b?style=flat-square&labelColor=09090b" alt="Privacy" />
-  <img src="https://img.shields.io/badge/LICENSE-MIT-18181b?style=flat-square&labelColor=09090b" alt="License" />
+  <a href="https://paradoxiicalie.github.io/form/form/">
+    <img src="https://img.shields.io/badge/ЗАПУСК_PWA-ОНЛАЙН_ВЕРСИЯ-E6DFD3?style=for-the-badge&labelColor=18181B&logo=googlechrome&logoColor=E6DFD3" alt="Открыть PWA" />
+  </a>
+  <a href="#03--развёртывание-и-установка">
+    <img src="https://img.shields.io/badge/ИНСТРУКЦИЯ-УСТАНОВКА-E6DFD3?style=for-the-badge&labelColor=18181B&logo=readme&logoColor=E6DFD3" alt="Инструкция" />
+  </a>
+  <a href="https://github.com/paradoxiicalie/form/releases">
+    <img src="https://img.shields.io/badge/РЕЛИЗ-СКАЧАТЬ_IPA-E6DFD3?style=for-the-badge&labelColor=18181B&logo=apple&logoColor=E6DFD3" alt="Скачать IPA" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/ПЛАТФОРМЫ-iOS%20%7C%20ANDROID%20%7C%20PWA-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Платформы" />
+  <img src="https://img.shields.io/badge/ХРАНИЛИЩЕ-100%25%20LOCAL%20(OFFLINE)-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Хранилище" />
+  <img src="https://img.shields.io/badge/ВИДЖЕТ-WIDGETKIT%20NATIVE-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Виджет" />
+  <img src="https://img.shields.io/badge/ЛИЦЕНЗИЯ-MIT-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Лицензия" />
 </p>
 
 ---
