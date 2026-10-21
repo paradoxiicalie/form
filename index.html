@@ -183,10 +183,40 @@
       color: #fff;
       padding: 10px 12px;
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       outline: none;
       transition: border-color 0.15s;
     }
     .dark-field:focus { border-color: var(--accent-cal); }
+    .dark-select-center {
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: center;
+      text-align-last: center;
+      -webkit-text-align-last: center;
+      padding: 8px 24px 8px 12px !important;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.35)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 13px 13px;
+    }
+    input[type="time"].dark-field {
+      box-sizing: border-box !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      padding: 9px 6px !important;
+      -webkit-appearance: none;
+    }
+    input[type="time"]::-webkit-datetime-edit {
+      display: inline-flex;
+      justify-content: center;
+      padding: 0;
+    }
+    input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+      padding: 0;
+    }
 
     .accent-btn {
       background: var(--accent-cal);
@@ -525,18 +555,27 @@
 
       <!-- Переключатель программ сплита + Назначение на день недели -->
       <div class="flex items-center justify-between gap-3 mb-2 px-0.5">
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1 mr-2">
           <div class="flex items-center gap-2">
-            <h2 id="activeSplitDayTitle" class="text-lg font-bold text-white truncate">День 1 · Жим</h2>
+            <h2 id="activeSplitDayTitle" class="text-[21px] font-bold tracking-tight text-white truncate leading-tight">День 1 · Жим</h2>
           </div>
-          <p id="activeWeekdayAssignLabel" class="text-[11px] text-zinc-500 mono mt-0.5 truncate">Назначено на этот день недели</p>
+          <p id="activeWeekdayAssignLabel" class="text-xs text-zinc-400 mt-0.5 truncate font-medium">Понедельник</p>
         </div>
 
-        <select
-          id="weekdayAssignSelect"
-          onchange="assignProgramToSelectedWeekday(this.value)"
-          class="bg-white/[0.05] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-zinc-200 mono outline-none shrink-0 max-w-[155px] truncate"
-        ></select>
+        <!-- Адаптивная плашка выбора программы (тянется строго по тексту, без пустоты и обрезаний) -->
+        <div class="relative shrink-0 max-w-[60%] group">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 group-focus-within:border-white/30 text-xs font-semibold text-zinc-200 max-w-full">
+            <span id="weekdayAssignText" class="truncate">День 1 · Жим</span>
+            <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <select
+            id="weekdayAssignSelect"
+            onchange="assignProgramToSelectedWeekday(this.value)"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+          ></select>
+        </div>
       </div>
 
       <!-- Быстрые вкладки самих тренировочных программ -->
@@ -952,22 +991,97 @@
           </div>
 
           <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-[11px] text-zinc-400 block mb-1">Активность</label>
-              <select id="calcActivity" onchange="recalcGoalsFromBody()" class="dark-field text-xs">
-                <option value="1.2">Сидячий (×1.2)</option>
-                <option value="1.375">Лёгкая 1-3 тр. (×1.375)</option>
-                <option value="1.55" selected>Средняя 3-5 тр. (×1.55)</option>
-                <option value="1.725">Высокая 6-7 тр. (×1.725)</option>
+            <!-- Тренировки -->
+            <div class="relative">
+              <label class="text-[11px] text-zinc-400 block mb-1">Тренировки</label>
+              <button
+                type="button"
+                id="btnCustomActivity"
+                onclick="toggleSelectDropdown('activity')"
+                class="dark-field text-[11.5px] font-medium flex items-center justify-between w-full"
+                style="padding: 8px 10px;"
+              >
+                <span id="labelCustomActivity" class="w-full text-center truncate">3–5 раз / нед</span>
+                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 ml-1 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Компактное окно выбора строго по размеру плашки -->
+              <div
+                id="menuCustomActivity"
+                class="hidden absolute top-full left-0 w-full mt-1.5 bg-[#121216]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
+              >
+                <button type="button" data-val="1.2" onclick="selectCustomOption('activity', '1.2', '0 (сидячий)')" class="custom-opt-activity w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>0 (сидячий)</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+                <button type="button" data-val="1.375" onclick="selectCustomOption('activity', '1.375', '1–3 раза / нед')" class="custom-opt-activity w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>1–3 раза / нед</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+                <button type="button" data-val="1.55" onclick="selectCustomOption('activity', '1.55', '3–5 раз / нед')" class="custom-opt-activity w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>3–5 раз / нед</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+                <button type="button" data-val="1.725" onclick="selectCustomOption('activity', '1.725', '6–7 раз / нед')" class="custom-opt-activity w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>6–7 раз / нед</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+              </div>
+
+              <select id="calcActivity" class="hidden">
+                <option value="1.2">0 (сидячий)</option>
+                <option value="1.375">1–3 раза / нед</option>
+                <option value="1.55" selected>3–5 раз / нед</option>
+                <option value="1.725">6–7 раз / нед</option>
               </select>
             </div>
-            <div>
+
+            <!-- Цель -->
+            <div class="relative">
               <label class="text-[11px] text-zinc-400 block mb-1">Цель</label>
-              <select id="calcGoalMode" onchange="recalcGoalsFromBody()" class="dark-field text-xs">
-                <option value="0.85">Сушка / Дефицит (-15%)</option>
-                <option value="1.0">Поддержание (0%)</option>
-                <option value="1.12" selected>Чистый набор (+12%)</option>
-                <option value="1.20">Массонабор (+20%)</option>
+              <button
+                type="button"
+                id="btnCustomGoal"
+                onclick="toggleSelectDropdown('goal')"
+                class="dark-field text-[11.5px] font-medium flex items-center justify-between w-full"
+                style="padding: 8px 10px;"
+              >
+                <span id="labelCustomGoal" class="w-full text-center truncate">Набор (+12%)</span>
+                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 ml-1 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Компактное окно выбора строго по размеру плашки -->
+              <div
+                id="menuCustomGoal"
+                class="hidden absolute top-full left-0 w-full mt-1.5 bg-[#121216]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
+              >
+                <button type="button" data-val="0.85" onclick="selectCustomOption('goal', '0.85', 'Сушка (-15%)')" class="custom-opt-goal w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>Сушка (-15%)</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+                <button type="button" data-val="1.0" onclick="selectCustomOption('goal', '1.0', 'Поддержание')" class="custom-opt-goal w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>Поддержание</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+                <button type="button" data-val="1.12" onclick="selectCustomOption('goal', '1.12', 'Набор (+12%)')" class="custom-opt-goal w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>Набор (+12%)</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+                <button type="button" data-val="1.20" onclick="selectCustomOption('goal', '1.20', 'Масса (+20%)')" class="custom-opt-goal w-full px-3 py-2 text-[11.5px] text-zinc-300 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] transition flex items-center justify-between">
+                  <span>Масса (+20%)</span>
+                  <span class="opt-check text-[10px] text-zinc-500 opacity-0">✓</span>
+                </button>
+              </div>
+
+              <select id="calcGoalMode" class="hidden">
+                <option value="0.85">Сушка (-15%)</option>
+                <option value="1.0">Поддержание</option>
+                <option value="1.12" selected>Набор (+12%)</option>
+                <option value="1.20">Масса (+20%)</option>
               </select>
             </div>
           </div>
@@ -1108,12 +1222,15 @@
       <!-- Вкладка 3: ПУШИ -->
       <div id="panelPush" class="hidden space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-xs font-semibold text-white uppercase tracking-wider">Ежедневные напоминания</div>
-              <div class="text-[11px] text-zinc-400 mt-0.5">Каждый день приходит новый рандомный текст</div>
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-white uppercase tracking-wide">Ежедневные напоминания</span>
+              <span id="pushStatusBadge" class="text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/10 text-zinc-400 flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span>
+                <span>Выкл</span>
+              </span>
             </div>
-            <span id="pushStatusBadge" class="text-[10px] mono px-2 py-0.5 rounded bg-white/10 text-zinc-300">Выкл</span>
+            <div class="text-[11px] text-zinc-400 mt-1 leading-snug">Каждый день приходит новый рандомный текст</div>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
@@ -1135,14 +1252,14 @@
             </button>
           </div>
 
-          <div id="pushTimesBox" class="grid grid-cols-2 gap-2.5 pt-1">
-            <div id="pushTime1Wrap">
+          <div id="pushTimesBox" class="grid grid-cols-2 gap-2 pt-1 w-full min-w-0">
+            <div id="pushTime1Wrap" class="min-w-0">
               <label class="text-[11px] text-zinc-400 block mb-1">Дневной пуш</label>
-              <input id="pushTime1" type="time" value="14:00" onchange="savePushSettings(false)" class="dark-field mono text-center text-sm font-bold" />
+              <input id="pushTime1" type="time" value="14:00" onchange="savePushSettings(false)" class="dark-field mono text-center text-sm font-bold w-full min-w-0 block" style="padding: 9px 6px; box-sizing: border-box;" />
             </div>
-            <div id="pushTime2Wrap">
+            <div id="pushTime2Wrap" class="min-w-0">
               <label class="text-[11px] text-zinc-400 block mb-1">Вечерний пуш</label>
-              <input id="pushTime2" type="time" value="23:00" onchange="savePushSettings(false)" class="dark-field mono text-center text-sm font-bold" />
+              <input id="pushTime2" type="time" value="23:00" onchange="savePushSettings(false)" class="dark-field mono text-center text-sm font-bold w-full min-w-0 block" style="padding: 9px 6px; box-sizing: border-box;" />
             </div>
           </div>
 
@@ -1171,12 +1288,18 @@
 
       <!-- Вкладка 4: API Ключ -->
       <div id="panelApi" class="hidden space-y-3">
-        <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-4 space-y-3">
+        <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-semibold text-white">Ключ Gemini API</span>
-            <div class="flex items-center gap-1.5">
-              <span id="activeModelBadge" class="text-[10px] mono px-2 py-0.5 rounded bg-white/10 text-zinc-200">gemini-3-flash-preview</span>
-              <span id="keySourceBadge" class="text-[10px] mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">Проверка...</span>
+            <span class="text-xs font-semibold text-white whitespace-nowrap">Ключ Gemini API</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span id="activeModelBadge" class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span>
+                <span>Gemini 3 Flash</span>
+              </span>
+              <span id="keySourceBadge" class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/15 text-zinc-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center">
+                <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-400"></span>
+                <span>Сохранён</span>
+              </span>
             </div>
           </div>
 
@@ -1995,6 +2118,21 @@
       const dayMeta = WEEKDAY_NAMES.find(d => d.key === selectedWeekdayKey) || WEEKDAY_NAMES[0];
       const assignedForDay = state.workout.weekSchedule?.[selectedWeekdayKey] || "rest";
       const assignSelect = document.getElementById("weekdayAssignSelect");
+      const assignText = document.getElementById("weekdayAssignText");
+      if (assignText) {
+        if (assignedForDay === "rest") {
+          assignText.textContent = "Отдых";
+        } else {
+          const prog = state.workout.programs?.[assignedForDay];
+          if (prog) {
+            const title = (prog.title || "").trim();
+            const short = (prog.short || "").trim();
+            assignText.textContent = title.startsWith(short) ? title : (short ? `${short} · ${title}` : title);
+          } else {
+            assignText.textContent = "Отдых";
+          }
+        }
+      }
       if (assignSelect) {
         const progOptions = Object.values(state.workout.programs || {}).map(p => {
           const title = (p.title || "").trim();
@@ -2003,14 +2141,15 @@
           return `<option value="${p.id}" ${assignedForDay === p.id ? 'selected' : ''}>${escapeHtml(display)}</option>`;
         }).join("");
         assignSelect.innerHTML = `
+          <option value="rest" ${assignedForDay === 'rest' ? 'selected' : ''}>Отдых (ОТД)</option>
           ${progOptions}
-          <option value="rest" ${assignedForDay === 'rest' ? 'selected' : ''}>Отдых</option>
+          <option value="__create_new__">+ Создать день...</option>
         `;
       }
 
       const assignLabel = document.getElementById("activeWeekdayAssignLabel");
       if (assignLabel) {
-        assignLabel.textContent = `${dayMeta.full}: ${assignedForDay === 'rest' ? 'День отдыха' : (state.workout.programs[assignedForDay]?.title || '')}`;
+        assignLabel.textContent = assignedForDay === "rest" ? `${dayMeta.full} · Отдых` : dayMeta.full;
       }
 
       // 4. Капсулы быстрого переключения программ Д1-Д4
@@ -2680,9 +2819,12 @@
       return (DEFAULT_API_KEY || "").trim();
     }
 
+    let apiKeyVerifiedStatus = null; // null: не проверялся, true: в сети, false: ошибка
+
     function syncKeyFieldUI() {
       const input = document.getElementById("inputApiKey");
       const badge = document.getElementById("keySourceBadge");
+      const modelBadge = document.getElementById("activeModelBadge");
       if (!input || !badge) return;
 
       let saved = "";
@@ -2695,15 +2837,38 @@
         input.value = activeKey;
       }
 
-      if (nativeKey || saved) {
-        badge.textContent = "В памяти iPhone";
-        badge.className = "text-[10px] mono px-2 py-0.5 rounded bg-white/15 text-white";
-      } else if (def) {
-        badge.textContent = "Вшит в Xcode";
-        badge.className = "text-[10px] mono px-2 py-0.5 rounded bg-white/15 text-white";
+      if (!activeKey) {
+        apiKeyVerifiedStatus = false;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Не задан</span>`;
+        badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
+        if (modelBadge) {
+          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>Gemini 3 Flash</span>`;
+          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 flex items-center gap-1 shrink-0 whitespace-nowrap";
+        }
+        return;
+      }
+
+      if (apiKeyVerifiedStatus === true) {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-emerald-400"></span><span>В сети</span>`;
+        badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
+        if (modelBadge) {
+          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-emerald-400"></span><span>Gemini 3 Flash</span>`;
+          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
+        }
+      } else if (apiKeyVerifiedStatus === false) {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Ошибка</span>`;
+        badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
+        if (modelBadge) {
+          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Gemini 3 Flash</span>`;
+          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center gap-1 shrink-0 whitespace-nowrap";
+        }
       } else {
-        badge.textContent = "Не задан";
-        badge.className = "text-[10px] mono px-2 py-0.5 rounded bg-red-500/15 text-red-400";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-400"></span><span>Сохранён</span>`;
+        badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/15 text-zinc-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
+        if (modelBadge) {
+          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>Gemini 3 Flash</span>`;
+          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
+        }
       }
     }
 
@@ -2722,6 +2887,7 @@
         if (val) localStorage.setItem(KEY_STORAGE, val);
         else localStorage.removeItem(KEY_STORAGE);
       } catch (e) {}
+      apiKeyVerifiedStatus = null;
       syncKeyFieldUI();
       syncNativeWidget();
     }
@@ -2736,6 +2902,7 @@
 
       window.__NATIVE_API_KEY__ = val;
       try { localStorage.setItem(KEY_STORAGE, val); } catch (e) {}
+      apiKeyVerifiedStatus = null;
       syncKeyFieldUI();
       syncNativeWidget();
 
@@ -2755,9 +2922,13 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        apiKeyVerifiedStatus = false;
+        syncKeyFieldUI();
         const msg = data?.error?.message || `HTTP ${res.status}`;
         throw new Error(msg);
       }
+      apiKeyVerifiedStatus = true;
+      syncKeyFieldUI();
       return data;
     }
 
@@ -2766,11 +2937,15 @@
       const dot = document.getElementById("apiKeyCheckDot");
       const txt = document.getElementById("apiKeyCheckText");
       const lat = document.getElementById("apiKeyLatency");
+      const modelBadge = document.getElementById("activeModelBadge");
+      const keyBadge = document.getElementById("keySourceBadge");
 
       if (!key) {
+        apiKeyVerifiedStatus = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
         if (txt) txt.textContent = "Ключ пустой — вставьте ключ выше";
         if (lat) lat.textContent = "";
+        syncKeyFieldUI();
         showToast("Сначала вставьте API-ключ в поле", true);
         return false;
       }
@@ -2778,6 +2953,15 @@
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0";
       if (txt) txt.textContent = "Пингуем Gemini 3 Flash...";
       if (lat) lat.textContent = "";
+
+      if (keyBadge) {
+        keyBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-amber-400 animate-pulse"></span><span>Тест...</span>`;
+        keyBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
+      }
+      if (modelBadge) {
+        modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-amber-400 animate-pulse"></span><span>Gemini 3 Flash</span>`;
+        modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
+      }
 
       const t0 = performance.now();
       try {
@@ -2787,9 +2971,12 @@
         });
         const ms = Math.round(performance.now() - t0);
 
+        apiKeyVerifiedStatus = true;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0";
         if (txt) txt.textContent = `✓ Ключ активен! (${GEMINI_MODEL})`;
         if (lat) lat.textContent = `${ms} мс`;
+
+        syncKeyFieldUI();
 
         showToast(isFromSave
           ? `✓ Ключ сохранен и работает! (${ms} мс)`
@@ -2798,10 +2985,14 @@
         return true;
       } catch (err) {
         const ms = Math.round(performance.now() - t0);
+        apiKeyVerifiedStatus = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
         const errMsg = String(err.message || "Ошибка сети");
         if (txt) txt.textContent = errMsg.slice(0, 65);
         if (lat) lat.textContent = `${ms} мс`;
+
+        syncKeyFieldUI();
+
         showToast(`Ошибка API: ${errMsg.slice(0, 55)}`, true);
         return false;
       }
@@ -2834,22 +3025,29 @@
       if (t1Input) t1Input.value = state.push.time1 || "14:00";
       if (t2Input) t2Input.value = state.push.time2 || "23:00";
 
+      const t1 = state.push.time1 || "14:00";
+      const t2 = state.push.time2 || "23:00";
+
       if (mode === "2x") {
         t1Wrap.classList.remove("hidden");
         t2Wrap.classList.remove("hidden");
-        badge.textContent = `2× (${state.push.time1} и ${state.push.time2})`;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"></span><span>2× · ${t1}, ${t2}</span>`;
+        badge.className = "text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 flex items-center gap-1.5 shrink-0 whitespace-nowrap";
       } else if (mode === "mid") {
         t1Wrap.classList.remove("hidden");
         t2Wrap.classList.add("hidden");
-        badge.textContent = `Днем (${state.push.time1})`;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"></span><span>Днём · ${t1}</span>`;
+        badge.className = "text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 flex items-center gap-1.5 shrink-0 whitespace-nowrap";
       } else if (mode === "eve") {
         t1Wrap.classList.add("hidden");
         t2Wrap.classList.remove("hidden");
-        badge.textContent = `Вечером (${state.push.time2})`;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"></span><span>Вечером · ${t2}</span>`;
+        badge.className = "text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 flex items-center gap-1.5 shrink-0 whitespace-nowrap";
       } else {
         t1Wrap.classList.add("hidden");
         t2Wrap.classList.add("hidden");
-        badge.textContent = "Выкл";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>Выкл</span>`;
+        badge.className = "text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 flex items-center gap-1.5 shrink-0 whitespace-nowrap";
       }
 
       rollRandomPushPreview();
@@ -3801,7 +3999,10 @@
           document.getElementById("calcAge").value = state.body.age || 19;
           document.getElementById("calcActivity").value = String(state.body.activity || 1.55);
           document.getElementById("calcGoalMode").value = String(state.body.goalMode || 1.12);
+          syncCustomSelectLabels();
           setSex(state.body.sex || "male", true);
+        } else {
+          syncCustomSelectLabels();
         }
         renderThemeSelector();
         syncCustomBuilderFields();
@@ -3811,8 +4012,90 @@
       } catch (e) {}
     }
 
+    function toggleSelectDropdown(type) {
+      const isAct = type === "activity";
+      const targetMenu = document.getElementById(isAct ? "menuCustomActivity" : "menuCustomGoal");
+      const otherMenu = document.getElementById(isAct ? "menuCustomGoal" : "menuCustomActivity");
+      if (otherMenu) otherMenu.classList.add("hidden");
+      if (targetMenu) targetMenu.classList.toggle("hidden");
+    }
+
+    function selectCustomOption(type, val, label) {
+      if (type === "activity") {
+        const sel = document.getElementById("calcActivity");
+        if (sel) sel.value = val;
+        const lbl = document.getElementById("labelCustomActivity");
+        if (lbl) lbl.textContent = label;
+        document.getElementById("menuCustomActivity")?.classList.add("hidden");
+        updateCustomSelectActiveUI("activity", val);
+      } else if (type === "goal") {
+        const sel = document.getElementById("calcGoalMode");
+        if (sel) sel.value = val;
+        const lbl = document.getElementById("labelCustomGoal");
+        if (lbl) lbl.textContent = label;
+        document.getElementById("menuCustomGoal")?.classList.add("hidden");
+        updateCustomSelectActiveUI("goal", val);
+      }
+      recalcGoalsFromBody();
+    }
+
+    function updateCustomSelectActiveUI(type, val) {
+      const items = document.querySelectorAll(type === "activity" ? ".custom-opt-activity" : ".custom-opt-goal");
+      items.forEach(btn => {
+        const isAct = btn.getAttribute("data-val") === String(val);
+        const check = btn.querySelector(".opt-check");
+        if (isAct) {
+          btn.classList.add("bg-white/[0.08]", "text-white", "font-semibold");
+          btn.classList.remove("text-zinc-300");
+          if (check) {
+            check.classList.remove("opacity-0");
+            check.style.color = "var(--accent-cal)";
+          }
+        } else {
+          btn.classList.remove("bg-white/[0.08]", "text-white", "font-semibold");
+          btn.classList.add("text-zinc-300");
+          if (check) check.classList.add("opacity-0");
+        }
+      });
+    }
+
+    function syncCustomSelectLabels() {
+      const actVal = document.getElementById("calcActivity")?.value || "1.55";
+      const actMap = {
+        "1.2": "0 (сидячий)",
+        "1.375": "1–3 раза / нед",
+        "1.55": "3–5 раз / нед",
+        "1.725": "6–7 раз / нед"
+      };
+      const actLbl = document.getElementById("labelCustomActivity");
+      if (actLbl) actLbl.textContent = actMap[actVal] || "3–5 раз / нед";
+      updateCustomSelectActiveUI("activity", actVal);
+
+      const goalVal = document.getElementById("calcGoalMode")?.value || "1.12";
+      const goalMap = {
+        "0.85": "Сушка (-15%)",
+        "1.0": "Поддержание",
+        "1.12": "Набор (+12%)",
+        "1.20": "Масса (+20%)"
+      };
+      const goalLbl = document.getElementById("labelCustomGoal");
+      if (goalLbl) goalLbl.textContent = goalMap[goalVal] || "Набор (+12%)";
+      updateCustomSelectActiveUI("goal", goalVal);
+    }
+
+    document.addEventListener("click", function(e) {
+      if (!e.target.closest("#btnCustomActivity") && !e.target.closest("#menuCustomActivity")) {
+        document.getElementById("menuCustomActivity")?.classList.add("hidden");
+      }
+      if (!e.target.closest("#btnCustomGoal") && !e.target.closest("#menuCustomGoal")) {
+        document.getElementById("menuCustomGoal")?.classList.add("hidden");
+      }
+    });
+
     function closeSettings() {
       document.getElementById("settingsModal")?.classList.remove("open");
+      document.getElementById("menuCustomActivity")?.classList.add("hidden");
+      document.getElementById("menuCustomGoal")?.classList.add("hidden");
     }
 
     function switchSettingsTab(tab) {
@@ -4156,7 +4439,19 @@
       if (activeProg) activeProgramId = activeProg.id;
 
       const assignSelect = document.getElementById("weekdayAssignSelect");
+      const assignText = document.getElementById("weekdayAssignText");
       const allProgs = Object.values(state.workout.programs || {});
+
+      let currentDisplay = "Отдых";
+      if (activeProg) {
+        const title = (activeProg.title || "").trim();
+        const short = (activeProg.short || "").trim();
+        currentDisplay = title.startsWith(short) ? title : (short ? `${short} · ${title}` : title);
+      }
+      if (assignText) {
+        assignText.textContent = currentDisplay;
+      }
+
       if (assignSelect) {
         const progOpts = allProgs.map(p => {
           const title = (p.title || "").trim();
@@ -4173,7 +4468,7 @@
 
       const assignLabel = document.getElementById("activeWeekdayAssignLabel");
       if (assignLabel) {
-        assignLabel.textContent = `${dayMeta.full}: ${activeProg ? activeProg.title : 'День отдыха'}`;
+        assignLabel.textContent = activeProg ? dayMeta.full : `${dayMeta.full} · Отдых`;
       }
 
       // 4) Панель действий под заголовком (никаких кнопок, которые сами переключают день на День 3!)
@@ -4701,7 +4996,7 @@
     // 2. Мелкий косметический фикс заголовка «СБ · День отдыха», чтобы он не резался в троеточие
     const titleEl = document.getElementById("activeSplitDayTitle");
     if (titleEl) {
-      titleEl.className = "text-[17px] font-bold text-white truncate";
+      titleEl.className = "text-[21px] font-bold tracking-tight text-white truncate leading-tight";
     }
   })();
   </script>
@@ -5796,6 +6091,117 @@
     observer.observe(document.body, { childList: true, subtree: true });
 
     if (currentMainView === "split") renderWorkoutAll();
+  })();
+  </script>
+  
+  <script id="formDynamicVolumeFix">
+  (function() {
+    // Пересчитываем и выполненные подходы, и плановую сумму подходов строго по активным дням недели (ПН-ВС)
+    window.recalculateWeeklySetsFromPrograms = function() {
+      const doneTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
+      const plannedTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
+
+      const schedule = state.workout?.weekSchedule || {};
+      const programs = state.workout?.programs || {};
+
+      const seenDoneProgs = new Set();
+      [1, 2, 3, 4, 5, 6, 0].forEach(dow => {
+        const progId = schedule[dow];
+        if (!progId || progId === "rest") return;
+        const prog = programs[progId];
+        if (!prog || !Array.isArray(prog.exercises)) return;
+
+        const isNewProgForDone = !seenDoneProgs.has(progId);
+        if (isNewProgForDone) seenDoneProgs.add(progId);
+
+        prog.exercises.forEach(ex => {
+          const m = (ex.muscle && doneTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
+          const targetS = Math.max(1, Number(ex.targetSets) || 3);
+          const doneS = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
+
+          plannedTotals[m] += targetS;
+          if (isNewProgForDone) {
+            doneTotals[m] += doneS;
+          }
+        });
+      });
+
+      // Обновляем целевые лимиты в MUSCLE_META реальной суммой твоих подходов из расписания
+      if (typeof MUSCLE_META === "object") {
+        Object.keys(MUSCLE_META).forEach(mKey => {
+          if (plannedTotals[mKey] !== undefined) {
+            MUSCLE_META[mKey].target = plannedTotals[mKey];
+          }
+        });
+      }
+
+      state.workout.weeklySetsByMuscle = doneTotals;
+      state.workout.weeklyTargetByMuscle = plannedTotals;
+      return doneTotals;
+    };
+
+    // Чтобы и на виджете iPhone отображалась реальная сумма подходов твоей программы (например 34/71 вместо 34/52)
+    const origSyncWidget = window.syncNativeWidget;
+    window.syncNativeWidget = function() {
+      recalculateWeeklySetsFromPrograms();
+      if (origSyncWidget) origSyncWidget();
+
+      try {
+        const planned = state.workout?.weeklyTargetByMuscle || {};
+        const realSetsTarget = Object.values(planned).reduce((a, b) => a + (Number(b) || 0), 0) || 60;
+        const done = state.workout?.weeklySetsByMuscle || {};
+        const realSetsDone = Object.values(done).reduce((a, b) => a + (Number(b) || 0), 0);
+
+        if (window.webkit?.messageHandlers?.widgetBridge) {
+          const activeTheme = typeof getActiveThemeObject === "function" ? getActiveThemeObject() : {};
+          let totalCal = 0, totalP = 0, totalF = 0, totalC = 0;
+          (state.todayItems || []).forEach(i => {
+            totalCal += Number(i.cal) || 0;
+            totalP += Number(i.p) || 0;
+            totalF += Number(i.f) || 0;
+            totalC += Number(i.c) || 0;
+          });
+          const todayDow = new Date().getDay();
+          const todayAssigned = state.workout?.weekSchedule?.[todayDow] || "rest";
+          const isRestDay = todayAssigned === "rest" || !state.workout?.programs?.[todayAssigned];
+          const splitTitle = isRestDay ? "ОТДЫХ // ВОССТАНОВЛЕНИЕ" : (state.workout.programs[todayAssigned].title || "Тренировка");
+          const weekBadges = [1, 2, 3, 4, 5, 6, 0].map(k => {
+            const v = state.workout?.weekSchedule?.[k] || "rest";
+            return (v === "rest" || !state.workout?.programs?.[v]) ? "ОТД" : (state.workout.programs[v].short || "ТР").replace("День ", "Д");
+          }).join(",");
+
+          window.webkit.messageHandlers.widgetBridge.postMessage({
+            action: "syncData",
+            themeId: state.themeId || "monolith",
+            calHex: activeTheme.cal || "#D62828",
+            pHex: activeTheme.p || "#E4E4E7",
+            cHex: activeTheme.c || "#C8BFA8",
+            fHex: activeTheme.f || "#64748B",
+            cal: Math.round(totalCal),
+            targetCal: Math.round(Number(state.targets.cal) || 2979),
+            p: Math.round(totalP),
+            targetP: Math.round(Number(state.targets.p) || 130),
+            f: Math.round(totalF),
+            targetF: Math.round(Number(state.targets.f) || 67),
+            c: Math.round(totalC),
+            targetC: Math.round(Number(state.targets.c) || 464),
+            splitTitle: splitTitle,
+            isRestDay: isRestDay,
+            setsDone: realSetsDone,
+            setsTarget: realSetsTarget,
+            weekBadges: weekBadges,
+            currentWeight: String(typeof getLatestBodyWeight === "function" ? getLatestBodyWeight() : 70),
+            stackDone: Object.keys(state.supplementsTakenToday || {}).filter(k => state.supplementsTakenToday[k]).length,
+            stackTotal: (state.supplements || []).length,
+            apiKey: typeof getEffectiveApiKey === "function" ? getEffectiveApiKey() : "",
+            stateJson: JSON.stringify(state)
+          });
+        }
+      } catch (e) {}
+    };
+
+    recalculateWeeklySetsFromPrograms();
+    if (typeof renderWorkoutAll === "function") renderWorkoutAll();
   })();
   </script>
   
