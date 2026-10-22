@@ -26,7 +26,22 @@
       --accent-p: #9CA3AF;
       --accent-f: #8C8275;
       --accent-c: #C2593F;
-      --accent-glow: rgba(230, 223, 211, 0.28);
+      --accent-glow: rgba(230, 223, 211, 0.45);
+
+      --ui-radius-card: 24px;
+      --ui-radius-card-sm: 18px;
+      --ui-radius-panel: 32px;
+      --ui-radius-btn: 14px;
+      --ui-radius-field: 14px;
+      --ui-card-border: rgba(255, 255, 255, 0.08);
+    }
+
+    html[data-ui-corners="brutal"] {
+      --ui-radius-card: 10px !important;
+      --ui-radius-card-sm: 8px !important;
+      --ui-radius-panel: 18px !important;
+      --ui-radius-btn: 8px !important;
+      --ui-radius-field: 8px !important;
     }
 
     * {
@@ -90,10 +105,11 @@
     .status-card {
       background: linear-gradient(180deg, rgba(20, 20, 23, 0.92) 0%, rgba(12, 12, 14, 0.96) 100%);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 15px 17px;
+      border-radius: var(--ui-radius-card, 24px);
+      padding: 16px 18px;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
+      transition: border-radius 0.22s ease;
     }
 
     .cal-track {
@@ -165,12 +181,13 @@
       max-width: 480px;
       background: #101013;
       border-top: 1px solid var(--card-border);
-      border-radius: 26px 26px 0 0;
+      border-radius: var(--ui-radius-panel, 32px) var(--ui-radius-panel, 32px) 0 0;
       padding: 18px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
       max-height: 90dvh;
       overflow-y: auto;
+      overscroll-behavior: contain;
       transform: translateY(16px);
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.22s ease;
     }
     .sheet-backdrop.open .sheet-panel {
       transform: translateY(0);
@@ -179,16 +196,24 @@
     .dark-field {
       background: #08080a;
       border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 12px;
+      border-radius: var(--ui-radius-field, 14px);
       color: #fff;
       padding: 10px 12px;
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, border-radius 0.22s ease;
     }
     .dark-field:focus { border-color: var(--accent-cal); }
+
+    .organic-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+      border: 1px solid var(--ui-card-border, rgba(255, 255, 255, 0.08));
+      border-radius: var(--ui-radius-card-sm, 18px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+      transition: border-radius 0.22s ease, border-color 0.15s ease;
+    }
     .dark-select-center {
       appearance: none;
       -webkit-appearance: none;
@@ -222,9 +247,21 @@
       background: var(--accent-cal);
       color: var(--accent-cal-text);
       font-weight: 700;
-      transition: transform 0.12s ease, opacity 0.15s ease, background-color 0.25s ease;
+      box-shadow: 0 0 16px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.35);
+      transition: transform 0.12s ease, opacity 0.15s ease, background-color 0.25s ease, box-shadow 0.25s ease;
     }
     .accent-btn:active { transform: scale(0.96); }
+
+    /* Отключение свечения в матовом режиме */
+    html[data-ui-glow="off"] .accent-btn {
+      box-shadow: none !important;
+    }
+    html[data-ui-glow="off"] .cal-fill {
+      box-shadow: none !important;
+    }
+    html[data-ui-glow="off"] .set-dot.completed {
+      box-shadow: none !important;
+    }
 
     .food-row { animation: rowIn 0.18s ease forwards; }
     @keyframes rowIn {
@@ -327,10 +364,40 @@
       background: var(--accent-cal);
       color: var(--accent-cal-text);
       border-color: var(--accent-cal);
-      box-shadow: 0 0 10px var(--accent-glow);
+      box-shadow: 0 0 14px var(--accent-glow);
     }
 
     ::-webkit-scrollbar { width: 0; height: 0; }
+
+    #viewsViewport {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y pinch-zoom;
+    }
+    #viewsTrack {
+      display: flex;
+      width: 200%;
+      align-items: flex-start;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      touch-action: pan-y pinch-zoom;
+    }
+    #viewDiet, #viewSplit {
+      width: 50%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    #viewDiet { padding-right: 4px; }
+    #viewSplit { padding-left: 4px; }
   </style>
 </head>
 <body>
@@ -391,9 +458,13 @@
     </div>
 
     <!-- =================================================================== -->
-    <!-- ВКЛАДКА 1: РАЦИОН (КБЖУ + СТЕК ДОБАВОК + УМНЫЙ ВЕС)                 -->
+    <!-- СЛАЙДЕР ВИДОВ СО СВАЙПАМИ (РАЦИОН <-> ТРЕНИ КАК В TIKTOK / INSTA)   -->
     <!-- =================================================================== -->
-    <div id="viewDiet" class="flex-1 flex flex-col">
+    <div id="viewsViewport" class="flex-1 w-full relative">
+      <div id="viewsTrack">
+
+        <!-- ВКЛАДКА 1: РАЦИОН (КБЖУ + СТЕК ДОБАВОК + УМНЫЙ ВЕС) -->
+        <div id="viewDiet">
       <!-- Карточка прогресса КБЖУ -->
       <div class="status-card mb-3">
         <div class="flex items-baseline justify-between mb-2">
@@ -527,10 +598,8 @@
       </div>
     </div>
 
-    <!-- =================================================================== -->
-    <!-- ВКЛАДКА 2: СПЛИТ И ТРЕНИРОВКИ (КАЛЕНДАРЬ + ОБЪЕМ + ПРОГРЕССИЯ)      -->
-    <!-- =================================================================== -->
-    <div id="viewSplit" class="hidden flex-1 flex-col">
+    <!-- ВКЛАДКА 2: СПЛИТ И ТРЕНИРОВКИ (КАЛЕНДАРЬ + ОБЪЕМ + ПРОГРЕССИЯ) -->
+    <div id="viewSplit">
       <!-- Календарь недели ПН - ВС -->
       <div id="weekScheduleBar" class="grid grid-cols-7 gap-1.5 mb-3"></div>
 
@@ -615,6 +684,8 @@
         </button>
       </div>
     </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===================================================================== -->
@@ -628,7 +699,7 @@
           <span id="setLoggerBadge" class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Рабочий подход #1</span>
           <div class="flex items-center gap-2 mt-0.5 min-w-0">
             <h3 id="setLoggerExName" class="text-base font-bold text-white truncate">Упражнение</h3>
-            <button type="button" onclick="openExerciseGuideFromLogger()" class="px-2 py-0.5 rounded-lg text-[10px] mono font-semibold bg-white/[0.08] border border-white/15 text-zinc-300 hover:text-white shrink-0 active:scale-95 transition">ⓘ Техника</button>
+            <button type="button" onclick="openExerciseGuideFromLogger()" class="px-2.5 py-0.5 rounded-full text-[10px] mono font-semibold bg-white/[0.08] border border-white/15 text-zinc-300 hover:text-white shrink-0 active:scale-95 transition">ⓘ Техника</button>
           </div>
         </div>
         <button type="button" onclick="closeSetLoggerModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 ml-2">✕</button>
@@ -638,30 +709,30 @@
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="text-xs text-zinc-400">Рабочий вес (кг)</label>
-            <button type="button" onclick="setLoggerBodyweight()" class="text-[10px] mono px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300">Свой вес (0 кг)</button>
+            <button type="button" onclick="setLoggerBodyweight()" class="text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition">Свой вес (0 кг)</button>
           </div>
           <div class="flex items-center gap-2">
-            <button type="button" onclick="stepSetWeight(-2.5)" class="w-12 h-11 rounded-xl bg-white/5 text-white font-bold mono text-xs active:scale-90">-2.5</button>
+            <button type="button" onclick="stepSetWeight(-2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">-2.5</button>
             <input id="setWeightInput" type="number" step="0.5" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
-            <button type="button" onclick="stepSetWeight(2.5)" class="w-12 h-11 rounded-xl bg-white/5 text-white font-bold mono text-xs active:scale-90">+2.5</button>
+            <button type="button" onclick="stepSetWeight(2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">+2.5</button>
           </div>
         </div>
 
         <div>
           <label class="text-xs text-zinc-400 block mb-1.5">Повторения</label>
           <div class="flex items-center gap-2">
-            <button type="button" onclick="stepSetReps(-1)" class="w-12 h-11 rounded-xl bg-white/5 text-white font-bold mono text-xs active:scale-90">-1</button>
+            <button type="button" onclick="stepSetReps(-1)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">-1</button>
             <input id="setRepsInput" type="number" class="dark-field mono text-center text-lg font-bold text-white" />
-            <button type="button" onclick="stepSetReps(1)" class="w-12 h-11 rounded-xl bg-white/5 text-white font-bold mono text-xs active:scale-90">+1</button>
+            <button type="button" onclick="stepSetReps(1)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">+1</button>
           </div>
         </div>
 
         <div class="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs text-zinc-400">
           <span>Всего рабочих подходов в упражнении:</span>
           <div class="flex items-center gap-1.5">
-            <button type="button" onclick="changeExTargetSets(-1)" class="w-7 h-7 rounded-lg bg-white/10 text-white font-bold mono">-</button>
-            <span id="setExTotalSetsLabel" class="mono font-bold text-white px-1.5">3</span>
-            <button type="button" onclick="changeExTargetSets(1)" class="w-7 h-7 rounded-lg bg-white/10 text-white font-bold mono">+</button>
+            <button type="button" onclick="changeExTargetSets(-1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold mono flex items-center justify-center active:scale-90 transition">-</button>
+            <span id="setExTotalSetsLabel" class="mono font-bold text-white px-2">3</span>
+            <button type="button" onclick="changeExTargetSets(1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold mono flex items-center justify-center active:scale-90 transition">+</button>
           </div>
         </div>
       </div>
@@ -1229,6 +1300,61 @@
             </button>
           </div>
         </div>
+
+        <!-- Блок: Форма и геометрия интерфейса (Скругления и Glow) -->
+        <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-white uppercase tracking-wider block">Геометрия интерфейса</span>
+              <span class="text-[10px] text-zinc-400">Форма карточек и комфорт для глаз</span>
+            </div>
+            <span id="uiCornerStyleBadge" class="text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-zinc-300">Органичный</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              id="btnUiCornerSoft"
+              onclick="setUiCornerStyle('soft')"
+              class="p-3 rounded-2xl border border-white/40 bg-white/[0.08] text-left transition flex flex-col justify-between shadow-[0_0_15px_rgba(255,255,255,0.06)] active:scale-95"
+            >
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-white">◯ Мягкий (iOS)</span>
+                <span class="text-[10px] text-emerald-400 font-mono font-bold">22px</span>
+              </div>
+              <div class="text-[10px] text-zinc-400 leading-snug">Плавные скругленные карточки, комфорт для глаз</div>
+            </button>
+
+            <button
+              type="button"
+              id="btnUiCornerBrutal"
+              onclick="setUiCornerStyle('brutal')"
+              class="p-3 rounded-2xl border border-white/10 bg-zinc-900/60 text-left transition flex flex-col justify-between opacity-60 active:scale-95"
+            >
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-white">▢ Брутализм</span>
+                <span class="text-[10px] text-zinc-400 font-mono">8px</span>
+              </div>
+              <div class="text-[10px] text-zinc-400 leading-snug">Строгий монолит, плотные линии, классический RAW</div>
+            </button>
+          </div>
+
+          <!-- Тумблер: Неоновое свечение -->
+          <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between">
+            <div>
+              <div class="text-xs font-medium text-white">Неоновое свечение (Glow)</div>
+              <div class="text-[10.5px] text-zinc-400">Мягкая аура вокруг прогресса и акцентов</div>
+            </div>
+            <button
+              type="button"
+              id="btnUiGlowToggle"
+              onclick="toggleUiGlow()"
+              class="w-12 h-6 rounded-full transition relative bg-emerald-500/20 border border-emerald-500/40"
+            >
+              <span id="btnUiGlowKnob" class="w-4 h-4 rounded-full bg-emerald-400 absolute top-0.5 right-1 transition-all"></span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Вкладка 3: ПУШИ -->
@@ -1246,21 +1372,21 @@
           </div>
 
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" id="pushMode2x" onclick="setPushMode('2x')" class="p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition">
-              <div class="text-xs font-bold text-white">2 раза в день</div>
-              <div class="text-[10px] text-zinc-400 mono mt-0.5">Днем + Вечером</div>
+            <button type="button" id="pushMode2x" onclick="setPushMode('2x')" class="px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95">
+              <div class="text-xs font-bold text-white leading-tight">2 раза в день</div>
+              <div class="text-[10px] text-zinc-400 mono mt-0.5 leading-tight">Днем + Вечером</div>
             </button>
-            <button type="button" id="pushModeMid" onclick="setPushMode('mid')" class="p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition">
-              <div class="text-xs font-bold text-white">Середина дня</div>
-              <div class="text-[10px] text-zinc-400 mono mt-0.5">1 раз днем</div>
+            <button type="button" id="pushModeMid" onclick="setPushMode('mid')" class="px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95">
+              <div class="text-xs font-bold text-white leading-tight">Середина дня</div>
+              <div class="text-[10px] text-zinc-400 mono mt-0.5 leading-tight">1 раз днем</div>
             </button>
-            <button type="button" id="pushModeEve" onclick="setPushMode('eve')" class="p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition">
-              <div class="text-xs font-bold text-white">Конец дня</div>
-              <div class="text-[10px] text-zinc-400 mono mt-0.5">1 раз вечером</div>
+            <button type="button" id="pushModeEve" onclick="setPushMode('eve')" class="px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95">
+              <div class="text-xs font-bold text-white leading-tight">Конец дня</div>
+              <div class="text-[10px] text-zinc-400 mono mt-0.5 leading-tight">1 раз вечером</div>
             </button>
-            <button type="button" id="pushModeOff" onclick="setPushMode('off')" class="p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition">
-              <div class="text-xs font-bold text-zinc-400">Выключены</div>
-              <div class="text-[10px] text-zinc-500 mono mt-0.5">Без уведомлений</div>
+            <button type="button" id="pushModeOff" onclick="setPushMode('off')" class="px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95">
+              <div class="text-xs font-bold text-zinc-400 leading-tight">Выключены</div>
+              <div class="text-[10px] text-zinc-500 mono mt-0.5 leading-tight">Без уведомлений</div>
             </button>
           </div>
 
@@ -1292,8 +1418,8 @@
             </button>
           </div>
 
-          <button type="button" onclick="generateAiPushPool()" class="w-full py-2 rounded-xl border border-white/10 bg-white/[0.03] text-[11px] text-zinc-300 font-medium active:scale-98 transition">
-            Сгенерировать новые фразы через Gemini 3
+          <button type="button" onclick="generateAiPushPool()" class="w-full py-2.5 px-3 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-[11px] text-zinc-300 font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
+            ✦ Сгенерировать фразы через Gemini 3
           </button>
         </div>
 
@@ -1312,13 +1438,13 @@
 
           <!-- Переключатели -->
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" id="btnToggleRestAuto" onclick="toggleRestSetting('autoStart')" class="p-2.5 rounded-xl border border-white/50 bg-white/[0.09] text-left transition">
-              <div class="text-xs font-bold text-white">Автостарт</div>
-              <div class="text-[10px] text-zinc-400 mono mt-0.5 truncate" id="restAutoStatusLabel">После подхода</div>
+            <button type="button" id="btnToggleRestAuto" onclick="toggleRestSetting('autoStart')" class="px-3 py-2 rounded-2xl border border-white/40 bg-white/[0.09] text-left transition active:scale-95">
+              <div class="text-xs font-bold text-white leading-tight">Автостарт</div>
+              <div class="text-[10px] text-zinc-300 mono mt-0.5 truncate leading-tight" id="restAutoStatusLabel">После подхода</div>
             </button>
-            <button type="button" id="btnToggleRestSound" onclick="toggleRestSetting('sound')" class="p-2.5 rounded-xl border border-white/50 bg-white/[0.09] text-left transition">
-              <div class="text-xs font-bold text-white">Звук и вибро</div>
-              <div class="text-[10px] text-zinc-400 mono mt-0.5 truncate" id="restSoundStatusLabel">Зальный сигнал</div>
+            <button type="button" id="btnToggleRestSound" onclick="toggleRestSetting('sound')" class="px-3 py-2 rounded-2xl border border-white/40 bg-white/[0.09] text-left transition active:scale-95">
+              <div class="text-xs font-bold text-white leading-tight">Звук и вибро</div>
+              <div class="text-[10px] text-zinc-300 mono mt-0.5 truncate leading-tight" id="restSoundStatusLabel">Зальный сигнал</div>
             </button>
           </div>
 
@@ -1407,8 +1533,8 @@
             </div>
           </div>
 
-          <button type="button" onclick="generateAiRestPhrases()" class="w-full py-2.5 rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/10 text-xs text-white font-semibold active:scale-98 transition">
-            Сгенерировать боевые фразы отдыха через Gemini 3
+          <button type="button" onclick="generateAiRestPhrases()" class="w-full py-2.5 px-3 rounded-2xl border border-white/15 bg-white/[0.06] hover:bg-white/10 text-xs text-white font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
+            ✦ Сгенерировать фразы тренера через Gemini 3
           </button>
         </div>
       </div>
@@ -1512,9 +1638,9 @@
       <div class="bg-zinc-900/70 border border-white/[0.06] rounded-2xl p-3.5 mb-4">
         <label class="text-xs text-zinc-400 block mb-2">Вес порции (г / мл)</label>
         <div class="flex items-center gap-2">
-          <button type="button" onclick="stepEditWeight(-15)" class="w-11 h-11 rounded-xl bg-white/5 text-white font-bold mono text-sm active:scale-90 transition">-15</button>
+          <button type="button" onclick="stepEditWeight(-15)" class="w-11 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-sm active:scale-95 transition">-15</button>
           <input id="editItemWeight" type="number" oninput="updateEditPreview()" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
-          <button type="button" onclick="stepEditWeight(15)" class="w-11 h-11 rounded-xl bg-white/5 text-white font-bold mono text-sm active:scale-90 transition">+15</button>
+          <button type="button" onclick="stepEditWeight(15)" class="w-11 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-sm active:scale-95 transition">+15</button>
         </div>
         <div class="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/[0.06] text-center mono text-xs">
           <div><div class="text-[10px] text-zinc-500">Ккал</div><div id="editPrevCal" class="font-bold mt-0.5" style="color: var(--accent-cal)">0</div></div>
@@ -1543,9 +1669,9 @@
       <!-- Шапка -->
       <div class="flex items-start justify-between gap-2.5 pb-2 border-b border-white/[0.08]">
         <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-1.5 mb-1">
-            <span id="guideMuscleBadge" class="px-2 py-0.5 rounded text-[10px] mono font-bold uppercase tracking-wider">Грудь</span>
-            <span id="guideTypeBadge" class="px-2 py-0.5 rounded text-[10px] mono text-zinc-400 bg-white/[0.05] border border-white/10">Базовое</span>
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <span id="guideMuscleBadge" class="px-2.5 py-0.5 rounded-full text-[10px] mono font-bold uppercase tracking-wider">Грудь</span>
+            <span id="guideTypeBadge" class="px-2.5 py-0.5 rounded-full text-[10px] mono text-zinc-400 bg-white/[0.05] border border-white/10">Базовое</span>
           </div>
           <h3 id="guideExTitle" class="text-base font-black text-white leading-tight">Жим штанги лежа</h3>
         </div>
@@ -1553,50 +1679,50 @@
       </div>
 
       <!-- Контейнер с разделами техники -->
-      <div id="guideContentBody" class="space-y-2.5">
+      <div id="guideContentBody" class="space-y-3">
         <!-- Блок 1: Цель и темп -->
-        <div class="grid grid-cols-2 gap-2">
-          <div class="bg-black/40 border border-white/[0.06] rounded-xl p-2.5">
-            <div class="text-[9.5px] mono uppercase tracking-wider text-zinc-500 font-semibold mb-0.5">Анатомический акцент</div>
-            <div id="guideTargetText" class="text-xs text-zinc-200 font-medium leading-snug">Грудь (стернокостальная часть)</div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="organic-card p-3">
+            <div class="text-[9.5px] mono uppercase tracking-wider text-zinc-400 font-semibold mb-1">Анатомический акцент</div>
+            <div id="guideTargetText" class="text-xs text-zinc-200 font-medium leading-relaxed">Грудь (стернокостальная часть)</div>
           </div>
-          <div class="bg-black/40 border border-white/[0.06] rounded-xl p-2.5">
-            <div class="text-[9.5px] mono uppercase tracking-wider text-zinc-500 font-semibold mb-0.5">Рекомендуемый темп</div>
-            <div id="guideTempoText" class="text-xs mono font-bold text-white leading-snug">3-1-1-0</div>
+          <div class="organic-card p-3">
+            <div class="text-[9.5px] mono uppercase tracking-wider text-zinc-400 font-semibold mb-1">Рекомендуемый темп</div>
+            <div id="guideTempoText" class="text-xs mono font-bold text-white leading-relaxed">3-1-1-0</div>
           </div>
         </div>
 
         <!-- Блок 2: Исходная позиция и хват -->
-        <div class="bg-black/40 border border-white/[0.06] rounded-xl p-3 space-y-1">
-          <div class="flex items-center gap-1.5 text-xs font-bold text-zinc-200">
-            <span class="text-emerald-400 font-mono">▸</span>
+        <div class="organic-card p-3.5 space-y-1.5">
+          <div class="flex items-center gap-2 text-xs font-bold text-zinc-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-400/90 inline-block shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
             <span>Исходная позиция и хват</span>
           </div>
           <p id="guideSetupText" class="text-xs text-zinc-300 leading-relaxed"></p>
         </div>
 
         <!-- Блок 3: Ключевые кьюсы и дыхание -->
-        <div class="bg-black/40 border border-white/[0.06] rounded-xl p-3 space-y-1">
-          <div class="flex items-center gap-1.5 text-xs font-bold text-zinc-200">
-            <span class="text-amber-400 font-mono">▸</span>
+        <div class="organic-card p-3.5 space-y-1.5">
+          <div class="flex items-center gap-2 text-xs font-bold text-zinc-200">
+            <span class="w-2 h-2 rounded-full bg-amber-400/90 inline-block shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.5)]"></span>
             <span>Траектория движения и дыхание</span>
           </div>
           <p id="guideCuesText" class="text-xs text-zinc-300 leading-relaxed"></p>
         </div>
 
         <!-- Блок 4: Критические ошибки -->
-        <div class="bg-red-500/[0.07] border border-red-500/20 rounded-xl p-3 space-y-1">
-          <div class="flex items-center gap-1.5 text-xs font-bold text-red-300">
-            <span class="font-mono">✕</span>
+        <div class="rounded-[20px] p-3.5 space-y-1.5 bg-gradient-to-b from-red-500/[0.12] to-red-500/[0.03] border border-red-500/25 shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all">
+          <div class="flex items-center gap-2 text-xs font-bold text-red-300">
+            <span class="w-2 h-2 rounded-full bg-red-400 inline-block shrink-0 shadow-[0_0_8px_rgba(248,113,113,0.6)]"></span>
             <span>Частые ошибки (слив нагрузки и травмы)</span>
           </div>
           <p id="guideMistakesText" class="text-xs text-red-200/90 leading-relaxed"></p>
         </div>
 
         <!-- Блок 5: Нейромышечный фокус -->
-        <div class="bg-sky-500/[0.07] border border-sky-500/20 rounded-xl p-3 space-y-1">
-          <div class="flex items-center gap-1.5 text-xs font-bold text-sky-300">
-            <span class="font-mono">★</span>
+        <div class="rounded-[20px] p-3.5 space-y-1.5 bg-gradient-to-b from-sky-500/[0.12] to-sky-500/[0.03] border border-sky-500/25 shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all">
+          <div class="flex items-center gap-2 text-xs font-bold text-sky-300">
+            <span class="w-2 h-2 rounded-full bg-sky-400 inline-block shrink-0 shadow-[0_0_8px_rgba(56,189,248,0.6)]"></span>
             <span>Ментальный фокус (Mind-Muscle)</span>
           </div>
           <p id="guideMindMuscleText" class="text-xs text-sky-200/90 leading-relaxed"></p>
@@ -1604,9 +1730,9 @@
       </div>
 
       <!-- Источник и кнопка Gemini 3 -->
-      <div class="pt-1 flex items-center justify-between gap-2 border-t border-white/[0.08]">
+      <div class="pt-2 flex items-center justify-between gap-2 border-t border-white/[0.08]">
         <div id="guideSourceStamp" class="text-[10px] mono text-zinc-500">✓ Экспертная база биомеханики</div>
-        <button type="button" id="btnGuideAiAction" onclick="requestAiExerciseCoach()" class="px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.05] hover:bg-white/10 text-xs text-zinc-300 font-semibold active:scale-95 transition flex items-center gap-1.5">
+        <button type="button" id="btnGuideAiAction" onclick="requestAiExerciseCoach()" class="px-3.5 py-2 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/10 text-xs text-zinc-300 font-semibold active:scale-95 transition flex items-center gap-1.5">
           <span>✦ Совет Gemini 3</span>
         </button>
       </div>
@@ -1615,7 +1741,7 @@
 
   <!-- ПЛАВАЮЩИЙ УМНЫЙ ТАЙМЕР ОТДЫХА -->
   <div id="restTimerFloatingBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50 pointer-events-auto">
-    <div class="bg-zinc-950/95 border border-white/20 backdrop-blur-2xl rounded-2xl p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] space-y-2.5">
+    <div class="bg-zinc-950/95 border border-white/20 backdrop-blur-2xl rounded-[28px] p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] space-y-2.5">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
@@ -1625,21 +1751,21 @@
           </div>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
-          <button type="button" onclick="adjustRestTimer(-30)" class="text-[10px] mono font-bold px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition">-30с</button>
-          <button type="button" onclick="adjustRestTimer(30)" class="text-[10px] mono font-bold px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition">+30с</button>
-          <button type="button" onclick="adjustRestTimer(60)" class="text-[10px] mono font-bold px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition">+1м</button>
-          <button type="button" onclick="stopRestTimer(true)" title="Сбросить отдых" class="text-[11px] mono font-bold px-2.5 py-1.5 rounded-lg bg-white/10 text-white hover:bg-red-500/20 hover:text-red-300 transition active:scale-95">✕</button>
+          <button type="button" onclick="adjustRestTimer(-30)" class="text-[10px] mono font-bold px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition">-30с</button>
+          <button type="button" onclick="adjustRestTimer(30)" class="text-[10px] mono font-bold px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition">+30с</button>
+          <button type="button" onclick="adjustRestTimer(60)" class="text-[10px] mono font-bold px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition">+1м</button>
+          <button type="button" onclick="stopRestTimer(true)" title="Сбросить отдых" class="text-[11px] mono font-bold px-2.5 py-1.5 rounded-xl bg-white/10 text-white hover:bg-red-500/20 hover:text-red-300 transition active:scale-95">✕</button>
         </div>
       </div>
       <!-- Быстрые пресеты на 1 тап (до 7 минут) -->
       <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-white/[0.08]">
         <span class="text-[9px] mono uppercase tracking-wider text-zinc-500 mr-0.5 shrink-0">Пресеты:</span>
         <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
-          <button type="button" onclick="setRestTimerDirect(90)" class="text-[10px] mono px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">1:30</button>
-          <button type="button" onclick="setRestTimerDirect(150)" class="text-[10px] mono px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">2:30</button>
-          <button type="button" onclick="setRestTimerDirect(240)" class="text-[10px] mono px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">4:00</button>
-          <button type="button" onclick="setRestTimerDirect(300)" class="text-[10px] mono px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">5:00</button>
-          <button type="button" onclick="setRestTimerDirect(420)" class="text-[10px] mono px-2 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">7:00</button>
+          <button type="button" onclick="setRestTimerDirect(90)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">1:30</button>
+          <button type="button" onclick="setRestTimerDirect(150)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">2:30</button>
+          <button type="button" onclick="setRestTimerDirect(240)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">4:00</button>
+          <button type="button" onclick="setRestTimerDirect(300)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">5:00</button>
+          <button type="button" onclick="setRestTimerDirect(420)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">7:00</button>
         </div>
       </div>
       <div class="macro-mini-track">
@@ -2291,7 +2417,7 @@
     // =========================================================================
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
-    function switchMainView(view) {
+    function switchMainView(view, immediate = false) {
       currentMainView = view;
       const vDiet = document.getElementById("viewDiet");
       const vSplit = document.getElementById("viewSplit");
@@ -2299,29 +2425,26 @@
       const tabSplit = document.getElementById("navTabSplit");
       const iconScan = document.getElementById("iconScannerTop");
       const iconAddEx = document.getElementById("iconAddExTop");
+      const track = document.getElementById("viewsTrack");
+
+      if (vDiet) vDiet.style.pointerEvents = (view === "diet") ? "auto" : "none";
+      if (vSplit) vSplit.style.pointerEvents = (view === "split") ? "auto" : "none";
+
+      if (track) {
+        track.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+        track.style.transform = (view === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+      }
 
       if (view === "split") {
-        vDiet.classList.add("hidden");
-        vDiet.classList.remove("flex");
-        vSplit.classList.remove("hidden");
-        vSplit.classList.add("flex");
-
-        tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
-        tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
-        iconScan.classList.add("hidden");
-        iconAddEx.classList.remove("hidden");
-        renderWorkoutAll();
+        if (tabSplit) tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
+        if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
+        if (iconScan) iconScan.classList.add("hidden");
+        if (iconAddEx) iconAddEx.classList.remove("hidden");
       } else {
-        vSplit.classList.add("hidden");
-        vSplit.classList.remove("flex");
-        vDiet.classList.remove("hidden");
-        vDiet.classList.add("flex");
-
-        tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
-        tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
-        iconScan.classList.remove("hidden");
-        iconAddEx.classList.add("hidden");
-        renderAll();
+        if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
+        if (tabSplit) tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
+        if (iconScan) iconScan.classList.remove("hidden");
+        if (iconAddEx) iconAddEx.classList.add("hidden");
       }
     }
 
@@ -2707,7 +2830,7 @@
               }"
             >
               <span class="text-[10px] font-bold mono ${isToday ? 'text-white' : 'text-zinc-400'}">${w.short}</span>
-              <span class="text-[9px] mono mt-1 px-1.5 py-0.5 rounded ${
+              <span class="text-[9px] mono mt-1 px-2 py-0.5 rounded-full ${
                 isRest ? 'text-zinc-500 bg-white/[0.03]' : 'font-bold text-white bg-white/[0.08]'
               }" style="${!isRest && isSelected ? 'color:var(--accent-cal)' : ''}">${progShort}</span>
             </button>
@@ -2731,7 +2854,7 @@
           const pct = targetSets > 0 ? Math.min(100, Math.max(0, Math.round((done / targetSets) * 100))) : 0;
           const isOddLast = (idx === keys.length - 1) && (keys.length % 2 === 1);
           return `
-            <div class="bg-white/[0.025] border border-white/[0.06] rounded-xl px-3 py-2 ${isOddLast ? 'col-span-2' : ''}">
+            <div class="bg-white/[0.03] border border-white/[0.07] rounded-2xl px-3.5 py-2.5 ${isOddLast ? 'col-span-2' : ''}">
               <div class="flex items-center justify-between text-[11px] mb-1">
                 <span class="text-zinc-300 font-semibold flex items-center gap-1.5">
                   <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:${meta.color}"></span>
@@ -2857,10 +2980,10 @@
                 <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${prog.id}', '${ex.id}', 0)">
                   <div class="flex items-center gap-1.5 min-w-0">
                     <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                    <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-1.5 py-0.5 rounded text-[9.5px] mono font-semibold bg-white/[0.06] border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 active:scale-90 transition shrink-0">ⓘ Техника</button>
+                    <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-2 py-0.5 rounded-full text-[9.5px] mono font-semibold bg-white/[0.07] border border-white/10 hover:bg-white/15 text-zinc-300 hover:text-white active:scale-95 transition shrink-0">ⓘ Техника</button>
                   </div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
-                    <span class="px-1.5 py-0.5 rounded text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
                     <span class="whitespace-nowrap truncate">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong></span>
                   </div>
                 </div>
@@ -3185,13 +3308,13 @@
           ...state.customTheme,
           id: "custom",
           calText: getContrastText(state.customTheme.cal),
-          glow: hexToRgba(state.customTheme.cal, 0.30)
+          glow: hexToRgba(state.customTheme.cal, 0.55)
         };
       }
       const preset = AVANT_THEMES[id] || (available[0] && AVANT_THEMES[available[0].id]) || AVANT_THEMES.monolith;
       return {
         ...preset,
-        glow: hexToRgba(preset.cal, 0.30)
+        glow: hexToRgba(preset.cal, 0.55)
       };
     }
 
@@ -3206,7 +3329,8 @@
       root.style.setProperty("--accent-p", t.p);
       root.style.setProperty("--accent-f", t.f);
       root.style.setProperty("--accent-c", t.c);
-      root.style.setProperty("--accent-glow", t.glow);
+      const isGlowOn = state.uiStyleSettings?.glow !== false;
+      root.style.setProperty("--accent-glow", isGlowOn ? t.glow : "transparent");
 
       const bLabel = document.getElementById("atelierBrandLabel");
       const nLabel = document.getElementById("atelierNumbersLabel");
@@ -3215,11 +3339,87 @@
 
       renderThemeSelector();
       syncCustomBuilderFields();
+      updateUiStyleControlButtons();
       if (save) {
         saveState();
         renderAll();
         if (currentMainView === "split") renderWorkoutAll();
       }
+    }
+
+    // =========================================================================
+    // ГЕОМЕТРИЯ И СТИЛЬ ИНТЕРФЕЙСА (СКРУГЛЕНИЯ И GLOW)
+    // =========================================================================
+    function setUiCornerStyle(style, save = true) {
+      if (!state.uiStyleSettings) state.uiStyleSettings = {};
+      state.uiStyleSettings.corners = style;
+      document.documentElement.setAttribute("data-ui-corners", style);
+
+      updateUiStyleControlButtons();
+
+      if (save) {
+        saveState();
+        showToast(style === "brutal" ? "Геометрия: Брутализм (8px)" : "Геометрия: Органичный iOS (22px)");
+      }
+    }
+
+    function toggleUiGlow(save = true) {
+      if (!state.uiStyleSettings) state.uiStyleSettings = {};
+      const current = state.uiStyleSettings.glow !== false;
+      const next = !current;
+      state.uiStyleSettings.glow = next;
+
+      applyUiGlow(next);
+      updateUiGlowToggleUI(next);
+
+      if (save) {
+        saveState();
+        showToast(next ? "Свечение акцентов включено" : "Свечение отключено");
+      }
+    }
+
+    function applyUiGlow(enabled) {
+      const t = getActiveThemeObject();
+      if (enabled) {
+        document.documentElement.removeAttribute("data-ui-glow");
+        document.documentElement.style.setProperty("--accent-glow", t.glow);
+      } else {
+        document.documentElement.setAttribute("data-ui-glow", "off");
+        document.documentElement.style.setProperty("--accent-glow", "transparent");
+      }
+    }
+
+    function updateUiGlowToggleUI(enabled) {
+      const btn = document.getElementById("btnUiGlowToggle");
+      const knob = document.getElementById("btnUiGlowKnob");
+      if (!btn || !knob) return;
+      if (enabled) {
+        btn.className = "w-12 h-6 rounded-full transition relative bg-emerald-500/20 border border-emerald-500/40";
+        knob.className = "w-4 h-4 rounded-full bg-emerald-400 absolute top-0.5 right-1 transition-all";
+      } else {
+        btn.className = "w-12 h-6 rounded-full transition relative bg-white/[0.05] border border-white/10";
+        knob.className = "w-4 h-4 rounded-full bg-zinc-500 absolute top-0.5 left-1 transition-all";
+      }
+    }
+
+    function updateUiStyleControlButtons() {
+      const style = state.uiStyleSettings?.corners || "soft";
+      const badge = document.getElementById("uiCornerStyleBadge");
+      if (badge) badge.textContent = style === "brutal" ? "Брутализм" : "Органичный";
+
+      const btnSoft = document.getElementById("btnUiCornerSoft");
+      const btnBrutal = document.getElementById("btnUiCornerBrutal");
+      if (btnSoft && btnBrutal) {
+        if (style === "brutal") {
+          btnBrutal.className = "p-3 rounded-2xl border border-white/40 bg-white/[0.08] text-left transition flex flex-col justify-between shadow-[0_0_15px_rgba(255,255,255,0.06)] active:scale-95";
+          btnSoft.className = "p-3 rounded-2xl border border-white/10 bg-zinc-900/60 text-left transition flex flex-col justify-between opacity-60 active:scale-95";
+        } else {
+          btnSoft.className = "p-3 rounded-2xl border border-white/40 bg-white/[0.08] text-left transition flex flex-col justify-between shadow-[0_0_15px_rgba(255,255,255,0.06)] active:scale-95";
+          btnBrutal.className = "p-3 rounded-2xl border border-white/10 bg-zinc-900/60 text-left transition flex flex-col justify-between opacity-60 active:scale-95";
+        }
+      }
+
+      updateUiGlowToggleUI(state.uiStyleSettings?.glow !== false);
     }
 
     function deleteTheme(themeId) {
@@ -3651,8 +3851,8 @@
       Object.keys(buttons).forEach(k => {
         if (!buttons[k]) return;
         buttons[k].className = (k === mode)
-          ? "p-2.5 rounded-xl border border-white/50 bg-white/[0.09] text-left transition"
-          : "p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition";
+          ? "px-3 py-2 rounded-2xl border border-white/40 bg-white/[0.09] text-left transition active:scale-95"
+          : "px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95";
       });
 
       const t1Wrap = document.getElementById("pushTime1Wrap");
@@ -4124,8 +4324,8 @@
       const btnAuto = document.getElementById("btnToggleRestAuto");
       if (btnAuto) {
         btnAuto.className = s.autoStart
-          ? "p-2.5 rounded-xl border border-white/50 bg-white/[0.09] text-left transition"
-          : "p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition";
+          ? "px-3 py-2 rounded-2xl border border-white/40 bg-white/[0.09] text-left transition active:scale-95"
+          : "px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95";
       }
       const lblAuto = document.getElementById("restAutoStatusLabel");
       if (lblAuto) {
@@ -4136,8 +4336,8 @@
       const btnSound = document.getElementById("btnToggleRestSound");
       if (btnSound) {
         btnSound.className = s.sound
-          ? "p-2.5 rounded-xl border border-white/50 bg-white/[0.09] text-left transition"
-          : "p-2.5 rounded-xl border border-white/10 bg-zinc-900 text-left transition";
+          ? "px-3 py-2 rounded-2xl border border-white/40 bg-white/[0.09] text-left transition active:scale-95"
+          : "px-3 py-2 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition active:scale-95";
       }
       const lblSound = document.getElementById("restSoundStatusLabel");
       if (lblSound) {
@@ -4230,10 +4430,10 @@
       state.restTimerSettings.customPrompt = userStyle;
       saveState();
 
-      showToast("Генерируем боевые фразы отдыха без цензуры...");
+      showToast("Генерируем фразы тренера для отдыха...");
       try {
         const prompt = `Ты — суровый, прямой и жесткий тренер в качалке.
-Придумай 10 коротких, хлестких, боевых фраз (до 85 символов каждая), которые приходят пушем на телефон спортсмена, когда закончился таймер отдыха между тяжелыми подходами со штангой.
+Придумай 10 коротких, хлестких фраз тренера (до 85 символов каждая), которые приходят пушем на телефон спортсмена, когда закончился таймер отдыха между тяжелыми подходами со штангой.
 Стиль и требование пользователя (выполни в точности, без цензуры и морализаторства): "${userStyle}".
 Фразы должны заставить человека немедленно встать с лавки, убрать телефон и подойти к штанге/тренажеру делать подход.
 Верни строго JSON массив строк без пояснений и без markdown-разметки: ["фраза 1", "фраза 2", ...]`;
@@ -4257,7 +4457,7 @@
             saveState();
             const prevEl = document.getElementById("restPreviewText");
             if (prevEl) prevEl.textContent = `«${arr[0]}»`;
-            showToast(`✓ Сгенерировано ${arr.length} боевых фраз без цензуры!`);
+            showToast(`✓ Сгенерировано ${arr.length} фраз тренера!`);
           } else {
             throw new Error("Неверный формат ответа");
           }
@@ -4490,6 +4690,9 @@
         if (!state.customExerciseGuides || typeof state.customExerciseGuides !== "object") {
           state.customExerciseGuides = {};
         }
+        if (!state.uiStyleSettings) {
+          state.uiStyleSettings = { corners: "soft", glow: true };
+        }
         if (!Array.isArray(state.supplements) || state.supplements.length === 0) {
           state.supplements = DEFAULT_SUPPLEMENTS.slice();
         }
@@ -4535,6 +4738,9 @@
       }
 
       applyTheme(state.themeId || "monolith", false);
+      setUiCornerStyle(state.uiStyleSettings?.corners || "soft", false);
+      applyUiGlow(state.uiStyleSettings?.glow !== false);
+      updateUiGlowToggleUI(state.uiStyleSettings?.glow !== false);
       checkDayRollover();
       checkWorkoutWeekRollover();
     }
@@ -5473,7 +5679,11 @@
         document.getElementById(panels[k]).classList.toggle("hidden", k !== tab);
       });
       if (tab === "api") syncKeyFieldUI();
-      if (tab === "style") { renderThemeSelector(); syncCustomBuilderFields(); }
+      if (tab === "style") {
+        renderThemeSelector();
+        syncCustomBuilderFields();
+        if (typeof updateUiStyleControlButtons === "function") updateUiStyleControlButtons();
+      }
       if (tab === "push") {
         syncPushUI();
         if (typeof syncRestSettingsUI === "function") syncRestSettingsUI();
@@ -5937,10 +6147,10 @@
                 <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${activeProg.id}', '${ex.id}', 0)">
                   <div class="flex items-center gap-1.5 min-w-0">
                     <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                    <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-1.5 py-0.5 rounded text-[9.5px] mono font-semibold bg-white/[0.06] border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 active:scale-90 transition shrink-0">ⓘ Техника</button>
+                    <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-2 py-0.5 rounded-full text-[9.5px] mono font-semibold bg-white/[0.07] border border-white/10 hover:bg-white/15 text-zinc-300 hover:text-white active:scale-95 transition shrink-0">ⓘ Техника</button>
                   </div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
-                    <span class="px-1.5 py-0.5 rounded text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
                     <span class="whitespace-nowrap truncate">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong></span>
                   </div>
                 </div>
@@ -6210,26 +6420,7 @@
       if (tab === "push") setTimeout(fitPushTextareas, 30);
     };
 
-    // 8. Свайпы между Рационом и Тренями
-    let touchStartX = 0, touchStartY = 0, ignoreSwipe = false;
-    document.addEventListener("touchstart", e => {
-      if (!e.touches || e.touches.length !== 1) return;
-      const inModal = !!document.querySelector(".sheet-backdrop.open");
-      const inStrip = e.target.closest("#stackAndWeightStrip, #splitProgramPills, input, select, textarea");
-      ignoreSwipe = inModal || !!inStrip;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    document.addEventListener("touchend", e => {
-      if (ignoreSwipe || !e.changedTouches || e.changedTouches.length !== 1) return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.7) {
-        if (dx < 0 && currentMainView === "diet") switchMainView("split");
-        else if (dx > 0 && currentMainView === "split") switchMainView("diet");
-      }
-    }, { passive: true });
+    // 8. Плавные свайпы и шторки инициализируются в formSmoothTransitionsPatch
 
     cleanAndIsolatePrograms();
     renderAll();
@@ -6807,10 +6998,10 @@
             <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${activeProg.id}', '${ex.id}', 0)">
               <div class="flex items-center gap-1.5 min-w-0">
                 <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-1.5 py-0.5 rounded text-[9.5px] mono font-semibold bg-white/[0.06] border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 active:scale-90 transition shrink-0">ⓘ Техника</button>
+                <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-2 py-0.5 rounded-full text-[9.5px] mono font-semibold bg-white/[0.07] border border-white/10 hover:bg-white/15 text-zinc-300 hover:text-white active:scale-95 transition shrink-0">ⓘ Техника</button>
               </div>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
-                <span class="px-1.5 py-0.5 rounded text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
+                <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong>${repsBreakdown}</span>
                 ${progressDot}
               </div>
@@ -7591,5 +7782,261 @@
   })();
   </script>
   
+  <script id="formSmoothTransitionsPatch">
+  (function() {
+    // =========================================================================
+    // 1. ПЛАВНЫЕ ШТОРКИ (SPOTIFY-STYLE PULL-TO-DISMISS ДЛЯ ВСЕХ МОДАЛОК)
+    // =========================================================================
+    function closeModalById(modalId, backdrop) {
+      const map = {
+        setLoggerModal: () => typeof closeSetLoggerModal === "function" && closeSetLoggerModal(),
+        addExerciseModal: () => typeof closeAddExerciseModal === "function" && closeAddExerciseModal(),
+        progressionModal: () => typeof closeProgressionModal === "function" && closeProgressionModal(),
+        stackConfigModal: () => typeof closeStackConfigModal === "function" && closeStackConfigModal(),
+        metabolismModal: () => typeof closeMetabolismModal === "function" && closeMetabolismModal(),
+        historyModal: () => typeof closeHistoryModal === "function" && closeHistoryModal(),
+        scannerModal: () => typeof closeScanner === "function" && closeScanner(),
+        settingsModal: () => typeof closeSettings === "function" && closeSettings(),
+        formulaModal: () => typeof closeFormulaModal === "function" && closeFormulaModal(),
+        editModal: () => typeof closeEditModal === "function" && closeEditModal(),
+        exerciseGuideModal: () => typeof closeExerciseGuideModal === "function" && closeExerciseGuideModal(),
+        dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal()
+      };
+
+      if (map[modalId]) {
+        map[modalId]();
+      } else {
+        const closeBtn = backdrop?.querySelector("button[onclick*='close'], button[onclick*='Close']");
+        if (closeBtn) closeBtn.click();
+        else if (backdrop) backdrop.classList.remove("open");
+      }
+    }
+
+    function initBottomSheetGestures() {
+      document.querySelectorAll(".sheet-backdrop").forEach(backdrop => {
+        const panel = backdrop.querySelector(".sheet-panel");
+        if (!panel || panel._hasGestureAttached) return;
+        panel._hasGestureAttached = true;
+
+        let startY = 0;
+        let startX = 0;
+        let currentY = 0;
+        let startTime = 0;
+        let isDragging = false;
+        let directionChecked = false;
+        let isHeaderTouch = false;
+
+        const handle = panel.querySelector(".w-10.h-1, [class*='h-1'][class*='rounded-full']");
+        if (handle) {
+          handle.style.cursor = "grab";
+        }
+
+        panel.addEventListener("touchstart", (e) => {
+          if (e.touches.length !== 1) return;
+          startY = e.touches[0].clientY;
+          startX = e.touches[0].clientX;
+          currentY = startY;
+          startTime = Date.now();
+          isDragging = false;
+          directionChecked = false;
+
+          const rect = panel.getBoundingClientRect();
+          isHeaderTouch = (startY - rect.top) < 65;
+        }, { passive: true });
+
+        panel.addEventListener("touchmove", (e) => {
+          if (e.touches.length !== 1) return;
+          currentY = e.touches[0].clientY;
+          const currentX = e.touches[0].clientX;
+          const dy = currentY - startY;
+          const dx = currentX - startX;
+
+          if (!directionChecked) {
+            if (Math.abs(dy) > 5 || Math.abs(dx) > 5) {
+              directionChecked = true;
+              if (dy > 0 && Math.abs(dy) > Math.abs(dx) && (panel.scrollTop <= 1 || isHeaderTouch)) {
+                isDragging = true;
+              } else {
+                isDragging = false;
+              }
+            }
+          }
+
+          if (isDragging) {
+            if (dy > 0) {
+              if (e.cancelable) e.preventDefault();
+              panel.style.transition = "none";
+              backdrop.style.transition = "none";
+              panel.style.transform = `translateY(${dy}px)`;
+              const opacity = Math.max(0.12, 1 - (dy / 440));
+              backdrop.style.opacity = opacity;
+            } else if (panel.scrollTop <= 0) {
+              panel.style.transition = "none";
+              panel.style.transform = `translateY(${dy * 0.16}px)`;
+            }
+          }
+        }, { passive: false });
+
+        const finishDrag = () => {
+          if (!isDragging) return;
+          isDragging = false;
+
+          const dy = currentY - startY;
+          const dt = Date.now() - startTime;
+          const vy = dy / (dt || 1);
+
+          if (dy > 115 || (dy > 45 && vy > 0.42)) {
+            panel.style.transition = "transform 0.23s cubic-bezier(0.22, 1, 0.36, 1)";
+            backdrop.style.transition = "opacity 0.23s cubic-bezier(0.22, 1, 0.36, 1)";
+            panel.style.transform = "translateY(100%)";
+            backdrop.style.opacity = "0";
+
+            setTimeout(() => {
+              closeModalById(backdrop.id, backdrop);
+              panel.style.transform = "";
+              backdrop.style.opacity = "";
+              panel.style.transition = "";
+              backdrop.style.transition = "";
+            }, 230);
+          } else {
+            panel.style.transition = "transform 0.24s cubic-bezier(0.22, 1, 0.36, 1)";
+            backdrop.style.transition = "opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1)";
+            panel.style.transform = "translateY(0)";
+            backdrop.style.opacity = "1";
+
+            setTimeout(() => {
+              panel.style.transform = "";
+              backdrop.style.opacity = "";
+              panel.style.transition = "";
+              backdrop.style.transition = "";
+            }, 240);
+          }
+        };
+
+        panel.addEventListener("touchend", finishDrag, { passive: true });
+        panel.addEventListener("touchcancel", finishDrag, { passive: true });
+      });
+    }
+
+    // =========================================================================
+    // 2. ПЛАВНЫЕ СВАЙПЫ МЕЖДУ «РАЦИОН» И «СПЛИТ» (TIKTOK / REELS СТИЛЬ 1:1)
+    // =========================================================================
+    function initHorizontalViewSwipe() {
+      const viewport = document.getElementById("viewsViewport");
+      const track = document.getElementById("viewsTrack");
+      if (!viewport || !track) return;
+
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let startTime = 0;
+      let isSwiping = false;
+      let directionDecided = false;
+      let cancelGesture = false;
+
+      viewport.addEventListener("touchstart", (e) => {
+        if (document.querySelector(".sheet-backdrop.open")) return;
+        if (e.touches.length !== 1) return;
+
+        const target = e.target;
+        if (target.closest("#stackAndWeightStrip, #splitProgramPills, input, textarea, select, .no-swipe")) {
+          cancelGesture = true;
+          return;
+        }
+
+        cancelGesture = false;
+        directionDecided = false;
+        isSwiping = false;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        currentX = startX;
+        startTime = Date.now();
+      }, { passive: true });
+
+      viewport.addEventListener("touchmove", (e) => {
+        if (cancelGesture || e.touches.length !== 1) return;
+        currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        if (!directionDecided) {
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            directionDecided = true;
+            if (Math.abs(dx) > Math.abs(dy) * 1.2) {
+              isSwiping = true;
+            } else {
+              isSwiping = false;
+              cancelGesture = true;
+              return;
+            }
+          } else {
+            return;
+          }
+        }
+
+        if (isSwiping) {
+          if (e.cancelable) e.preventDefault();
+          track.style.transition = "none";
+          const width = viewport.offsetWidth || window.innerWidth;
+          let basePercent = (currentMainView === "split") ? -50 : 0;
+          let deltaPercent = (dx / width) * 50;
+
+          if (currentMainView === "diet" && dx > 0) {
+            deltaPercent = (dx * 0.18 / width) * 50;
+          } else if (currentMainView === "split" && dx < 0) {
+            deltaPercent = (dx * 0.18 / width) * 50;
+          }
+
+          let targetTranslate = basePercent + deltaPercent;
+          targetTranslate = Math.max(-62, Math.min(12, targetTranslate));
+          track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+        }
+      }, { passive: false });
+
+      const endHandler = () => {
+        if (cancelGesture || !isSwiping) return;
+        isSwiping = false;
+        cancelGesture = false;
+
+        const dx = currentX - startX;
+        const dt = Date.now() - startTime;
+        const vx = dx / (dt || 1);
+        const width = viewport.offsetWidth || window.innerWidth;
+        const distanceThreshold = width * 0.18;
+
+        if (currentMainView === "diet") {
+          if (dx < -distanceThreshold || (dx < -25 && vx < -0.30)) {
+            switchMainView("split");
+          } else {
+            switchMainView("diet");
+          }
+        } else {
+          if (dx > distanceThreshold || (dx > 25 && vx > 0.30)) {
+            switchMainView("diet");
+          } else {
+            switchMainView("split");
+          }
+        }
+      };
+
+      viewport.addEventListener("touchend", endHandler, { passive: true });
+      viewport.addEventListener("touchcancel", endHandler, { passive: true });
+    }
+
+    // Инициализация при старте и наблюдение за появлением модалок
+    initBottomSheetGestures();
+    initHorizontalViewSwipe();
+    switchMainView("diet", true);
+
+    try {
+      const modalObserver = new MutationObserver(() => {
+        initBottomSheetGestures();
+      });
+      modalObserver.observe(document.body, { childList: true, subtree: true });
+    } catch (e) {}
+  })();
+  </script>
 </body>
 </html>
+
