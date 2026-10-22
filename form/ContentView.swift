@@ -9,7 +9,12 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound, .list])
+        if notification.request.identifier == "form_rest_timer" {
+            // Когда пользователь находится внутри приложения, интерфейс сам выводит тост и играет зальный сигнал
+            completionHandler([])
+        } else {
+            completionHandler([.banner, .sound, .list])
+        }
     }
 }
 
@@ -85,6 +90,16 @@ struct WebView: UIViewRepresentable {
                 scheduleDailyRandomPushes(mode: mode, time1: time1, time2: time2, messages: messages)
                 return
             }
+            if action == "startRestNotification" {
+                let seconds = dict["seconds"] as? Double ?? 180.0
+                let text = dict["text"] as? String ?? "Отдых окончен! Время подхода."
+                scheduleRestNotification(seconds: seconds, text: text)
+                return
+            }
+            if action == "cancelRestNotification" {
+                cancelRestNotification()
+                return
+            }
             
             guard let d = UserDefaults(suiteName: "group.com.macro.shared") else { return }
             if let apiKey = dict["apiKey"] as? String { d.set(apiKey, forKey: "nativeApiKey") }
@@ -128,6 +143,25 @@ struct WebView: UIViewRepresentable {
                 let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
                 center.add(UNNotificationRequest(identifier: "form_test_\(UUID().uuidString)", content: content, trigger: trigger))
             }
+        }
+        
+        private func scheduleRestNotification(seconds: Double, text: String) {
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: ["form_rest_timer"])
+            guard seconds > 0 else { return }
+            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                guard granted else { return }
+                let content = UNMutableNotificationContent()
+                content.title = "⏱ Отдых окончен!"
+                content.body = text
+                content.sound = .default
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
+                center.add(UNNotificationRequest(identifier: "form_rest_timer", content: content, trigger: trigger))
+            }
+        }
+        
+        private func cancelRestNotification() {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["form_rest_timer"])
         }
         
         private func scheduleDailyRandomPushes(mode: String, time1: String, time2: String, messages: [String]) {
