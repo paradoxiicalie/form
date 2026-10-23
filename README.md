@@ -20,7 +20,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/АРХИТЕКТУРА-LOCAL--FIRST%20(ZERO%20TELEMETRY)-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Архитектура" />
   <img src="https://img.shields.io/badge/AI_CORE-GEMINI%203%20FLASH%20(VISION%20%26%20NLP)-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="AI Core" />
-  <img src="https://img.shields.io/badge/ПЛАТФОРМЫ-iOS%20(WIDGET)%20%7C%20ANDROID%20%7C%20PWA-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Платформы" />
+  <img src="https://img.shields.io/badge/ПЛАТФОРМЫ-iOS%20(WIDGET%20%2B%20DYNAMIC%20ISLAND)%20%7C%20ANDROID%20%7C%20PWA-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Платформы" />
   <img src="https://img.shields.io/badge/ХРАНИЛИЩЕ-LOCALSTORAGE%20%2B%20APP%20GROUPS-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Хранилище" />
   <img src="https://img.shields.io/badge/ЛИЦЕНЗИЯ-MIT-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Лицензия" />
 </p>
@@ -56,11 +56,13 @@
 * **Учёт рабочих подходов:** Фиксация рабочих весов и повторений с автоматическим определением **лучшего рабочего подхода дня** (защита объективных силовых метрик от неизбежного спада повторений к 3–4 подходу из-за локального утомления).
 * **Недельный мышечный объём:** Раздельный учёт рабочего объёма подходов по **5 мышечным группам** (Грудь, Спина, Ноги, Руки, Плечи) с визуальным контролем недельного лимита для предотвращения системной перегрузки ЦНС.
 * **14-дневная аналитика прогрессии:** График прогрессии рабочих весов и повторений с алгоритмической детекцией силового плато.
+* **Умный автотаймер отдыха:** Автоматический запуск обратного отсчета между подходами с адаптивной калибровкой времени (тяжелые компаунд-упражнения vs изоляция), возможностью ручной подстройки (+30с / -30с) и звуковым оповещением.
 
 #### [ СИСТЕМНАЯ ИНТЕГРАЦИЯ С iOS ]
-* **WidgetKit Engine:** Нативный системный виджет для экрана «Домой» (iOS 17+), отображающий текущий остаток калорий, выполнение нормы белка и статус приёма ежедневного стека добавок.
-* **App Groups Sync:** Мгновенный обмен данными между веб-движком и виджетом через изолированный системный контейнер `UserDefaults(suiteName: "group.com.macro.shared")`.
-* **UserNotifications (умные пуши):** Планировщик локальных системных уведомлений на 14 дней вперёд. Интегрирован генератор персонализированных мотивационных фраз через Gemini по произвольному системному промпту пользователя.
+* **ActivityKit & Dynamic Island (Live Activity):** Нативный живой таймер отдыха прямо в «динамическом острове» (Dynamic Island) и на экране блокировки (Always-On Display). Поддерживает 4 режима отображения (Compact Leading/Trailing, Minimal при воспроизведении фоновой музыки из Spotify/Apple Music, Expanded с кнопкой быстрого возврата к упражнению). Работает автономно через системную директиву `Text(style: .timer)` без расхода аккумулятора и фоновых процессов.
+* **WidgetKit Engine & Deep Linking:** Нативный Medium-виджет в эстетике приборной панели концепт-кара (интегральный Hero-блок калорий, макросы КБЖУ, таймлайн расписания недели, шкала объема подходов) с раздельной маршрутизацией тапов (`form://diet` для питания и `form://split` для тренировок).
+* **App Groups Sync:** Мгновенный обмен данными между веб-движком, системным виджетом и фоновыми сервисами через изолированный контейнер `UserDefaults(suiteName: "group.com.macro.shared")`.
+* **UserNotifications (умные пуши):** Планировщик локальных системных уведомлений на 14 дней вперёд. Интегрирован генератор персонализированных мотивационных фраз через Gemini по произвольному системному промпту пользователя, а также пуш-уведомления об окончании отдыха.
 
 #### [ АВТОНОМИЯ И РЕЗЕРВНОЕ КОПИРОВАНИЕ ]
 * **Полный JSON-снапшот:** Экспорт всей локальной базы (история питания, каталог продуктов, силовые показатели, сплиты, стек добавок) в файл формата `.json` в один клик.
@@ -72,14 +74,14 @@
 
 #### [ СРАВНИТЕЛЬНАЯ ТАБЛИЦА МЕТОДОВ ]
 
-| Метод | Требования | Срок действия | Виджет iOS | Локальные пуши |
-| :--- | :--- | :--- | :---: | :---: |
-| **A. Сборка в Xcode (Эталон)** | Mac + Xcode + Apple ID | 7 дней / 1 год | **Да (100%)** | **Да** |
-| **B. Progressive Web App (PWA)** | Safari / Chrome (без ПК) | **Бессрочно** | — | — |
-| **C. Sideloadly / AltServer** | Mac / ПК + USB-кабель | 7 дней (авторефреш) | Частично* | **Да** |
-| **D. SideStore / AltStore** | WireGuard VPN на устройстве | Бессрочно (рефреш по Wi-Fi) | Частично* | **Да** |
+| Метод | Требования | Срок действия | Виджет iOS | Dynamic Island | Локальные пуши |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **A. Сборка в Xcode (Эталон)** | Mac + Xcode + Apple ID | 7 дней / 1 год | **Да (100%)** | **Да (Live Activity)** | **Да** |
+| **B. Progressive Web App (PWA)** | Safari / Chrome (без ПК) | **Бессрочно** | — | — | — |
+| **C. Sideloadly / AltServer** | Mac / ПК + USB-кабель | 7 дней (авторефреш) | Частично* | Частично* | **Да** |
+| **D. SideStore / AltStore** | WireGuard VPN на устройстве | Бессрочно (рефреш по Wi-Fi) | Частично* | Частично* | **Да** |
 
-*\*Примечание: При установке готового IPA через сторонние утилиты на бесплатный Apple ID расширение WidgetKit и общая память App Groups могут не связаться из-за ограничений бесплатных профилей подготовки. Для гарантированной работы виджета рекомендуется Метод A (Xcode).*
+*\*Примечание: При установке готового IPA через сторонние утилиты на бесплатный Apple ID системные расширения WidgetKit / ActivityKit и общая память App Groups могут не связаться из-за ограничений бесплатных профилей подготовки. Для гарантированной работы виджета и Dynamic Island рекомендуется Метод A (Xcode).*
 
 ---
 
@@ -140,8 +142,8 @@
                        Vision API (object_box detection), NLP Entity Extraction
 [ COMPUTER VISION ]    Quagga2 Realtime Barcode Decoding Engine
 [ RUNTIME & UI ]       Vanilla JavaScript (ES6+), HTML5, Tailwind CSS
-[ NATIVE iOS BRIDGE ]  Swift 5.10, SwiftUI, WebKit (WKScriptMessageHandler)
-[ SYSTEM EXTENSIONS ]  WidgetKit, UserNotifications, App Groups (group.com.macro.shared)
+[ NATIVE iOS BRIDGE ]  Swift 5.10, SwiftUI, WebKit (WKScriptMessageHandler), Custom URL Scheme (form://)
+[ SYSTEM EXTENSIONS ]  ActivityKit (Dynamic Island & Live Activities), WidgetKit, UserNotifications, App Groups
 [ METABOLIC ENGINE ]   Adaptive 14-day Rolling TDEE, Dynamic BMR, Plateau Detection
 [ PERSISTENCE ]        W3C LocalStorage + Native UserDefaults Replication + JSON Snapshots
 ```
