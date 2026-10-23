@@ -2447,6 +2447,7 @@
         if (iconAddEx) iconAddEx.classList.add("hidden");
       }
     }
+    window.switchMainView = switchMainView;
 
     function handleTopRightAction() {
       if (currentMainView === "split") {
@@ -4087,10 +4088,13 @@
       // В iOS планируем системный пуш на время окончания (сработает при выключенном экране или если свернуто)
       if (window.webkit?.messageHandlers?.widgetBridge) {
         try {
+          const activeTheme = getActiveThemeObject();
           window.webkit.messageHandlers.widgetBridge.postMessage({
             action: "startRestNotification",
             seconds: seconds,
-            text: restMsg
+            text: restMsg,
+            exerciseName: exName || "Упражнение",
+            themeCalHex: activeTheme.cal || "#D62828"
           });
         } catch (e) {}
       }
@@ -4157,10 +4161,13 @@
       const remaining = Math.max(1, Math.ceil((state.activeRest.endTime - Date.now()) / 1000));
       if (window.webkit?.messageHandlers?.widgetBridge) {
         try {
+          const activeTheme = getActiveThemeObject();
           window.webkit.messageHandlers.widgetBridge.postMessage({
             action: "startRestNotification",
             seconds: remaining,
-            text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle)
+            text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle),
+            exerciseName: state.activeRest.exName || "Отдых",
+            themeCalHex: activeTheme.cal || "#D62828"
           });
         } catch (e) {}
       }
@@ -4178,10 +4185,13 @@
 
       if (window.webkit?.messageHandlers?.widgetBridge) {
         try {
+          const activeTheme = getActiveThemeObject();
           window.webkit.messageHandlers.widgetBridge.postMessage({
             action: "startRestNotification",
             seconds: seconds,
-            text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle)
+            text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle),
+            exerciseName: state.activeRest.exName || "Отдых",
+            themeCalHex: activeTheme.cal || "#D62828"
           });
         } catch (e) {}
       }
@@ -4829,6 +4839,7 @@
           currentWeight: String(getLatestBodyWeight()),
           stackDone: stackDone,
           stackTotal: stackTotal,
+          restTimerEndDate: (state.activeRest && state.activeRest.endTime > Date.now()) ? state.activeRest.endTime : 0,
           apiKey: getEffectiveApiKey(),
           stateJson: JSON.stringify(state)
         };
@@ -5780,7 +5791,12 @@
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) { checkDayRollover(); checkWorkoutWeekRollover(); renderAll(); }
+      if (!document.hidden) {
+        checkDayRollover();
+        checkWorkoutWeekRollover();
+        if (state.activeRest) tickRestTimer();
+        renderAll();
+      }
     });
 
     setInterval(checkDayRollover, 30000);
@@ -7954,7 +7970,7 @@
       }, { passive: true });
 
       viewport.addEventListener("touchmove", (e) => {
-        if (cancelGesture || e.touches.length !== 1) return;
+        if (cancelGesture || e.touches.length !== 1 || document.querySelector(".sheet-backdrop.open")) return;
         currentX = e.touches[0].clientX;
         const currentY = e.touches[0].clientY;
         const dx = currentX - startX;

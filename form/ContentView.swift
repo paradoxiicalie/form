@@ -2,6 +2,23 @@ import SwiftUI
 import WebKit
 import WidgetKit
 import UserNotifications
+#if canImport(ActivityKit)
+import ActivityKit
+#endif
+
+final class WebViewModel {
+    static let shared = WebViewModel()
+    weak var webView: WKWebView?
+    var pendingRoute: String?
+    
+    func navigate(to route: String) {
+        if let wv = webView {
+            wv.evaluateJavaScript("switchMainView('\(route)');", completionHandler: nil)
+        } else {
+            pendingRoute = route
+        }
+    }
+}
 
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationDelegate()
@@ -47,11 +64,14 @@ struct WebView: UIViewRepresentable {
         
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.uiDelegate = context.coordinator
+        webView.navigationDelegate = context.coordinator
         webView.isOpaque = false
         webView.backgroundColor = UIColor(red: 0.03, green: 0.03, blue: 0.04, alpha: 1.0)
         webView.scrollView.backgroundColor = UIColor(red: 0.03, green: 0.03, blue: 0.04, alpha: 1.0)
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.bounces = false
+        
+        WebViewModel.shared.webView = webView
         
         if let filePath = Bundle.main.path(forResource: "index", ofType: "html"),
            let htmlString = try? String(contentsOfFile: filePath, encoding: .utf8) {
@@ -62,7 +82,7 @@ struct WebView: UIViewRepresentable {
     
     func updateUIView(_ uiView: WKWebView, context: Context) {}
     
-    class Coordinator: NSObject, WKUIDelegate, WKScriptMessageHandler {
+    class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
         @available(iOS 15.0, *)
         func webView(_ webView: WKWebView,
                      requestMediaCapturePermissionFor origin: WKSecurityOrigin,
@@ -70,6 +90,15 @@ struct WebView: UIViewRepresentable {
                      type: WKMediaCaptureType,
                      decisionHandler: @escaping (WKPermissionDecision) -> Void) {
             decisionHandler(.grant)
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            if let route = WebViewModel.shared.pendingRoute {
+                WebViewModel.shared.pendingRoute = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    webView.evaluateJavaScript("switchMainView('\(route)');", completionHandler: nil)
+                }
+            }
         }
         
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -93,11 +122,20 @@ struct WebView: UIViewRepresentable {
             if action == "startRestNotification" {
                 let seconds = dict["seconds"] as? Double ?? 180.0
                 let text = dict["text"] as? String ?? "Отдых окончен! Время подхода."
+                let exName = dict["exerciseName"] as? String ?? "Подход"
+                let themeCalHex = dict["themeCalHex"] as? String ?? "#D62828"
                 scheduleRestNotification(seconds: seconds, text: text)
+                RestActivityManager.shared.startActivity(seconds: seconds, exerciseName: exName, themeCalHex: themeCalHex)
                 return
             }
             if action == "cancelRestNotification" {
                 cancelRestNotification()
+                RestActivityManager.shared.stopActivity()
+                if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+                    d.set(0.0, forKey: "restTimerEndDate")
+                    d.synchronize()
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
                 return
             }
             
@@ -127,6 +165,10 @@ struct WebView: UIViewRepresentable {
             d.set(dict["currentWeight"] as? String ?? "70", forKey: "currentWeight")
             d.set(dict["stackDone"] as? Int ?? 0, forKey: "stackDone")
             d.set(dict["stackTotal"] as? Int ?? 4, forKey: "stackTotal")
+            
+            if let restEnd = dict["restTimerEndDate"] as? Double {
+                d.set(restEnd, forKey: "restTimerEndDate")
+            }
             
             d.synchronize()
             WidgetCenter.shared.reloadAllTimelines()
@@ -205,6 +247,13 @@ struct ContentView: View {
             WebView().ignoresSafeArea(.container, edges: .vertical)
         }
         .preferredColorScheme(.dark)
+        .onOpenURL { url in
+            let str = url.absoluteString.lowercased()
+            if str.contains("split") {
+                WebViewModel.shared.navigate(to: "split")
+            } else if str.contains("diet") {
+                WebViewModel.shared.navigate(to: "diet")
+            }
+        }
     }
 }
-
