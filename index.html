@@ -269,6 +269,30 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Анимации плавного свайпа вкладок настроек */
+    .tab-slide-left {
+      animation: tabSlideLeft 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .tab-slide-right {
+      animation: tabSlideRight 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .tab-fade-in {
+      animation: tabFadeIn 0.15s ease-out forwards;
+    }
+
+    @keyframes tabSlideLeft {
+      from { opacity: 0.35; transform: translate3d(14px, 0, 0); }
+      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    @keyframes tabSlideRight {
+      from { opacity: 0.35; transform: translate3d(-14px, 0, 0); }
+      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    @keyframes tabFadeIn {
+      from { opacity: 0.5; transform: translate3d(0, 3px, 0); }
+      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+
     .health-data-btn {
       background: linear-gradient(180deg, rgba(22, 22, 26, 0.78) 0%, rgba(13, 13, 16, 0.88) 100%);
       border: 1px solid var(--card-border);
@@ -810,7 +834,7 @@
         </div>
       </div>
 
-      <button type="button" onclick="saveNewExerciseToSplit()" class="w-full py-3 rounded-2xl accent-btn text-xs">
+      <button type="button" onclick="saveNewExerciseToSplit()" class="w-full py-3 rounded-2xl accent-btn text-xs font-semibold">
         + Добавить в программу
       </button>
     </div>
@@ -870,7 +894,7 @@
             <input id="newSuppC" type="number" value="0" class="dark-field mono text-center text-xs" />
           </div>
         </div>
-        <button type="button" onclick="addNewSupplementToStack()" class="w-full py-2.5 rounded-xl accent-btn text-xs">
+        <button type="button" onclick="addNewSupplementToStack()" class="w-full py-3 rounded-2xl accent-btn text-xs font-semibold">
           + Добавить капсулу в стек
         </button>
       </div>
@@ -1304,7 +1328,7 @@
               <button type="button" onclick="resetCustomThemeDefaults()" class="text-[10px] mono text-zinc-400 underline px-2">Сброс</button>
             </div>
 
-            <button type="button" onclick="saveAndApplyCustomTheme()" class="w-full py-2.5 rounded-xl accent-btn text-xs">
+            <button type="button" onclick="saveAndApplyCustomTheme()" class="w-full py-3 rounded-2xl accent-btn text-xs font-semibold">
               Сохранить и применить свой стиль
             </button>
           </div>
@@ -1422,12 +1446,50 @@
             <button type="button" onclick="triggerTestPush()" class="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs active:scale-95 transition">
               Тест (через 5 сек)
             </button>
-            <button type="button" onclick="savePushSettings(true)" class="py-2.5 px-3 rounded-xl accent-btn text-xs">
+            <button type="button" onclick="savePushSettings(true)" class="py-2.5 px-3 rounded-xl accent-btn text-xs font-semibold">
               Применить пуши
             </button>
           </div>
 
-          <button type="button" onclick="generateAiPushPool()" class="w-full py-2.5 px-3 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-[11px] text-zinc-300 font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
+          <!-- Твой промпт для Gemini и свои фразы для напоминаний питания -->
+          <div id="customPushPromptBlock" class="bg-black/45 border border-white/[0.07] rounded-2xl p-3 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] mono uppercase tracking-wider text-zinc-400 font-semibold">
+                Твой промпт для Gemini (стиль напоминаний):
+              </label>
+              <button type="button" onclick="clearPushPoolToCustomOnly()" class="text-[10px] mono text-zinc-500 underline hover:text-zinc-300">
+                Сброс к базе
+              </button>
+            </div>
+
+            <textarea
+              id="customPushPromptInput"
+              rows="3"
+              placeholder="Опиши стиль: например, жесткий тренер, маты через слово, черный юмор..."
+              oninput="saveCustomPushPrompt(this.value)"
+              class="dark-field mono text-xs leading-relaxed"
+              style="font-size: 12.5px !important; min-height: 68px !important; padding: 9px 11px !important; resize: none;"
+            ></textarea>
+
+            <div class="flex gap-2 pt-0.5">
+              <input
+                id="manualPushPhraseInput"
+                type="text"
+                placeholder="Впиши свою фразу вручную..."
+                class="dark-field text-xs flex-1"
+                style="font-size: 12.5px !important; padding: 9px 11px !important;"
+              />
+              <button
+                type="button"
+                onclick="addManualPushPhrase()"
+                class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white shrink-0 active:scale-95 transition"
+              >
+                + Фраза
+              </button>
+            </div>
+          </div>
+
+          <button type="button" id="btnGenPushAi" onclick="generateAiPushPool()" class="w-full py-2.5 px-3 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.09] text-xs text-zinc-200 font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
             ✦ Сгенерировать фразы через Gemini 3
           </button>
         </div>
@@ -1499,12 +1561,12 @@
             <button type="button" onclick="testRestSignal()" class="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs active:scale-95 transition">
               Тест (звук + пуш)
             </button>
-            <button type="button" onclick="saveRestSettings(true)" class="py-2.5 px-3 rounded-xl accent-btn text-xs">
+            <button type="button" onclick="saveRestSettings(true)" class="py-2.5 px-3 rounded-xl accent-btn text-xs font-semibold">
               Применить настройки
             </button>
           </div>
 
-          <!-- Твой промпт для Gemini и свои фразы для отдыха (в стиле Сергея Духоты без цензуры) -->
+          <!-- Твой промпт для Gemini и свои фразы для отдыха -->
           <div id="customRestPromptBlock" class="bg-black/45 border border-white/[0.07] rounded-2xl p-3 space-y-2.5">
             <div class="flex items-center justify-between">
               <label class="text-[10px] mono uppercase tracking-wider text-zinc-400 font-semibold">
@@ -1518,7 +1580,7 @@
             <textarea
               id="customRestPromptInput"
               rows="3"
-              placeholder="Опиши стиль: например, Сергей Духота, суровый тренер, маты через слово, жестко подорвать жопу с лавки и жать..."
+              placeholder="Опиши стиль: например, Сергей Духота, суровый зальный тренер, маты через слово, жестко подорвать жопу с лавки, никаких оправданий..."
               oninput="saveCustomRestPrompt(this.value)"
               class="dark-field mono text-xs leading-relaxed"
               style="font-size: 12.5px !important; min-height: 68px !important; padding: 9px 11px !important; resize: none;"
@@ -1528,7 +1590,7 @@
               <input
                 id="manualRestPhraseInput"
                 type="text"
-                placeholder="Или впиши свою зальную фразу вручную..."
+                placeholder="Впиши свою фразу вручную..."
                 class="dark-field text-xs flex-1"
                 style="font-size: 12.5px !important; padding: 9px 11px !important;"
               />
@@ -1542,8 +1604,8 @@
             </div>
           </div>
 
-          <button type="button" onclick="generateAiRestPhrases()" class="w-full py-2.5 px-3 rounded-2xl border border-white/15 bg-white/[0.06] hover:bg-white/10 text-xs text-white font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
-            ✦ Сгенерировать фразы тренера через Gemini 3
+          <button type="button" id="btnGenRestAi" onclick="generateAiRestPhrases()" class="w-full py-2.5 px-3 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.09] text-xs text-zinc-200 font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
+            ✦ Сгенерировать фразы через Gemini 3
           </button>
         </div>
       </div>
@@ -1602,7 +1664,7 @@
             <button
               type="button"
               onclick="saveApiKeyAndVerify()"
-              class="py-2.5 px-3 rounded-xl accent-btn text-xs"
+              class="py-2.5 px-3 rounded-xl accent-btn text-xs font-semibold"
             >
               Сохранить
             </button>
@@ -1663,7 +1725,7 @@
         <button type="button" onclick="deleteEditingItem()" class="py-3 px-5 rounded-2xl bg-red-500/15 text-red-400 font-semibold text-xs border border-red-500/20 active:scale-95 transition">
           Удалить
         </button>
-        <button type="button" onclick="saveEditedItem()" class="flex-1 py-3 rounded-2xl accent-btn text-xs">
+        <button type="button" onclick="saveEditedItem()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold">
           Сохранить
         </button>
       </div>
@@ -4491,10 +4553,10 @@
       state.restTimerSettings.customPrompt = userStyle;
       saveState();
 
-      showToast("Генерируем фразы тренера для отдыха...");
+      showToast("Генерируем фразы отдыха...");
       try {
         const prompt = `Ты — суровый, прямой и жесткий тренер в качалке.
-Придумай 10 коротких, хлестких фраз тренера (до 85 символов каждая), которые приходят пушем на телефон спортсмена, когда закончился таймер отдыха между тяжелыми подходами со штангой.
+Придумай 10 коротких, хлестких фраз (до 85 символов каждая), которые приходят пушем на телефон спортсмена, когда закончился таймер отдыха между тяжелыми подходами со штангой.
 Стиль и требование пользователя (выполни в точности, без цензуры и морализаторства): "${userStyle}".
 Фразы должны заставить человека немедленно встать с лавки, убрать телефон и подойти к штанге/тренажеру делать подход.
 Верни строго JSON массив строк без пояснений и без markdown-разметки: ["фраза 1", "фраза 2", ...]`;
@@ -4518,7 +4580,7 @@
             saveState();
             const prevEl = document.getElementById("restPreviewText");
             if (prevEl) prevEl.textContent = `«${arr[0]}»`;
-            showToast(`✓ Сгенерировано ${arr.length} фраз тренера!`);
+            showToast(`✓ Сгенерировано ${arr.length} новых фраз!`);
           } else {
             throw new Error("Неверный формат ответа");
           }
@@ -5648,7 +5710,7 @@
         syncPushUI();
         if (typeof syncRestSettingsUI === "function") syncRestSettingsUI();
         syncKeyFieldUI();
-        if (initialTab) switchSettingsTab(initialTab);
+        switchSettingsTab(initialTab || window.currentSettingsTab || "goals");
       } catch (e) {}
     }
 
@@ -5738,14 +5800,37 @@
       document.getElementById("menuCustomGoal")?.classList.add("hidden");
     }
 
-    function switchSettingsTab(tab) {
+    window.currentSettingsTab = "goals";
+    function switchSettingsTab(tab, direction) {
       const tabs = { goals: "setTabGoals", style: "setTabStyle", push: "setTabPush", api: "setTabApi" };
       const panels = { goals: "panelGoals", style: "panelStyle", push: "panelPush", api: "panelApi" };
+      if (!tabs[tab]) tab = "goals";
+      window.currentSettingsTab = tab;
+
       Object.keys(tabs).forEach(k => {
-        document.getElementById(tabs[k]).className = (k === tab)
-          ? "py-2 text-[11px] font-semibold rounded-xl bg-zinc-800 text-white transition"
-          : "py-2 text-[11px] font-semibold rounded-xl text-zinc-400 transition";
-        document.getElementById(panels[k]).classList.toggle("hidden", k !== tab);
+        const btn = document.getElementById(tabs[k]);
+        if (btn) {
+          btn.className = (k === tab)
+            ? "py-2 text-[11px] font-semibold rounded-xl bg-zinc-800 text-white transition shadow-sm"
+            : "py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition";
+        }
+        const panel = document.getElementById(panels[k]);
+        if (panel) {
+          if (k === tab) {
+            panel.classList.remove("hidden");
+            panel.classList.remove("tab-slide-left", "tab-slide-right", "tab-fade-in");
+            void panel.offsetWidth;
+            if (direction === "next") {
+              panel.classList.add("tab-slide-left");
+            } else if (direction === "prev") {
+              panel.classList.add("tab-slide-right");
+            } else {
+              panel.classList.add("tab-fade-in");
+            }
+          } else {
+            panel.classList.add("hidden");
+          }
+        }
       });
       if (tab === "api") syncKeyFieldUI();
       if (tab === "style") {
@@ -6337,7 +6422,7 @@
               <button type="button" onclick="deleteCurrentWorkoutProgramDay()" class="py-2.5 px-3.5 rounded-xl bg-red-500/15 border border-red-500/25 text-red-400 text-xs font-semibold">
                 Удалить совсем
               </button>
-              <button type="button" onclick="saveCurrentWorkoutProgramDay()" class="flex-1 py-2.5 rounded-xl accent-btn text-xs">
+              <button type="button" onclick="saveCurrentWorkoutProgramDay()" class="flex-1 py-2.5 rounded-xl accent-btn text-xs font-semibold">
                 Сохранить название
               </button>
             </div>
@@ -6350,7 +6435,7 @@
               <input id="newDayShortInput" type="text" maxlength="6" placeholder="Код (Д1)" class="dark-field mono text-xs text-center" />
               <input id="newDayTitleInput" type="text" placeholder="Название (напр. Тяга / Спина)" class="dark-field text-xs col-span-2" />
             </div>
-            <button type="button" onclick="createNewWorkoutProgramDay()" class="w-full py-2.5 rounded-xl accent-btn text-xs">
+            <button type="button" onclick="createNewWorkoutProgramDay()" class="w-full py-2.5 rounded-xl accent-btn text-xs font-semibold">
               + Создать и поставить на выбранный день недели
             </button>
           </div>
@@ -6535,8 +6620,8 @@
     };
 
     const origSwitchSettingsTab = window.switchSettingsTab;
-    window.switchSettingsTab = function(tab) {
-      if (origSwitchSettingsTab) origSwitchSettingsTab(tab);
+    window.switchSettingsTab = function(tab, direction) {
+      if (origSwitchSettingsTab) origSwitchSettingsTab(tab, direction);
       if (tab === "push") setTimeout(fitPushTextareas, 30);
     };
 
@@ -6551,59 +6636,14 @@
   
   <script id="formPushPromptRestore">
   (function() {
-    // 1. Встраиваем блок кастомного промпта и ручного добавления фразы во вкладку «Пуши»
-    const genBtn = document.querySelector('button[onclick="generateAiPushPool()"]');
-    if (genBtn && !document.getElementById("customPushPromptBlock")) {
-      const defaultPrompt = "Знаменитые фразы с таким набором матов, будто бы они вставляются вместо запятых";
-      if (!state.push) state.push = {};
-      if (!state.push.customPrompt) {
-        state.push.customPrompt = state.push.prompt || defaultPrompt;
-      }
-
-      const block = document.createElement("div");
-      block.id = "customPushPromptBlock";
-      block.className = "bg-black/45 border border-white/[0.07] rounded-2xl p-3 space-y-2.5";
-      block.innerHTML = `
-        <div class="flex items-center justify-between">
-          <label class="text-[10px] mono uppercase tracking-wider text-zinc-400 font-semibold">
-            Твой промпт для Gemini (в каком стиле писать пуши):
-          </label>
-          <button type="button" onclick="clearPushPoolToCustomOnly()" class="text-[10px] mono text-zinc-500 underline hover:text-zinc-300">
-            Сбросить старые
-          </button>
-        </div>
-
-        <textarea
-          id="customPushPromptInput"
-          rows="3"
-          placeholder="Опиши стиль: например, жесткий тренер, маты через слово, черный юмор..."
-          oninput="saveCustomPushPrompt(this.value)"
-          class="dark-field mono text-xs leading-relaxed"
-          style="font-size: 12.5px !important; min-height: 68px !important; padding: 9px 11px !important; resize: none;"
-        ></textarea>
-
-        <div class="flex gap-2 pt-0.5">
-          <input
-            id="manualPushPhraseInput"
-            type="text"
-            placeholder="Или впиши свою фразу вручную..."
-            class="dark-field text-xs flex-1"
-            style="font-size: 12.5px !important; padding: 9px 11px !important;"
-          />
-          <button
-            type="button"
-            onclick="addManualPushPhrase()"
-            class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white shrink-0 active:scale-95 transition"
-          >
-            + Фраза
-          </button>
-        </div>
-      `;
-
-      genBtn.parentNode.insertBefore(block, genBtn);
-      const ta = document.getElementById("customPushPromptInput");
-      if (ta) ta.value = state.push.customPrompt;
+    // 1. Инициализируем текст промпта во вкладке «Пуши»
+    const defaultPrompt = "Знаменитые фразы с таким набором матов, будто бы они вставляются вместо запятых";
+    if (!state.push) state.push = {};
+    if (!state.push.customPrompt) {
+      state.push.customPrompt = state.push.prompt || defaultPrompt;
     }
+    const ta = document.getElementById("customPushPromptInput");
+    if (ta) ta.value = state.push.customPrompt;
 
     // Сохранение текста промпта на лету
     window.saveCustomPushPrompt = function(val) {
@@ -6632,13 +6672,16 @@
       showToast("✓ Твоя фраза добавлена в ротацию пушей!");
     };
 
-    // Очистка стандартных пресных фраз, чтобы остались только дерзкие
+    // Очистка стандартных пресных фраз и сброс к базовому стилю
     window.clearPushPoolToCustomOnly = function() {
-      if (!state.push) return;
-      state.push.messages = (state.push.messages || []).slice(0, 5);
-      rollRandomPushPreview();
+      if (!state.push) state.push = {};
+      const defaultPrompt = "Знаменитые фразы с таким набором матов, будто бы они вставляются вместо запятых";
+      state.push.customPrompt = defaultPrompt;
+      const ta = document.getElementById("customPushPromptInput");
+      if (ta) ta.value = defaultPrompt;
       savePushSettings(false);
-      showToast("Стандартные фразы убраны, остались только твои");
+      rollRandomPushPreview();
+      showToast("Сброс к базе выполнен");
     };
 
     // Переопределяем генерацию через Gemini 3 с учетом твоего промпта и снятием цензуры
@@ -6761,8 +6804,8 @@
     };
 
     const prevSwitchTab = window.switchSettingsTab;
-    window.switchSettingsTab = function(tab) {
-      if (prevSwitchTab) prevSwitchTab(tab);
+    window.switchSettingsTab = function(tab, direction) {
+      if (prevSwitchTab) prevSwitchTab(tab, direction);
       if (tab === "push") {
         setTimeout(resizePushPromptBox, 25);
       }
@@ -8144,14 +8187,114 @@
       viewport.addEventListener("touchcancel", endHandler, { passive: true });
     }
 
+    // =========================================================================
+    // 3. ПЛАВНЫЕ СВАЙПЫ МЕЖДУ ВКЛАДКАМИ НАСТРОЕК (ЦЕЛИ <-> СТИЛЬ <-> ПУШИ <-> API)
+    // =========================================================================
+    function initSettingsTabsSwipe() {
+      const modal = document.getElementById("settingsModal");
+      if (!modal) return;
+      const panel = modal.querySelector(".sheet-panel");
+      if (!panel || panel.dataset.swipeTabsAttached === "true") return;
+      panel.dataset.swipeTabsAttached = "true";
+
+      const tabsList = ["goals", "style", "push", "api"];
+      let startX = 0;
+      let startY = 0;
+      let startTime = 0;
+      let isHorizontal = false;
+      let isVertical = false;
+      let cancelSwipe = false;
+
+      panel.addEventListener("touchstart", (e) => {
+        if (!e.touches || e.touches.length !== 1) return;
+        const target = e.target;
+        // Не перехватываем свайп, если палец на текстовых полях, селектах, ползунках или в палитре цветов
+        if (target.closest("input, textarea, select, .color-swatch-wrap, #themeCardsContainer")) {
+          cancelSwipe = true;
+          return;
+        }
+        cancelSwipe = false;
+        isHorizontal = false;
+        isVertical = false;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTime = Date.now();
+      }, { passive: true });
+
+      panel.addEventListener("touchmove", (e) => {
+        if (cancelSwipe || !startX || !e.touches || e.touches.length !== 1) return;
+        if (isVertical) return;
+
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        if (!isHorizontal && !isVertical) {
+          if (Math.abs(dy) > 7 && Math.abs(dy) > Math.abs(dx) * 1.1) {
+            isVertical = true;
+            return;
+          }
+          if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.1) {
+            isHorizontal = true;
+          }
+        }
+      }, { passive: true });
+
+      const finishSwipe = (e) => {
+        if (cancelSwipe || !startX || !isHorizontal) {
+          startX = 0;
+          isHorizontal = false;
+          isVertical = false;
+          return;
+        }
+
+        const touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        if (!touch) {
+          startX = 0;
+          isHorizontal = false;
+          return;
+        }
+
+        const dx = touch.clientX - startX;
+        const dt = Date.now() - startTime;
+        const vx = dx / (dt || 1);
+        startX = 0;
+        isHorizontal = false;
+        isVertical = false;
+
+        const curTab = window.currentSettingsTab || "goals";
+        const currentIdx = tabsList.indexOf(curTab);
+
+        if (dx < -35 || (dx < -18 && vx < -0.25)) {
+          // Свайп влево -> СЛЕДУЮЩАЯ вкладка
+          if (currentIdx >= 0 && currentIdx < tabsList.length - 1) {
+            switchSettingsTab(tabsList[currentIdx + 1], "next");
+            if (typeof triggerGymHaptic === "function") triggerGymHaptic();
+          }
+        } else if (dx > 35 || (dx > 18 && vx > 0.25)) {
+          // Свайп вправо -> ПРЕДЫДУЩАЯ вкладка
+          if (currentIdx > 0) {
+            switchSettingsTab(tabsList[currentIdx - 1], "prev");
+            if (typeof triggerGymHaptic === "function") triggerGymHaptic();
+          }
+        }
+      };
+
+      panel.addEventListener("touchend", finishSwipe, { passive: true });
+      panel.addEventListener("touchcancel", finishSwipe, { passive: true });
+    }
+
     // Инициализация при старте и наблюдение за появлением модалок
     initBottomSheetGestures();
     initHorizontalViewSwipe();
+    initSettingsTabsSwipe();
     switchMainView("diet", true);
 
     try {
       const modalObserver = new MutationObserver(() => {
         initBottomSheetGestures();
+        initSettingsTabsSwipe();
       });
       modalObserver.observe(document.body, { childList: true, subtree: true });
     } catch (e) {}
