@@ -4139,16 +4139,10 @@
       saveState();
       hideRestTimerUI();
 
-      // Отменяем запланированный нативный пуш, т.к. таймер уже сработал
-      if (window.webkit?.messageHandlers?.widgetBridge) {
-        try {
-          window.webkit.messageHandlers.widgetBridge.postMessage({
-            action: "cancelRestNotification"
-          });
-        } catch (e) {}
-      }
-
-      if (state.restTimerSettings?.sound !== false) {
+      // Звуковой сигнал веб-аудио издаем только если таймер завершился прямо сейчас
+      // (а не если пользователь вернулся в приложение спустя время после окончания)
+      const isJustFinished = !active || (Date.now() - active.endTime < 3500);
+      if (state.restTimerSettings?.sound !== false && isJustFinished) {
         playGymRestBeep();
         triggerGymHaptic();
       }

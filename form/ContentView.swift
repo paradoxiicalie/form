@@ -28,12 +28,29 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        if notification.request.identifier == "rest_timer" {
+        if notification.request.identifier == "form_rest_timer" {
             if #available(iOS 16.2, *) {
                 RestActivityManager.shared.stopActivity()
             }
         }
-        completionHandler([.banner, .sound, .list])
+        if #available(iOS 14.0, *) {
+            completionHandler([.banner, .sound, .list])
+        } else {
+            completionHandler([.alert, .sound])
+        }
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        if response.notification.request.identifier == "form_rest_timer" {
+            if #available(iOS 16.2, *) {
+                RestActivityManager.shared.stopActivity()
+            }
+        }
+        completionHandler()
     }
 }
 
@@ -41,7 +58,9 @@ struct WebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
     
     func makeUIView(context: Context) -> WKWebView {
-        UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
+        let center = UNUserNotificationCenter.current()
+        center.delegate = NotificationDelegate.shared
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
@@ -214,6 +233,9 @@ struct WebView: UIViewRepresentable {
                 content.title = "Отдых окончен!"
                 content.body = text
                 content.sound = .default
+                if #available(iOS 15.0, *) {
+                    content.interruptionLevel = .timeSensitive
+                }
                 let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
                 center.add(UNNotificationRequest(identifier: "form_rest_timer", content: content, trigger: trigger))
             }
