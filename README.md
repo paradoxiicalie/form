@@ -76,7 +76,7 @@
 
 | Метод | Требования | Срок действия | Виджет iOS | Dynamic Island | Локальные пуши |
 | :--- | :--- | :--- | :---: | :---: | :---: |
-| **A. Сборка в Xcode (Эталон)** | Mac + Xcode + Apple ID | 7 дней / 1 год | **Да (100%)** | **Да (Live Activity)** | **Да** |
+| **A. Сборка в Xcode + Auto-Resign** | Mac + Xcode + Apple ID | **Бессрочно (Auto-Resign)** | **Да (100%)** | **Да (Live Activity)** | **Да** |
 | **B. Progressive Web App (PWA)** | Safari / Chrome (без ПК) | **Бессрочно** | — | — | — |
 | **C. Sideloadly / AltServer** | Mac / ПК + USB-кабель | 7 дней (авторефреш) | Частично* | Частично* | **Да** |
 | **D. SideStore / AltStore** | WireGuard VPN на устройстве | Бессрочно (рефреш по Wi-Fi) | Частично* | Частично* | **Да** |
@@ -98,6 +98,33 @@
 3. В настройках целей `form` и `FormWidgetExtension` перейдите во вкладку **Signing & Capabilities** и укажите свою команду разработчика (*Team*).
 4. Подключите iPhone кабелем (или по Wi-Fi через *Window → Devices and Simulators → Connect via network*).
 5. Нажмите **Run** (`Cmd + R`) для компиляции и установки на устройство.
+
+##### [ АВТОМАТИЧЕСКОЕ ПРОДЛЕНИЕ 7-ДНЕВНОГО ПРОФИЛЯ ПО WI-FI (AUTO-RESIGN DAEMON) ]
+> Полностью решает проблему 7-дневного отзыва профиля на бесплатном Apple ID: приложение автоматически переподписывается и обновляется по воздуху (через Wi-Fi «планету» CoreDevice), когда iPhone и Mac находятся в одной сети.
+
+В проект встроен автономный фоновый сервис **FORM // KEEP-ALIVE DAEMON**, который раз в 4 дня (с 3-дневным страховочным запасом) проверяет сопряжение iPhone и тихо обновляет/переподписывает приложение в фоне всего за 8 секунд.
+
+* **Активация фонового демона macOS (один раз):**
+  ```bash
+  ./scripts/install_daemon.sh
+  ```
+  *Демон регистрируется в системном `launchd` (`~/Library/LaunchAgents/com.form.autoresign.plist`) и каждые 2 часа незаметно опрашивает сетевой мост `devicectl`. Если прошло ≥ 4 дней и iPhone доступен по Wi-Fi или USB — запускается компиляция с флагом `-allowProvisioningUpdates` и беспроводная установка.*
+
+* **Проверка статуса сертификата и сопряжения:**
+  ```bash
+  ./scripts/autoresign.sh --status
+  ```
+  *Выводит наглядную панель: имя устройства, статус Wi-Fi сопряжения, сколько дней осталось до конца 7-дневного цикла и последние записи журнала.*
+
+* **Принудительное обновление прямо сейчас:**
+  ```bash
+  ./scripts/autoresign.sh --force
+  ```
+
+* **Остановка фонового демона (при необходимости):**
+  ```bash
+  ./scripts/uninstall_daemon.sh
+  ```
 
 ---
 
@@ -143,7 +170,8 @@
 [ COMPUTER VISION ]    Quagga2 Realtime Barcode Decoding Engine
 [ RUNTIME & UI ]       Vanilla JavaScript (ES6+), HTML5, Tailwind CSS
 [ NATIVE iOS BRIDGE ]  Swift 5.10, SwiftUI, WebKit (WKScriptMessageHandler), Custom URL Scheme (form://)
-[ SYSTEM EXTENSIONS ]  ActivityKit (Dynamic Island & Live Activities), WidgetKit, UserNotifications, App Groups
+[ SYSTEM EXTENSIONS ]  ActivityKit (Dynamic Island & Live Activities), AppIntents, WidgetKit, UserNotifications, App Groups
+[ AUTOMATION & CI/CD ] CoreDevice Tunnel (xcrun devicectl), launchd Keep-Alive Daemon, Auto-Provisioning
 [ METABOLIC ENGINE ]   Adaptive 14-day Rolling TDEE, Dynamic BMR, Plateau Detection
 [ PERSISTENCE ]        W3C LocalStorage + Native UserDefaults Replication + JSON Snapshots
 ```
