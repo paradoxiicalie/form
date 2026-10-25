@@ -512,12 +512,18 @@ struct RestTimerLiveActivity: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     HStack(spacing: 8) {
-                        Text(timerInterval: range, countsDown: true)
-                            .monospacedDigit()
-                            .font(.system(size: 20, weight: .black, design: .monospaced))
-                            .foregroundColor(accent)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 64, alignment: .trailing)
+                        if context.isStale {
+                            Text("ГОТОВО")
+                                .font(.system(size: 13, weight: .black, design: .monospaced))
+                                .foregroundColor(accent)
+                        } else {
+                            Text(timerInterval: range, countsDown: true)
+                                .monospacedDigit()
+                                .font(.system(size: 20, weight: .black, design: .monospaced))
+                                .foregroundColor(accent)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 64, alignment: .trailing)
+                        }
 
                         if #available(iOS 17.0, *) {
                             Button(intent: StopRestTimerIntent()) {
@@ -544,17 +550,19 @@ struct RestTimerLiveActivity: Widget {
                                 .foregroundColor(.white)
                                 .lineLimit(1)
                             Spacer(minLength: 8)
-                            Text("СЛЕД. ПОДХОД")
+                            Text(context.isStale ? "В РАБОЧИЙ ПОДХОД" : "СЛЕД. ПОДХОД")
                                 .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                                .foregroundColor(Color(white: 0.5))
+                                .foregroundColor(context.isStale ? accent : Color(white: 0.5))
                         }
 
-                        ProgressView(timerInterval: range, countsDown: true) {
-                            EmptyView()
-                        } currentValueLabel: {
-                            EmptyView()
+                        if !context.isStale {
+                            ProgressView(timerInterval: range, countsDown: true) {
+                                EmptyView()
+                            } currentValueLabel: {
+                                EmptyView()
+                            }
+                            .tint(accent)
                         }
-                        .tint(accent)
                     }
                     .padding(.horizontal, 6)
                     .padding(.top, 4)
@@ -562,7 +570,7 @@ struct RestTimerLiveActivity: Widget {
 
             } compactLeading: {
                 HStack(spacing: 4) {
-                    Image(systemName: "timer")
+                    Image(systemName: context.isStale ? "checkmark" : "timer")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(accent)
                     Text("ОТД")
@@ -572,31 +580,43 @@ struct RestTimerLiveActivity: Widget {
                 .fixedSize()
 
             } compactTrailing: {
-                Text("0:00")
-                    .font(.system(size: 12.5, weight: .bold, design: .monospaced))
-                    .hidden()
-                    .overlay(alignment: .trailing) {
-                        Text(timerInterval: range, countsDown: true)
-                            .monospacedDigit()
-                            .font(.system(size: 12.5, weight: .bold, design: .monospaced))
-                            .foregroundColor(accent)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 46, alignment: .trailing)
-                    }
+                if context.isStale {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(accent)
+                } else {
+                    Text("0:00")
+                        .font(.system(size: 12.5, weight: .bold, design: .monospaced))
+                        .hidden()
+                        .overlay(alignment: .trailing) {
+                            Text(timerInterval: range, countsDown: true)
+                                .monospacedDigit()
+                                .font(.system(size: 12.5, weight: .bold, design: .monospaced))
+                                .foregroundColor(accent)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 46, alignment: .trailing)
+                        }
+                }
 
             } minimal: {
-                Text("0:00")
-                    .font(.system(size: 10.5, weight: .black, design: .monospaced))
-                    .hidden()
-                    .overlay(alignment: .center) {
-                        Text(timerInterval: range, countsDown: true)
-                            .monospacedDigit()
-                            .font(.system(size: 10.5, weight: .black, design: .monospaced))
-                            .foregroundColor(accent)
-                            .multilineTextAlignment(.center)
-                            .minimumScaleFactor(0.7)
-                            .frame(width: 36, alignment: .center)
-                    }
+                if context.isStale {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(accent)
+                } else {
+                    Text("0:00")
+                        .font(.system(size: 10.5, weight: .black, design: .monospaced))
+                        .hidden()
+                        .overlay(alignment: .center) {
+                            Text(timerInterval: range, countsDown: true)
+                                .monospacedDigit()
+                                .font(.system(size: 10.5, weight: .black, design: .monospaced))
+                                .foregroundColor(accent)
+                                .multilineTextAlignment(.center)
+                                .minimumScaleFactor(0.7)
+                                .frame(width: 36, alignment: .center)
+                        }
+                }
             }
             .keylineTint(accent)
             .widgetURL(URL(string: "form://split"))

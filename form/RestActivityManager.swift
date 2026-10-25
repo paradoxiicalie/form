@@ -1,4 +1,5 @@
 import ActivityKit
+import AVFoundation
 import Foundation
 import UIKit
 
@@ -8,9 +9,9 @@ final class RestActivityManager {
 
     private var autoStopTask: Task<Void, Never>?
     private var bgTask: UIBackgroundTaskIdentifier = .invalid
+    private var silentPlayer: AVAudioPlayer?
 
     private init() {
-        // Если приложение развернули или разблокировали экран — сразу убираем просроченные 0:00
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
@@ -33,6 +34,7 @@ final class RestActivityManager {
 
         autoStopTask?.cancel()
         endBackgroundTask()
+        stopSilentAudioKeepAlive()
 
         let duration = max(1.0, seconds)
         let now = Date()
@@ -41,7 +43,8 @@ final class RestActivityManager {
             ? "РАБОЧИЙ ПОДХОД"
             : exerciseName
 
-        // Просим у iOS фоновое время, чтобы таймер сам закрыл остров даже при заблокированном экране
+        // Держим процесс активным в фоне без влияния на Spotify / Apple Music
+        startSilentAudioKeepAlive()
         bgTask = UIApplication.shared.beginBackgroundTask(withName: "FormRestTimerAutoStop") { [weak self] in
             self?.cleanupExpiredActivities()
             self?.endBackgroundTask()
@@ -61,7 +64,6 @@ final class RestActivityManager {
             )
 
             do {
-                // staleDate равен точному концу таймера без лишних +60 секунд
                 let content = ActivityContent(state: state, staleDate: end)
                 _ = try Activity<RestActivityAttributes>.request(
                     attributes: attributes,
@@ -73,13 +75,14 @@ final class RestActivityManager {
             }
         }
 
-        // Автоматически закрываем остров ровно через duration секунд
+        // Ровно на 0:00 закрываем остров и выключаем фоновый держатель
         autoStopTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
             guard !Task.isCancelled else { return }
             for activity in Activity<RestActivityAttributes>.activities {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
+            self?.stopSilentAudioKeepAlive()
             self?.endBackgroundTask()
         }
     }
@@ -87,6 +90,7 @@ final class RestActivityManager {
     func stopActivity() {
         autoStopTask?.cancel()
         autoStopTask = nil
+        stopSilentAudioKeepAlive()
         endBackgroundTask()
 
         Task { @MainActor in
@@ -105,6 +109,54 @@ final class RestActivityManager {
                 }
             }
         }
+    }
+
+    // MARK: - Бесшумный аудио-держатель для точного закрытия на 0:00
+    private func startSilentAudioKeepAlive() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+
+            let wavData = Self.makeSilentWavData()
+            let player = try AVAudioPlayer(data: wavData)
+            player.numberOfLoops = -1
+            player.volume = 0.0
+            player.prepareToPlay()
+            player.play()
+            self.silentPlayer = player
+        } catch {
+            print("Silent keep-alive error: \(error.localizedDescription)")
+        }
+    }
+
+    private func stopSilentAudioKeepAlive() {
+        silentPlayer?.stop()
+        silentPlayer = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    private static func makeSilentWavData() -> Data {
+        let sampleRate: UInt32 = 8000
+        let numSamples: UInt32 = 8000 // 1 секунда тишины
+        let dataSize = numSamples * 2
+        let fileSize = 36 + dataSize
+
+        var data = Data()
+        data.append("RIFF".data(using: .ascii)!)
+        data.append(withUnsafeBytes(of: fileSize.littleEndian) { Data($0) })
+        data.append("WAVEfmt ".data(using: .ascii)!)
+        data.append(withUnsafeBytes(of: UInt32(16).littleEndian) { Data($0) })
+        data.append(withUnsafeBytes(of: UInt16(1).littleEndian) { Data($0) }) // PCM
+        data.append(withUnsafeBytes(of: UInt16(1).littleEndian) { Data($0) }) // Mono
+        data.append(withUnsafeBytes(of: sampleRate.littleEndian) { Data($0) })
+        data.append(withUnsafeBytes(of: (sampleRate * 2).littleEndian) { Data($0) })
+        data.append(withUnsafeBytes(of: UInt16(2).littleEndian) { Data($0) })
+        data.append(withUnsafeBytes(of: UInt16(16).littleEndian) { Data($0) })
+        data.append("data".data(using: .ascii)!)
+        data.append(withUnsafeBytes(of: dataSize.littleEndian) { Data($0) })
+        data.append(Data(count: Int(dataSize)))
+        return data
     }
 
     private func endBackgroundTask() {
