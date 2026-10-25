@@ -22,3 +22,7 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 timeline.xctimeline
+
+# Auto-resign logs and state
+scripts/*.log
+scripts/last_resign.txt
