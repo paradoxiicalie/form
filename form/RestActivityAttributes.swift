@@ -1,31 +1,59 @@
-//
-//  RestActivityAttributes.swift
-//  form
-//
-
-import Foundation
-#if canImport(ActivityKit)
 import ActivityKit
+import AppIntents
+import Foundation
+import UserNotifications
+import WidgetKit
 
-public struct RestActivityAttributes: ActivityAttributes {
+struct RestActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        public var endTime: Date
-        public var totalSeconds: Double
-        public var exerciseName: String
-        public var themeCalHex: String
-        
-        public init(endTime: Date, totalSeconds: Double, exerciseName: String, themeCalHex: String) {
-            self.endTime = endTime
-            self.totalSeconds = totalSeconds
+        var startDate: Date
+        var endDate: Date
+        var exerciseName: String
+        var themeCalHex: String
+
+        init(
+            startDate: Date = Date(),
+            endDate: Date,
+            exerciseName: String,
+            themeCalHex: String = "#D62828"
+        ) {
+            self.startDate = startDate
+            self.endDate = endDate
             self.exerciseName = exerciseName
             self.themeCalHex = themeCalHex
         }
     }
-    
-    public var id: String
-    
-    public init(id: String = UUID().uuidString) {
-        self.id = id
+
+    var workoutTitle: String = "FORM // SYSTEM"
+}
+
+@available(iOS 16.2, *)
+struct StopRestTimerIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Сбросить таймер отдыха"
+
+    func perform() async throws -> some IntentResult {
+        for activity in Activity<RestActivityAttributes>.activities {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: ["rest_timer", "form_rest_timer", "restNotification"]
+        )
+
+        if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+            d.set(0.0, forKey: "restTimerEndDate")
+            d.set(true, forKey: "restTimerStoppedExternally")
+            d.synchronize()
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+
+        await MainActor.run {
+            NotificationCenter.default.post(
+                name: Notification.Name("FormStopRestTimerExternally"),
+                object: nil
+            )
+        }
+
+        return .result()
     }
 }
-#endif

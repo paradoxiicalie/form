@@ -23,15 +23,17 @@ final class WebViewModel {
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationDelegate()
     
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        if notification.request.identifier == "form_rest_timer" {
-            // Когда пользователь находится внутри приложения, интерфейс сам выводит тост и играет зальный сигнал
-            completionHandler([])
-        } else {
-            completionHandler([.banner, .sound, .list])
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        if notification.request.identifier == "rest_timer" {
+            if #available(iOS 16.2, *) {
+                RestActivityManager.shared.stopActivity()
+            }
         }
+        completionHandler([.banner, .sound, .list])
     }
 }
 
@@ -70,6 +72,16 @@ struct WebView: UIViewRepresentable {
         webView.scrollView.backgroundColor = UIColor(red: 0.03, green: 0.03, blue: 0.04, alpha: 1.0)
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.bounces = false
+        
+        NotificationCenter.default.addObserver(forName: Notification.Name("FormStopRestTimerExternally"), object: nil, queue: .main) { _ in
+            webView.evaluateJavaScript("""
+                if (typeof stopRestTimer === 'function') { stopRestTimer(); }
+                if (typeof closeRestTimer === 'function') { closeRestTimer(); }
+                if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
+                var bar = document.getElementById('rest-timer-bar') || document.getElementById('rest-bar');
+                if (bar) { bar.classList.remove('active', 'open', 'visible'); bar.style.display = 'none'; }
+            """, completionHandler: nil)
+        }
         
         WebViewModel.shared.webView = webView
         
@@ -125,7 +137,12 @@ struct WebView: UIViewRepresentable {
                 let exName = dict["exerciseName"] as? String ?? "Подход"
                 let themeCalHex = dict["themeCalHex"] as? String ?? "#D62828"
                 scheduleRestNotification(seconds: seconds, text: text)
-                RestActivityManager.shared.startActivity(seconds: seconds, exerciseName: exName, themeCalHex: themeCalHex)
+                let wv = message.webView
+                RestActivityManager.shared.startActivity(seconds: seconds, exerciseName: exName, themeCalHex: themeCalHex) {
+                    DispatchQueue.main.async {
+                        wv?.evaluateJavaScript("if (typeof showToast === 'function') { showToast('Включите «Эфир активности» для form в Настройках iPhone', true); }", completionHandler: nil)
+                    }
+                }
                 return
             }
             if action == "cancelRestNotification" {
@@ -194,7 +211,7 @@ struct WebView: UIViewRepresentable {
             center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
                 guard granted else { return }
                 let content = UNMutableNotificationContent()
-                content.title = "⏱ Отдых окончен!"
+                content.title = "Отдых окончен!"
                 content.body = text
                 content.sound = .default
                 let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)

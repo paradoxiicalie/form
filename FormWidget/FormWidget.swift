@@ -1,4 +1,5 @@
 import WidgetKit
+import AppIntents
 import SwiftUI
 #if canImport(ActivityKit)
 import ActivityKit
@@ -7,6 +8,20 @@ import ActivityKit
 let APP_GROUP_ID = "group.com.macro.shared"
 
 extension Color {
+    init(hex: String, fallback: Color = Color(red: 0.84, green: 0.16, blue: 0.16)) {
+        var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if cleaned.hasPrefix("#") { cleaned.removeFirst() }
+        guard cleaned.count == 6, let rgb = UInt64(cleaned, radix: 16) else {
+            self = fallback
+            return
+        }
+        self.init(
+            red: Double((rgb & 0xFF0000) >> 16) / 255.0,
+            green: Double((rgb & 0x00FF00) >> 8) / 255.0,
+            blue: Double(rgb & 0x0000FF) / 255.0
+        )
+    }
+
     static func fromHex(_ hex: String, fallback: Color) -> Color {
         var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         if cleaned.hasPrefix("#") { cleaned.removeFirst() }
@@ -372,116 +387,219 @@ struct MacroWidget: Widget {
 // LIVE ACTIVITY & DYNAMIC ISLAND ДЛЯ ТАЙМЕРА ОТДЫХА МЕЖДУ ПОДХОДАМИ
 // =============================================================================
 #if canImport(ActivityKit)
-struct RestTimerActivityWidget: Widget {
+
+@available(iOS 16.2, *)
+struct RestTimerLiveActivity: Widget {
+    private func accentColor(_ hex: String) -> Color {
+        let c = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: c).scanHexInt64(&int)
+        if c.count == 6 {
+            let r = Double((int >> 16) & 0xFF) / 255.0
+            let g = Double((int >> 8) & 0xFF) / 255.0
+            let b = Double(int & 0xFF) / 255.0
+            return Color(red: r, green: g, blue: b)
+        }
+        return Color(red: 0.84, green: 0.16, blue: 0.16)
+    }
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: RestActivityAttributes.self) { context in
-            // 1. Lock Screen / Always-On Display баннер
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Color.fromHex(context.state.themeCalHex, fallback: .red).opacity(0.16))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "timer")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                }
-                
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 4) {
-                        Text("ОТДЫХ")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                        Text("·")
-                            .foregroundColor(.white.opacity(0.4))
+            let accent = accentColor(context.state.themeCalHex)
+            let range = context.state.startDate...context.state.endDate
+
+            VStack(spacing: 10) {
+                HStack(alignment: .center, spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(accent.opacity(0.18))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(accent.opacity(0.45), lineWidth: 1)
+                            )
+                            .frame(width: 38, height: 38)
+
+                        Image(systemName: context.isStale ? "checkmark" : "timer")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(accent)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 5) {
+                            Circle()
+                                .fill(accent)
+                                .frame(width: 5, height: 5)
+                            Text(context.isStale ? "ОТДЫХ ОКОНЧЕН" : "ОТДЫХ // ТАЙМЕР")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(accent)
+                        }
+
                         Text(context.state.exerciseName.uppercased())
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                             .lineLimit(1)
+
+                        Text(context.isStale ? "ВРЕМЯ РАБОЧЕГО ПОДХОДА" : "ДО СЛЕДУЮЩЕГО ПОДХОДА")
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .foregroundColor(Color(white: 0.55))
                     }
-                    Text("ДО СЛЕДУЮЩЕГО ПОДХОДА")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.45))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
+
+                    if !context.isStale {
+                        Text(timerInterval: range, countsDown: true)
+                            .monospacedDigit()
+                            .font(.system(size: 24, weight: .black, design: .monospaced))
+                            .foregroundColor(accent)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 72, alignment: .trailing)
+                    }
+
+                    if #available(iOS 17.0, *) {
+                        Button(intent: StopRestTimerIntent()) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color.white.opacity(0.08))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                                    )
+                                    .frame(width: 32, height: 32)
+
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color(white: 0.85))
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                
-                Spacer()
-                
-                Text(context.state.endTime, style: .timer)
-                    .font(.system(size: 22, weight: .heavy, design: .monospaced))
-                    .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                    .monospacedDigit()
+
+                if !context.isStale {
+                    ProgressView(timerInterval: range, countsDown: true) {
+                        EmptyView()
+                    } currentValueLabel: {
+                        EmptyView()
+                    }
+                    .tint(accent)
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color(red: 0.07, green: 0.07, blue: 0.08))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .activityBackgroundTint(Color(red: 0.05, green: 0.05, blue: 0.06))
+            .activitySystemActionForegroundColor(.white)
             .widgetURL(URL(string: "form://split"))
-            
+
         } dynamicIsland: { context in
-            DynamicIsland {
-                // Развернутый вид при долгом зажатии Dynamic Island
+            let accent = accentColor(context.state.themeCalHex)
+            let range = context.state.startDate...context.state.endDate
+
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         Image(systemName: "timer")
-                            .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                        Text("ОТДЫХ")
-                            .font(.system(size: 12, weight: .heavy, design: .monospaced))
-                            .foregroundColor(.white)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(accent)
+                        Text("FORM // REST")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color(white: 0.8))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
-                    .padding(.leading, 8)
+                    .padding(.leading, 4)
+                    .padding(.top, 2)
                 }
+
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.endTime, style: .timer)
-                        .font(.system(size: 18, weight: .heavy, design: .monospaced))
-                        .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                        .monospacedDigit()
-                        .padding(.trailing, 8)
+                    HStack(spacing: 8) {
+                        Text(timerInterval: range, countsDown: true)
+                            .monospacedDigit()
+                            .font(.system(size: 20, weight: .black, design: .monospaced))
+                            .foregroundColor(accent)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 64, alignment: .trailing)
+
+                        if #available(iOS 17.0, *) {
+                            Button(intent: StopRestTimerIntent()) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.12))
+                                        .frame(width: 26, height: 26)
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 10.5, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.trailing, 2)
                 }
+
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("СЛЕДУЮЩИЙ ПОДХОД:")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.5))
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
                             Text(context.state.exerciseName.uppercased())
-                                .font(.system(size: 13, weight: .heavy, design: .monospaced))
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.white)
                                 .lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text("СЛЕД. ПОДХОД")
+                                .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
+                                .foregroundColor(Color(white: 0.5))
                         }
-                        Spacer()
-                        Link(destination: URL(string: "form://split")!) {
-                            Text("К ТРЕНИРОВКЕ →")
-                                .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                                .foregroundColor(.black)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Capsule().fill(Color.fromHex(context.state.themeCalHex, fallback: .white)))
+
+                        ProgressView(timerInterval: range, countsDown: true) {
+                            EmptyView()
+                        } currentValueLabel: {
+                            EmptyView()
                         }
+                        .tint(accent)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 6)
+                    .padding(.horizontal, 6)
+                    .padding(.top, 4)
                 }
+
             } compactLeading: {
-                // Компактный вид слева внутри острова
-                Image(systemName: "timer")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                    .padding(.leading, 4)
+                HStack(spacing: 4) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(accent)
+                    Text("ОТД")
+                        .font(.system(size: 10.5, weight: .heavy, design: .monospaced))
+                        .foregroundColor(.white)
+                }
+                .fixedSize()
+
             } compactTrailing: {
-                // Компактный вид справа внутри острова: тикающие секунды
-                Text(context.state.endTime, style: .timer)
-                    .font(.system(size: 12, weight: .heavy, design: .monospaced))
-                    .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                    .monospacedDigit()
-                    .frame(minWidth: 38)
-                    .padding(.trailing, 4)
+                Text("0:00")
+                    .font(.system(size: 12.5, weight: .bold, design: .monospaced))
+                    .hidden()
+                    .overlay(alignment: .trailing) {
+                        Text(timerInterval: range, countsDown: true)
+                            .monospacedDigit()
+                            .font(.system(size: 12.5, weight: .bold, design: .monospaced))
+                            .foregroundColor(accent)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 46, alignment: .trailing)
+                    }
+
             } minimal: {
-                // Минимальный вид: отдельный круглый пузырек рядом с Dynamic Island
-                // (когда в основном острове играет музыка Spotify / Apple Music)
-                Text(context.state.endTime, style: .timer)
-                    .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                    .foregroundColor(Color.fromHex(context.state.themeCalHex, fallback: .red))
-                    .monospacedDigit()
+                Text("0:00")
+                    .font(.system(size: 10.5, weight: .black, design: .monospaced))
+                    .hidden()
+                    .overlay(alignment: .center) {
+                        Text(timerInterval: range, countsDown: true)
+                            .monospacedDigit()
+                            .font(.system(size: 10.5, weight: .black, design: .monospaced))
+                            .foregroundColor(accent)
+                            .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.7)
+                            .frame(width: 36, alignment: .center)
+                    }
             }
-            .keylineTint(Color.fromHex(context.state.themeCalHex, fallback: .red))
+            .keylineTint(accent)
+            .widgetURL(URL(string: "form://split"))
         }
     }
 }
@@ -493,7 +611,7 @@ struct FormWidgetBundle: WidgetBundle {
         MacroWidget()
         #if canImport(ActivityKit)
         if #available(iOS 16.2, *) {
-            RestTimerActivityWidget()
+            RestTimerLiveActivity()
         }
         #endif
     }

@@ -623,37 +623,46 @@
       </div>
 
       <!-- Переключатель программ сплита + Назначение на день недели -->
-      <div class="flex items-center justify-between gap-3 mb-2 px-0.5">
-        <div class="min-w-0 flex-1 mr-2">
-          <div class="flex items-center gap-2">
-            <h2 id="activeSplitDayTitle" class="text-[21px] font-bold tracking-tight text-white truncate leading-tight">День 1 · Жим</h2>
+      <div class="mb-2 px-0.5">
+        <div class="flex items-center justify-between gap-2">
+          <!-- Левая сторона: заголовок дня + компактная кнопка таймера (сплоченная группа без пустоты) -->
+          <div class="flex items-center gap-2 min-w-0 flex-1 mr-1">
+            <h2 id="activeSplitDayTitle" class="text-[20px] font-bold tracking-tight text-white truncate leading-tight">День 1 · Жим</h2>
             <button
               type="button"
+              id="quickRestBtn"
               onclick="toggleOrStartRestTimer()"
-              title="Запустить таймер отдыха"
-              class="px-2 py-0.5 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/10 text-[10px] mono text-zinc-300 flex items-center gap-1 shrink-0 active:scale-95 transition"
+              title="Запустить таймер отдыха между подходами"
+              class="group px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[11px] mono text-zinc-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-all shadow-sm"
             >
-              <span>⏱</span>
-              <span id="quickRestBtnLabel">Отдых</span>
+              <span id="quickRestBtnIcon" class="flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="13" r="8"></circle>
+                  <path d="M12 9v4l2 2"></path>
+                  <path d="M10 2h4"></path>
+                </svg>
+              </span>
+              <span id="quickRestBtnLabel" class="font-medium tracking-tight">Таймер</span>
             </button>
           </div>
-          <p id="activeWeekdayAssignLabel" class="text-xs text-zinc-400 mt-0.5 truncate font-medium">Понедельник</p>
+
+          <!-- Правая сторона: компактная плашка смены программы (например «День 2 ▾») -->
+          <div class="relative shrink-0 group">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.05] border border-white/10 group-focus-within:border-white/30 text-xs font-semibold text-zinc-200">
+              <span id="weekdayAssignText" class="truncate max-w-[100px]">День 1</span>
+              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <select
+              id="weekdayAssignSelect"
+              onchange="assignProgramToSelectedWeekday(this.value)"
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+            ></select>
+          </div>
         </div>
 
-        <!-- Адаптивная плашка выбора программы (тянется строго по тексту, без пустоты и обрезаний) -->
-        <div class="relative shrink-0 max-w-[60%] group">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 group-focus-within:border-white/30 text-xs font-semibold text-zinc-200 max-w-full">
-            <span id="weekdayAssignText" class="truncate">День 1 · Жим</span>
-            <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-          <select
-            id="weekdayAssignSelect"
-            onchange="assignProgramToSelectedWeekday(this.value)"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
-          ></select>
-        </div>
+        <p id="activeWeekdayAssignLabel" class="text-xs text-zinc-400 mt-1 font-medium truncate">Понедельник</p>
       </div>
 
       <!-- Быстрые вкладки самих тренировочных программ -->
@@ -2884,7 +2893,7 @@
           if (prog) {
             const title = (prog.title || "").trim();
             const short = (prog.short || "").trim();
-            assignText.textContent = title.startsWith(short) ? title : (short ? `${short} · ${title}` : title);
+            assignText.textContent = (prog.short || prog.title || "Сменить").trim();
           } else {
             assignText.textContent = "Отдых";
           }
@@ -4017,11 +4026,11 @@
 
     function triggerGymRestNotification(msg) {
       if (document.visibilityState === "visible") {
-        showToast(`⏱ ${msg}`);
+        showToast(msg);
       } else {
         try {
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("⏱ Отдых окончен!", {
+            new Notification("Отдых окончен!", {
               body: msg,
               icon: "icon-192.png",
               vibrate: [200, 100, 200]
@@ -4235,7 +4244,16 @@
         labelEl.textContent = `${mLabel} · ${state.activeRest.exName || 'Отдых'}`;
       }
 
+      const quickBtn = document.getElementById("quickRestBtn");
+      const quickIcon = document.getElementById("quickRestBtnIcon");
       const quickLabel = document.getElementById("quickRestBtnLabel");
+      if (quickBtn) {
+        quickBtn.classList.remove("bg-white/[0.06]", "border-white/10", "text-zinc-300");
+        quickBtn.classList.add("bg-emerald-500/15", "border-emerald-500/40", "text-emerald-300", "shadow-[0_0_12px_rgba(16,185,129,0.25)]");
+      }
+      if (quickIcon && !quickIcon.querySelector(".animate-pulse")) {
+        quickIcon.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>`;
+      }
       if (quickLabel) {
         quickLabel.textContent = formatMMSS(remaining);
       }
@@ -4244,8 +4262,17 @@
     function hideRestTimerUI() {
       const bar = document.getElementById("restTimerFloatingBar");
       if (bar) bar.classList.add("hidden");
+      const quickBtn = document.getElementById("quickRestBtn");
+      const quickIcon = document.getElementById("quickRestBtnIcon");
       const quickLabel = document.getElementById("quickRestBtnLabel");
-      if (quickLabel) quickLabel.textContent = "Отдых";
+      if (quickBtn) {
+        quickBtn.classList.remove("bg-emerald-500/15", "border-emerald-500/40", "text-emerald-300", "shadow-[0_0_12px_rgba(16,185,129,0.25)]");
+        quickBtn.classList.add("bg-white/[0.06]", "border-white/10", "text-zinc-300");
+      }
+      if (quickIcon) {
+        quickIcon.innerHTML = `<svg class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M10 2h4"></path></svg>`;
+      }
+      if (quickLabel) quickLabel.textContent = "Таймер";
     }
 
     function toggleOrStartRestTimer() {
@@ -4301,7 +4328,7 @@
       playGymRestBeep();
       triggerGymHaptic();
       const testMsg = getRandomRestMessage("back");
-      showToast(`⏱ Тест сигнала: «${testMsg}»`);
+      showToast(`Тест сигнала: «${testMsg}»`);
 
       if (window.webkit?.messageHandlers?.widgetBridge) {
         try {
@@ -6045,9 +6072,7 @@
 
       let currentDisplay = "Отдых";
       if (activeProg) {
-        const title = (activeProg.title || "").trim();
-        const short = (activeProg.short || "").trim();
-        currentDisplay = title.startsWith(short) ? title : (short ? `${short} · ${title}` : title);
+        currentDisplay = (activeProg.short || activeProg.title || "Сменить").trim();
       }
       if (assignText) {
         assignText.textContent = currentDisplay;
@@ -8055,4 +8080,3 @@
   </script>
 </body>
 </html>
-
