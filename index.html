@@ -470,11 +470,11 @@
         <div class="flex items-baseline justify-between mb-2">
           <div class="flex items-baseline gap-1.5">
             <span id="calEaten" class="text-3xl font-extrabold tracking-tight mono text-white">0</span>
-            <span class="text-xs text-zinc-500 mono">/ <span id="calTarget">2979</span> ккал</span>
+            <span class="text-xs text-zinc-500 mono">/ <span id="calTarget">2000</span> ккал</span>
           </div>
           <button type="button" onclick="openSettings('goals')" class="flex items-center gap-1.5 active:opacity-70">
             <span id="statusDot" class="w-2 h-2 rounded-full" style="background: var(--accent-cal)"></span>
-            <span id="calPercentBadge" class="text-xs font-semibold mono" style="color: var(--accent-cal)">2979 в запасе</span>
+            <span id="calPercentBadge" class="text-xs font-semibold mono" style="color: var(--accent-cal)">2000 в запасе</span>
           </button>
         </div>
 
@@ -486,7 +486,7 @@
           <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl px-2.5 py-2">
             <div class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-0.5">Белки</div>
             <div class="text-xs font-bold mono text-white mb-1.5">
-              <span id="pEaten">0</span> <span class="text-zinc-500 font-normal">/ <span id="pTarget">130</span>г</span>
+              <span id="pEaten">0</span> <span class="text-zinc-500 font-normal">/ <span id="pTarget">140</span>г</span>
             </div>
             <div class="macro-mini-track">
               <div id="pBar" class="h-full rounded-full transition-all duration-300" style="width: 0%; background: var(--accent-p);"></div>
@@ -496,7 +496,7 @@
           <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl px-2.5 py-2">
             <div class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-0.5">Жиры</div>
             <div class="text-xs font-bold mono text-white mb-1.5">
-              <span id="fEaten">0</span> <span class="text-zinc-500 font-normal">/ <span id="fTarget">67</span>г</span>
+              <span id="fEaten">0</span> <span class="text-zinc-500 font-normal">/ <span id="fTarget">65</span>г</span>
             </div>
             <div class="macro-mini-track">
               <div id="fBar" class="h-full rounded-full transition-all duration-300" style="width: 0%; background: var(--accent-f);"></div>
@@ -506,7 +506,7 @@
           <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl px-2.5 py-2">
             <div class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-0.5">Углеводы</div>
             <div class="text-xs font-bold mono text-white mb-1.5">
-              <span id="cEaten">0</span> <span class="text-zinc-500 font-normal">/ <span id="cTarget">464</span>г</span>
+              <span id="cEaten">0</span> <span class="text-zinc-500 font-normal">/ <span id="cTarget">215</span>г</span>
             </div>
             <div class="macro-mini-track">
               <div id="cBar" class="h-full rounded-full transition-all duration-300" style="width: 0%; background: var(--accent-c);"></div>
@@ -895,7 +895,7 @@
       <div class="bg-zinc-900/70 border border-white/[0.07] rounded-2xl p-3.5 mb-3">
         <label class="text-xs text-zinc-400 block mb-2">Утренний вес сегодня (кг)</label>
         <div class="flex gap-2">
-          <input id="morningWeightInput" type="number" step="0.1" placeholder="70.4" class="dark-field mono text-lg font-bold text-center" style="color: var(--accent-cal)" />
+          <input id="morningWeightInput" type="number" step="0.1" placeholder="70.0" class="dark-field mono text-lg font-bold text-center" style="color: var(--accent-cal)" />
           <button type="button" onclick="saveMorningWeight()" class="px-5 rounded-xl accent-btn text-xs shrink-0">
             Записать вес
           </button>
@@ -1070,15 +1070,15 @@
           <div class="grid grid-cols-3 gap-2">
             <div>
               <label class="text-[11px] text-zinc-400 block mb-1">Вес (кг)</label>
-              <input id="calcWeight" type="number" value="70" oninput="recalcGoalsFromBody()" class="dark-field mono text-center font-semibold" />
+              <input id="calcWeight" type="number" placeholder="70" value="" oninput="recalcGoalsFromBody()" class="dark-field mono text-center font-semibold" />
             </div>
             <div>
               <label class="text-[11px] text-zinc-400 block mb-1">Рост (см)</label>
-              <input id="calcHeight" type="number" value="177" oninput="recalcGoalsFromBody()" class="dark-field mono text-center font-semibold" />
+              <input id="calcHeight" type="number" placeholder="175" value="" oninput="recalcGoalsFromBody()" class="dark-field mono text-center font-semibold" />
             </div>
             <div>
               <label class="text-[11px] text-zinc-400 block mb-1">Возраст</label>
-              <input id="calcAge" type="number" value="19" oninput="recalcGoalsFromBody()" class="dark-field mono text-center font-semibold" />
+              <input id="calcAge" type="number" placeholder="20" value="" oninput="recalcGoalsFromBody()" class="dark-field mono text-center font-semibold" />
             </div>
           </div>
 
@@ -1189,21 +1189,21 @@
                 class="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold flex items-center justify-center active:scale-90 transition"
               >?</button>
             </div>
-            <input id="inputTargetCal" type="number" class="dark-field mono text-right font-bold text-lg w-28" style="color: var(--accent-cal)" />
+            <input id="inputTargetCal" type="number" placeholder="2000" class="dark-field mono text-right font-bold text-lg w-28" style="color: var(--accent-cal)" />
           </div>
 
           <div class="grid grid-cols-3 gap-2.5">
             <div>
               <label class="text-[11px] font-semibold block mb-1" style="color: var(--accent-p)">Белки (г)</label>
-              <input id="inputTargetP" type="number" class="dark-field mono text-center font-semibold" />
+              <input id="inputTargetP" type="number" placeholder="140" class="dark-field mono text-center font-semibold" />
             </div>
             <div>
               <label class="text-[11px] font-semibold block mb-1" style="color: var(--accent-f)">Жиры (г)</label>
-              <input id="inputTargetF" type="number" class="dark-field mono text-center font-semibold" />
+              <input id="inputTargetF" type="number" placeholder="65" class="dark-field mono text-center font-semibold" />
             </div>
             <div>
               <label class="text-[11px] font-semibold block mb-1" style="color: var(--accent-c)">Углеводы (г)</label>
-              <input id="inputTargetC" type="number" class="dark-field mono text-center font-semibold" />
+              <input id="inputTargetC" type="number" placeholder="215" class="dark-field mono text-center font-semibold" />
             </div>
           </div>
         </div>
@@ -2373,8 +2373,8 @@
         c: "#C96A4A",
         f: "#7D7482"
       },
-      targets: { cal: 2979, p: 130, f: 67, c: 464 },
-      body: { sex: "male", weight: 70, height: 177, age: 19, activity: 1.55, goalMode: 1.12 },
+      targets: { cal: 2000, p: 140, f: 65, c: 215 },
+      body: { sex: "male", weight: null, height: null, age: null, activity: 1.55, goalMode: 1.12 },
       push: {
         mode: "2x",
         time1: "14:00",
@@ -2393,11 +2393,7 @@
       supplements: DEFAULT_SUPPLEMENTS.slice(),
       supplementsTakenToday: {},
       // Умный вес тела
-      weightLogs: [
-        { date: "2026-10-05", weight: 69.6 },
-        { date: "2026-10-11", weight: 69.8 },
-        { date: "2026-10-16", weight: 70.0 }
-      ],
+      weightLogs: [],
       // Сплит и тренировки
       workout: {
         lastMondayKey: "",
@@ -2479,7 +2475,7 @@
 
       const weightPill = `
         <button type="button" onclick="openMetabolismModal()" class="stack-pill done shrink-0">
-          <span>${latestW} кг</span>
+          <span>${latestW ? latestW + ' кг' : 'Внести вес'}</span>
         </button>
       `;
 
@@ -2614,13 +2610,18 @@
       if (logs.length > 0) {
         return logs[logs.length - 1].weight;
       }
-      return state.body?.weight || 70;
+      return state.body?.weight || null;
     }
 
     function openMetabolismModal() {
       const modal = document.getElementById("metabolismModal");
       if (modal) modal.classList.add("open");
-      document.getElementById("morningWeightInput").value = getLatestBodyWeight();
+      const latestW = getLatestBodyWeight();
+      const input = document.getElementById("morningWeightInput");
+      if (input) {
+        input.value = latestW !== null ? latestW : "";
+        input.placeholder = "70.0";
+      }
       renderMetabolismAnalysis();
     }
 
@@ -2645,7 +2646,8 @@
         state.weightLogs.push({ date: todayKey, weight: w });
       }
       state.weightLogs.sort((a, b) => a.date.localeCompare(b.date));
-      if (state.body) state.body.weight = w;
+      if (!state.body) state.body = {};
+      state.body.weight = w;
 
       saveState();
       renderAll();
@@ -2658,13 +2660,35 @@
       const logsList = document.getElementById("weightLogsList");
       const logs = (state.weightLogs || []).slice().sort((a, b) => a.date.localeCompare(b.date));
 
+      if (logs.length === 0) {
+        if (verdictBox) {
+          verdictBox.innerHTML = `
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-zinc-400">Оценка реального расхода (TDEE):</span>
+              <span class="mono font-bold text-zinc-500">— ккал/день</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-zinc-400">Текущая цель в приложении:</span>
+              <span class="mono font-bold" style="color:var(--accent-cal)">${state.targets?.cal || 2000} ккал</span>
+            </div>
+            <div class="pt-2 border-t border-white/10 text-xs text-zinc-400 text-center py-1">
+              Запиши утренний вес выше, чтобы начать умный расчет метаболизма и TDEE.
+            </div>
+          `;
+        }
+        if (logsList) {
+          logsList.innerHTML = `<div class="py-6 text-center text-zinc-500 text-xs">Нет записей веса.<br><span class="text-zinc-600 text-[11px]">Запиши утренний вес выше, чтобы отслеживать динамику.</span></div>`;
+        }
+        return;
+      }
+
       // Считаем среднюю калорийность по истории
       const allDays = Object.assign({}, state.history || {});
       if (state.todayItems && state.todayItems.length > 0) {
         allDays[getTodayKey()] = state.todayItems;
       }
       const dayKeys = Object.keys(allDays).sort().slice(-14);
-      let avgIntake = state.targets.cal || 2979;
+      let avgIntake = state.targets?.cal || 2000;
       if (dayKeys.length > 0) {
         let sum = 0;
         dayKeys.forEach(k => {
@@ -2687,13 +2711,19 @@
       const isBulking = (state.body?.goalMode || 1.12) > 1.0;
 
       let adviceHtml = "";
-      if (isBulking && deltaW <= 0.1) {
+      if (logs.length === 1) {
+        adviceHtml = `
+          <div class="text-xs text-zinc-300 leading-relaxed">
+            Первый замер записан (<strong class="text-white mono">${logs[0].weight} кг</strong>). Добавляй замеры каждое утро или раз в 2–3 дня, чтобы алгоритм рассчитал точный TDEE.
+          </div>
+        `;
+      } else if (isBulking && deltaW <= 0.1) {
         adviceHtml = `
           <div class="text-xs text-zinc-300 leading-relaxed">
             За последние замеры сдвиг веса <strong class="text-white mono">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</strong>. На наборе вес стоит — твой реальный расход выше расчетного.
           </div>
           <button type="button" onclick="applySmartCalorieAdjustment(150)" class="w-full py-2 mt-1 rounded-xl accent-btn text-xs">
-            Накинуть +150 ккал к дневной цели (${state.targets.cal + 150} ккал)
+            Накинуть +150 ккал к дневной цели (${(state.targets?.cal || 2000) + 150} ккал)
           </button>
         `;
       } else if (isBulking && deltaW > 0.9) {
@@ -2702,13 +2732,13 @@
             Вес вырос на <strong class="text-white mono">+${deltaW} кг</strong>. Чтобы набирать сухо без лишней воды и жира, можно слегка урезать профицит.
           </div>
           <button type="button" onclick="applySmartCalorieAdjustment(-120)" class="w-full py-2 mt-1 rounded-xl bg-white/10 text-white font-semibold text-xs">
-            Снизить цель на -120 ккал (${state.targets.cal - 120} ккал)
+            Снизить цель на -120 ккал (${(state.targets?.cal || 2000) - 120} ккал)
           </button>
         `;
       } else {
         adviceHtml = `
           <div class="text-xs text-zinc-300 leading-relaxed">
-            Динамика веса <strong class="text-white mono">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</strong> — темп идет четко по плану твоего набора!
+            Динамика веса <strong class="text-white mono">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</strong> — темп идет по плану!
           </div>
         `;
       }
@@ -2720,7 +2750,7 @@
         </div>
         <div class="flex items-center justify-between text-xs">
           <span class="text-zinc-400">Текущая цель в приложении:</span>
-          <span class="mono font-bold" style="color:var(--accent-cal)">${state.targets.cal} ккал</span>
+          <span class="mono font-bold" style="color:var(--accent-cal)">${state.targets?.cal || 2000} ккал</span>
         </div>
         <div class="pt-2 border-t border-white/10">${adviceHtml}</div>
       `;
@@ -2734,9 +2764,9 @@
     }
 
     function applySmartCalorieAdjustment(deltaCal) {
-      state.targets.cal = Math.max(1200, (Number(state.targets.cal) || 2979) + deltaCal);
+      state.targets.cal = Math.max(1200, (Number(state.targets.cal) || 2000) + deltaCal);
       // Пересчитываем углеводы под новую калорийность
-      const usedByPF = (Number(state.targets.p) || 130) * 4 + (Number(state.targets.f) || 67) * 9;
+      const usedByPF = (Number(state.targets.p) || 140) * 4 + (Number(state.targets.f) || 65) * 9;
       state.targets.c = Math.max(50, Math.round((state.targets.cal - usedByPF) / 4));
       saveState();
       renderAll();
@@ -4728,8 +4758,8 @@
           state.supplements = DEFAULT_SUPPLEMENTS.slice();
         }
         if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
-        if (!Array.isArray(state.weightLogs) || state.weightLogs.length === 0) {
-          state.weightLogs = [{ date: getTodayKey(), weight: state.body?.weight || 70 }];
+        if (!Array.isArray(state.weightLogs)) {
+          state.weightLogs = [];
         }
         if (!state.workout || !state.workout.programs) {
           state.workout = {
@@ -4892,10 +4922,10 @@
       totalF = Math.round(totalF);
       totalC = Math.round(totalC);
 
-      const tCal = Math.max(500, Number(state.targets.cal) || 2979);
-      const tP = Math.max(10, Number(state.targets.p) || 130);
-      const tF = Math.max(10, Number(state.targets.f) || 67);
-      const tC = Math.max(10, Number(state.targets.c) || 464);
+      const tCal = Math.max(500, Number(state.targets?.cal) || 2000);
+      const tP = Math.max(10, Number(state.targets?.p) || 140);
+      const tF = Math.max(10, Number(state.targets?.f) || 65);
+      const tC = Math.max(10, Number(state.targets?.c) || 215);
 
       document.getElementById("calEaten").textContent = totalCal;
       document.getElementById("calTarget").textContent = tCal;
@@ -5591,20 +5621,27 @@
     function openSettings(initialTab) {
       document.getElementById("settingsModal")?.classList.add("open");
       try {
-        document.getElementById("inputTargetCal").value = state.targets.cal;
-        document.getElementById("inputTargetP").value = state.targets.p;
-        document.getElementById("inputTargetF").value = state.targets.f;
-        document.getElementById("inputTargetC").value = state.targets.c;
-        if (state.body) {
-          document.getElementById("calcWeight").value = state.body.weight || 70;
-          document.getElementById("calcHeight").value = state.body.height || 177;
-          document.getElementById("calcAge").value = state.body.age || 19;
+        const hasCustomTargets = state.targets && state.targets.cal;
+        document.getElementById("inputTargetCal").value = hasCustomTargets ? state.targets.cal : "";
+        document.getElementById("inputTargetP").value = hasCustomTargets ? state.targets.p : "";
+        document.getElementById("inputTargetF").value = hasCustomTargets ? state.targets.f : "";
+        document.getElementById("inputTargetC").value = hasCustomTargets ? state.targets.c : "";
+        if (state.body && (state.body.weight || state.body.height || state.body.age)) {
+          document.getElementById("calcWeight").value = state.body.weight || "";
+          document.getElementById("calcHeight").value = state.body.height || "";
+          document.getElementById("calcAge").value = state.body.age || "";
           document.getElementById("calcActivity").value = String(state.body.activity || 1.55);
           document.getElementById("calcGoalMode").value = String(state.body.goalMode || 1.12);
           syncCustomSelectLabels();
           setSex(state.body.sex || "male", true);
         } else {
+          document.getElementById("calcWeight").value = "";
+          document.getElementById("calcHeight").value = "";
+          document.getElementById("calcAge").value = "";
+          document.getElementById("calcActivity").value = "1.55";
+          document.getElementById("calcGoalMode").value = "1.12";
           syncCustomSelectLabels();
+          setSex("male", true);
         }
         renderThemeSelector();
         syncCustomBuilderFields();
@@ -5741,13 +5778,21 @@
     }
 
     function recalcGoalsFromBody() {
-      const w = Math.max(35, Number(document.getElementById("calcWeight").value) || 70);
-      const h = Math.max(120, Number(document.getElementById("calcHeight").value) || 177);
-      const a = Math.max(14, Number(document.getElementById("calcAge").value) || 19);
+      const rawW = document.getElementById("calcWeight").value;
+      const rawH = document.getElementById("calcHeight").value;
+      const rawA = document.getElementById("calcAge").value;
+
+      if (!rawW && !rawH && !rawA) {
+        return;
+      }
+
+      const w = Math.max(35, Number(rawW) || 70);
+      const h = Math.max(120, Number(rawH) || 175);
+      const a = Math.max(14, Number(rawA) || 20);
       const act = Number(document.getElementById("calcActivity").value) || 1.55;
       const goal = Number(document.getElementById("calcGoalMode").value) || 1.12;
       const sex = state.body?.sex || "male";
-      state.body = { sex, weight: w, height: h, age: a, activity: act, goalMode: goal };
+      state.body = { sex, weight: Number(rawW) ? w : null, height: Number(rawH) ? h : null, age: Number(rawA) ? a : null, activity: act, goalMode: goal };
 
       const bmr = 10 * w + 6.25 * h - 5 * a + (sex === "male" ? 5 : -161);
       const tdee = bmr * act;
@@ -5768,10 +5813,33 @@
     function closeFormulaModal() { document.getElementById("formulaModal")?.classList.remove("open"); }
 
     function saveManualTargets() {
-      state.targets.cal = Math.max(800, Number(document.getElementById("inputTargetCal").value) || 2979);
-      state.targets.p = Math.max(20, Number(document.getElementById("inputTargetP").value) || 130);
-      state.targets.f = Math.max(15, Number(document.getElementById("inputTargetF").value) || 67);
-      state.targets.c = Math.max(20, Number(document.getElementById("inputTargetC").value) || 464);
+      const rawW = Number(document.getElementById("calcWeight").value);
+      const rawH = Number(document.getElementById("calcHeight").value);
+      const rawA = Number(document.getElementById("calcAge").value);
+      const act = Number(document.getElementById("calcActivity").value) || 1.55;
+      const goal = Number(document.getElementById("calcGoalMode").value) || 1.12;
+      const sex = state.body?.sex || "male";
+
+      if (!state.body) state.body = {};
+      state.body = {
+        sex: sex,
+        weight: rawW > 0 ? rawW : (state.body.weight || null),
+        height: rawH > 0 ? rawH : (state.body.height || null),
+        age: rawA > 0 ? rawA : (state.body.age || null),
+        activity: act,
+        goalMode: goal
+      };
+
+      const cVal = Number(document.getElementById("inputTargetCal").value);
+      const pVal = Number(document.getElementById("inputTargetP").value);
+      const fVal = Number(document.getElementById("inputTargetF").value);
+      const carbVal = Number(document.getElementById("inputTargetC").value);
+
+      if (!state.targets) state.targets = {};
+      state.targets.cal = cVal > 0 ? cVal : (state.targets.cal || 2000);
+      state.targets.p = pVal > 0 ? pVal : (state.targets.p || 140);
+      state.targets.f = fVal > 0 ? fVal : (state.targets.f || 65);
+      state.targets.c = carbVal > 0 ? carbVal : (state.targets.c || 215);
       saveState(); renderAll(); closeSettings();
       showToast("Цели КБЖУ сохранены");
     }
@@ -6417,27 +6485,44 @@
       if (logs.length >= 2) {
         deltaW = round1(logs[logs.length - 1].weight - logs[Math.max(0, logs.length - 7)].weight);
       }
-      const badge = daysSinceLastLog === 0
-        ? `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.07] text-zinc-300">✓ Замер сегодня</span>`
-        : (daysSinceLastLog >= 2
-            ? `<span class="text-[10px] mono font-bold px-2 py-0.5 rounded-full accent-btn">Пора взвеситься (${daysSinceLastLog} дн.)</span>`
-            : `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Раз в 2–3 дня</span>`);
+      const badge = logs.length === 0
+        ? `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Первый замер</span>`
+        : (daysSinceLastLog === 0
+            ? `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.07] text-zinc-300">✓ Замер сегодня</span>`
+            : (daysSinceLastLog >= 2
+                ? `<span class="text-[10px] mono font-bold px-2 py-0.5 rounded-full accent-btn">Пора взвеситься (${daysSinceLastLog} дн.)</span>`
+                : `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Раз в 2–3 дня</span>`));
 
       if (banner) {
-        banner.innerHTML = `
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
-            ${badge}
-          </div>
-          <div class="flex items-center justify-between">
-            <div class="text-xs text-zinc-300 mono">
-              Вес: <strong class="text-white text-sm">${latestW} кг</strong>
-              <span class="text-zinc-500 mx-1">·</span>
-              <span>За 14д: <b class="text-white">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</b></span>
+        if (logs.length === 0) {
+          banner.innerHTML = `
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
+              ${badge}
             </div>
-            <span class="text-[11px] font-semibold mono underline" style="color:var(--accent-cal)">Ввести вес →</span>
-          </div>
-        `;
+            <div class="flex items-center justify-between">
+              <div class="text-xs text-zinc-400 mono">
+                Вес еще не внесен
+              </div>
+              <span class="text-[11px] font-semibold mono underline" style="color:var(--accent-cal)">Ввести вес →</span>
+            </div>
+          `;
+        } else {
+          banner.innerHTML = `
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
+              ${badge}
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-xs text-zinc-300 mono">
+                Вес: <strong class="text-white text-sm">${latestW} кг</strong>
+                <span class="text-zinc-500 mx-1">·</span>
+                <span>За 14д: <b class="text-white">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</b></span>
+              </div>
+              <span class="text-[11px] font-semibold mono underline" style="color:var(--accent-cal)">Ввести вес →</span>
+            </div>
+          `;
+        }
       }
       if (strip) {
         const sups = state.supplements || [];

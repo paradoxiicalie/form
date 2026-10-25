@@ -198,7 +198,7 @@ struct WebView: UIViewRepresentable {
             d.set(dict["setsDone"] as? Int ?? 0, forKey: "setsDone")
             d.set(dict["setsTarget"] as? Int ?? 52, forKey: "setsTarget")
             d.set(dict["weekBadges"] as? String ?? "Д1,Д2,ОТД,Д3,ОТД,Д4,ОТД", forKey: "weekBadges")
-            d.set(dict["currentWeight"] as? String ?? "70", forKey: "currentWeight")
+            d.set(dict["currentWeight"] as? String ?? "", forKey: "currentWeight")
             d.set(dict["stackDone"] as? Int ?? 0, forKey: "stackDone")
             d.set(dict["stackTotal"] as? Int ?? 4, forKey: "stackTotal")
             

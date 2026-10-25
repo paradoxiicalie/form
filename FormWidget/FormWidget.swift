@@ -95,7 +95,7 @@ struct Provider: TimelineProvider {
             setsDone: d?.integer(forKey: "setsDone") ?? 0,
             setsTarget: max(10, d?.integer(forKey: "setsTarget") ?? 52),
             weekBadges: badges.count == 7 ? badges : ["Д1","Д2","ОТД","Д3","ОТД","Д4","ОТД"],
-            currentWeight: d?.string(forKey: "currentWeight") ?? "70",
+            currentWeight: d?.string(forKey: "currentWeight") ?? "",
             stackDone: d?.integer(forKey: "stackDone") ?? 0,
             stackTotal: max(1, d?.integer(forKey: "stackTotal") ?? 4),
             restTimerEndDate: d?.double(forKey: "restTimerEndDate") ?? 0.0
@@ -180,11 +180,13 @@ struct MacroWidgetEntryView: View {
                         }
                         Spacer()
                         HStack(spacing: 4) {
-                            Text(verbatim: "\(entry.currentWeight)кг")
-                                .font(.system(size: 8.5, weight: .bold, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.85))
-                            Text("·")
-                                .foregroundColor(.white.opacity(0.25))
+                            if !entry.currentWeight.isEmpty && entry.currentWeight != "0" {
+                                Text(verbatim: "\(entry.currentWeight)кг")
+                                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.white.opacity(0.85))
+                                Text("·")
+                                    .foregroundColor(.white.opacity(0.25))
+                            }
                             if entry.stackDone >= entry.stackTotal && entry.stackTotal > 0 {
                                 HStack(spacing: 2) {
                                     Text("Стек")
