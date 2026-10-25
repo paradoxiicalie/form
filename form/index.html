@@ -269,28 +269,33 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Анимации плавного свайпа вкладок настроек */
-    .tab-slide-left {
-      animation: tabSlideLeft 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    /* Слайдер и карусель вкладок настроек (в стиле TikTok / Reels 1:1) */
+    #settingsViewport {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y pinch-zoom;
+      transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .tab-slide-right {
-      animation: tabSlideRight 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    #settingsTrack {
+      display: flex;
+      width: 400%;
+      align-items: flex-start;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      touch-action: pan-y pinch-zoom;
     }
-    .tab-fade-in {
-      animation: tabFadeIn 0.15s ease-out forwards;
-    }
-
-    @keyframes tabSlideLeft {
-      from { opacity: 0.35; transform: translate3d(14px, 0, 0); }
-      to { opacity: 1; transform: translate3d(0, 0, 0); }
-    }
-    @keyframes tabSlideRight {
-      from { opacity: 0.35; transform: translate3d(-14px, 0, 0); }
-      to { opacity: 1; transform: translate3d(0, 0, 0); }
-    }
-    @keyframes tabFadeIn {
-      from { opacity: 0.5; transform: translate3d(0, 3px, 0); }
-      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    .settings-slide-panel {
+      width: 25%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      padding-left: 2px;
+      padding-right: 2px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     .health-data-btn {
@@ -1078,8 +1083,11 @@
         <button type="button" id="setTabApi" onclick="switchSettingsTab('api')" class="py-2 text-[11px] font-semibold rounded-xl text-zinc-400 transition">API Ключ</button>
       </div>
 
-      <!-- Вкладка 1: Цели КБЖУ -->
-      <div id="panelGoals" class="space-y-3">
+      <div id="settingsViewport">
+        <div id="settingsTrack">
+
+          <!-- Вкладка 1: Цели КБЖУ -->
+          <div id="panelGoals" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Параметры тела (авто-расчет)</span>
@@ -1243,7 +1251,7 @@
       </div>
 
       <!-- Вкладка 2: ЭСТЕТИКА И КОНСТРУКТОР СВОЕГО СТИЛЯ -->
-      <div id="panelStyle" class="hidden space-y-3">
+      <div id="panelStyle" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-white uppercase tracking-wider">Цветовая эстетика</span>
@@ -1391,7 +1399,7 @@
       </div>
 
       <!-- Вкладка 3: ПУШИ -->
-      <div id="panelPush" class="hidden space-y-3">
+      <div id="panelPush" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div>
             <div class="flex items-center justify-between gap-2">
@@ -1611,7 +1619,7 @@
       </div>
 
       <!-- Вкладка 4: API Ключ -->
-      <div id="panelApi" class="hidden space-y-3">
+      <div id="panelApi" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between gap-2">
             <span class="text-xs font-semibold text-white whitespace-nowrap">Ключ Gemini API</span>
@@ -1669,6 +1677,9 @@
               Сохранить
             </button>
           </div>
+        </div>
+      </div>
+
         </div>
       </div>
     </div>
@@ -3628,6 +3639,9 @@
       } else {
         box.classList.add("hidden");
         if (arrow) arrow.textContent = "↓";
+      }
+      if (typeof updateSettingsViewportHeight === "function") {
+        setTimeout(() => updateSettingsViewportHeight("style"), 30);
       }
     }
 
@@ -5710,7 +5724,7 @@
         syncPushUI();
         if (typeof syncRestSettingsUI === "function") syncRestSettingsUI();
         syncKeyFieldUI();
-        switchSettingsTab(initialTab || window.currentSettingsTab || "goals");
+        switchSettingsTab(initialTab || window.currentSettingsTab || "goals", true);
       } catch (e) {}
     }
 
@@ -5800,38 +5814,63 @@
       document.getElementById("menuCustomGoal")?.classList.add("hidden");
     }
 
+    const SETTINGS_TABS = ["goals", "style", "push", "api"];
     window.currentSettingsTab = "goals";
-    function switchSettingsTab(tab, direction) {
-      const tabs = { goals: "setTabGoals", style: "setTabStyle", push: "setTabPush", api: "setTabApi" };
-      const panels = { goals: "panelGoals", style: "panelStyle", push: "panelPush", api: "panelApi" };
-      if (!tabs[tab]) tab = "goals";
-      window.currentSettingsTab = tab;
 
-      Object.keys(tabs).forEach(k => {
-        const btn = document.getElementById(tabs[k]);
+    function updateSettingsViewportHeight(tab) {
+      const panelMap = { goals: "panelGoals", style: "panelStyle", push: "panelPush", api: "panelApi" };
+      const targetId = panelMap[tab] || "panelGoals";
+      const el = document.getElementById(targetId);
+      const vp = document.getElementById("settingsViewport");
+      if (!el || !vp) return;
+      const h = el.scrollHeight || el.offsetHeight;
+      if (h > 50) {
+        vp.style.height = h + "px";
+      } else {
+        setTimeout(() => {
+          const retryH = el.scrollHeight || el.offsetHeight;
+          if (retryH > 50) vp.style.height = retryH + "px";
+        }, 50);
+      }
+    }
+    window.updateSettingsViewportHeight = updateSettingsViewportHeight;
+
+    function switchSettingsTab(tab, immediate = false) {
+      if (!SETTINGS_TABS.includes(tab)) tab = "goals";
+      window.currentSettingsTab = tab;
+      const targetIndex = SETTINGS_TABS.indexOf(tab);
+
+      const tabIds = { goals: "setTabGoals", style: "setTabStyle", push: "setTabPush", api: "setTabApi" };
+      const panelIds = { goals: "panelGoals", style: "panelStyle", push: "panelPush", api: "panelApi" };
+
+      // Обновляем состояние кнопок в шапке и доступность панелей
+      SETTINGS_TABS.forEach(k => {
+        const btn = document.getElementById(tabIds[k]);
         if (btn) {
           btn.className = (k === tab)
             ? "py-2 text-[11px] font-semibold rounded-xl bg-zinc-800 text-white transition shadow-sm"
             : "py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition";
         }
-        const panel = document.getElementById(panels[k]);
-        if (panel) {
-          if (k === tab) {
-            panel.classList.remove("hidden");
-            panel.classList.remove("tab-slide-left", "tab-slide-right", "tab-fade-in");
-            void panel.offsetWidth;
-            if (direction === "next") {
-              panel.classList.add("tab-slide-left");
-            } else if (direction === "prev") {
-              panel.classList.add("tab-slide-right");
-            } else {
-              panel.classList.add("tab-fade-in");
-            }
-          } else {
-            panel.classList.add("hidden");
-          }
+        const panelEl = document.getElementById(panelIds[k]);
+        if (panelEl) {
+          panelEl.style.pointerEvents = (k === tab) ? "auto" : "none";
         }
       });
+
+      // Перемещаем трек карусели 1:1 как в TikTok / viewsTrack на главной
+      const track = document.getElementById("settingsTrack");
+      if (track) {
+        track.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+        track.style.transform = `translate3d(-${targetIndex * 25}%, 0, 0)`;
+      }
+
+      updateSettingsViewportHeight(tab);
+
+      const sheetPanel = document.querySelector("#settingsModal .sheet-panel");
+      if (sheetPanel && sheetPanel.scrollTop > 50 && !immediate) {
+        sheetPanel.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
       if (tab === "api") syncKeyFieldUI();
       if (tab === "style") {
         renderThemeSelector();
@@ -6620,8 +6659,8 @@
     };
 
     const origSwitchSettingsTab = window.switchSettingsTab;
-    window.switchSettingsTab = function(tab, direction) {
-      if (origSwitchSettingsTab) origSwitchSettingsTab(tab, direction);
+    window.switchSettingsTab = function(tab, immediate) {
+      if (origSwitchSettingsTab) origSwitchSettingsTab(tab, immediate);
       if (tab === "push") setTimeout(fitPushTextareas, 30);
     };
 
@@ -6804,8 +6843,8 @@
     };
 
     const prevSwitchTab = window.switchSettingsTab;
-    window.switchSettingsTab = function(tab, direction) {
-      if (prevSwitchTab) prevSwitchTab(tab, direction);
+    window.switchSettingsTab = function(tab, immediate) {
+      if (prevSwitchTab) prevSwitchTab(tab, immediate);
       if (tab === "push") {
         setTimeout(resizePushPromptBox, 25);
       }
@@ -8188,101 +8227,134 @@
     }
 
     // =========================================================================
-    // 3. ПЛАВНЫЕ СВАЙПЫ МЕЖДУ ВКЛАДКАМИ НАСТРОЕК (ЦЕЛИ <-> СТИЛЬ <-> ПУШИ <-> API)
+    // 3. ПЛАВНЫЕ СВАЙПЫ МЕЖДУ ВКЛАДКАМИ НАСТРОЕК (TIKTOK / REELS СТИЛЬ 1:1)
     // =========================================================================
     function initSettingsTabsSwipe() {
       const modal = document.getElementById("settingsModal");
-      if (!modal) return;
+      const viewport = document.getElementById("settingsViewport");
+      const track = document.getElementById("settingsTrack");
+      if (!modal || !viewport || !track) return;
       const panel = modal.querySelector(".sheet-panel");
-      if (!panel || panel.dataset.swipeTabsAttached === "true") return;
-      panel.dataset.swipeTabsAttached = "true";
+      if (!panel || panel.dataset.swipeTrackAttached === "true") return;
+      panel.dataset.swipeTrackAttached = "true";
 
       const tabsList = ["goals", "style", "push", "api"];
+      const panelMap = { goals: "panelGoals", style: "panelStyle", push: "panelPush", api: "panelApi" };
       let startX = 0;
       let startY = 0;
+      let currentX = 0;
       let startTime = 0;
-      let isHorizontal = false;
-      let isVertical = false;
-      let cancelSwipe = false;
+      let isSwiping = false;
+      let directionDecided = false;
+      let cancelGesture = false;
 
       panel.addEventListener("touchstart", (e) => {
-        if (!e.touches || e.touches.length !== 1) return;
+        if (e.touches.length !== 1) return;
         const target = e.target;
-        // Не перехватываем свайп, если палец на текстовых полях, селектах, ползунках или в палитре цветов
-        if (target.closest("input, textarea, select, .color-swatch-wrap, #themeCardsContainer")) {
-          cancelSwipe = true;
+        // Не перехватываем свайп, если палец на интерактивных контролах
+        if (target.closest("input, textarea, select, .color-swatch-wrap, #themeCardsContainer, .no-swipe")) {
+          cancelGesture = true;
           return;
         }
-        cancelSwipe = false;
-        isHorizontal = false;
-        isVertical = false;
+
+        cancelGesture = false;
+        directionDecided = false;
+        isSwiping = false;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
+        currentX = startX;
         startTime = Date.now();
       }, { passive: true });
 
       panel.addEventListener("touchmove", (e) => {
-        if (cancelSwipe || !startX || !e.touches || e.touches.length !== 1) return;
-        if (isVertical) return;
-
-        const currentX = e.touches[0].clientX;
+        if (cancelGesture || e.touches.length !== 1) return;
+        currentX = e.touches[0].clientX;
         const currentY = e.touches[0].clientY;
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        if (!isHorizontal && !isVertical) {
-          if (Math.abs(dy) > 7 && Math.abs(dy) > Math.abs(dx) * 1.1) {
-            isVertical = true;
+        if (!directionDecided) {
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            directionDecided = true;
+            if (Math.abs(dx) > Math.abs(dy) * 1.15) {
+              isSwiping = true;
+            } else {
+              isSwiping = false;
+              cancelGesture = true;
+              return;
+            }
+          } else {
             return;
           }
-          if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.1) {
-            isHorizontal = true;
+        }
+
+        if (isSwiping) {
+          if (e.cancelable) e.preventDefault();
+          track.style.transition = "none";
+          const width = viewport.offsetWidth || window.innerWidth;
+          const currentIdx = Math.max(0, tabsList.indexOf(window.currentSettingsTab || "goals"));
+          const basePercent = -(currentIdx * 25);
+          let deltaPercent = (dx / width) * 25;
+
+          // Пружинящее сопротивление на крайних вкладках
+          if (currentIdx === 0 && dx > 0) {
+            deltaPercent = (dx * 0.18 / width) * 25;
+          } else if (currentIdx === 3 && dx < 0) {
+            deltaPercent = (dx * 0.18 / width) * 25;
+          }
+
+          let targetTranslate = basePercent + deltaPercent;
+          targetTranslate = Math.max(-82, Math.min(8, targetTranslate));
+          track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+
+          // Динамически подстраиваем высоту вьюпорта под соседнюю входящую вкладку во время жеста
+          const nextIdx = dx < 0 ? Math.min(3, currentIdx + 1) : Math.max(0, currentIdx - 1);
+          const curEl = document.getElementById(panelMap[tabsList[currentIdx]]);
+          const nextEl = document.getElementById(panelMap[tabsList[nextIdx]]);
+          if (curEl && nextEl) {
+            const h = Math.max(curEl.scrollHeight || curEl.offsetHeight, nextEl.scrollHeight || nextEl.offsetHeight);
+            if (h > 50) viewport.style.height = h + "px";
           }
         }
-      }, { passive: true });
+      }, { passive: false });
 
-      const finishSwipe = (e) => {
-        if (cancelSwipe || !startX || !isHorizontal) {
-          startX = 0;
-          isHorizontal = false;
-          isVertical = false;
+      const endHandler = () => {
+        if (cancelGesture || !isSwiping) {
+          isSwiping = false;
+          cancelGesture = false;
           return;
         }
+        isSwiping = false;
+        cancelGesture = false;
 
-        const touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
-        if (!touch) {
-          startX = 0;
-          isHorizontal = false;
-          return;
-        }
-
-        const dx = touch.clientX - startX;
+        const dx = currentX - startX;
         const dt = Date.now() - startTime;
         const vx = dx / (dt || 1);
-        startX = 0;
-        isHorizontal = false;
-        isVertical = false;
+        const width = viewport.offsetWidth || window.innerWidth;
+        const distanceThreshold = width * 0.18;
+        const currentIdx = Math.max(0, tabsList.indexOf(window.currentSettingsTab || "goals"));
 
-        const curTab = window.currentSettingsTab || "goals";
-        const currentIdx = tabsList.indexOf(curTab);
-
-        if (dx < -35 || (dx < -18 && vx < -0.25)) {
-          // Свайп влево -> СЛЕДУЮЩАЯ вкладка
-          if (currentIdx >= 0 && currentIdx < tabsList.length - 1) {
-            switchSettingsTab(tabsList[currentIdx + 1], "next");
-            if (typeof triggerGymHaptic === "function") triggerGymHaptic();
+        let targetIdx = currentIdx;
+        if (dx < -distanceThreshold || (dx < -25 && vx < -0.28)) {
+          // Свайп влево -> следующая
+          if (currentIdx < tabsList.length - 1) {
+            targetIdx = currentIdx + 1;
           }
-        } else if (dx > 35 || (dx > 18 && vx > 0.25)) {
-          // Свайп вправо -> ПРЕДЫДУЩАЯ вкладка
+        } else if (dx > distanceThreshold || (dx > 25 && vx > 0.28)) {
+          // Свайп вправо -> предыдущая
           if (currentIdx > 0) {
-            switchSettingsTab(tabsList[currentIdx - 1], "prev");
-            if (typeof triggerGymHaptic === "function") triggerGymHaptic();
+            targetIdx = currentIdx - 1;
           }
+        }
+
+        switchSettingsTab(tabsList[targetIdx]);
+        if (targetIdx !== currentIdx && typeof triggerGymHaptic === "function") {
+          triggerGymHaptic();
         }
       };
 
-      panel.addEventListener("touchend", finishSwipe, { passive: true });
-      panel.addEventListener("touchcancel", finishSwipe, { passive: true });
+      panel.addEventListener("touchend", endHandler, { passive: true });
+      panel.addEventListener("touchcancel", endHandler, { passive: true });
     }
 
     // Инициализация при старте и наблюдение за появлением модалок
