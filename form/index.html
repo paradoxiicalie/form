@@ -1622,7 +1622,7 @@
       <div id="panelApi" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-semibold text-white whitespace-nowrap">Ключ Gemini API</span>
+            <span class="text-xs font-semibold text-white whitespace-nowrap">Ключи Gemini API</span>
             <div class="flex items-center gap-1.5 shrink-0">
               <span id="activeModelBadge" class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
                 <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span>
@@ -1635,28 +1635,58 @@
             </div>
           </div>
 
-          <div class="relative">
-            <input
-              id="inputApiKey"
-              type="password"
-              placeholder="Вставьте ключ (AQ... или AIza...)"
-              class="dark-field mono text-xs pr-10"
-              oninput="handleApiKeyInput()"
-            />
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] text-zinc-400">
+              <span>Основной ключ (Key #1)</span>
+              <span class="mono text-[10px] text-zinc-500">Primary</span>
+            </div>
+            <div class="relative">
+              <input
+                id="inputApiKey"
+                type="password"
+                placeholder="Вставьте основной ключ (AIza...)"
+                class="dark-field mono text-xs pr-10"
+                oninput="handleApiKeyInput()"
+              />
+              <button
+                type="button"
+                onclick="toggleApiKeyVisibility()"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1"
+                title="Показать / скрыть"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Резервные ключи (пул авто-ротации) -->
+          <div class="space-y-2 pt-1 border-t border-white/[0.06]">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-white">Резервные ключи</span>
+                <span id="backupKeysCountBadge" class="text-[10px] mono px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-300">0</span>
+              </div>
+              <span class="text-[10px] mono text-zinc-400">Каскад × Ротация</span>
+            </div>
+            
+            <div id="backupKeysList" class="space-y-2">
+              <!-- Динамический список резервных ключей -->
+            </div>
+
             <button
               type="button"
-              onclick="toggleApiKeyVisibility()"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1"
-              title="Показать / скрыть"
+              onclick="addBackupKeyRow()"
+              class="w-full py-2 px-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 bg-white/[0.02] hover:bg-white/[0.05] text-zinc-300 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              <span>+ Добавить резервный ключ</span>
             </button>
           </div>
 
           <div id="apiKeyCheckStatusBox" class="rounded-xl p-3 bg-black/50 border border-white/[0.06] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
               <span id="apiKeyCheckDot" class="w-2.5 h-2.5 rounded-full bg-zinc-500 shrink-0"></span>
-              <span id="apiKeyCheckText" class="text-xs text-zinc-300 truncate">Нажмите «Проверить ключ»</span>
+              <span id="apiKeyCheckText" class="text-xs text-zinc-300 truncate">Нажмите «Проверить пул»</span>
             </div>
             <span id="apiKeyLatency" class="text-[10px] mono text-zinc-500 shrink-0"></span>
           </div>
@@ -1667,7 +1697,7 @@
               onclick="checkApiKeyLive(false)"
               class="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs active:scale-95 transition"
             >
-              Проверить ключ
+              Проверить пул
             </button>
             <button
               type="button"
@@ -1676,6 +1706,17 @@
             >
               Сохранить
             </button>
+          </div>
+
+          <div class="text-[10.5px] text-zinc-400 space-y-1 pt-1 border-t border-white/[0.06] leading-relaxed">
+            <div class="flex items-start gap-1.5">
+              <span class="text-zinc-500 mono">ℹ</span>
+              <span>При ошибке 429 движок бесшовно перебирает ключи и переходит с Gemini 3 на Gemini 2.5 Flash.</span>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="text-amber-400/90 mono">!</span>
+              <span class="text-zinc-400">В РФ обязателен включенный VPN (иначе Google выдает «location not supported»).</span>
+            </div>
           </div>
         </div>
       </div>
@@ -2434,6 +2475,7 @@
     let state = {
       themeId: "monolith",
       deletedThemeIds: [],
+      backupApiKeys: [],
       customTheme: {
         id: "custom",
         title: "CUSTOM // ТВОЙ КОНЦЕПТ",
@@ -3774,7 +3816,43 @@
       return (DEFAULT_API_KEY || "").trim();
     }
 
+    const GEMINI_MODELS_CASCADE = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+    let lastActiveGeminiModel = GEMINI_MODELS_CASCADE[0];
+    let lastActiveKeyIndex = 1;
     let apiKeyVerifiedStatus = null; // null: не проверялся, true: в сети, false: ошибка
+
+    function getAllApiKeys() {
+      const list = [];
+      const primary = getEffectiveApiKey();
+      if (primary && primary.length > 8) {
+        list.push(primary);
+      }
+      if (Array.isArray(state.backupApiKeys)) {
+        state.backupApiKeys.forEach(k => {
+          const trimmed = (k || "").trim();
+          if (trimmed.length > 8 && !list.includes(trimmed)) {
+            list.push(trimmed);
+          }
+        });
+      }
+      return list;
+    }
+
+    function updateActiveModelBadge(modelName, keyNumber, isLive = true) {
+      const modelBadge = document.getElementById("activeModelBadge");
+      if (!modelBadge) return;
+      const shortModel = (modelName || "").includes("3")
+        ? "Gemini 3"
+        : ((modelName || "").includes("lite") ? "G2.5 Lite" : "Gemini 2.5");
+      const keyLabel = keyNumber ? ` · K#${keyNumber}` : "";
+      const dotColor = isLive ? "bg-emerald-400" : "bg-zinc-500";
+      const badgeClass = isLive 
+        ? "text-[10px] mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 flex items-center gap-1 shrink-0 whitespace-nowrap"
+        : "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
+
+      modelBadge.className = badgeClass;
+      modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block ${dotColor}"></span><span>${shortModel}${keyLabel}</span>`;
+    }
 
     function syncKeyFieldUI() {
       const input = document.getElementById("inputApiKey");
@@ -3792,7 +3870,9 @@
         input.value = activeKey;
       }
 
-      if (!activeKey) {
+      const allKeys = getAllApiKeys();
+
+      if (allKeys.length === 0) {
         apiKeyVerifiedStatus = false;
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Не задан</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
@@ -3803,13 +3883,12 @@
         return;
       }
 
+      const totalPoolText = allKeys.length > 1 ? `Пул: ${allKeys.length}` : "Сохранён";
+
       if (apiKeyVerifiedStatus === true) {
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-emerald-400"></span><span>В сети</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
-        if (modelBadge) {
-          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-emerald-400"></span><span>Gemini 3 Flash</span>`;
-          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
-        }
+        updateActiveModelBadge(lastActiveGeminiModel, lastActiveKeyIndex, true);
       } else if (apiKeyVerifiedStatus === false) {
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Ошибка</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
@@ -3818,13 +3897,117 @@
           modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center gap-1 shrink-0 whitespace-nowrap";
         }
       } else {
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-400"></span><span>Сохранён</span>`;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-400"></span><span>${totalPoolText}</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/15 text-zinc-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
         if (modelBadge) {
           modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>Gemini 3 Flash</span>`;
           modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
         }
       }
+    }
+
+    function renderBackupKeysUI() {
+      const container = document.getElementById("backupKeysList");
+      const countBadge = document.getElementById("backupKeysCountBadge");
+      if (!Array.isArray(state.backupApiKeys)) state.backupApiKeys = [];
+
+      if (countBadge) {
+        countBadge.textContent = state.backupApiKeys.length;
+      }
+      if (!container) return;
+
+      if (state.backupApiKeys.length === 0) {
+        container.innerHTML = `
+          <div class="text-[11px] text-zinc-500 py-1.5 px-2 italic text-center rounded-xl bg-black/20 border border-white/[0.04]">
+            Нет резервных ключей. Добавьте запасные ключи из других проектов Google AI Studio для бесперебойной работы.
+          </div>
+        `;
+        if (window.currentSettingsTab === "api" && typeof updateSettingsViewportHeight === "function") {
+          updateSettingsViewportHeight("api");
+        }
+        return;
+      }
+
+      container.innerHTML = state.backupApiKeys.map((keyVal, idx) => {
+        const keyNum = idx + 2;
+        return `
+          <div class="space-y-1 bg-black/40 border border-white/[0.05] rounded-xl p-2.5">
+            <div class="flex items-center justify-between text-[11px] text-zinc-400">
+              <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-white/40"></span>
+                <span class="font-medium text-zinc-300">Резервный ключ #${keyNum}</span>
+              </div>
+              <button
+                type="button"
+                onclick="removeBackupKeyRow(${idx})"
+                class="text-[11px] text-zinc-500 hover:text-red-400 transition px-1"
+                title="Удалить ключ"
+              >
+                ✕ Удалить
+              </button>
+            </div>
+            <div class="relative">
+              <input
+                id="inputBackupKey_${idx}"
+                type="password"
+                placeholder="Вставьте резервный ключ (AIza...)"
+                value="${(keyVal || '').replace(/"/g, '&quot;')}"
+                class="dark-field mono text-xs pr-10"
+                oninput="handleBackupKeyInput(${idx}, this.value)"
+              />
+              <button
+                type="button"
+                onclick="toggleBackupKeyVisibility(${idx})"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1"
+                title="Показать / скрыть"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (window.currentSettingsTab === "api" && typeof updateSettingsViewportHeight === "function") {
+        updateSettingsViewportHeight("api");
+      }
+    }
+
+    function addBackupKeyRow() {
+      if (!Array.isArray(state.backupApiKeys)) state.backupApiKeys = [];
+      state.backupApiKeys.push("");
+      saveState();
+      renderBackupKeysUI();
+      const newIdx = state.backupApiKeys.length - 1;
+      const input = document.getElementById(`inputBackupKey_${newIdx}`);
+      if (input) input.focus();
+      if (window.currentSettingsTab === "api" && typeof updateSettingsViewportHeight === "function") {
+        updateSettingsViewportHeight("api");
+      }
+    }
+
+    function removeBackupKeyRow(idx) {
+      if (!Array.isArray(state.backupApiKeys)) return;
+      state.backupApiKeys.splice(idx, 1);
+      saveState();
+      renderBackupKeysUI();
+      syncKeyFieldUI();
+      if (window.currentSettingsTab === "api" && typeof updateSettingsViewportHeight === "function") {
+        updateSettingsViewportHeight("api");
+      }
+    }
+
+    function handleBackupKeyInput(idx, value) {
+      if (!Array.isArray(state.backupApiKeys)) state.backupApiKeys = [];
+      state.backupApiKeys[idx] = (value || "").trim();
+      saveState();
+      syncKeyFieldUI();
+    }
+
+    function toggleBackupKeyVisibility(idx) {
+      const input = document.getElementById(`inputBackupKey_${idx}`);
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
     }
 
     function toggleApiKeyVisibility() {
@@ -3850,52 +4033,107 @@
     async function saveApiKeyAndVerify() {
       const input = document.getElementById("inputApiKey");
       const val = input ? input.value.trim() : "";
-      if (!val || val.length < 10) {
-        showToast("Вставьте корректный ключ Gemini API", true);
+      const allKeys = getAllApiKeys();
+      if (!val && allKeys.length === 0) {
+        showToast("Вставьте хотя бы один ключ Gemini API", true);
         return;
       }
 
-      window.__NATIVE_API_KEY__ = val;
-      try { localStorage.setItem(KEY_STORAGE, val); } catch (e) {}
+      if (val) {
+        window.__NATIVE_API_KEY__ = val;
+        try { localStorage.setItem(KEY_STORAGE, val); } catch (e) {}
+      }
+      saveState();
+
       apiKeyVerifiedStatus = null;
       syncKeyFieldUI();
       syncNativeWidget();
 
-      showToast("Ключ сохранен в память iPhone! Проверяем Gemini 3...");
+      showToast("Ключи сохранены! Проверяем каскад...");
       await checkApiKeyLive(true);
     }
 
-    async function callGemini3Flash(payload) {
-      const key = getEffectiveApiKey();
-      if (!key) throw new Error("Ключ не задан в настройках");
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        apiKeyVerifiedStatus = false;
-        syncKeyFieldUI();
-        const msg = data?.error?.message || `HTTP ${res.status}`;
-        throw new Error(msg);
+    async function callGeminiWithFallback(payload) {
+      const keys = getAllApiKeys();
+      if (keys.length === 0) {
+        throw new Error("Ключ не задан в настройках");
       }
-      apiKeyVerifiedStatus = true;
+
+      let lastError = null;
+      let hasLocationError = false;
+
+      for (let m = 0; m < GEMINI_MODELS_CASCADE.length; m++) {
+        const model = GEMINI_MODELS_CASCADE[m];
+
+        for (let k = 0; k < keys.length; k++) {
+          const apiKey = keys[k];
+          const keyNumber = k + 1;
+
+          try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+              const errMsg = data?.error?.message || `HTTP ${res.status}`;
+              
+              // Проверка на геоблокировку (Россия / отсутствие VPN)
+              if (/location is not supported|unsupported location/i.test(errMsg)) {
+                hasLocationError = true;
+                throw new Error("Включи VPN! Запрос пошел с российского IP (location not supported)");
+              }
+
+              // Если лимит (429), недействительный ключ или перегрузка модели — пробуем следующий ключ/модель
+              lastError = new Error(`[${model} · K#${keyNumber}] ${errMsg}`);
+              continue;
+            }
+
+            // Успешный запрос
+            lastActiveGeminiModel = model;
+            lastActiveKeyIndex = keyNumber;
+            apiKeyVerifiedStatus = true;
+            updateActiveModelBadge(model, keyNumber, true);
+            syncKeyFieldUI();
+            return data;
+
+          } catch (err) {
+            if (hasLocationError || /location is not supported|Включи VPN/i.test(err.message)) {
+              apiKeyVerifiedStatus = false;
+              syncKeyFieldUI();
+              throw err;
+            }
+            lastError = err;
+          }
+        }
+      }
+
+      apiKeyVerifiedStatus = false;
       syncKeyFieldUI();
-      return data;
+
+      if (lastError && /quota|RESOURCE_EXHAUSTED|429/i.test(lastError.message)) {
+        throw new Error("Лимиты всех ключей и моделей (Gemini 3 / 2.5) исчерпаны. Добавьте резервный ключ из другого аккаунта.");
+      }
+      throw lastError || new Error("Ошибка всех ключей Gemini API");
+    }
+
+    async function callGemini3Flash(payload) {
+      return await callGeminiWithFallback(payload);
     }
 
     async function checkApiKeyLive(isFromSave) {
-      const key = getEffectiveApiKey();
+      const keys = getAllApiKeys();
       const dot = document.getElementById("apiKeyCheckDot");
       const txt = document.getElementById("apiKeyCheckText");
       const lat = document.getElementById("apiKeyLatency");
       const modelBadge = document.getElementById("activeModelBadge");
       const keyBadge = document.getElementById("keySourceBadge");
 
-      if (!key) {
+      if (keys.length === 0) {
         apiKeyVerifiedStatus = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
         if (txt) txt.textContent = "Ключ пустой — вставьте ключ выше";
@@ -3906,21 +4144,17 @@
       }
 
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0";
-      if (txt) txt.textContent = "Пингуем Gemini 3 Flash...";
+      if (txt) txt.textContent = `Пингуем пул ключей (${keys.length} шт.)...`;
       if (lat) lat.textContent = "";
 
       if (keyBadge) {
         keyBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-amber-400 animate-pulse"></span><span>Тест...</span>`;
         keyBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
       }
-      if (modelBadge) {
-        modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-amber-400 animate-pulse"></span><span>Gemini 3 Flash</span>`;
-        modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
-      }
 
       const t0 = performance.now();
       try {
-        await callGemini3Flash({
+        await callGeminiWithFallback({
           contents: [{ parts: [{ text: "ping" }] }],
           generationConfig: { maxOutputTokens: 4 }
         });
@@ -3928,14 +4162,15 @@
 
         apiKeyVerifiedStatus = true;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0";
-        if (txt) txt.textContent = `✓ Ключ активен! (${GEMINI_MODEL})`;
+        const shortModel = lastActiveGeminiModel.includes("3") ? "Gemini 3" : (lastActiveGeminiModel.includes("lite") ? "G2.5 Lite" : "Gemini 2.5");
+        if (txt) txt.textContent = `✓ Активен: ${shortModel} (Ключ #${lastActiveKeyIndex})`;
         if (lat) lat.textContent = `${ms} мс`;
 
         syncKeyFieldUI();
 
         showToast(isFromSave
-          ? `✓ Ключ сохранен и работает! (${ms} мс)`
-          : `✓ Ключ работает (${GEMINI_MODEL}, ${ms} мс)`
+          ? `✓ Ключи сохранены и работают! (${ms} мс)`
+          : `✓ Пул активен (${shortModel} · K#${lastActiveKeyIndex}, ${ms} мс)`
         );
         return true;
       } catch (err) {
@@ -3948,7 +4183,7 @@
 
         syncKeyFieldUI();
 
-        showToast(`Ошибка API: ${errMsg.slice(0, 55)}`, true);
+        showToast(errMsg.includes("VPN") ? errMsg : `Ошибка API: ${errMsg.slice(0, 55)}`, true);
         return false;
       }
     }
@@ -4824,6 +5059,14 @@
         if (!Array.isArray(state.deletedThemeIds)) state.deletedThemeIds = [];
         if (!Array.isArray(state.todayItems)) state.todayItems = [];
         if (!Array.isArray(state.customHistory)) state.customHistory = [];
+        if (!Array.isArray(state.backupApiKeys)) state.backupApiKeys = [];
+        try {
+          const rawBackups = localStorage.getItem("macro_gemini_backup_keys");
+          if (rawBackups && state.backupApiKeys.length === 0) {
+            const parsed = JSON.parse(rawBackups);
+            if (Array.isArray(parsed)) state.backupApiKeys = parsed;
+          }
+        } catch (e) {}
         if (!state.customExerciseGuides || typeof state.customExerciseGuides !== "object") {
           state.customExerciseGuides = {};
         }
@@ -4905,6 +5148,9 @@
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (Array.isArray(state.backupApiKeys)) {
+          localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(state.backupApiKeys));
+        }
       } catch (e) {}
       syncNativeWidget();
     }
@@ -5723,6 +5969,7 @@
         syncCustomBuilderFields();
         syncPushUI();
         if (typeof syncRestSettingsUI === "function") syncRestSettingsUI();
+        renderBackupKeysUI();
         syncKeyFieldUI();
         switchSettingsTab(initialTab || window.currentSettingsTab || "goals", true);
       } catch (e) {}
@@ -5871,7 +6118,11 @@
         sheetPanel.scrollTo({ top: 0, behavior: "smooth" });
       }
 
-      if (tab === "api") syncKeyFieldUI();
+      if (tab === "api") {
+        renderBackupKeysUI();
+        syncKeyFieldUI();
+        updateSettingsViewportHeight("api");
+      }
       if (tab === "style") {
         renderThemeSelector();
         syncCustomBuilderFields();
@@ -6016,6 +6267,7 @@
 
     loadState();
     renderAll();
+    renderBackupKeysUI();
     syncKeyFieldUI();
   </script>
   
@@ -7828,7 +8080,13 @@
     }
 
     window.exportFullDatabaseBackup = async function() {
-      const jsonStr = JSON.stringify({ version: 14, exportedAt: new Date().toISOString(), apiKey: getEffectiveApiKey(), state });
+      const jsonStr = JSON.stringify({
+        version: 15,
+        exportedAt: new Date().toISOString(),
+        apiKey: getEffectiveApiKey(),
+        backupApiKeys: Array.isArray(state.backupApiKeys) ? state.backupApiKeys : [],
+        state
+      });
       const wrap = document.getElementById("backupImportWrap"), area = document.getElementById("backupJsonArea");
       if (wrap && area) { wrap.classList.remove("hidden"); area.value = jsonStr; }
       try {
@@ -7851,12 +8109,21 @@
           window.__NATIVE_API_KEY__ = parsed.apiKey;
           try { localStorage.setItem(KEY_STORAGE, parsed.apiKey); } catch (e) {}
         }
+        if (Array.isArray(parsed.backupApiKeys)) {
+          state.backupApiKeys = parsed.backupApiKeys.slice();
+          try { localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(state.backupApiKeys)); } catch (e) {}
+        }
         const newState = parsed.state || parsed;
         if (newState && newState.targets) {
           state = Object.assign({}, state, newState);
+          if (Array.isArray(newState.backupApiKeys)) {
+            state.backupApiKeys = newState.backupApiKeys.slice();
+          }
           applyTheme(state.themeId || "monolith", true);
           saveState(); renderAll();
           if (currentMainView === "split") renderWorkoutAll();
+          if (typeof renderBackupKeysUI === "function") renderBackupKeysUI();
+          syncKeyFieldUI();
           document.getElementById("backupImportWrap")?.classList.add("hidden");
           showToast("База успешно восстановлена");
         }
