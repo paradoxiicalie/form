@@ -1687,12 +1687,12 @@
           <div class="space-y-1.5 pt-1 border-t border-white/[0.06]">
             <div class="flex items-center justify-between text-[11px] text-zinc-400">
               <span>Шлюз / Зеркало API</span>
-              <span class="mono text-[10px] text-zinc-500">Обход VPN (Опционально)</span>
+              <span class="mono text-[10px] text-zinc-500">Обход VPN</span>
             </div>
             <input
               id="inputApiProxy"
               type="text"
-              placeholder="По умолчанию: прямой доступ к Google"
+              placeholder="По умолчанию: Google API"
               class="dark-field mono text-xs"
               oninput="handleApiProxyInput(this.value)"
             />
@@ -4212,7 +4212,7 @@
               // Проверка на геоблокировку (Россия / отсутствие VPN)
               if (/location is not supported|unsupported location/i.test(errMsg)) {
                 hasLocationError = true;
-                throw new Error("Включите VPN или укажите зеркало/прокси в настройках (location not supported)");
+                throw new Error("Включите VPN (location not supported)");
               }
 
               // Если лимит (429), недействительный ключ или перегрузка модели — пробуем следующий ключ/модель с микропаузой
