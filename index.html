@@ -206,6 +206,12 @@
       transition: border-color 0.15s, border-radius 0.22s ease;
     }
     .dark-field:focus { border-color: var(--accent-cal); }
+    .dark-field::placeholder {
+      color: #52525b;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      font-weight: 400;
+      opacity: 0.85;
+    }
 
     .organic-card {
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
@@ -1622,7 +1628,7 @@
       <div id="panelApi" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-semibold text-white whitespace-nowrap">Ключи Gemini API</span>
+            <span class="text-xs font-semibold text-white uppercase tracking-wide">Ключи Gemini API</span>
             <div class="flex items-center gap-1.5 shrink-0">
               <span id="activeModelBadge" class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
                 <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span>
@@ -1634,11 +1640,12 @@
               </span>
             </div>
           </div>
+          <div class="text-[11px] text-zinc-400 -mt-1 leading-snug">Каскадная ротация моделей и защита от лимитов</div>
 
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-[11px] text-zinc-400">
-              <span>Основной ключ (Key #1)</span>
-              <span class="mono text-[10px] text-zinc-500">Primary</span>
+              <span class="font-medium text-zinc-300">Основной ключ</span>
+              <span class="mono text-[10px] text-zinc-500">Key #1 · Primary</span>
             </div>
             <div class="relative">
               <input
@@ -1661,12 +1668,12 @@
 
           <!-- Резервные ключи (пул авто-ротации) -->
           <div class="space-y-2 pt-1 border-t border-white/[0.06]">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between text-[11px] text-zinc-400">
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-white">Резервные ключи</span>
+                <span class="font-medium text-zinc-300">Резервные ключи</span>
                 <span id="backupKeysCountBadge" class="text-[10px] mono px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-300">0</span>
               </div>
-              <span class="text-[10px] mono text-zinc-400">Каскад × Ротация</span>
+              <span class="text-[10px] mono text-zinc-500">Каскад × Ротация</span>
             </div>
             
             <div id="backupKeysList" class="space-y-2">
@@ -1686,14 +1693,14 @@
           <!-- Зеркало / Прокси (Опциональный обход VPN) -->
           <div class="space-y-1.5 pt-1 border-t border-white/[0.06]">
             <div class="flex items-center justify-between text-[11px] text-zinc-400">
-              <span>Шлюз / Зеркало API</span>
-              <span class="mono text-[10px] text-zinc-500">Обход VPN</span>
+              <span class="font-medium text-zinc-300">Шлюз / Зеркало API</span>
+              <span class="text-[10px] mono text-zinc-500">Обход VPN</span>
             </div>
             <input
               id="inputApiProxy"
               type="text"
               placeholder="По умолчанию: Google API"
-              class="dark-field mono text-xs"
+              class="dark-field text-xs text-zinc-200"
               oninput="handleApiProxyInput(this.value)"
             />
           </div>
@@ -1701,7 +1708,7 @@
           <div id="apiKeyCheckStatusBox" class="rounded-xl p-3 bg-black/50 border border-white/[0.06] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
               <span id="apiKeyCheckDot" class="w-2.5 h-2.5 rounded-full bg-zinc-500 shrink-0"></span>
-              <span id="apiKeyCheckText" class="text-xs text-zinc-300 truncate mono">Нажмите «Проверить пул»</span>
+              <span id="apiKeyCheckText" class="text-xs text-zinc-300 truncate font-medium">Нажмите «Проверить пул»</span>
             </div>
             <span id="apiKeyLatency" class="text-[10px] mono text-zinc-500 shrink-0"></span>
           </div>
@@ -1723,13 +1730,13 @@
             </button>
           </div>
 
-          <div class="text-[10.5px] text-zinc-400 space-y-2 pt-1 border-t border-white/[0.06] leading-relaxed">
+          <div class="text-[11px] text-zinc-400 space-y-2 pt-2 border-t border-white/[0.06] leading-normal">
             <div class="flex items-start gap-2">
-              <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300 shrink-0 font-semibold uppercase">SYS</span>
+              <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-zinc-400 shrink-0 font-medium uppercase">SYS</span>
               <span class="text-zinc-400">При лимите (429) движок перебирает все ключи и переключает модели: Gemini 3 Flash → 2.5 Flash → 2.5 Lite → 2.0 Flash → 1.5 Flash.</span>
             </div>
             <div class="flex items-start gap-2">
-              <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300 shrink-0 font-semibold uppercase">NET</span>
+              <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-zinc-400 shrink-0 font-medium uppercase">NET</span>
               <span class="text-zinc-400">Для прямого подключения к Google API требуется VPN (ограничение региона) либо указание зеркала/прокси.</span>
             </div>
           </div>
@@ -3948,7 +3955,7 @@
 
       if (state.backupApiKeys.length === 0) {
         container.innerHTML = `
-          <div class="text-[11px] text-zinc-500 py-1.5 px-2 text-center rounded-xl bg-black/20 border border-white/[0.04] mono">
+          <div class="text-[11px] text-zinc-500 py-1.5 px-2 text-center rounded-xl bg-black/20 border border-white/[0.04]">
             Резервные ключи не добавлены. Добавьте 1–2 запасных ключа для защиты от исчерпания квот.
           </div>
         `;
@@ -3970,7 +3977,7 @@
               <button
                 type="button"
                 onclick="removeBackupKeyRow(${idx})"
-                class="text-[11px] mono text-zinc-500 hover:text-red-400 transition px-1"
+                class="text-[11px] text-zinc-500 hover:text-red-400 transition px-1 font-medium"
                 title="Удалить ключ"
               >
                 Удалить
@@ -8241,18 +8248,19 @@
     const apiPanel = document.getElementById("panelApi");
     if (apiPanel && !document.getElementById("backupManagerCard")) {
       apiPanel.insertAdjacentHTML("beforeend", `
-        <div id="backupManagerCard" class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-4 space-y-3">
+        <div id="backupManagerCard" class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-white uppercase tracking-wider mono">Резервная копия базы (Backup)</span>
-            <span class="text-[10px] mono text-zinc-400">JSON</span>
+            <span class="text-xs font-semibold text-white uppercase tracking-wide">Резервная копия базы</span>
+            <span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400">JSON</span>
           </div>
+          <div class="text-[11px] text-zinc-400 -mt-1 leading-snug">Экспорт и восстановление рациона, весов и настроек</div>
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="exportFullDatabaseBackup()" class="py-2.5 px-3 rounded-xl accent-btn text-xs">Экспорт в буфер</button>
-            <button type="button" onclick="toggleBackupImportArea()" class="py-2.5 px-3 rounded-xl bg-white/10 text-white font-semibold text-xs">Импорт базы</button>
+            <button type="button" onclick="exportFullDatabaseBackup()" class="py-2.5 px-3 rounded-xl accent-btn text-xs font-semibold">Экспорт в буфер</button>
+            <button type="button" onclick="toggleBackupImportArea()" class="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs active:scale-95 transition">Импорт базы</button>
           </div>
           <div id="backupImportWrap" class="hidden space-y-2 pt-1">
-            <textarea id="backupJsonArea" placeholder="Вставь JSON-код резервной копии..." class="dark-field mono text-xs"></textarea>
-            <button type="button" onclick="importFullDatabaseFromText()" class="w-full py-2.5 rounded-xl bg-white text-black font-bold text-xs">Восстановить данные</button>
+            <textarea id="backupJsonArea" placeholder="Вставьте JSON-код резервной копии..." class="dark-field mono text-xs" rows="3"></textarea>
+            <button type="button" onclick="importFullDatabaseFromText()" class="w-full py-2.5 rounded-xl bg-white text-black font-bold text-xs active:scale-95 transition">Восстановить данные</button>
           </div>
         </div>
       `);
