@@ -1679,14 +1679,29 @@
               class="w-full py-2 px-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 bg-white/[0.02] hover:bg-white/[0.05] text-zinc-300 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-              <span>+ Добавить резервный ключ</span>
+              <span>Добавить резервный ключ</span>
             </button>
+          </div>
+
+          <!-- Зеркало / Прокси (Опциональный обход VPN) -->
+          <div class="space-y-1.5 pt-1 border-t border-white/[0.06]">
+            <div class="flex items-center justify-between text-[11px] text-zinc-400">
+              <span>Шлюз / Зеркало API</span>
+              <span class="mono text-[10px] text-zinc-500">Обход VPN (Опционально)</span>
+            </div>
+            <input
+              id="inputApiProxy"
+              type="text"
+              placeholder="По умолчанию: прямой доступ к Google"
+              class="dark-field mono text-xs"
+              oninput="handleApiProxyInput(this.value)"
+            />
           </div>
 
           <div id="apiKeyCheckStatusBox" class="rounded-xl p-3 bg-black/50 border border-white/[0.06] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
               <span id="apiKeyCheckDot" class="w-2.5 h-2.5 rounded-full bg-zinc-500 shrink-0"></span>
-              <span id="apiKeyCheckText" class="text-xs text-zinc-300 truncate">Нажмите «Проверить пул»</span>
+              <span id="apiKeyCheckText" class="text-xs text-zinc-300 truncate mono">Нажмите «Проверить пул»</span>
             </div>
             <span id="apiKeyLatency" class="text-[10px] mono text-zinc-500 shrink-0"></span>
           </div>
@@ -1708,14 +1723,14 @@
             </button>
           </div>
 
-          <div class="text-[10.5px] text-zinc-400 space-y-1 pt-1 border-t border-white/[0.06] leading-relaxed">
-            <div class="flex items-start gap-1.5">
-              <span class="text-zinc-500 mono">ℹ</span>
-              <span>При ошибке 429 движок бесшовно перебирает ключи и переходит с Gemini 3 на Gemini 2.5 Flash.</span>
+          <div class="text-[10.5px] text-zinc-400 space-y-2 pt-1 border-t border-white/[0.06] leading-relaxed">
+            <div class="flex items-start gap-2">
+              <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300 shrink-0 font-semibold uppercase">SYS</span>
+              <span class="text-zinc-400">При лимите (429) движок перебирает все ключи и переключает модели: Gemini 3 Flash → 2.5 Flash → 2.5 Lite → 2.0 Flash → 1.5 Flash.</span>
             </div>
-            <div class="flex items-start gap-1.5">
-              <span class="text-amber-400/90 mono">!</span>
-              <span class="text-zinc-400">В РФ обязателен включенный VPN (иначе Google выдает «location not supported»).</span>
+            <div class="flex items-start gap-2">
+              <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/10 text-zinc-300 shrink-0 font-semibold uppercase">NET</span>
+              <span class="text-zinc-400">Для прямого подключения к Google API требуется VPN (ограничение региона) либо указание зеркала/прокси.</span>
             </div>
           </div>
         </div>
@@ -2476,6 +2491,7 @@
       themeId: "monolith",
       deletedThemeIds: [],
       backupApiKeys: [],
+      apiProxy: "",
       customTheme: {
         id: "custom",
         title: "CUSTOM // ТВОЙ КОНЦЕПТ",
@@ -3816,10 +3832,26 @@
       return (DEFAULT_API_KEY || "").trim();
     }
 
-    const GEMINI_MODELS_CASCADE = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+    const GEMINI_MODELS_CASCADE = [
+      "gemini-3-flash-preview",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash"
+    ];
     let lastActiveGeminiModel = GEMINI_MODELS_CASCADE[0];
     let lastActiveKeyIndex = 1;
     let apiKeyVerifiedStatus = null; // null: не проверялся, true: в сети, false: ошибка
+
+    function getShortModelLabel(modelName) {
+      if (!modelName) return "Gemini 3";
+      if (modelName.includes("3")) return "Gemini 3";
+      if (modelName.includes("2.5") && modelName.includes("lite")) return "G2.5 Lite";
+      if (modelName.includes("2.5")) return "Gemini 2.5";
+      if (modelName.includes("2.0")) return "Gemini 2.0";
+      if (modelName.includes("1.5")) return "Gemini 1.5";
+      return "Gemini";
+    }
 
     function getAllApiKeys() {
       const list = [];
@@ -3841,9 +3873,7 @@
     function updateActiveModelBadge(modelName, keyNumber, isLive = true) {
       const modelBadge = document.getElementById("activeModelBadge");
       if (!modelBadge) return;
-      const shortModel = (modelName || "").includes("3")
-        ? "Gemini 3"
-        : ((modelName || "").includes("lite") ? "G2.5 Lite" : "Gemini 2.5");
+      const shortModel = getShortModelLabel(modelName);
       const keyLabel = keyNumber ? ` · K#${keyNumber}` : "";
       const dotColor = isLive ? "bg-emerald-400" : "bg-zinc-500";
       const badgeClass = isLive 
@@ -3918,8 +3948,8 @@
 
       if (state.backupApiKeys.length === 0) {
         container.innerHTML = `
-          <div class="text-[11px] text-zinc-500 py-1.5 px-2 italic text-center rounded-xl bg-black/20 border border-white/[0.04]">
-            Нет резервных ключей. Добавьте запасные ключи из других проектов Google AI Studio для бесперебойной работы.
+          <div class="text-[11px] text-zinc-500 py-1.5 px-2 text-center rounded-xl bg-black/20 border border-white/[0.04] mono">
+            Резервные ключи не добавлены. Добавьте 1–2 запасных ключа для защиты от исчерпания квот.
           </div>
         `;
         if (window.currentSettingsTab === "api" && typeof updateSettingsViewportHeight === "function") {
@@ -3940,10 +3970,10 @@
               <button
                 type="button"
                 onclick="removeBackupKeyRow(${idx})"
-                class="text-[11px] text-zinc-500 hover:text-red-400 transition px-1"
+                class="text-[11px] mono text-zinc-500 hover:text-red-400 transition px-1"
                 title="Удалить ключ"
               >
-                ✕ Удалить
+                Удалить
               </button>
             </div>
             <div class="relative">
@@ -4030,6 +4060,16 @@
       syncNativeWidget();
     }
 
+    function handleApiProxyInput(val) {
+      const clean = (val || "").trim();
+      state.apiProxy = clean;
+      try {
+        if (clean) localStorage.setItem("form_gemini_proxy", clean);
+        else localStorage.removeItem("form_gemini_proxy");
+      } catch (e) {}
+      saveState();
+    }
+
     async function saveApiKeyAndVerify() {
       const input = document.getElementById("inputApiKey");
       const val = input ? input.value.trim() : "";
@@ -4049,8 +4089,92 @@
       syncKeyFieldUI();
       syncNativeWidget();
 
-      showToast("Ключи сохранены! Проверяем каскад...");
+      showToast("Ключи сохранены. Проверяем каскад...");
       await checkApiKeyLive(true);
+    }
+
+    // =========================================================================
+    // ОФЛАЙН КЭШ AI И ЛОКАЛЬНЫЙ РАСЧЕТ КБЖУ (ZERO-DOWNTIME ENGINE)
+    // =========================================================================
+    function getAiCache(key) {
+      try {
+        const raw = localStorage.getItem("form_ai_cache_v1");
+        if (!raw) return null;
+        const cache = JSON.parse(raw);
+        const norm = String(key || "").trim().toLowerCase();
+        return cache[norm] || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setAiCache(key, data) {
+      try {
+        const raw = localStorage.getItem("form_ai_cache_v1");
+        const cache = raw ? JSON.parse(raw) : {};
+        const norm = String(key || "").trim().toLowerCase();
+        cache[norm] = data;
+        const keys = Object.keys(cache);
+        if (keys.length > 200) delete cache[keys[0]];
+        localStorage.setItem("form_ai_cache_v1", JSON.stringify(cache));
+      } catch (e) {}
+    }
+
+    function parseFoodLocally(query, explicitWeight) {
+      if (!query || typeof query !== "string") return null;
+      const q = query.toLowerCase().trim();
+
+      let extractedWeight = explicitWeight || null;
+      const numMatch = q.match(/(\d+(?:[.,]\d+)?)\s*(г|гр|g|грамм|штук|шт|pcs)?/i);
+      let countOrWeight = null;
+      let isPiece = false;
+
+      if (numMatch) {
+        const val = parseFloat(numMatch[1].replace(",", "."));
+        const unit = (numMatch[2] || "").toLowerCase();
+        if (["шт", "штук", "pcs"].includes(unit)) {
+          isPiece = true;
+          countOrWeight = val;
+        } else {
+          extractedWeight = val;
+        }
+      }
+
+      let bestMatch = null;
+      let maxScore = 0;
+
+      for (const item of LOCAL_DB) {
+        const itemName = item.name.toLowerCase();
+        const words = itemName.split(/[\s,()\/]+/).filter(w => w.length > 2);
+        let score = 0;
+        for (const w of words) {
+          if (q.includes(w)) score += 2;
+        }
+        if (q.includes(itemName.slice(0, 5))) score += 3;
+
+        if (score > maxScore) {
+          maxScore = score;
+          bestMatch = item;
+        }
+      }
+
+      if (bestMatch && maxScore > 0) {
+        let finalWeight = extractedWeight || bestMatch.defaultWeight || 100;
+        if (isPiece && bestMatch.pieceWeight) {
+          finalWeight = Math.round(countOrWeight * bestMatch.pieceWeight);
+        }
+        return {
+          name: bestMatch.name,
+          cal100: bestMatch.cal,
+          p100: bestMatch.p,
+          f100: bestMatch.f,
+          c100: bestMatch.c,
+          weight: finalWeight,
+          source: "База"
+        };
+      }
+
+      return null;
     }
 
     async function callGeminiWithFallback(payload) {
@@ -4058,6 +4182,9 @@
       if (keys.length === 0) {
         throw new Error("Ключ не задан в настройках");
       }
+
+      const baseHost = (state.apiProxy || localStorage.getItem("form_gemini_proxy") || "").trim();
+      const apiBase = baseHost ? baseHost.replace(/\/+$/, "") : "https://generativelanguage.googleapis.com";
 
       let lastError = null;
       let hasLocationError = false;
@@ -4070,7 +4197,7 @@
           const keyNumber = k + 1;
 
           try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+            const url = `${apiBase}/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
             const res = await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -4085,11 +4212,12 @@
               // Проверка на геоблокировку (Россия / отсутствие VPN)
               if (/location is not supported|unsupported location/i.test(errMsg)) {
                 hasLocationError = true;
-                throw new Error("Включи VPN! Запрос пошел с российского IP (location not supported)");
+                throw new Error("Включите VPN или укажите зеркало/прокси в настройках (location not supported)");
               }
 
-              // Если лимит (429), недействительный ключ или перегрузка модели — пробуем следующий ключ/модель
+              // Если лимит (429), недействительный ключ или перегрузка модели — пробуем следующий ключ/модель с микропаузой
               lastError = new Error(`[${model} · K#${keyNumber}] ${errMsg}`);
+              await new Promise(r => setTimeout(r, 200));
               continue;
             }
 
@@ -4102,7 +4230,7 @@
             return data;
 
           } catch (err) {
-            if (hasLocationError || /location is not supported|Включи VPN/i.test(err.message)) {
+            if (hasLocationError || /location is not supported|Включите VPN/i.test(err.message)) {
               apiKeyVerifiedStatus = false;
               syncKeyFieldUI();
               throw err;
@@ -4116,9 +4244,9 @@
       syncKeyFieldUI();
 
       if (lastError && /quota|RESOURCE_EXHAUSTED|429/i.test(lastError.message)) {
-        throw new Error("Лимиты всех ключей и моделей (Gemini 3 / 2.5) исчерпаны. Добавьте резервный ключ из другого аккаунта.");
+        throw new Error("Лимиты всех ключей и каскада моделей исчерпаны. Добавьте резервный ключ из другого аккаунта.");
       }
-      throw lastError || new Error("Ошибка всех ключей Gemini API");
+      throw lastError || new Error("Ошибка пула Gemini API");
     }
 
     async function callGemini3Flash(payload) {
@@ -4162,15 +4290,15 @@
 
         apiKeyVerifiedStatus = true;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0";
-        const shortModel = lastActiveGeminiModel.includes("3") ? "Gemini 3" : (lastActiveGeminiModel.includes("lite") ? "G2.5 Lite" : "Gemini 2.5");
-        if (txt) txt.textContent = `✓ Активен: ${shortModel} (Ключ #${lastActiveKeyIndex})`;
+        const shortModel = getShortModelLabel(lastActiveGeminiModel);
+        if (txt) txt.textContent = `Активен: ${shortModel} · K#${lastActiveKeyIndex}`;
         if (lat) lat.textContent = `${ms} мс`;
 
         syncKeyFieldUI();
 
         showToast(isFromSave
-          ? `✓ Ключи сохранены и работают! (${ms} мс)`
-          : `✓ Пул активен (${shortModel} · K#${lastActiveKeyIndex}, ${ms} мс)`
+          ? `Ключи сохранены и активны (${ms} мс)`
+          : `Пул активен (${shortModel} · K#${lastActiveKeyIndex}, ${ms} мс)`
         );
         return true;
       } catch (err) {
@@ -4829,13 +4957,18 @@
             saveState();
             const prevEl = document.getElementById("restPreviewText");
             if (prevEl) prevEl.textContent = `«${arr[0]}»`;
-            showToast(`✓ Сгенерировано ${arr.length} новых фраз!`);
+            showToast(`Сгенерировано ${arr.length} новых фраз`);
           } else {
             throw new Error("Неверный формат ответа");
           }
         }
       } catch (err) {
-        showToast(`Ошибка генерации: ${err.message}`, true);
+        const pool = [...(DEFAULT_REST_MESSAGES.chest || []), ...(DEFAULT_REST_MESSAGES.general || [])];
+        state.restTimerSettings.customMessages = pool.slice().sort(() => Math.random() - 0.5);
+        saveState();
+        const prevEl = document.getElementById("restPreviewText");
+        if (prevEl && pool.length) prevEl.textContent = `«${pool[0]}»`;
+        showToast("Фразы обновлены из встроенной базы");
       }
     };
 
@@ -5034,7 +5167,7 @@
         };
         saveState();
         renderExerciseGuideContent(currentGuideExercise.name, currentGuideExercise.muscle);
-        showToast("✓ Разбор техники сохранен!");
+        showToast("Разбор техники сохранен");
       } catch (err) {
         showToast(`Ошибка: ${err.message}`, true);
       } finally {
@@ -5066,6 +5199,11 @@
             const parsed = JSON.parse(rawBackups);
             if (Array.isArray(parsed)) state.backupApiKeys = parsed;
           }
+        } catch (e) {}
+        if (typeof state.apiProxy !== "string") state.apiProxy = "";
+        try {
+          const rawProxy = localStorage.getItem("form_gemini_proxy");
+          if (rawProxy && !state.apiProxy) state.apiProxy = rawProxy;
         } catch (e) {}
         if (!state.customExerciseGuides || typeof state.customExerciseGuides !== "object") {
           state.customExerciseGuides = {};
@@ -5150,6 +5288,11 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         if (Array.isArray(state.backupApiKeys)) {
           localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(state.backupApiKeys));
+        }
+        if (state.apiProxy) {
+          localStorage.setItem("form_gemini_proxy", state.apiProxy);
+        } else {
+          localStorage.removeItem("form_gemini_proxy");
         }
       } catch (e) {}
       syncNativeWidget();
@@ -5500,6 +5643,25 @@
       const spinner = document.getElementById("aiInlineSpinner");
       spinner.classList.remove("hidden");
       spinner.classList.add("flex");
+
+      const normQuery = String(textQuery || "").trim();
+      const cached = getAiCache(normQuery);
+      if (cached && cached.name) {
+        addFoodEntryFrom100g({
+          name: cached.name,
+          cal100: Number(cached.cal100) || 150,
+          p100: Number(cached.p100) || 8,
+          f100: Number(cached.f100) || 6,
+          c100: Number(cached.c100) || 15,
+          weight: explicitWeight || Number(cached.weight) || 100,
+          source: "Кэш"
+        });
+        spinner.classList.add("hidden");
+        spinner.classList.remove("flex");
+        showToast(`Добавлено из кэша (${cached.name})`);
+        return;
+      }
+
       const prompt = `Продукт: "${textQuery}". Верни строго JSON: {"name":"Название","weight":число_г,"cal100":число,"p100":число,"f100":число,"c100":число}. 1 вафля Яшкино=40г, 1 сырок=45г, 1 яйцо=55г.`;
       try {
         const data = await callGemini3Flash({
@@ -5508,6 +5670,7 @@
         });
         const parsed = JSON.parse(cleanJsonString(data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}"));
         if (parsed && parsed.name) {
+          setAiCache(normQuery, parsed);
           addFoodEntryFrom100g({
             name: parsed.name,
             cal100: Number(parsed.cal100) || 150,
@@ -5517,9 +5680,17 @@
             weight: explicitWeight || Number(parsed.weight) || 100,
             source: "AI"
           });
+          return;
         }
+        throw new Error("Неверный ответ AI");
       } catch (err) {
-        showToast(`Ошибка AI: ${String(err.message || "").slice(0, 45)}`, true);
+        const fallback = parseFoodLocally(textQuery, explicitWeight);
+        if (fallback) {
+          addFoodEntryFrom100g(fallback);
+          showToast(`Добавлено из локальной базы (${fallback.name})`);
+        } else {
+          showToast(err.message.includes("VPN") ? err.message : `Ошибка AI: ${String(err.message || "").slice(0, 45)}`, true);
+        }
       } finally {
         spinner.classList.add("hidden");
         spinner.classList.remove("flex");
@@ -5969,6 +6140,10 @@
         syncCustomBuilderFields();
         syncPushUI();
         if (typeof syncRestSettingsUI === "function") syncRestSettingsUI();
+        const proxyInput = document.getElementById("inputApiProxy");
+        if (proxyInput) {
+          proxyInput.value = state.apiProxy || localStorage.getItem("form_gemini_proxy") || "";
+        }
         renderBackupKeysUI();
         syncKeyFieldUI();
         switchSettingsTab(initialTab || window.currentSettingsTab || "goals", true);
@@ -7007,12 +7182,16 @@
           const prevEl = document.getElementById("pushPreviewText");
           if (prevEl) prevEl.textContent = `«${arr[0]}»`;
           savePushSettings(false);
-          showToast(`Сгенерировано ${arr.length} новых фраз!`);
+          showToast(`Сгенерировано ${arr.length} новых фраз`);
         } else {
-          showToast("Модель вернула пустой ответ, попробуй еще раз", true);
+          throw new Error("Пустой ответ от AI");
         }
       } catch (e) {
-        showToast("Ошибка генерации: " + String(e.message || "").slice(0, 40), true);
+        state.push.messages = DEFAULT_PUSH_MESSAGES.slice().sort(() => Math.random() - 0.5);
+        const prevEl = document.getElementById("pushPreviewText");
+        if (prevEl && state.push.messages.length) prevEl.textContent = `«${state.push.messages[0]}»`;
+        savePushSettings(false);
+        showToast("Фразы обновлены из встроенной базы");
       }
     };
 
@@ -8108,6 +8287,10 @@
         if (parsed.apiKey) {
           window.__NATIVE_API_KEY__ = parsed.apiKey;
           try { localStorage.setItem(KEY_STORAGE, parsed.apiKey); } catch (e) {}
+        }
+        if (parsed.apiProxy) {
+          state.apiProxy = parsed.apiProxy;
+          try { localStorage.setItem("form_gemini_proxy", parsed.apiProxy); } catch (e) {}
         }
         if (Array.isArray(parsed.backupApiKeys)) {
           state.backupApiKeys = parsed.backupApiKeys.slice();
