@@ -743,7 +743,6 @@
           <span id="setLoggerBadge" class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Рабочий подход #1</span>
           <div class="flex items-center gap-2 mt-0.5 min-w-0">
             <h3 id="setLoggerExName" class="text-base font-bold text-white truncate">Упражнение</h3>
-            <button type="button" onclick="openExerciseGuideFromLogger()" class="px-2.5 py-0.5 rounded-full text-[10px] mono font-semibold bg-white/[0.08] border border-white/15 text-zinc-300 hover:text-white shrink-0 active:scale-95 transition">ⓘ Техника</button>
           </div>
         </div>
         <button type="button" onclick="closeSetLoggerModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 ml-2">✕</button>
@@ -3156,10 +3155,7 @@
             return `
               <div class="py-3.5 flex items-center justify-between gap-3">
                 <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${prog.id}', '${ex.id}', 0)">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                    <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-2 py-0.5 rounded-full text-[9.5px] mono font-semibold bg-white/[0.07] border border-white/10 hover:bg-white/15 text-zinc-300 hover:text-white active:scale-95 transition shrink-0">ⓘ Техника</button>
-                  </div>
+                  <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
                     <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
                     <span class="whitespace-nowrap truncate">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong></span>
@@ -6806,10 +6802,7 @@
             return `
               <div class="py-3.5 flex items-center justify-between gap-3">
                 <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${activeProg.id}', '${ex.id}', 0)">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                    <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-2 py-0.5 rounded-full text-[9.5px] mono font-semibold bg-white/[0.07] border border-white/10 hover:bg-white/15 text-zinc-300 hover:text-white active:scale-95 transition shrink-0">ⓘ Техника</button>
-                  </div>
+                  <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
                     <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
                     <span class="whitespace-nowrap truncate">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong></span>
@@ -7636,10 +7629,7 @@
         return `
           <div class="py-3.5 flex items-center justify-between gap-2.5">
             <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${activeProg.id}', '${ex.id}', 0)">
-              <div class="flex items-center gap-1.5 min-w-0">
-                <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                <button type="button" onclick="event.stopPropagation(); openExerciseGuideModal('${escapeHtml(ex.name)}', '${ex.muscle}')" title="Техника и советы" class="px-2 py-0.5 rounded-full text-[9.5px] mono font-semibold bg-white/[0.07] border border-white/10 hover:bg-white/15 text-zinc-300 hover:text-white active:scale-95 transition shrink-0">ⓘ Техника</button>
-              </div>
+              <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong>${repsBreakdown}</span>
