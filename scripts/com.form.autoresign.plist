@@ -9,8 +9,15 @@
         <string>/bin/bash</string>
         <string>/Users/alexeytikunov/xcode/form/scripts/autoresign.sh</string>
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+        <key>DEVELOPER_DIR</key>
+        <string>/Applications/Xcode.app/Contents/Developer</string>
+    </dict>
     <key>StartInterval</key>
-    <integer>7200</integer>
+    <integer>3600</integer>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>

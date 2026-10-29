@@ -6,13 +6,17 @@
 # и устанавливает приложение form на твой iPhone по воздуху (Wi-Fi) или USB.
 # ==============================================================================
 
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:$PATH"
+export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$SCRIPT_DIR/autoresign.log"
 STATE_FILE="$SCRIPT_DIR/last_resign.txt"
+ALERT_FILE="$SCRIPT_DIR/last_alert.txt"
 PROJECT_FILE="$PROJECT_DIR/form.xcodeproj"
 SCHEME="form"
-MAX_AGE_DAYS=4 # Продлеваем каждые 4 дня (запас 3 дня до истечения 7-дневного лимита)
+MAX_AGE_DAYS=2 # Продлеваем каждые 2 дня (запас 5 дней гарантирует, что профиль никогда не истечет)
 MAX_AGE_SECONDS=$((MAX_AGE_DAYS * 86400))
 
 # Цвета для красивого вывода в терминал
@@ -37,18 +41,24 @@ notify_mac() {
 }
 
 get_paired_device() {
-    # Ищем подключенный по проводу или Wi-Fi («планета» в Xcode) iPhone
-    local line
-    line=$(xcrun devicectl list devices 2>/dev/null | grep -i "available (paired)" | grep -i "iPhone" | head -n 1)
-    if [[ -n "$line" ]]; then
-        # Извлекаем UUID устройства
-        local dev_id
-        dev_id=$(echo "$line" | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -n 1)
-        # Извлекаем имя устройства
-        local dev_name
-        dev_name=$(echo "$line" | awk -F'   ' '{print $1}' | xargs)
-        echo "$dev_id|$dev_name"
-    fi
+    # Ищем подключенный по проводу или Wi-Fi («планета» в Xcode) iPhone с 3 попытками
+    local attempts=3
+    for ((i=1; i<=attempts; i++)); do
+        local line
+        line=$(xcrun devicectl list devices 2>/dev/null | grep -i "available (paired)" | grep -i "iPhone" | head -n 1)
+        if [[ -n "$line" ]]; then
+            local dev_id
+            dev_id=$(echo "$line" | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -n 1)
+            local dev_name
+            dev_name=$(echo "$line" | awk -F'   ' '{print $1}' | xargs)
+            echo "$dev_id|$dev_name"
+            return 0
+        fi
+        if [[ $i -lt $attempts ]]; then
+            sleep 2
+        fi
+    done
+    return 1
 }
 
 show_status() {
@@ -91,8 +101,8 @@ show_status() {
         if [[ $elapsed -ge $MAX_AGE_SECONDS ]]; then
             echo -e "План автообновления: ${CLR_YELLOW}ПОРА ОБНОВЛЯТЬ (прошло >= $MAX_AGE_DAYS дней)${CLR_RESET}"
         else
-            local next_update=$(((MAX_AGE_SECONDS - elapsed) / 86400))
-            echo -e "План автообновления: ${CLR_GREEN}В норме (плановое обновление через $next_update дн.)${CLR_RESET}"
+            local next_hours=$(((MAX_AGE_SECONDS - elapsed) / 3600))
+            echo -e "План автообновления: ${CLR_GREEN}В норме (плановое обновление через ~$next_hours ч.)${CLR_RESET}"
         fi
     else
         echo -e "Последнее обновление: ${CLR_YELLOW}Еще не запускалось${CLR_RESET}"
@@ -101,8 +111,8 @@ show_status() {
     echo -e "${CLR_CYAN}------------------------------------------------------${CLR_RESET}"
     echo -e "Файл лога: ${CLR_GRAY}$LOG_FILE${CLR_RESET}"
     if [[ -f "$LOG_FILE" ]]; then
-        echo -e "Последние 3 записи лога:"
-        tail -n 3 "$LOG_FILE" | sed 's/^/  /'
+        echo -e "Последние 5 записей лога:"
+        tail -n 5 "$LOG_FILE" | sed 's/^/  /'
     fi
     echo -e "${CLR_CYAN}======================================================${CLR_RESET}"
 }
@@ -118,16 +128,31 @@ run_autoresign() {
         last_run=$(cat "$STATE_FILE" 2>/dev/null)
         local elapsed=$((now - last_run))
         if [[ $elapsed -lt $MAX_AGE_SECONDS ]]; then
-            local days_left=$(((MAX_AGE_SECONDS - elapsed) / 86400))
             # Еще рано обновлять, тихо выходим
             exit 0
         fi
     fi
 
-    # 2. Проверяем сопряжение с iPhone
+    # 2. Проверяем сопряжение с iPhone (3 попытки для стабилизации Wi-Fi Bonjour)
     local dev_info
     dev_info=$(get_paired_device)
     if [[ -z "$dev_info" ]]; then
+        if [[ -f "$STATE_FILE" ]]; then
+            local last_run
+            last_run=$(cat "$STATE_FILE" 2>/dev/null)
+            local elapsed=$((now - last_run))
+            if [[ $elapsed -ge $((4 * 86400)) ]]; then
+                local days_ago=$((elapsed / 86400))
+                log_msg "⚠️ Внимание: Сертификат не обновлялся уже $days_ago дн., а iPhone не обнаружен по Wi-Fi/USB."
+                local last_alert=0
+                [[ -f "$ALERT_FILE" ]] && last_alert=$(cat "$ALERT_FILE" 2>/dev/null)
+                if [[ $((now - last_alert)) -ge 86400 ]]; then
+                    echo "$now" > "$ALERT_FILE"
+                    notify_mac "FORM // ВНИМАНИЕ" "Сертификат form не обновлялся $days_ago дн.! Подключи iPhone к одной Wi-Fi сети с Mac или по USB."
+                fi
+            fi
+        fi
+
         if [[ "$force_flag" == "--force" ]]; then
             log_msg "${CLR_RED}❌ Ошибка: iPhone не найден в сети Wi-Fi или по USB.${CLR_RESET}"
             echo "Убедись, что iPhone и Mac в одной Wi-Fi сети и в Xcode горит сопряжение."
@@ -170,6 +195,7 @@ run_autoresign() {
 
     # 6. Фиксируем успех
     echo "$now" > "$STATE_FILE"
+    rm -f "$ALERT_FILE" 2>/dev/null || true
     log_msg "✅ УСПЕХ: form переподписан и обновлен на $dev_name! 7-дневный сертификат продлен."
     notify_mac "FORM // SYSTEM" "Сертификат form продлен еще на 7 дней! Приложение обновлено на $dev_name."
 }
