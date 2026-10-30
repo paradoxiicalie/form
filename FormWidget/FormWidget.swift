@@ -76,6 +76,15 @@ struct Provider: TimelineProvider {
         let badgesRaw = d?.string(forKey: "weekBadges") ?? "Д1,Д2,ОТД,Д3,ОТД,Д4,ОТД"
         let badges = badgesRaw.split(separator: ",").map(String.init)
         
+        let rawTargetCal = d?.integer(forKey: "targetCal") ?? 0
+        let targetCal = rawTargetCal > 0 ? rawTargetCal : 2000
+        let rawTargetP = d?.integer(forKey: "targetP") ?? 0
+        let targetP = rawTargetP > 0 ? rawTargetP : 140
+        let rawTargetF = d?.integer(forKey: "targetF") ?? 0
+        let targetF = rawTargetF > 0 ? rawTargetF : 65
+        let rawTargetC = d?.integer(forKey: "targetC") ?? 0
+        let targetC = rawTargetC > 0 ? rawTargetC : 215
+
         return MacroEntry(
             date: Date(),
             calHex: d?.string(forKey: "calHex") ?? "#E6DFD3",
@@ -83,17 +92,17 @@ struct Provider: TimelineProvider {
             cHex: d?.string(forKey: "cHex") ?? "#C2593F",
             fHex: d?.string(forKey: "fHex") ?? "#8C8275",
             cal: d?.integer(forKey: "cal") ?? 0,
-            targetCal: max(500, d?.integer(forKey: "targetCal") ?? 2979),
+            targetCal: targetCal,
             p: d?.integer(forKey: "p") ?? 0,
-            targetP: max(10, d?.integer(forKey: "targetP") ?? 130),
+            targetP: targetP,
             f: d?.integer(forKey: "f") ?? 0,
-            targetF: max(10, d?.integer(forKey: "targetF") ?? 67),
+            targetF: targetF,
             c: d?.integer(forKey: "c") ?? 0,
-            targetC: max(10, d?.integer(forKey: "targetC") ?? 464),
+            targetC: targetC,
             splitTitle: d?.string(forKey: "splitTitle") ?? "День 1 · Жим",
             isRestDay: d?.bool(forKey: "isRestDay") ?? false,
             setsDone: d?.integer(forKey: "setsDone") ?? 0,
-            setsTarget: max(10, d?.integer(forKey: "setsTarget") ?? 52),
+            setsTarget: max(10, d?.integer(forKey: "setsTarget") ?? 60),
             weekBadges: badges.count == 7 ? badges : ["Д1","Д2","ОТД","Д3","ОТД","Д4","ОТД"],
             currentWeight: d?.string(forKey: "currentWeight") ?? "",
             stackDone: d?.integer(forKey: "stackDone") ?? 0,

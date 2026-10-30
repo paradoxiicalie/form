@@ -2392,6 +2392,26 @@
       showToast(`✓ Вес ${w} кг сохранен`);
     }
 
+    function getBodyFormulaBaseline(wOverride) {
+      const logs = (state.weightLogs || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+      const latestW = wOverride || (logs.length > 0 ? Number(logs[logs.length - 1].weight) : null) || (state.body && Number(state.body.weight)) || 72;
+      const w = Math.max(35, latestW);
+      const h = Math.max(120, (state.body && Number(state.body.height)) || 175);
+      const a = Math.max(14, (state.body && Number(state.body.age)) || 20);
+      const act = Number(state.body?.activity) || 1.55;
+      const goal = Number(state.body?.goalMode) || 1.12;
+      const sex = state.body?.sex || "male";
+
+      const bmr = 10 * w + 6.25 * h - 5 * a + (sex === "male" ? 5 : -161);
+      const tdee = bmr * act;
+      const targetCal = Math.round(tdee * goal);
+      const p = Math.round(w * (goal < 1.0 ? 2.0 : 1.85));
+      const f = Math.round(w * 0.95);
+      const c = Math.max(40, Math.round((targetCal - p * 4 - f * 9) / 4));
+
+      return { w, h, a, act, goal, sex, bmr, tdee, targetCal, p, f, c };
+    }
+
     function renderMetabolismAnalysis() {
       const verdictBox = document.getElementById("smartTdeeVerdictBox");
       const logsList = document.getElementById("weightLogsList");
@@ -2419,13 +2439,13 @@
         return;
       }
 
-      // Считаем среднюю калорийность по истории
+      // Считаем среднюю калорийность по истории (до 14 дней)
       const allDays = Object.assign({}, state.history || {});
       if (state.todayItems && state.todayItems.length > 0) {
         allDays[getTodayKey()] = state.todayItems;
       }
       const dayKeys = Object.keys(allDays).sort().slice(-14);
-      let avgIntake = state.targets?.cal || 2000;
+      let avgIntake = Number(state.targets?.cal) || 2000;
       if (dayKeys.length > 0) {
         let sum = 0;
         dayKeys.forEach(k => {
@@ -2445,7 +2465,15 @@
       // 1 кг ткани ≈ 7700 ккал за 14 дней (~550 ккал/день)
       const dailyEnergyDelta = Math.round((deltaW * 7700) / 14);
       const estimatedRealTdee = Math.max(1400, Math.round(avgIntake - dailyEnergyDelta));
-      const isBulking = (state.body?.goalMode || 1.12) > 1.0;
+      const latestW = logs[logs.length - 1].weight;
+      const formula = getBodyFormulaBaseline(latestW);
+      const goalMode = formula.goal;
+      const isBulking = goalMode > 1.05;
+      const isCutting = goalMode < 0.95;
+
+      // Проверяем, была ли уже применена умная корректировка для этого замера веса
+      const adj = state.smartAdjustment;
+      const isAlreadyAdjusted = adj && (adj.weight === latestW || adj.date === getTodayKey());
 
       let adviceHtml = "";
       if (logs.length === 1) {
@@ -2454,28 +2482,83 @@
             Первый замер записан (<strong class="text-white mono">${logs[0].weight} кг</strong>). Добавляй замеры каждое утро или раз в 2–3 дня, чтобы алгоритм рассчитал точный TDEE.
           </div>
         `;
-      } else if (isBulking && deltaW <= 0.1) {
+      } else if (isAlreadyAdjusted) {
+        // Калибровка уже активна — результат зафиксирован, кнопки для повторного спам-понижения нет
         adviceHtml = `
-          <div class="text-xs text-zinc-300 leading-relaxed">
-            За последние замеры сдвиг веса <strong class="text-white mono">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</strong>. На наборе вес стоит — твой реальный расход выше расчетного.
+          <div class="space-y-2">
+            <div class="text-xs text-zinc-300 leading-relaxed">
+              Динамика веса: <strong class="text-white mono">${deltaW >= 0 ? "+" + deltaW : deltaW} кг</strong>.
+            </div>
+            <div class="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-[11px] font-semibold text-white">Калораж адаптирован (${adj.deltaCal > 0 ? "+" : ""}${adj.deltaCal} ккал)</div>
+                <div class="text-[10px] text-zinc-400 mt-0.5">Текущая цель: <strong class="mono text-white">${state.targets?.cal || adj.appliedCal} ккал</strong> · Зафиксировано</div>
+              </div>
+              <button type="button" onclick="revertSmartCalorieAdjustment()" class="text-[10.5px] px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-300 font-semibold transition active:scale-95 shrink-0">
+                Сброс
+              </button>
+            </div>
+            <div class="text-[10.5px] text-zinc-500 text-center">Следующий чек-ин динамики — через 7–14 дней новых замеров.</div>
           </div>
-          <button type="button" onclick="applySmartCalorieAdjustment(150)" class="w-full py-2 mt-1 rounded-xl accent-btn text-xs">
-            Накинуть +150 ккал к дневной цели (${(state.targets?.cal || 2000) + 150} ккал)
-          </button>
         `;
-      } else if (isBulking && deltaW > 0.9) {
+      } else if (isBulking && deltaW > 0.8) {
+        // Набор: вес растет быстрее плана (+1.7 кг) -> разовая аккуратная корректировка профицита
+        const safeFloor = Math.round(formula.tdee - 100);
+        const suggestedCal = Math.max(safeFloor, (Number(state.targets?.cal) || formula.targetCal) - 120);
         adviceHtml = `
-          <div class="text-xs text-zinc-300 leading-relaxed">
-            Вес вырос на <strong class="text-white mono">+${deltaW} кг</strong>. Чтобы набирать сухо без лишней воды и жира, можно слегка урезать профицит.
+          <div class="space-y-2">
+            <div class="text-xs text-zinc-300 leading-relaxed">
+              Вес вырос на <strong class="text-white mono">+${deltaW} кг</strong>. Чтобы набирать чисто без лишней воды и жира, рекомендуется скорректировать профицит.
+            </div>
+            <button type="button" onclick="applySmartCalorieAdjustment(-120)" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/10 transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>Скорректировать цель на -120 ккал (до ${suggestedCal} ккал)</span>
+            </button>
           </div>
-          <button type="button" onclick="applySmartCalorieAdjustment(-120)" class="w-full py-2 mt-1 rounded-xl bg-white/10 text-white font-semibold text-xs">
-            Снизить цель на -120 ккал (${(state.targets?.cal || 2000) - 120} ккал)
-          </button>
+        `;
+      } else if (isBulking && deltaW <= 0.1) {
+        // Набор: вес стоит -> разовая корректировка вверх
+        const suggestedCal = (Number(state.targets?.cal) || formula.targetCal) + 150;
+        adviceHtml = `
+          <div class="space-y-2">
+            <div class="text-xs text-zinc-300 leading-relaxed">
+              Сдвиг веса <strong class="text-white mono">${deltaW >= 0 ? "+" : ""}${deltaW} кг</strong>. На наборе вес стоит — реальный расход выше расчетного.
+            </div>
+            <button type="button" onclick="applySmartCalorieAdjustment(150)" class="w-full py-2.5 rounded-xl accent-btn text-xs font-semibold transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>Добавить +150 ккал к цели (до ${suggestedCal} ккал)</span>
+            </button>
+          </div>
+        `;
+      } else if (isCutting && deltaW < -1.2) {
+        // Сушка: вес падает слишком быстро -> поднять калории для защиты мышц
+        const suggestedCal = (Number(state.targets?.cal) || formula.targetCal) + 120;
+        adviceHtml = `
+          <div class="space-y-2">
+            <div class="text-xs text-zinc-300 leading-relaxed">
+              Вес падает слишком быстро (<strong class="text-white mono">${deltaW} кг</strong>). Чтобы защитить мышцы, рекомендуется слегка поднять калории.
+            </div>
+            <button type="button" onclick="applySmartCalorieAdjustment(120)" class="w-full py-2.5 rounded-xl accent-btn text-xs font-semibold transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>Добавить +120 ккал (до ${suggestedCal} ккал)</span>
+            </button>
+          </div>
+        `;
+      } else if (isCutting && deltaW >= -0.1) {
+        // Сушка: плато -> аккуратный срез калорий
+        const safeFloor = Math.round(formula.bmr);
+        const suggestedCal = Math.max(safeFloor, (Number(state.targets?.cal) || formula.targetCal) - 120);
+        adviceHtml = `
+          <div class="space-y-2">
+            <div class="text-xs text-zinc-300 leading-relaxed">
+              Вес стоит на месте (<strong class="text-white mono">${deltaW >= 0 ? "+" : ""}${deltaW} кг</strong>). Метаболизм адаптировался — можно мягко урезать дефицит.
+            </div>
+            <button type="button" onclick="applySmartCalorieAdjustment(-120)" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/10 transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>Снизить норму на -120 ккал (до ${suggestedCal} ккал)</span>
+            </button>
+          </div>
         `;
       } else {
         adviceHtml = `
           <div class="text-xs text-zinc-300 leading-relaxed">
-            Динамика веса <strong class="text-white mono">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</strong> — темп идет по плану!
+            Динамика веса <strong class="text-white mono">${deltaW >= 0 ? "+" : ""}${deltaW} кг</strong> — темп идет строго по плану!
           </div>
         `;
       }
@@ -2501,14 +2584,47 @@
     }
 
     function applySmartCalorieAdjustment(deltaCal) {
-      state.targets.cal = Math.max(1200, (Number(state.targets.cal) || 2000) + deltaCal);
-      // Пересчитываем углеводы под новую калорийность
-      const usedByPF = (Number(state.targets.p) || 140) * 4 + (Number(state.targets.f) || 65) * 9;
-      state.targets.c = Math.max(50, Math.round((state.targets.cal - usedByPF) / 4));
+      const logs = (state.weightLogs || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+      const latestW = (logs.length > 0 ? Number(logs[logs.length - 1].weight) : null) || (state.body && Number(state.body.weight)) || 72;
+      const formula = getBodyFormulaBaseline(latestW);
+      const isBulking = formula.goal >= 1.0;
+
+      // Безопасный порог: на наборе не опускаемся ниже TDEE-100, на сушке не ниже BMR
+      const safeFloor = isBulking ? Math.round(formula.tdee - 100) : Math.round(formula.bmr);
+      const currentCal = Number(state.targets?.cal) || formula.targetCal;
+      const newCal = Math.max(safeFloor, currentCal + deltaCal);
+
+      const p = Math.round(formula.w * (formula.goal < 1.0 ? 2.0 : 1.85));
+      const f = Math.round(formula.w * 0.95);
+      const c = Math.max(50, Math.round((newCal - p * 4 - f * 9) / 4));
+
+      state.targets = { cal: newCal, p, f, c };
+      state.smartAdjustment = {
+        date: getTodayKey(),
+        weight: latestW,
+        deltaCal: deltaCal,
+        baselineCal: formula.targetCal,
+        appliedCal: newCal
+      };
+
       saveState();
       renderAll();
       renderMetabolismAnalysis();
-      showToast(`✓ Новая цель: ${state.targets.cal} ккал (${state.targets.c}г углей)`);
+      showToast(`✓ Цель адаптирована: ${newCal} ккал (${c}г углей)`);
+    }
+
+    function revertSmartCalorieAdjustment() {
+      const logs = (state.weightLogs || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+      const latestW = (logs.length > 0 ? Number(logs[logs.length - 1].weight) : null) || (state.body && Number(state.body.weight)) || 72;
+      const formula = getBodyFormulaBaseline(latestW);
+
+      state.targets = { cal: formula.targetCal, p: formula.p, f: formula.f, c: formula.c };
+      state.smartAdjustment = null;
+
+      saveState();
+      renderAll();
+      renderMetabolismAnalysis();
+      showToast(`✓ Возвращена базовая формула: ${formula.targetCal} ккал`);
     }
 
     // =========================================================================
@@ -4589,6 +4705,34 @@
           }
         }
         if (!state.goalCalcMode) state.goalCalcMode = "auto";
+        // Защита и восстановление: если калораж был сбит спамом до неадекватных <= 1500 ккал на наборе массы
+        if (state.targets && Number(state.targets.cal) <= 1500) {
+          const latestW = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
+          const h = (state.body && Number(state.body.height)) || 175;
+          const a = (state.body && Number(state.body.age)) || 20;
+          const act = (state.body && Number(state.body.activity)) || 1.55;
+          const goal = (state.body && Number(state.body.goalMode)) || 1.12;
+          const sex = (state.body && state.body.sex) || "male";
+
+          if (latestW >= 55 && goal >= 1.0) {
+            const bmr = 10 * latestW + 6.25 * h - 5 * a + (sex === "male" ? 5 : -161);
+            const tdee = bmr * act;
+            const baseCal = Math.round(tdee * goal);
+            // Аккуратная разовая коррекция профицита (-120 ккал)
+            const recoveredCal = Math.max(Math.round(tdee - 100), Math.round(baseCal - 120));
+            const recP = Math.round(latestW * 1.85);
+            const recF = Math.round(latestW * 0.95);
+            const recC = Math.max(50, Math.round((recoveredCal - recP * 4 - recF * 9) / 4));
+            state.targets = { cal: recoveredCal, p: recP, f: recF, c: recC };
+            state.smartAdjustment = {
+              date: getTodayKey(),
+              weight: latestW,
+              deltaCal: -120,
+              baselineCal: baseCal,
+              appliedCal: recoveredCal
+            };
+          }
+        }
         if (!state.history) state.history = {};
         if (!Array.isArray(state.deletedThemeIds)) state.deletedThemeIds = [];
         if (!Array.isArray(state.todayItems)) state.todayItems = [];
@@ -4710,14 +4854,19 @@
           totalC += Number(item.c) || 0;
         });
 
-        const activeTheme = getActiveThemeObject();
-        const totals = recalculateWeeklySetsFromPrograms();
-        const setsDone = totals.chest + totals.back + totals.legs + totals.arms;
-        const setsTarget = 52;
+        const activeTheme = typeof getActiveThemeObject === "function" ? getActiveThemeObject() : {};
+        if (typeof recalculateWeeklySetsFromPrograms === "function") {
+          recalculateWeeklySetsFromPrograms();
+        }
+
+        const planned = state.workout?.weeklyTargetByMuscle || {};
+        const realSetsTarget = Object.values(planned).reduce((a, b) => a + (Number(b) || 0), 0) || 60;
+        const done = state.workout?.weeklySetsByMuscle || {};
+        const realSetsDone = Object.values(done).reduce((a, b) => a + (Number(b) || 0), 0);
 
         const todayDow = new Date().getDay();
         const todayAssigned = state.workout?.weekSchedule?.[todayDow] || "rest";
-        const isRestDay = todayAssigned === "rest";
+        const isRestDay = todayAssigned === "rest" || !state.workout?.programs?.[todayAssigned];
         const splitTitle = isRestDay
           ? "ОТДЫХ // ВОССТАНОВЛЕНИЕ"
           : (state.workout?.programs?.[todayAssigned]?.title || "Тренировка");
@@ -4726,7 +4875,7 @@
         const weekOrder = [1, 2, 3, 4, 5, 6, 0];
         const weekBadges = weekOrder.map(k => {
           const val = state.workout?.weekSchedule?.[k] || "rest";
-          if (val === "rest") return "ОТД";
+          if (val === "rest" || !state.workout?.programs?.[val]) return "ОТД";
           return (state.workout?.programs?.[val]?.short || "ТР").replace("День ", "Д");
         }).join(",");
 
@@ -4741,23 +4890,23 @@
           cHex: activeTheme.c || "#C2593F",
           fHex: activeTheme.f || "#8C8275",
           cal: Math.round(totalCal),
-          targetCal: Math.round(Number(state.targets.cal) || 2979),
+          targetCal: Math.max(500, Math.round(Number(state.targets?.cal) || 2000)),
           p: Math.round(totalP),
-          targetP: Math.round(Number(state.targets.p) || 130),
+          targetP: Math.max(10, Math.round(Number(state.targets?.p) || 140)),
           f: Math.round(totalF),
-          targetF: Math.round(Number(state.targets.f) || 67),
+          targetF: Math.max(10, Math.round(Number(state.targets?.f) || 65)),
           c: Math.round(totalC),
-          targetC: Math.round(Number(state.targets.c) || 464),
+          targetC: Math.max(10, Math.round(Number(state.targets?.c) || 215)),
           splitTitle: splitTitle,
           isRestDay: isRestDay,
-          setsDone: setsDone,
-          setsTarget: setsTarget,
+          setsDone: realSetsDone,
+          setsTarget: realSetsTarget,
           weekBadges: weekBadges,
-          currentWeight: String(getLatestBodyWeight()),
+          currentWeight: String(typeof getLatestBodyWeight === "function" ? getLatestBodyWeight() : (state.body?.weight || 70)),
           stackDone: stackDone,
           stackTotal: stackTotal,
           restTimerEndDate: (state.activeRest && state.activeRest.endTime > Date.now()) ? state.activeRest.endTime : 0,
-          apiKey: getEffectiveApiKey(),
+          apiKey: typeof getEffectiveApiKey === "function" ? getEffectiveApiKey() : "",
           stateJson: JSON.stringify(state)
         };
 
@@ -4766,6 +4915,7 @@
         }
       } catch (e) {}
     }
+    window.syncNativeWidget = syncNativeWidget;
 
     function renderAll() {
       const listEl = document.getElementById("foodList");
@@ -6783,76 +6933,8 @@
       }
     };
 
-    // 4. Синхронизируем все 5 мышечных групп (включая Пресс / Кор = 60 подходов) с нативным Виджетом iOS
-    const prevSyncWidget = window.syncNativeWidget;
-    window.syncNativeWidget = function() {
-      if (typeof recalculateWeeklySetsFromPrograms === "function" && window.webkit?.messageHandlers?.widgetBridge) {
-        try {
-          let totalCal = 0, totalP = 0, totalF = 0, totalC = 0;
-          (state.todayItems || []).forEach(item => {
-            totalCal += Number(item.cal) || 0;
-            totalP += Number(item.p) || 0;
-            totalF += Number(item.f) || 0;
-            totalC += Number(item.c) || 0;
-          });
-
-          const activeTheme = typeof getActiveThemeObject === "function" ? getActiveThemeObject() : {};
-          const totals = recalculateWeeklySetsFromPrograms();
-          const setsDone = Object.values(totals).reduce((acc, v) => acc + (Number(v) || 0), 0);
-          const setsTarget = typeof MUSCLE_META === "object"
-            ? Object.values(MUSCLE_META).reduce((acc, m) => acc + (Number(m.target) || 0), 0)
-            : 60;
-
-          const todayDow = new Date().getDay();
-          const todayAssigned = state.workout?.weekSchedule?.[todayDow] || "rest";
-          const progObj = todayAssigned !== "rest" ? state.workout?.programs?.[todayAssigned] : null;
-          const isRestDay = !progObj;
-          const splitTitle = isRestDay ? "ОТДЫХ // ВОССТАНОВЛЕНИЕ" : (progObj.title || "Тренировка");
-
-          const weekOrder = [1, 2, 3, 4, 5, 6, 0];
-          const weekBadges = weekOrder.map(k => {
-            const val = state.workout?.weekSchedule?.[k] || "rest";
-            const p = val !== "rest" ? state.workout?.programs?.[val] : null;
-            if (!p) return "ОТД";
-            return (p.short || "ТР").replace("День ", "Д");
-          }).join(",");
-
-          const stackTotal = (state.supplements || []).length;
-          const stackDone = Object.keys(state.supplementsTakenToday || {}).filter(k => state.supplementsTakenToday[k]).length;
-
-          window.webkit.messageHandlers.widgetBridge.postMessage({
-            action: "syncData",
-            themeId: state.themeId || "noir",
-            calHex: activeTheme.cal || "#D62828",
-            pHex: activeTheme.p || "#E4E4E7",
-            cHex: activeTheme.c || "#C8BFA8",
-            fHex: activeTheme.f || "#64748B",
-            cal: Math.round(totalCal),
-            targetCal: Math.round(Number(state.targets.cal) || 2979),
-            p: Math.round(totalP),
-            targetP: Math.round(Number(state.targets.p) || 130),
-            f: Math.round(totalF),
-            targetF: Math.round(Number(state.targets.f) || 67),
-            c: Math.round(totalC),
-            targetC: Math.round(Number(state.targets.c) || 464),
-            splitTitle: splitTitle,
-            isRestDay: isRestDay,
-            setsDone: setsDone,
-            setsTarget: setsTarget,
-            weekBadges: weekBadges,
-            currentWeight: String(typeof getLatestBodyWeight === "function" ? getLatestBodyWeight() : 70),
-            stackDone: stackDone,
-            stackTotal: stackTotal,
-            apiKey: typeof getEffectiveApiKey === "function" ? getEffectiveApiKey() : "",
-            stateJson: JSON.stringify(state)
-          });
-          return;
-        } catch (e) {}
-      }
-      if (prevSyncWidget) prevSyncWidget();
-    };
-
-    syncNativeWidget();
+    // 4. Синхронизируем виджет
+    if (typeof syncNativeWidget === "function") syncNativeWidget();
   })();
   </script>
   
@@ -7869,66 +7951,8 @@
       return doneTotals;
     };
 
-    // Чтобы и на виджете iPhone отображалась реальная сумма подходов твоей программы (например 34/71 вместо 34/52)
-    const origSyncWidget = window.syncNativeWidget;
-    window.syncNativeWidget = function() {
-      recalculateWeeklySetsFromPrograms();
-      if (origSyncWidget) origSyncWidget();
-
-      try {
-        const planned = state.workout?.weeklyTargetByMuscle || {};
-        const realSetsTarget = Object.values(planned).reduce((a, b) => a + (Number(b) || 0), 0) || 60;
-        const done = state.workout?.weeklySetsByMuscle || {};
-        const realSetsDone = Object.values(done).reduce((a, b) => a + (Number(b) || 0), 0);
-
-        if (window.webkit?.messageHandlers?.widgetBridge) {
-          const activeTheme = typeof getActiveThemeObject === "function" ? getActiveThemeObject() : {};
-          let totalCal = 0, totalP = 0, totalF = 0, totalC = 0;
-          (state.todayItems || []).forEach(i => {
-            totalCal += Number(i.cal) || 0;
-            totalP += Number(i.p) || 0;
-            totalF += Number(i.f) || 0;
-            totalC += Number(i.c) || 0;
-          });
-          const todayDow = new Date().getDay();
-          const todayAssigned = state.workout?.weekSchedule?.[todayDow] || "rest";
-          const isRestDay = todayAssigned === "rest" || !state.workout?.programs?.[todayAssigned];
-          const splitTitle = isRestDay ? "ОТДЫХ // ВОССТАНОВЛЕНИЕ" : (state.workout.programs[todayAssigned].title || "Тренировка");
-          const weekBadges = [1, 2, 3, 4, 5, 6, 0].map(k => {
-            const v = state.workout?.weekSchedule?.[k] || "rest";
-            return (v === "rest" || !state.workout?.programs?.[v]) ? "ОТД" : (state.workout.programs[v].short || "ТР").replace("День ", "Д");
-          }).join(",");
-
-          window.webkit.messageHandlers.widgetBridge.postMessage({
-            action: "syncData",
-            themeId: state.themeId || "monolith",
-            calHex: activeTheme.cal || "#D62828",
-            pHex: activeTheme.p || "#E4E4E7",
-            cHex: activeTheme.c || "#C8BFA8",
-            fHex: activeTheme.f || "#64748B",
-            cal: Math.round(totalCal),
-            targetCal: Math.round(Number(state.targets.cal) || 2979),
-            p: Math.round(totalP),
-            targetP: Math.round(Number(state.targets.p) || 130),
-            f: Math.round(totalF),
-            targetF: Math.round(Number(state.targets.f) || 67),
-            c: Math.round(totalC),
-            targetC: Math.round(Number(state.targets.c) || 464),
-            splitTitle: splitTitle,
-            isRestDay: isRestDay,
-            setsDone: realSetsDone,
-            setsTarget: realSetsTarget,
-            weekBadges: weekBadges,
-            currentWeight: String(typeof getLatestBodyWeight === "function" ? getLatestBodyWeight() : 70),
-            stackDone: Object.keys(state.supplementsTakenToday || {}).filter(k => state.supplementsTakenToday[k]).length,
-            stackTotal: (state.supplements || []).length,
-            apiKey: typeof getEffectiveApiKey === "function" ? getEffectiveApiKey() : "",
-            stateJson: JSON.stringify(state)
-          });
-        }
-      } catch (e) {}
-    };
-
+    // Синхронизация виджета
+    if (typeof syncNativeWidget === "function") syncNativeWidget();
     recalculateWeeklySetsFromPrograms();
     if (typeof renderWorkoutAll === "function") renderWorkoutAll();
   })();

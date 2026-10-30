@@ -183,20 +183,31 @@ struct WebView: UIViewRepresentable {
             if let cHex = dict["cHex"] as? String { d.set(cHex, forKey: "cHex") }
             if let fHex = dict["fHex"] as? String { d.set(fHex, forKey: "fHex") }
             
-            d.set(dict["cal"] as? Int ?? 0, forKey: "cal")
-            d.set(dict["targetCal"] as? Int ?? 2979, forKey: "targetCal")
-            d.set(dict["p"] as? Int ?? 0, forKey: "p")
-            d.set(dict["targetP"] as? Int ?? 130, forKey: "targetP")
-            d.set(dict["f"] as? Int ?? 0, forKey: "f")
-            d.set(dict["targetF"] as? Int ?? 67, forKey: "targetF")
-            d.set(dict["c"] as? Int ?? 0, forKey: "c")
-            d.set(dict["targetC"] as? Int ?? 464, forKey: "targetC")
+            let curCal = (dict["cal"] as? Int) ?? (dict["cal"] as? NSNumber)?.intValue ?? 0
+            let targetCal = (dict["targetCal"] as? Int) ?? (dict["targetCal"] as? NSNumber)?.intValue ?? 2000
+            let curP = (dict["p"] as? Int) ?? (dict["p"] as? NSNumber)?.intValue ?? 0
+            let targetP = (dict["targetP"] as? Int) ?? (dict["targetP"] as? NSNumber)?.intValue ?? 140
+            let curF = (dict["f"] as? Int) ?? (dict["f"] as? NSNumber)?.intValue ?? 0
+            let targetF = (dict["targetF"] as? Int) ?? (dict["targetF"] as? NSNumber)?.intValue ?? 65
+            let curC = (dict["c"] as? Int) ?? (dict["c"] as? NSNumber)?.intValue ?? 0
+            let targetC = (dict["targetC"] as? Int) ?? (dict["targetC"] as? NSNumber)?.intValue ?? 215
+
+            d.set(curCal, forKey: "cal")
+            d.set(targetCal, forKey: "targetCal")
+            d.set(curP, forKey: "p")
+            d.set(targetP, forKey: "targetP")
+            d.set(curF, forKey: "f")
+            d.set(targetF, forKey: "targetF")
+            d.set(curC, forKey: "c")
+            d.set(targetC, forKey: "targetC")
             
             // Данные тренировки, календаря и стека для двух виджетов
             d.set(dict["splitTitle"] as? String ?? "День 1 · Жим", forKey: "splitTitle")
             d.set(dict["isRestDay"] as? Bool ?? false, forKey: "isRestDay")
-            d.set(dict["setsDone"] as? Int ?? 0, forKey: "setsDone")
-            d.set(dict["setsTarget"] as? Int ?? 52, forKey: "setsTarget")
+            let setsDone = (dict["setsDone"] as? Int) ?? (dict["setsDone"] as? NSNumber)?.intValue ?? 0
+            let setsTarget = (dict["setsTarget"] as? Int) ?? (dict["setsTarget"] as? NSNumber)?.intValue ?? 60
+            d.set(setsDone, forKey: "setsDone")
+            d.set(setsTarget, forKey: "setsTarget")
             d.set(dict["weekBadges"] as? String ?? "Д1,Д2,ОТД,Д3,ОТД,Д4,ОТД", forKey: "weekBadges")
             d.set(dict["currentWeight"] as? String ?? "", forKey: "currentWeight")
             d.set(dict["stackDone"] as? Int ?? 0, forKey: "stackDone")
