@@ -1564,15 +1564,13 @@
             <button type="button" onclick="stepDailySteps(1000)" class="preset-chip shrink-0">+1k</button>
           </div>
 
-          <!-- Тумблер компенсации нормы калорий -->
-          <div onclick="toggleStepBurnCompensation()" class="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between cursor-pointer active:scale-[0.99] transition">
-            <div class="flex items-center gap-2">
-              <div id="settingsStepBurnCheckbox" class="w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold">
-                ✓
-              </div>
-              <span class="text-xs text-zinc-300 font-medium">Добавлять расход шагов к норме</span>
-            </div>
-            <span id="settingsStepBurnTargetDelta" class="text-xs mono font-bold text-white">+0 ккал</span>
+          <!-- Расчет автоматического списания расхода шагов из наетого -->
+          <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
+            <span class="text-zinc-400">Списание активности (NEAT):</span>
+            <span id="settingsStepBurnTargetDelta" class="mono font-bold text-orange-400">−0 ккал из наетого</span>
+          </div>
+          <div class="text-[11px] text-zinc-500 leading-relaxed px-1">
+            Калории от шагов автоматически вычитаются из текущего наетого калоража за день. Суточная норма остается фиксированной.
           </div>
         </div>
 
@@ -5347,8 +5345,8 @@
           pHex: activeTheme.p || "#9CA3AF",
           cHex: activeTheme.c || "#C2593F",
           fHex: activeTheme.f || "#8C8275",
-          cal: Math.round(totalCal),
-          targetCal: Math.max(500, Math.round((Number(state.targets?.cal) || 2000) + ((state.dailySteps?.autoAddTarget) ? (typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0) : 0))),
+          cal: Math.round(Math.max(0, totalCal - (typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0))),
+          targetCal: Math.max(500, Math.round(Number(state.targets?.cal) || 2000)),
           p: Math.round(totalP),
           targetP: Math.max(10, Math.round(Number(state.targets?.p) || 140)),
           f: Math.round(totalF),
@@ -5406,7 +5404,7 @@
 
       if (setSteps) setSteps.textContent = steps.toLocaleString("ru-RU");
       if (setBurn) setBurn.textContent = `+${burn} ккал`;
-      if (setDelta) setDelta.textContent = `+${burn} ккал к цели`;
+      if (setDelta) setDelta.textContent = `−${burn} ккал из наетого`;
 
       if (setBadge) {
         if (state.dailySteps.source === "motion" || isNative) {
@@ -5700,15 +5698,16 @@
       totalF = Math.round(totalF);
       totalC = Math.round(totalC);
 
-      const baseCal = Math.max(500, Number(state.targets?.cal) || 2000);
+      const tCal = Math.max(500, Number(state.targets?.cal) || 2000);
       const tP = Math.max(10, Number(state.targets?.p) || 140);
       const tF = Math.max(10, Number(state.targets?.f) || 65);
       const tC = Math.max(10, Number(state.targets?.c) || 215);
 
-      const stepBurn = (state.dailySteps?.autoAddTarget) ? (typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0) : 0;
-      const tCal = baseCal + stepBurn;
+      // Шаги автоматически вычитаются из текущего наетого за день
+      const stepBurn = typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0;
+      const netCal = Math.max(0, totalCal - stepBurn);
 
-      document.getElementById("calEaten").textContent = totalCal;
+      document.getElementById("calEaten").textContent = netCal;
       document.getElementById("calTarget").textContent = tCal;
       document.getElementById("pEaten").textContent = totalP;
       document.getElementById("pTarget").textContent = tP;
@@ -5717,18 +5716,18 @@
       document.getElementById("cEaten").textContent = totalC;
       document.getElementById("cTarget").textContent = tC;
 
-      const calPct = Math.min(100, Math.round((totalCal / tCal) * 100));
+      const calPct = Math.min(100, Math.round((netCal / tCal) * 100));
       document.getElementById("calBar").style.width = `${calPct}%`;
       document.getElementById("pBar").style.width = `${Math.min(100, (totalP / tP) * 100)}%`;
       document.getElementById("fBar").style.width = `${Math.min(100, (totalF / tF) * 100)}%`;
       document.getElementById("cBar").style.width = `${Math.min(100, (totalC / tC) * 100)}%`;
 
-      const diff = tCal - totalCal;
+      const diff = tCal - netCal;
       const statusDot = document.getElementById("statusDot");
       const pctBadge = document.getElementById("calPercentBadge");
 
       if (diff >= 0) {
-        pctBadge.textContent = stepBurn > 0 ? `Осталось ${diff} (+ ${stepBurn}ш)` : `Осталось ${diff} ккал`;
+        pctBadge.textContent = `Осталось ${diff} ккал`;
         pctBadge.style.color = "var(--accent-cal)";
         statusDot.style.backgroundColor = "var(--accent-cal)";
       } else {
