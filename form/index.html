@@ -402,6 +402,69 @@
       box-shadow: 0 0 14px var(--accent-glow);
     }
 
+    /* Кругляши и плашки разминочных подходов (аккуратные и скромные) */
+    .warmup-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.14);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8.5px;
+      font-weight: 700;
+      font-family: var(--font-mono, monospace);
+      color: #fcd34d;
+      flex-shrink: 0;
+    }
+    .warmup-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.22);
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+      color: #f4f4f5;
+    }
+    .note-cat-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #a1a1aa;
+      font-family: var(--font-mono, monospace);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .note-cat-pill:active { transform: scale(0.95); }
+    .note-cat-pill.active[data-cat="coach"], .note-cat-pill.active-coach {
+      background: rgba(14, 165, 233, 0.16) !important;
+      border-color: rgba(56, 189, 248, 0.5) !important;
+      color: #7dd3fc !important;
+    }
+    .note-cat-pill.active[data-cat="warmup"] {
+      background: rgba(245, 158, 11, 0.16) !important;
+      border-color: rgba(245, 158, 11, 0.5) !important;
+      color: #fcd34d !important;
+    }
+    .note-cat-pill.active[data-cat="technique"] {
+      background: rgba(16, 185, 129, 0.16) !important;
+      border-color: rgba(52, 211, 153, 0.5) !important;
+      color: #6ee7b7 !important;
+    }
+    .note-cat-pill.active[data-cat="setup"] {
+      background: rgba(168, 85, 247, 0.16) !important;
+      border-color: rgba(192, 132, 252, 0.5) !important;
+      color: #d8b4fe !important;
+    }
+    .note-cat-pill.active[data-cat="general"] {
+      background: rgba(255, 255, 255, 0.12) !important;
+      border-color: rgba(255, 255, 255, 0.28) !important;
+      color: #ffffff !important;
+    }
+
     ::-webkit-scrollbar { width: 0; height: 0; }
 
     #viewsViewport {
@@ -748,6 +811,9 @@
         <button type="button" onclick="closeSetLoggerModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 ml-2">✕</button>
       </div>
 
+      <!-- Контейнер превью заметок и разминки к упражнению -->
+      <div id="setLoggerNotesPreview" class="mb-3"></div>
+
       <div class="bg-zinc-900/70 border border-white/[0.06] rounded-2xl p-3.5 space-y-3 mb-4">
         <div>
           <div class="flex items-center justify-between mb-1.5">
@@ -851,19 +917,90 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- МОДАЛКА: СВОДКА ПРОГРЕССИИ ЗА 14 ДНЕЙ                                 -->
+  <!-- МОДАЛКА: СВОДКА ПРОГРЕССИИ ЗА 14 ДНЕЙ И ЗАМЕТКИ                      -->
   <!-- ===================================================================== -->
   <div id="progressionModal" class="sheet-backdrop" onclick="if(event.target===this) closeProgressionModal()">
     <div class="sheet-panel">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
       <div class="flex items-center justify-between mb-3">
         <div>
-          <h2 class="text-lg font-bold text-white">Прогрессия за 14 дней</h2>
-          <p class="text-xs text-zinc-400">Сравнение рабочих весов и повторений за 2 недели</p>
+          <h2 class="text-lg font-bold text-white">Прогрессия и база знаний</h2>
+          <p class="text-xs text-zinc-400">Сравнение весов за 14 дней, советы тренера и разминка</p>
         </div>
         <button type="button" onclick="closeProgressionModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
-      <div id="progressionListContainer" class="space-y-2.5 max-h-[65dvh] overflow-y-auto pr-0.5"></div>
+
+      <!-- Вкладки: Прогрессия vs Заметки и разминка -->
+      <div class="flex items-center p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] mb-3 text-xs mono">
+        <button type="button" id="tabProgressionHistory" onclick="setProgressionSubtab('history')" class="flex-1 py-1.5 rounded-xl font-bold transition bg-white/10 text-white">
+          Динамика весов (14д)
+        </button>
+        <button type="button" id="tabProgressionNotes" onclick="setProgressionSubtab('notes')" class="flex-1 py-1.5 rounded-xl font-medium transition text-zinc-400 hover:text-white">
+          Заметки и разминка
+        </button>
+      </div>
+
+      <div id="progressionListContainer" class="space-y-2.5 max-h-[60dvh] overflow-y-auto pr-0.5"></div>
+      <div id="progressionNotesContainer" class="space-y-3 max-h-[60dvh] overflow-y-auto pr-0.5 hidden"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- МОДАЛКА: ЗАМЕТКИ, СОВЕТЫ ТРЕНЕРА И РАЗМИНКА К УПРАЖНЕНИЮ            -->
+  <!-- ===================================================================== -->
+  <div id="exerciseNotesModal" class="sheet-backdrop z-[110]" onclick="if(event.target===this) closeExerciseNotesModal()">
+    <div class="sheet-panel">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span id="exNotesMuscleBadge" class="px-2 py-0.5 rounded-full text-[9px] font-semibold mono uppercase tracking-wide bg-white/10 text-zinc-300">Мышцы</span>
+            <span class="text-[10px] uppercase tracking-wider font-semibold mono text-zinc-400">База заметок</span>
+          </div>
+          <h3 id="exNotesModalTitle" class="text-base font-bold text-white truncate">Упражнение</h3>
+        </div>
+        <button type="button" onclick="closeExerciseNotesModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 ml-2">✕</button>
+      </div>
+
+      <!-- Список заметок к упражнению в стиле GitHub alerts -->
+      <div id="exNotesListContainer" class="space-y-2.5 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3.5"></div>
+
+      <!-- Форма создания новой заметки -->
+      <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 space-y-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider mono text-zinc-400 flex items-center justify-between">
+          <span>+ Добавить запись</span>
+          <span class="text-[9px] text-zinc-500 lowercase font-mono">github style alert</span>
+        </div>
+
+        <!-- Выбор категории -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] mono">
+          <button type="button" onclick="selectNoteCategory('coach')" id="noteCatBtn_coach" class="note-cat-pill active active-coach px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="coach">
+            Совет тренера
+          </button>
+          <button type="button" onclick="selectNoteCategory('warmup')" id="noteCatBtn_warmup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="warmup">
+            Разминка
+          </button>
+          <button type="button" onclick="selectNoteCategory('technique')" id="noteCatBtn_technique" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="technique">
+            Техника
+          </button>
+          <button type="button" onclick="selectNoteCategory('setup')" id="noteCatBtn_setup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="setup">
+            Настройка
+          </button>
+          <button type="button" onclick="selectNoteCategory('general')" id="noteCatBtn_general" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="general">
+            Заметка
+          </button>
+        </div>
+
+        <!-- Поле ввода текста -->
+        <textarea id="newExNoteText" rows="3" placeholder="Что сказал тренер / техника / веса разминки (напр. 10 кг × 12, 15 кг × 8)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
+
+        <div class="flex items-center justify-between pt-0.5">
+          <div class="text-[10px] text-zinc-500 mono">Поддерживает разминочные веса</div>
+          <button type="button" onclick="submitNewExerciseNote()" class="py-2 px-4 rounded-xl accent-btn text-xs font-semibold">
+            + Записать
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2138,7 +2275,8 @@
         weekSchedule: { 1: "d1", 2: "d2", 3: "rest", 4: "d3", 5: "rest", 6: "d4", 0: "rest" },
         programs: JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS)),
         weeklySetsByMuscle: { chest: 0, back: 0, legs: 0, arms: 0, core: 0 },
-        logs: [] // [{ date, exId, exName, muscle, weight, reps }]
+        logs: [], // [{ date, exId, exName, muscle, weight, reps }]
+        exerciseNotes: {} // [normName]: [{ id, category, text, date, createdAt }]
       },
       lastDate: "",
       todayItems: [],
@@ -2907,6 +3045,10 @@
       const uncheckBtn = document.getElementById("btnUncheckSet");
       if (existingSet) uncheckBtn.classList.remove("hidden");
       else uncheckBtn.classList.add("hidden");
+
+      if (typeof renderSetLoggerNotesPreview === "function") {
+        renderSetLoggerNotesPreview(ex.name);
+      }
 
       document.getElementById("setLoggerModal").classList.add("open");
     }
@@ -4769,8 +4911,12 @@
             weekSchedule: { 1: "d1", 2: "d2", 3: "rest", 4: "d3", 5: "rest", 6: "d4", 0: "rest" },
             programs: JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS)),
             weeklySetsByMuscle: { chest: 0, back: 0, legs: 0, arms: 0, core: 0 },
-            logs: []
+            logs: [],
+            exerciseNotes: {}
           };
+        }
+        if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
+          state.workout.exerciseNotes = {};
         }
         if (!state.restTimerSettings) {
           state.restTimerSettings = {
@@ -7080,6 +7226,10 @@
       if (existingSet) uncheckBtn.classList.remove("hidden");
       else uncheckBtn.classList.add("hidden");
 
+      if (typeof renderSetLoggerNotesPreview === "function") {
+        renderSetLoggerNotesPreview(ex.name);
+      }
+
       document.getElementById("setLoggerModal").classList.add("open");
     };
 
@@ -7226,11 +7376,353 @@
       }).join("");
     };
 
-    window.openProgressionModal = function() {
-      const modal = document.getElementById("progressionModal");
-      if (modal) modal.classList.add("open");
+    // =========================================================================
+    // БАЗА ЗНАНИЙ: СОВЕТЫ ТРЕНЕРА, ТЕХНИКА, РАЗМИНКА И GITHUB-STYLE ЗАМЕТКИ
+    // =========================================================================
+    let currentProgressionSubtab = "history";
+    let currentActiveNotesExName = "";
+    let selectedNoteCategory = "coach";
 
-      const container = document.getElementById("progressionListContainer");
+    window.getExerciseNoteKey = function(name) {
+      return (name || "").trim().toLowerCase();
+    };
+
+    window.getExerciseNotes = function(name) {
+      if (!state.workout) state.workout = {};
+      if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
+        state.workout.exerciseNotes = {};
+      }
+      const key = getExerciseNoteKey(name);
+      return Array.isArray(state.workout.exerciseNotes[key]) ? state.workout.exerciseNotes[key] : [];
+    };
+
+    window.parseWarmupSets = function(text) {
+      if (!text) return [];
+      const regex = /(?:[РрPpWw]\d+[:.\s]*)?(\d+(?:[.,]\d+)?)\s*(?:кг|kg)?\s*(?:[xх×*]|на)\s*(\d+)/gi;
+      const results = [];
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const w = parseFloat(match[1].replace(",", "."));
+        const r = parseInt(match[2], 10);
+        if (!isNaN(w) && !isNaN(r)) {
+          results.push({ weight: w, reps: r });
+        }
+      }
+      return results;
+    };
+
+    window.renderWarmupPillsHtml = function(sets) {
+      if (!Array.isArray(sets) || sets.length === 0) return "";
+      return sets.map((item, idx) => `
+        <div class="warmup-pill">
+          <span class="warmup-dot">Р${idx + 1}</span>
+          <span class="font-semibold text-zinc-100">${item.weight === 0 ? "Свой вес" : item.weight + " кг"} × ${item.reps}</span>
+        </div>
+      `).join(" ");
+    };
+
+    const NOTE_CATEGORY_META = {
+      coach: {
+        title: "СОВЕТ ТРЕНЕРА",
+        border: "border-sky-500/30",
+        bg: "bg-sky-950/20",
+        borderLeft: "border-l-4 border-l-sky-400",
+        badge: "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+      },
+      warmup: {
+        title: "РАЗМИНКА",
+        border: "border-amber-500/30",
+        bg: "bg-amber-950/20",
+        borderLeft: "border-l-4 border-l-amber-400",
+        badge: "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+      },
+      technique: {
+        title: "ТЕХНИКА",
+        border: "border-emerald-500/30",
+        bg: "bg-emerald-950/20",
+        borderLeft: "border-l-4 border-l-emerald-400",
+        badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+      },
+      setup: {
+        title: "НАСТРОЙКА",
+        border: "border-purple-500/30",
+        bg: "bg-purple-950/20",
+        borderLeft: "border-l-4 border-l-purple-400",
+        badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+      },
+      general: {
+        title: "ЗАМЕТКА",
+        border: "border-white/10",
+        bg: "bg-zinc-900/60",
+        borderLeft: "border-l-4 border-l-zinc-400",
+        badge: "bg-white/10 text-zinc-300 border border-white/10"
+      }
+    };
+
+    window.renderSingleNoteCardHtml = function(note, exName) {
+      const meta = NOTE_CATEGORY_META[note.category] || NOTE_CATEGORY_META.general;
+      const warmups = parseWarmupSets(note.text);
+      const warmupPillsHtml = warmups.length > 0 ? renderWarmupPillsHtml(warmups) : "";
+
+      return `
+        <div class="rounded-2xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-3 space-y-1.5 transition">
+          <div class="flex items-center justify-between text-[10px] mono">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px] ${meta.badge}">
+                ${meta.title}
+              </span>
+              <span class="text-zinc-500">${escapeHtml(note.date || "")}</span>
+            </div>
+            <button type="button" onclick="deleteExNote('${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-2 py-0.5 rounded transition">
+              ✕
+            </button>
+          </div>
+          ${warmupPillsHtml ? `<div class="flex flex-wrap gap-1.5 pt-1">${warmupPillsHtml}</div>` : ""}
+          <div class="text-xs text-zinc-200 leading-relaxed font-mono whitespace-pre-wrap">${escapeHtml(note.text)}</div>
+        </div>
+      `;
+    };
+
+    window.addExerciseNote = function(name, category, text) {
+      if (!name || !text || !text.trim()) return;
+      if (!state.workout) state.workout = {};
+      if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
+        state.workout.exerciseNotes = {};
+      }
+      const key = getExerciseNoteKey(name);
+      if (!Array.isArray(state.workout.exerciseNotes[key])) {
+        state.workout.exerciseNotes[key] = [];
+      }
+
+      let finalCat = category || "coach";
+      let cleanText = text.trim();
+      const alertMatch = cleanText.match(/^>\s*\[!(NOTE|TIP|WARNING|IMPORTANT|CAUTION)\]\s*(.*)$/is);
+      if (alertMatch) {
+        const tag = alertMatch[1].toUpperCase();
+        if (tag === "NOTE") finalCat = "coach";
+        else if (tag === "TIP") finalCat = "technique";
+        else if (tag === "WARNING") finalCat = "warmup";
+        else if (tag === "IMPORTANT") finalCat = "setup";
+        else if (tag === "CAUTION") finalCat = "general";
+        cleanText = (alertMatch[2] || "").trim();
+      }
+
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")} · ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+      state.workout.exerciseNotes[key].unshift({
+        id: "note_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        category: finalCat,
+        text: cleanText,
+        date: dateStr,
+        createdAt: Date.now()
+      });
+
+      saveState();
+    };
+
+    window.deleteExNote = function(name, noteId) {
+      if (!state.workout?.exerciseNotes) return;
+      const key = getExerciseNoteKey(name);
+      if (!Array.isArray(state.workout.exerciseNotes[key])) return;
+      state.workout.exerciseNotes[key] = state.workout.exerciseNotes[key].filter(n => n.id !== noteId);
+      saveState();
+
+      renderExerciseNotesList(name);
+      renderSetLoggerNotesPreview(name);
+      if (document.getElementById("progressionModal")?.classList.contains("open")) {
+        renderProgressionContent();
+      }
+      showToast("Заметка удалена");
+    };
+
+    window.selectNoteCategory = function(cat) {
+      selectedNoteCategory = cat;
+      const btns = document.querySelectorAll(".note-cat-pill");
+      btns.forEach(btn => {
+        const btnCat = btn.getAttribute("data-cat") || "";
+        if (btnCat === cat) {
+          btn.className = `note-cat-pill active px-2.5 py-1 rounded-lg border transition shrink-0 active-${cat}`;
+        } else {
+          btn.className = "note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0";
+        }
+      });
+    };
+
+    window.renderExerciseNotesList = function(exName) {
+      const container = document.getElementById("exNotesListContainer");
+      if (!container) return;
+      const notes = getExerciseNotes(exName);
+      if (notes.length === 0) {
+        container.innerHTML = `
+          <div class="py-7 text-center space-y-2 rounded-2xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="text-xs font-bold text-zinc-300 mono uppercase tracking-wider">НЕТ ЗАМЕТОК И СОВЕТОВ</div>
+            <p class="text-[11px] text-zinc-500 max-w-xs mx-auto leading-relaxed px-4">
+              Запиши советы тренера, высоту сиденья скамьи или разминочную пирамиду (напр. 10 кг × 12, 15 кг × 8).
+            </p>
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = notes.map(n => renderSingleNoteCardHtml(n, exName)).join("");
+    };
+
+    window.openExerciseNotesModal = function(exName) {
+      currentActiveNotesExName = exName;
+      const modal = document.getElementById("exerciseNotesModal");
+      const title = document.getElementById("exNotesModalTitle");
+      const badge = document.getElementById("exNotesMuscleBadge");
+      if (title) title.textContent = exName;
+
+      let muscle = "chest";
+      Object.values(state.workout?.programs || {}).forEach(p => {
+        (p.exercises || []).forEach(e => {
+          if (e.name.trim().toLowerCase() === exName.trim().toLowerCase() && e.muscle) {
+            muscle = e.muscle;
+          }
+        });
+      });
+      const mMeta = MUSCLE_META[muscle] || MUSCLE_META.chest;
+      if (badge) {
+        badge.textContent = mMeta.label;
+        badge.style.color = mMeta.color || "var(--accent-cal)";
+        badge.style.background = mMeta.bg || "rgba(255,255,255,0.08)";
+      }
+
+      selectNoteCategory("coach");
+      const input = document.getElementById("newExNoteText");
+      if (input) input.value = "";
+
+      renderExerciseNotesList(exName);
+      if (modal) modal.classList.add("open");
+    };
+
+    window.closeExerciseNotesModal = function() {
+      const modal = document.getElementById("exerciseNotesModal");
+      if (modal) modal.classList.remove("open");
+    };
+
+    window.submitNewExerciseNote = function() {
+      const input = document.getElementById("newExNoteText");
+      const text = input ? input.value : "";
+      if (!text || !text.trim()) {
+        showToast("Введи текст заметки");
+        return;
+      }
+      addExerciseNote(currentActiveNotesExName, selectedNoteCategory, text);
+      if (input) input.value = "";
+      renderExerciseNotesList(currentActiveNotesExName);
+      renderSetLoggerNotesPreview(currentActiveNotesExName);
+      if (document.getElementById("progressionModal")?.classList.contains("open")) {
+        renderProgressionContent();
+      }
+      showToast("Заметка сохранена");
+    };
+
+    window.renderSetLoggerNotesPreview = function(exName) {
+      const box = document.getElementById("setLoggerNotesPreview");
+      if (!box) return;
+
+      const notes = getExerciseNotes(exName);
+      if (notes.length === 0) {
+        box.innerHTML = `
+          <button
+            type="button"
+            onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
+            class="w-full py-2 px-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.05] text-[11px] mono text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition"
+          >
+            <span>+ Заметка / Совет тренера / Разминка</span>
+          </button>
+        `;
+        return;
+      }
+
+      const warmupNote = notes.find(n => n.category === "warmup") || notes.find(n => parseWarmupSets(n.text).length > 0);
+      const coachNote = notes.find(n => n.category === "coach") || notes[0];
+
+      let warmHtml = "";
+      if (warmupNote) {
+        const warmups = parseWarmupSets(warmupNote.text);
+        if (warmups.length > 0) {
+          warmHtml = `
+            <div class="rounded-2xl border border-amber-500/25 bg-amber-950/20 p-2.5 border-l-4 border-l-amber-400">
+              <div class="flex items-center justify-between text-[10px] font-bold mono text-amber-300 uppercase tracking-wider mb-1">
+                <span>Разминочный план</span>
+                <span class="text-zinc-500 text-[9px]">${escapeHtml(warmupNote.date || "")}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 pt-0.5">
+                ${renderWarmupPillsHtml(warmups)}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      let tipHtml = "";
+      if (coachNote && coachNote !== warmupNote) {
+        const meta = NOTE_CATEGORY_META[coachNote.category] || NOTE_CATEGORY_META.coach;
+        tipHtml = `
+          <div class="rounded-2xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2.5">
+            <div class="flex items-center justify-between text-[10px] font-bold mono ${meta.badge.split(' ')[1] || 'text-sky-300'} uppercase tracking-wider mb-0.5">
+              <span>${meta.title}</span>
+              <span class="text-zinc-500 text-[9px]">${escapeHtml(coachNote.date || "")}</span>
+            </div>
+            <div class="text-xs text-zinc-200 font-mono leading-relaxed truncate">${escapeHtml(coachNote.text)}</div>
+          </div>
+        `;
+      }
+
+      box.innerHTML = `
+        <div class="space-y-1.5">
+          ${warmHtml}
+          ${tipHtml}
+          <div class="flex justify-end pt-0.5">
+            <button
+              type="button"
+              onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
+              class="text-[10px] mono text-zinc-400 hover:text-white underline flex items-center gap-1"
+            >
+              <span>База заметок (${notes.length}) →</span>
+            </button>
+          </div>
+        </div>
+      `;
+    };
+
+    window.setProgressionSubtab = function(tab) {
+      currentProgressionSubtab = tab;
+      const tabHist = document.getElementById("tabProgressionHistory");
+      const tabNotes = document.getElementById("tabProgressionNotes");
+      const listHist = document.getElementById("progressionListContainer");
+      const listNotes = document.getElementById("progressionNotesContainer");
+
+      if (tab === "history") {
+        if (tabHist) {
+          tabHist.className = "flex-1 py-1.5 rounded-xl font-bold transition bg-white/10 text-white";
+        }
+        if (tabNotes) {
+          tabNotes.className = "flex-1 py-1.5 rounded-xl font-medium transition text-zinc-400 hover:text-white";
+        }
+        if (listHist) listHist.classList.remove("hidden");
+        if (listNotes) listNotes.classList.add("hidden");
+      } else {
+        if (tabHist) {
+          tabHist.className = "flex-1 py-1.5 rounded-xl font-medium transition text-zinc-400 hover:text-white";
+        }
+        if (tabNotes) {
+          tabNotes.className = "flex-1 py-1.5 rounded-xl font-bold transition bg-white/10 text-white";
+        }
+        if (listHist) listHist.classList.add("hidden");
+        if (listNotes) listNotes.classList.remove("hidden");
+      }
+      renderProgressionContent();
+    };
+
+    window.renderProgressionContent = function() {
+      const containerHist = document.getElementById("progressionListContainer");
+      const containerNotes = document.getElementById("progressionNotesContainer");
+      if (!containerHist && !containerNotes) return;
+
       const logs = state.workout?.logs || [];
       const todayKey = getTodayKey();
       const cutoff = new Date();
@@ -7238,7 +7730,7 @@
       const cutoffKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
 
       const uniqueExercisesMap = new Map();
-      Object.values(state.workout.programs || {}).forEach(p => {
+      Object.values(state.workout?.programs || {}).forEach(p => {
         (p.exercises || []).forEach(ex => {
           ensureExerciseBaseline(ex);
           const key = ex.name.trim().toLowerCase();
@@ -7254,98 +7746,173 @@
       });
 
       const allExercises = Array.from(uniqueExercisesMap.values());
-      if (allExercises.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-xs text-zinc-500">Нет упражнений в программе.</div>`;
-        return;
-      }
 
-      container.innerHTML = allExercises.map(ex => {
-        const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
-        const mColor = mMeta.color || mMeta.colorVar || "var(--accent-cal)";
-        const mBg = mMeta.bg || "rgba(255,255,255,0.08)";
+      if (containerHist) {
+        if (allExercises.length === 0) {
+          containerHist.innerHTML = `<div class="text-center py-8 text-xs text-zinc-500">Нет упражнений в программе.</div>`;
+        } else {
+          containerHist.innerHTML = allExercises.map(ex => {
+            const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
+            const mColor = mMeta.color || mMeta.colorVar || "var(--accent-cal)";
+            const mBg = mMeta.bg || "rgba(255,255,255,0.08)";
 
-        const normName = ex.name.trim().toLowerCase();
-        const exLogs = logs.filter(l =>
-          l.date >= cutoffKey &&
-          (l.exId === ex.id || (l.exName && l.exName.trim().toLowerCase() === normName))
-        );
+            const normName = ex.name.trim().toLowerCase();
+            const exLogs = logs.filter(l =>
+              l.date >= cutoffKey &&
+              (l.exId === ex.id || (l.exName && l.exName.trim().toLowerCase() === normName))
+            );
 
-        const bestByDate = {};
-        exLogs.forEach(l => {
-          if (!bestByDate[l.date] || isSetBetter(l, bestByDate[l.date])) {
-            bestByDate[l.date] = { weight: l.weight, reps: l.reps };
-          }
-        });
+            const bestByDate = {};
+            exLogs.forEach(l => {
+              if (!bestByDate[l.date] || isSetBetter(l, bestByDate[l.date])) {
+                bestByDate[l.date] = { weight: l.weight, reps: l.reps };
+              }
+            });
 
-        const doneTodaySets = (ex.setsToday || []).filter(Boolean);
-        const bestToday = getBestSetFromList(doneTodaySets);
-        if (bestToday) {
-          if (!bestByDate[todayKey] || isSetBetter(bestToday, bestByDate[todayKey])) {
-            bestByDate[todayKey] = { weight: bestToday.weight, reps: bestToday.reps };
-          }
-        }
+            const doneTodaySets = (ex.setsToday || []).filter(Boolean);
+            const bestToday = getBestSetFromList(doneTodaySets);
+            if (bestToday) {
+              if (!bestByDate[todayKey] || isSetBetter(bestToday, bestByDate[todayKey])) {
+                bestByDate[todayKey] = { weight: bestToday.weight, reps: bestToday.reps };
+              }
+            }
 
-        const totalSets14d = Math.max(exLogs.length, doneTodaySets.length);
-        const trainingDates = Object.keys(bestByDate).sort();
+            const totalSets14d = Math.max(exLogs.length, doneTodaySets.length);
+            const trainingDates = Object.keys(bestByDate).sort();
 
-        const curW = bestToday ? bestToday.weight : ex.lastWeight;
-        const curR = bestToday ? bestToday.reps : ex.lastReps;
-        const curWLabel = (curW === 0 || curW === "0") ? "Свой вес" : `${curW} кг`;
+            const curW = bestToday ? bestToday.weight : ex.lastWeight;
+            const curR = bestToday ? bestToday.reps : ex.lastReps;
+            const curWLabel = (curW === 0 || curW === "0") ? "Свой вес" : `${curW} кг`;
 
-        let refW = ex.prevWeight !== undefined ? ex.prevWeight : (ex.baseWeight !== undefined ? ex.baseWeight : curW);
-        let refR = ex.prevReps !== undefined ? ex.prevReps : (ex.baseReps !== undefined ? ex.baseReps : curR);
+            let refW = ex.prevWeight !== undefined ? ex.prevWeight : (ex.baseWeight !== undefined ? ex.baseWeight : curW);
+            let refR = ex.prevReps !== undefined ? ex.prevReps : (ex.baseReps !== undefined ? ex.baseReps : curR);
 
-        if (trainingDates.length >= 2) {
-          const firstDayBest = bestByDate[trainingDates[0]];
-          refW = firstDayBest.weight;
-          refR = firstDayBest.reps;
-        }
+            if (trainingDates.length >= 2) {
+              const firstDayBest = bestByDate[trainingDates[0]];
+              refW = firstDayBest.weight;
+              refR = firstDayBest.reps;
+            }
 
-        const refWLabel = (refW === 0 || refW === "0") ? "Свой вес" : `${refW}кг`;
-        let statusBadge = `
-          <span class="text-[10px] mono font-semibold px-2.5 py-1 rounded-lg border" style="color:${mColor}; background:${mBg}; border-color:rgba(255,255,255,0.08)">
-            База: ${refWLabel} × ${refR}
-          </span>
-        `;
-
-        if (totalSets14d > 0) {
-          const diffW = round1((Number(curW) || 0) - (Number(refW) || 0));
-          const diffR = (Number(curR) || 0) - (Number(refR) || 0);
-
-          if (diffW > 0) {
-            statusBadge = `<span class="text-[10px] mono font-bold px-2.5 py-1 rounded-lg accent-btn">+${diffW} кг ↑</span>`;
-          } else if (diffW === 0 && diffR > 0) {
-            statusBadge = `<span class="text-[10px] mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">+${diffR} повт. ↑</span>`;
-          } else if (trainingDates.length >= 4 && diffW === 0 && diffR <= 0) {
-            statusBadge = `<span class="text-[10px] mono font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300">Плато (${trainingDates.length} тр.)</span>`;
-          } else if (trainingDates.length >= 2 && diffW === 0 && diffR === 0) {
-            statusBadge = `<span class="text-[10px] mono font-semibold px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/10 text-zinc-300">В плане · ${trainingDates.length} тр.</span>`;
-          } else {
-            statusBadge = `
-              <span class="text-[10px] mono font-bold px-2.5 py-1 rounded-lg" style="color:${mColor}; background:${mBg}">
-                В работе · ${totalSets14d} подх.
+            const refWLabel = (refW === 0 || refW === "0") ? "Свой вес" : `${refW}кг`;
+            let statusBadge = `
+              <span class="text-[10px] mono font-semibold px-2.5 py-1 rounded-lg border" style="color:${mColor}; background:${mBg}; border-color:rgba(255,255,255,0.08)">
+                База: ${refWLabel} × ${refR}
               </span>
             `;
-          }
-        }
 
-        return `
-          <div class="bg-zinc-900/75 border border-white/[0.07] rounded-2xl p-3.5 flex items-center justify-between gap-2.5" style="border-left: 3px solid ${mColor}">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold mono uppercase tracking-wider shrink-0" style="color:${mColor}; background:${mBg}">
-                  ${mMeta.label}
+            if (totalSets14d > 0) {
+              const diffW = round1((Number(curW) || 0) - (Number(refW) || 0));
+              const diffR = (Number(curR) || 0) - (Number(refR) || 0);
+
+              if (diffW > 0) {
+                statusBadge = `<span class="text-[10px] mono font-bold px-2.5 py-1 rounded-lg accent-btn">+${diffW} кг ↑</span>`;
+              } else if (diffW === 0 && diffR > 0) {
+                statusBadge = `<span class="text-[10px] mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">+${diffR} повт. ↑</span>`;
+              } else if (trainingDates.length >= 4 && diffW === 0 && diffR <= 0) {
+                statusBadge = `<span class="text-[10px] mono font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300">Плато (${trainingDates.length} тр.)</span>`;
+              } else if (trainingDates.length >= 2 && diffW === 0 && diffR === 0) {
+                statusBadge = `<span class="text-[10px] mono font-semibold px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/10 text-zinc-300">В плане · ${trainingDates.length} тр.</span>`;
+              } else {
+                statusBadge = `
+                  <span class="text-[10px] mono font-bold px-2.5 py-1 rounded-lg" style="color:${mColor}; background:${mBg}">
+                    В работе · ${totalSets14d} подх.
+                  </span>
+                `;
+              }
+            }
+
+            const exNotes = getExerciseNotes(ex.name);
+            let notesTagHtml = "";
+            if (exNotes.length > 0) {
+              const hasWarm = exNotes.some(n => n.category === "warmup" || parseWarmupSets(n.text).length > 0);
+              const hasCoach = exNotes.some(n => n.category === "coach");
+              const label = hasCoach ? "Совет" : (hasWarm ? "Разминка" : "Заметка");
+              notesTagHtml = `
+                <span class="text-[9px] mono font-bold px-1.5 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 shrink-0">
+                  ${label}${exNotes.length > 1 ? ` · ${exNotes.length}` : ''}
                 </span>
-                <span class="text-xs font-bold text-white truncate">${escapeHtml(ex.name)}</span>
+              `;
+            }
+
+            return `
+              <div
+                onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')"
+                class="bg-zinc-900/75 border border-white/[0.07] hover:border-white/20 active:scale-[0.99] transition cursor-pointer rounded-2xl p-3.5 flex items-center justify-between gap-2.5"
+                style="border-left: 3px solid ${mColor}"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold mono uppercase tracking-wider shrink-0" style="color:${mColor}; background:${mBg}">
+                      ${mMeta.label}
+                    </span>
+                    <span class="text-xs font-bold text-white truncate">${escapeHtml(ex.name)}</span>
+                    ${notesTagHtml}
+                  </div>
+                  <div class="text-[11px] text-zinc-400 mono">
+                    Лучший рабочий: <strong class="text-white">${curWLabel} × ${curR}</strong> · подходов за 14д: <b class="text-zinc-200">${totalSets14d}</b>
+                  </div>
+                </div>
+                <div class="shrink-0">${statusBadge}</div>
               </div>
-              <div class="text-[11px] text-zinc-400 mono">
-                Лучший рабочий: <strong class="text-white">${curWLabel} × ${curR}</strong> · подходов за 14д: <b class="text-zinc-200">${totalSets14d}</b>
+            `;
+          }).join("");
+        }
+      }
+
+      if (containerNotes) {
+        if (allExercises.length === 0) {
+          containerNotes.innerHTML = `<div class="text-center py-8 text-xs text-zinc-500">Нет упражнений для заметок.</div>`;
+        } else {
+          containerNotes.innerHTML = allExercises.map(ex => {
+            const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
+            const mColor = mMeta.color || mMeta.colorVar || "var(--accent-cal)";
+            const mBg = mMeta.bg || "rgba(255,255,255,0.08)";
+            const exNotes = getExerciseNotes(ex.name);
+
+            let notesFeedHtml = "";
+            if (exNotes.length === 0) {
+              notesFeedHtml = `
+                <div class="py-3 px-3.5 rounded-xl bg-white/[0.02] border border-dashed border-white/10 text-center">
+                  <span class="text-[11px] mono text-zinc-500">Пока нет заметок к упражнению</span>
+                </div>
+              `;
+            } else {
+              notesFeedHtml = `
+                <div class="space-y-2">
+                  ${exNotes.map(n => renderSingleNoteCardHtml(n, ex.name)).join("")}
+                </div>
+              `;
+            }
+
+            return `
+              <div class="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold mono uppercase tracking-wider shrink-0" style="color:${mColor}; background:${mBg}">
+                      ${mMeta.label}
+                    </span>
+                    <span class="text-xs font-bold text-white truncate">${escapeHtml(ex.name)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')"
+                    class="py-1 px-2.5 rounded-lg border border-white/15 bg-white/[0.04] hover:bg-white/10 active:scale-95 text-[10px] font-mono text-zinc-300 transition shrink-0"
+                  >
+                    + Заметка / Разминка
+                  </button>
+                </div>
+                ${notesFeedHtml}
               </div>
-            </div>
-            <div class="shrink-0">${statusBadge}</div>
-          </div>
-        `;
-      }).join("");
+            `;
+          }).join("");
+        }
+      }
+    };
+
+    window.openProgressionModal = function() {
+      const modal = document.getElementById("progressionModal");
+      if (modal) modal.classList.add("open");
+      setProgressionSubtab(currentProgressionSubtab || "history");
     };
 
     // =========================================================================
@@ -7975,7 +8542,8 @@
         settingsModal: () => typeof closeSettings === "function" && closeSettings(),
         formulaModal: () => typeof closeFormulaModal === "function" && closeFormulaModal(),
         editModal: () => typeof closeEditModal === "function" && closeEditModal(),
-        dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal()
+        dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal(),
+        exerciseNotesModal: () => typeof closeExerciseNotesModal === "function" && closeExerciseNotesModal()
       };
 
       if (map[modalId]) {
