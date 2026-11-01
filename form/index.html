@@ -967,9 +967,8 @@
 
       <!-- Форма создания новой заметки -->
       <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 space-y-3">
-        <div class="text-[11px] font-bold uppercase tracking-wider mono text-zinc-400 flex items-center justify-between">
+        <div class="text-[11px] font-bold uppercase tracking-wider mono text-zinc-400">
           <span>+ Добавить запись</span>
-          <span class="text-[9px] text-zinc-500 lowercase font-mono">github style alert</span>
         </div>
 
         <!-- Выбор категории -->
@@ -7210,8 +7209,12 @@
       const existingSet = (ex.setsToday || [])[setIdx];
       const bestToday = getBestSetFromList(ex.setsToday);
 
-      const defaultW = existingSet ? existingSet.weight : (bestToday ? bestToday.weight : (ex.lastWeight ?? 50));
-      const defaultR = existingSet ? existingSet.reps : (bestToday ? bestToday.reps : (ex.lastReps || 10));
+      const defaultW = (existingSet && existingSet.weight !== undefined)
+        ? existingSet.weight
+        : ((ex.lastWeight !== undefined && ex.lastWeight !== null) ? ex.lastWeight : (bestToday ? bestToday.weight : 50));
+      const defaultR = (existingSet && existingSet.reps !== undefined)
+        ? existingSet.reps
+        : (ex.lastReps || 10);
       const prevWLabel = (ex.prevWeight === 0 || ex.prevWeight === "0") ? "Свой вес" : `${ex.prevWeight ?? ex.lastWeight}кг`;
       const prevRLabel = ex.prevReps || ex.lastReps || 10;
 
@@ -7247,9 +7250,10 @@
       if (!Array.isArray(ex.setsToday)) ex.setsToday = [];
       ex.setsToday[activeSetEdit.setIndex] = { weight: w, reps: r, date: todayKey };
 
+      ex.lastWeight = w;
+      ex.lastReps = r;
+
       const bestToday = getBestSetFromList(ex.setsToday) || { weight: w, reps: r };
-      ex.lastWeight = bestToday.weight;
-      ex.lastReps = bestToday.reps;
 
       if (!Array.isArray(state.workout.logs)) state.workout.logs = [];
       const existingLogIdx = state.workout.logs.findIndex(
@@ -7268,8 +7272,7 @@
       closeSetLoggerModal();
 
       const wText = w === 0 ? "Свой вес" : `${w}кг`;
-      const bestText = bestToday.weight === 0 ? "Свой вес" : `${bestToday.weight}кг`;
-      showToast(`Подход #${activeSetEdit.setIndex + 1}: ${wText} × ${r} (Лучший: ${bestText} × ${bestToday.reps})`);
+      showToast(`Подход #${activeSetEdit.setIndex + 1}: ${wText} × ${r} записан`);
       if (typeof handleSetCompletedRestTimer === "function") {
         handleSetCompletedRestTimer(ex.name, ex.muscle);
       }
@@ -7304,6 +7307,40 @@
       showToast("Подход снят");
     };
 
+    function getSetsBreakdownHtml(ex, targetS) {
+      const doneSets = [];
+      for (let idx = 0; idx < targetS; idx++) {
+        const s = (ex.setsToday || [])[idx];
+        if (s && s.reps !== undefined) {
+          const sw = (s.weight !== undefined && s.weight !== null && !isNaN(s.weight)) ? Number(s.weight) : (Number(ex.lastWeight) || 0);
+          doneSets.push({ weight: sw, reps: Number(s.reps) || 10 });
+        }
+      }
+
+      if (doneSets.length <= 1) return "";
+
+      const firstW = doneSets[0].weight;
+      const weightsDiffer = doneSets.some(s => s.weight !== firstW);
+      const firstR = doneSets[0].reps;
+      const repsDiffer = doneSets.some(s => s.reps !== firstR);
+
+      if (weightsDiffer) {
+        if (!repsDiffer) {
+          const wTokens = doneSets.map(s => (s.weight === 0 ? "0" : `${s.weight}`));
+          return ` <span class="text-zinc-500 font-mono">[${wTokens.join("·")} кг]</span>`;
+        } else {
+          const comboTokens = doneSets.map(s => {
+            const wStr = s.weight === 0 ? "0" : `${s.weight}кг`;
+            return `${wStr}×${s.reps}`;
+          });
+          return ` <span class="text-zinc-500 font-mono">[${comboTokens.join(" · ")}]</span>`;
+        }
+      } else {
+        const repsTokens = doneSets.map(s => s.reps);
+        return ` <span class="text-zinc-500 font-mono">[${repsTokens.join("·")}]</span>`;
+      }
+    }
+
     const prevRenderWorkoutAll = window.renderWorkoutAll;
     window.renderWorkoutAll = function() {
       if (prevRenderWorkoutAll) prevRenderWorkoutAll();
@@ -7319,10 +7356,12 @@
       exContainer.innerHTML = activeProg.exercises.map(ex => {
         ensureExerciseBaseline(ex);
         const bestToday = getBestSetFromList(ex.setsToday);
-        if (bestToday) {
-          ex.lastWeight = bestToday.weight;
-          ex.lastReps = bestToday.reps;
-        }
+        const curW = (ex.lastWeight !== undefined && ex.lastWeight !== null) 
+          ? ex.lastWeight 
+          : (bestToday ? bestToday.weight : (ex.baseWeight || 0));
+        const curR = (ex.lastReps !== undefined && ex.lastReps !== null) 
+          ? ex.lastReps 
+          : (bestToday ? bestToday.reps : (ex.baseReps || 10));
 
         const targetS = Math.max(1, Number(ex.targetSets) || 3);
         const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
@@ -7330,11 +7369,9 @@
         const mBg = mMeta.bg || "rgba(255,255,255,0.06)";
 
         let circlesHtml = "";
-        const repsHistoryToday = [];
         for (let idx = 0; idx < targetS; idx++) {
           const setObj = (ex.setsToday || [])[idx];
           const isDone = !!setObj;
-          if (isDone) repsHistoryToday.push(setObj.reps);
           circlesHtml += `
             <button
               type="button"
@@ -7346,8 +7383,8 @@
           `;
         }
 
-        const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
-        const repsBreakdown = repsHistoryToday.length > 1 ? ` <span class="text-zinc-500">[${repsHistoryToday.join("·")}]</span>` : "";
+        const wLabel = (curW === 0 || curW === "0") ? "Свой вес" : `${curW || 0} кг`;
+        const setsBreakdown = getSetsBreakdownHtml(ex, targetS);
 
         let progressDot = "";
         if (bestToday && ex.prevWeight !== undefined) {
@@ -7366,7 +7403,7 @@
               <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
-                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong>${repsBreakdown}</span>
+                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong>${setsBreakdown}</span>
                 ${progressDot}
               </div>
             </div>
