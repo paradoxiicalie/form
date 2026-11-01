@@ -683,12 +683,9 @@
       <!-- Карточка прогресса КБЖУ -->
       <div class="status-card mb-3">
         <div class="flex items-baseline justify-between mb-2">
-          <div class="flex items-baseline gap-1.5 flex-wrap">
+          <div class="flex items-baseline gap-1.5 cursor-pointer active:opacity-80 transition" onclick="openSettings('goals')" title="Настроить суточную норму">
             <span id="calEaten" class="text-3xl font-extrabold tracking-tight mono text-white">0</span>
             <span class="text-xs text-zinc-500 mono">/ <span id="calTarget">2000</span> ккал</span>
-            <button type="button" id="btnDietTargetMode" onclick="openTargetEditorModal()" class="ml-1 px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[10px] mono text-zinc-300 font-semibold active:scale-95 transition" title="Настроить суточную норму">
-              <span id="dietTargetModeBadge">Авто</span>
-            </button>
           </div>
           <button type="button" onclick="openSettings('goals')" class="flex items-center gap-1.5 active:opacity-70 shrink-0">
             <span id="statusDot" class="w-2 h-2 rounded-full" style="background: var(--accent-cal)"></span>
@@ -736,50 +733,14 @@
       <!-- Лента: [ Утренний Вес / TDEE ] + [ Стек добавок в один тап ] -->
       <div id="stackAndWeightStrip" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar"></div>
 
-      <!-- КАРТОЧКА АКТИВНОСТИ И ШАГОВ (NEAT) -->
-      <div id="stepsNeatCard" class="steps-neat-card p-3.5 mb-3">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mono">Активность // Шаги (NEAT)</span>
-          </div>
-          <div id="stepsSourceBadge" class="text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400">
-            Веб / PWA
-          </div>
+      <!-- КАРТОЧКА АКТИВНОСТИ И ШАГОВ (ТОЛЬКО ВЕБ/PWA РЕЖИМ, СКРЫТА В ПРИЛОЖЕНИИ ДЛЯ ЧИСТОТЫ) -->
+      <div id="stepsNeatCard" class="hidden mb-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] items-center justify-between transition">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-zinc-400 mono">Шаги (PWA):</span>
+          <span id="stepsCountDisplay" class="text-xs font-bold mono text-white cursor-pointer active:opacity-70" onclick="promptCustomSteps()">0</span>
+          <span id="stepsBurnDisplay" class="text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400">+0 ккал</span>
         </div>
-
-        <div class="flex items-baseline justify-between mb-3">
-          <div class="flex items-baseline gap-2 cursor-pointer active:opacity-70 transition" onclick="promptCustomSteps()" title="Нажми, чтобы ввести точное число шагов">
-            <span id="stepsCountDisplay" class="text-2xl font-black mono text-white">0</span>
-            <span class="text-xs text-zinc-500 mono">шагов</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span id="stepsBurnDisplay" class="text-xs font-bold mono px-2 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/25">+0 ккал</span>
-            <button type="button" id="btnSyncSteps" onclick="requestNativeStepsSync()" class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/10 flex items-center justify-center text-zinc-300 active:scale-90 transition" title="Обновить шаги из Apple Здоровья">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Быстрые пресеты шагов в 1 тап (ADHD friendly) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar mb-2.5 pb-0.5">
-          <button type="button" onclick="stepDailySteps(-1000)" class="preset-chip shrink-0">-1k</button>
-          <button type="button" onclick="setDailyStepsPreset(5000)" class="preset-chip shrink-0">5 000</button>
-          <button type="button" onclick="setDailyStepsPreset(10000)" class="preset-chip shrink-0">10 000</button>
-          <button type="button" onclick="setDailyStepsPreset(15000)" class="preset-chip shrink-0">15 000</button>
-          <button type="button" onclick="setDailyStepsPreset(20000)" class="preset-chip shrink-0">20 000</button>
-          <button type="button" onclick="stepDailySteps(1000)" class="preset-chip shrink-0">+1k</button>
-        </div>
-
-        <!-- Тумблер компенсации калорий -->
-        <div onclick="toggleStepBurnCompensation()" class="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between cursor-pointer active:scale-[0.99] transition">
-          <div class="flex items-center gap-2">
-            <div id="stepBurnCheckbox" class="w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold">
-              ✓
-            </div>
-            <span class="text-xs text-zinc-300 font-medium">Добавлять расход шагов к норме</span>
-          </div>
-          <span id="stepBurnTargetDelta" class="text-xs mono font-bold text-white">+0 ккал</span>
-        </div>
+        <button type="button" onclick="openSettings('goals')" class="text-[10.5px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white font-mono active:scale-95 transition">Настроить →</button>
       </div>
 
       <!-- Заголовок Сегодня -->
@@ -1568,6 +1529,50 @@
               <label class="text-[11px] font-semibold block mb-1" style="color: var(--accent-c)">Углеводы (г)</label>
               <input id="inputTargetC" type="number" placeholder="215" oninput="updateMacroSumCheck()" class="dark-field mono text-center font-semibold text-xs" />
             </div>
+          </div>
+        </div>
+
+        <!-- Блок 3: Шаги и расход калорий (NEAT) -->
+        <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-white font-semibold uppercase tracking-wider">Активность // Шаги (NEAT)</span>
+            <div id="settingsStepsBadge" class="text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400">
+              Здоровье
+            </div>
+          </div>
+
+          <div class="flex items-baseline justify-between">
+            <div class="flex items-baseline gap-2 cursor-pointer active:opacity-70 transition" onclick="promptCustomSteps()" title="Нажми для ввода точного числа шагов">
+              <span id="settingsStepsCount" class="text-2xl font-black mono text-white">0</span>
+              <span class="text-xs text-zinc-500 mono">шагов</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="settingsStepsBurn" class="text-xs font-bold mono px-2 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/25">+0 ккал</span>
+              <button type="button" onclick="requestNativeStepsSync()" class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/10 flex items-center justify-center text-zinc-300 active:scale-90 transition" title="Синхронизировать с Apple Здоровьем">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Быстрые пресеты шагов в 1 тап -->
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            <button type="button" onclick="stepDailySteps(-1000)" class="preset-chip shrink-0">-1k</button>
+            <button type="button" onclick="setDailyStepsPreset(5000)" class="preset-chip shrink-0">5 000</button>
+            <button type="button" onclick="setDailyStepsPreset(10000)" class="preset-chip shrink-0">10 000</button>
+            <button type="button" onclick="setDailyStepsPreset(15000)" class="preset-chip shrink-0">15 000</button>
+            <button type="button" onclick="setDailyStepsPreset(20000)" class="preset-chip shrink-0">20 000</button>
+            <button type="button" onclick="stepDailySteps(1000)" class="preset-chip shrink-0">+1k</button>
+          </div>
+
+          <!-- Тумблер компенсации нормы калорий -->
+          <div onclick="toggleStepBurnCompensation()" class="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between cursor-pointer active:scale-[0.99] transition">
+            <div class="flex items-center gap-2">
+              <div id="settingsStepBurnCheckbox" class="w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold">
+                ✓
+              </div>
+              <span class="text-xs text-zinc-300 font-medium">Добавлять расход шагов к норме</span>
+            </div>
+            <span id="settingsStepBurnTargetDelta" class="text-xs mono font-bold text-white">+0 ккал</span>
           </div>
         </div>
 
@@ -2563,6 +2568,7 @@
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
     function switchMainView(view, immediate = false) {
+      const prevView = currentMainView;
       currentMainView = view;
       const vDiet = document.getElementById("viewDiet");
       const vSplit = document.getElementById("viewSplit");
@@ -2572,8 +2578,9 @@
       const iconAddEx = document.getElementById("iconAddExTop");
       const track = document.getElementById("viewsTrack");
 
-      if (vDiet) vDiet.style.pointerEvents = (view === "diet") ? "auto" : "none";
-      if (vSplit) vSplit.style.pointerEvents = (view === "split") ? "auto" : "none";
+      // Перед анимацией гарантируем разворачивание обоих видов для плавного сдвига
+      if (vDiet) { vDiet.style.height = "auto"; vDiet.style.overflow = "visible"; vDiet.style.opacity = "1"; }
+      if (vSplit) { vSplit.style.height = "auto"; vSplit.style.overflow = "visible"; vSplit.style.opacity = "1"; }
 
       if (track) {
         track.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
@@ -2585,11 +2592,43 @@
         if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
         if (iconScan) iconScan.classList.add("hidden");
         if (iconAddEx) iconAddEx.classList.remove("hidden");
+        if (vSplit) vSplit.style.pointerEvents = "auto";
+
+        if (prevView !== "split") {
+          window.scrollTo({ top: 0, behavior: "instant" });
+        }
+
+        const collapseDiet = () => {
+          if (currentMainView === "split" && vDiet) {
+            vDiet.style.height = "0px";
+            vDiet.style.overflow = "hidden";
+            vDiet.style.opacity = "0";
+            vDiet.style.pointerEvents = "none";
+          }
+        };
+        if (immediate) collapseDiet();
+        else setTimeout(collapseDiet, 300);
       } else {
         if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
         if (tabSplit) tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
         if (iconScan) iconScan.classList.remove("hidden");
         if (iconAddEx) iconAddEx.classList.add("hidden");
+        if (vDiet) vDiet.style.pointerEvents = "auto";
+
+        if (prevView !== "diet") {
+          window.scrollTo({ top: 0, behavior: "instant" });
+        }
+
+        const collapseSplit = () => {
+          if (currentMainView === "diet" && vSplit) {
+            vSplit.style.height = "0px";
+            vSplit.style.overflow = "hidden";
+            vSplit.style.opacity = "0";
+            vSplit.style.pointerEvents = "none";
+          }
+        };
+        if (immediate) collapseSplit();
+        else setTimeout(collapseSplit, 300);
       }
     }
     window.switchMainView = switchMainView;
@@ -5347,9 +5386,6 @@
     }
 
     function renderStepsCard() {
-      const card = document.getElementById("stepsNeatCard");
-      if (!card) return;
-
       if (!state.dailySteps || typeof state.dailySteps !== "object") {
         state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
       } else if (state.dailySteps.date !== getTodayKey()) {
@@ -5359,37 +5395,52 @@
 
       const steps = Number(state.dailySteps.count) || 0;
       const burn = calcStepBurn(steps);
-
-      const countDisplay = document.getElementById("stepsCountDisplay");
-      const burnDisplay = document.getElementById("stepsBurnDisplay");
-      const sourceBadge = document.getElementById("stepsSourceBadge");
-      const chk = document.getElementById("stepBurnCheckbox");
-      const deltaLabel = document.getElementById("stepBurnTargetDelta");
-
-      if (countDisplay) countDisplay.textContent = steps.toLocaleString("ru-RU");
-      if (burnDisplay) burnDisplay.textContent = `+${burn} ккал`;
-      if (deltaLabel) deltaLabel.textContent = `+${burn} ккал к цели`;
-
       const isNative = !!window.webkit?.messageHandlers?.widgetBridge;
-      if (sourceBadge) {
-        if (state.dailySteps.source === "motion" || (isNative && state.dailySteps.source !== "manual")) {
-          sourceBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
-          sourceBadge.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>Здоровье Live`;
+
+      // 1. Обновляем блок в Настройках
+      const setSteps = document.getElementById("settingsStepsCount");
+      const setBurn = document.getElementById("settingsStepsBurn");
+      const setBadge = document.getElementById("settingsStepsBadge");
+      const setChk = document.getElementById("settingsStepBurnCheckbox");
+      const setDelta = document.getElementById("settingsStepBurnTargetDelta");
+
+      if (setSteps) setSteps.textContent = steps.toLocaleString("ru-RU");
+      if (setBurn) setBurn.textContent = `+${burn} ккал`;
+      if (setDelta) setDelta.textContent = `+${burn} ккал к цели`;
+
+      if (setBadge) {
+        if (state.dailySteps.source === "motion" || isNative) {
+          setBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
+          setBadge.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>Apple Здоровье (Live)`;
         } else {
-          sourceBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400";
-          sourceBadge.textContent = isNative ? "Ручной ввод" : "Веб / PWA";
+          setBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400";
+          setBadge.textContent = "Ручной ввод / PWA";
         }
       }
 
-      if (chk) {
+      if (setChk) {
         if (state.dailySteps.autoAddTarget) {
-          chk.className = "w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold text-black border-transparent";
-          chk.style.backgroundColor = "var(--accent-cal)";
-          chk.textContent = "✓";
+          setChk.className = "w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold text-black border-transparent";
+          setChk.style.backgroundColor = "var(--accent-cal)";
+          setChk.textContent = "✓";
         } else {
-          chk.className = "w-4 h-4 rounded border border-white/20 bg-transparent flex items-center justify-center text-[10px] font-bold text-transparent";
-          chk.style.backgroundColor = "transparent";
-          chk.textContent = "";
+          setChk.className = "w-4 h-4 rounded border border-white/20 bg-transparent flex items-center justify-center text-[10px] font-bold text-transparent";
+          setChk.style.backgroundColor = "transparent";
+          setChk.textContent = "";
+        }
+      }
+
+      // 2. Вкладка Рацион: в нативном приложении полностью скрываем плашку шагов
+      const dietCard = document.getElementById("stepsNeatCard");
+      if (dietCard) {
+        if (isNative) {
+          dietCard.style.display = "none";
+        } else {
+          dietCard.style.display = "flex";
+          const countEl = document.getElementById("stepsCountDisplay");
+          const burnEl = document.getElementById("stepsBurnDisplay");
+          if (countEl) countEl.textContent = steps.toLocaleString("ru-RU");
+          if (burnEl) burnEl.textContent = `+${burn} ккал`;
         }
       }
     }
@@ -9224,6 +9275,10 @@
 
         if (isSwiping) {
           if (e.cancelable) e.preventDefault();
+          const vDietEl = document.getElementById("viewDiet");
+          const vSplitEl = document.getElementById("viewSplit");
+          if (vDietEl) { vDietEl.style.height = "auto"; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; }
+          if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; }
           track.style.transition = "none";
           const width = viewport.offsetWidth || window.innerWidth;
           let basePercent = (currentMainView === "split") ? -50 : 0;
