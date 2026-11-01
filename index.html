@@ -496,6 +496,123 @@
     }
     #viewDiet { padding-right: 4px; }
     #viewSplit { padding-left: 4px; }
+
+      /* === CONSOLIDATED CORE STYLES & ADHD MODERN BRUTALIST POLISH === */
+      .app-shell {
+        padding-top: calc(env(safe-area-inset-top, 44px) + 16px) !important;
+      }
+      .smart-weight-card {
+        background: linear-gradient(180deg, rgba(24, 24, 28, 0.85) 0%, rgba(14, 14, 17, 0.92) 100%);
+        border: 1px solid var(--card-border);
+        border-radius: 18px;
+        padding: 12px 15px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: transform 0.12s ease, border-color 0.2s ease;
+      }
+      .smart-weight-card:active {
+        transform: scale(0.985);
+      }
+      #inputTargetCal {
+        text-align: center !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+      }
+      #foodList .food-row .mono.text-zinc-500 {
+        flex-wrap: wrap !important;
+        row-gap: 3px !important;
+      }
+      #foodList .food-row .mono.text-zinc-500 > span {
+        white-space: nowrap !important;
+      }
+      #panelPush textarea {
+        font-size: 12.5px !important;
+        line-height: 1.45 !important;
+        padding: 10px 12px !important;
+        min-height: 92px !important;
+        box-sizing: border-box !important;
+        overflow-y: hidden !important;
+        resize: none !important;
+      }
+      #panelPush input[type="text"] {
+        font-size: 12.5px !important;
+        padding: 9px 11px !important;
+      }
+      .mod-chip {
+        padding: 6px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.03);
+        color: #a1a1aa;
+        transition: all 0.15s ease;
+        text-align: center;
+        cursor: pointer;
+      }
+      .mod-chip.active {
+        border-color: var(--accent-cal);
+        color: var(--accent-cal);
+        background: rgba(255, 255, 255, 0.09);
+      }
+      .piece-btn {
+        padding: 5px 8px;
+        border-radius: 9px;
+        font-size: 10.5px;
+        font-weight: 700;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: #e4e4e7;
+        cursor: pointer;
+        transition: all 0.12s ease;
+      }
+      .piece-btn.active {
+        background: var(--accent-cal);
+        color: var(--accent-cal-text);
+        border-color: var(--accent-cal);
+      }
+      #backupJsonArea {
+        font-size: 11.5px !important;
+        line-height: 1.4 !important;
+        padding: 10px 12px !important;
+        min-height: 74px !important;
+        resize: none !important;
+      }
+      .sets-row-compact .set-dot {
+        width: 27px !important;
+        height: 27px !important;
+        font-size: 10.5px !important;
+      }
+      #cameraStream, #photoPreview {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        background: #08080a !important;
+      }
+      /* Steps & NEAT Brutalist Card */
+      .steps-neat-card {
+        background: linear-gradient(180deg, rgba(22, 22, 26, 0.85) 0%, rgba(12, 12, 15, 0.95) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        transition: border-color 0.2s ease, transform 0.1s ease;
+      }
+      .preset-chip {
+        padding: 6px 11px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #d4d4d8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.12s ease;
+        user-select: none;
+      }
+      .preset-chip:active {
+        transform: scale(0.95);
+        background: rgba(255, 255, 255, 0.12);
+      }
   </style>
 </head>
 <body>
@@ -566,11 +683,14 @@
       <!-- Карточка прогресса КБЖУ -->
       <div class="status-card mb-3">
         <div class="flex items-baseline justify-between mb-2">
-          <div class="flex items-baseline gap-1.5">
+          <div class="flex items-baseline gap-1.5 flex-wrap">
             <span id="calEaten" class="text-3xl font-extrabold tracking-tight mono text-white">0</span>
             <span class="text-xs text-zinc-500 mono">/ <span id="calTarget">2000</span> ккал</span>
+            <button type="button" id="btnDietTargetMode" onclick="openTargetEditorModal()" class="ml-1 px-2 py-0.5 rounded-md bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[10px] mono text-zinc-300 font-semibold active:scale-95 transition" title="Настроить суточную норму">
+              <span id="dietTargetModeBadge">Авто</span>
+            </button>
           </div>
-          <button type="button" onclick="openSettings('goals')" class="flex items-center gap-1.5 active:opacity-70">
+          <button type="button" onclick="openSettings('goals')" class="flex items-center gap-1.5 active:opacity-70 shrink-0">
             <span id="statusDot" class="w-2 h-2 rounded-full" style="background: var(--accent-cal)"></span>
             <span id="calPercentBadge" class="text-xs font-semibold mono" style="color: var(--accent-cal)">2000 в запасе</span>
           </button>
@@ -615,6 +735,52 @@
 
       <!-- Лента: [ Утренний Вес / TDEE ] + [ Стек добавок в один тап ] -->
       <div id="stackAndWeightStrip" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar"></div>
+
+      <!-- КАРТОЧКА АКТИВНОСТИ И ШАГОВ (NEAT) -->
+      <div id="stepsNeatCard" class="steps-neat-card p-3.5 mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mono">Активность // Шаги (NEAT)</span>
+          </div>
+          <div id="stepsSourceBadge" class="text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400">
+            Веб / PWA
+          </div>
+        </div>
+
+        <div class="flex items-baseline justify-between mb-3">
+          <div class="flex items-baseline gap-2 cursor-pointer active:opacity-70 transition" onclick="promptCustomSteps()" title="Нажми, чтобы ввести точное число шагов">
+            <span id="stepsCountDisplay" class="text-2xl font-black mono text-white">0</span>
+            <span class="text-xs text-zinc-500 mono">шагов</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="stepsBurnDisplay" class="text-xs font-bold mono px-2 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/25">+0 ккал</span>
+            <button type="button" id="btnSyncSteps" onclick="requestNativeStepsSync()" class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/10 flex items-center justify-center text-zinc-300 active:scale-90 transition" title="Обновить шаги из Apple Здоровья">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Быстрые пресеты шагов в 1 тап (ADHD friendly) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar mb-2.5 pb-0.5">
+          <button type="button" onclick="stepDailySteps(-1000)" class="preset-chip shrink-0">-1k</button>
+          <button type="button" onclick="setDailyStepsPreset(5000)" class="preset-chip shrink-0">5 000</button>
+          <button type="button" onclick="setDailyStepsPreset(10000)" class="preset-chip shrink-0">10 000</button>
+          <button type="button" onclick="setDailyStepsPreset(15000)" class="preset-chip shrink-0">15 000</button>
+          <button type="button" onclick="setDailyStepsPreset(20000)" class="preset-chip shrink-0">20 000</button>
+          <button type="button" onclick="stepDailySteps(1000)" class="preset-chip shrink-0">+1k</button>
+        </div>
+
+        <!-- Тумблер компенсации калорий -->
+        <div onclick="toggleStepBurnCompensation()" class="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between cursor-pointer active:scale-[0.99] transition">
+          <div class="flex items-center gap-2">
+            <div id="stepBurnCheckbox" class="w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold">
+              ✓
+            </div>
+            <span class="text-xs text-zinc-300 font-medium">Добавлять расход шагов к норме</span>
+          </div>
+          <span id="stepBurnTargetDelta" class="text-xs mono font-bold text-white">+0 ккал</span>
+        </div>
+      </div>
 
       <!-- Заголовок Сегодня -->
       <div class="flex items-baseline justify-between mb-2 px-0.5">
@@ -1927,6 +2093,106 @@
     </div>
   </div>
 
+  <!-- МОДАЛКА: НАСТРОЙКА И РУЧНОЙ ВВОД ЦЕЛЕЙ КБЖУ -->
+  <div id="targetEditorModal" class="sheet-backdrop" onclick="if(event.target===this) closeTargetEditorModal()">
+    <div class="sheet-panel max-w-md mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Управление целями</span>
+          <h3 class="text-base font-bold text-white mt-0.5">Суточная норма КБЖУ</h3>
+        </div>
+        <button type="button" onclick="closeTargetEditorModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 active:scale-95 transition">✕</button>
+      </div>
+
+      <!-- Переключатель режима: Авто / Своя норма -->
+      <div class="grid grid-cols-2 gap-1.5 p-1 bg-zinc-950/80 border border-white/10 rounded-xl mb-4">
+        <button type="button" id="btnTargetTabAuto" onclick="selectTargetEditorMode('auto')" class="py-2 rounded-lg text-xs font-semibold transition text-center">
+          Авто (Миффлин)
+        </button>
+        <button type="button" id="btnTargetTabManual" onclick="selectTargetEditorMode('manual')" class="py-2 rounded-lg text-xs font-semibold transition text-center">
+          Своя норма
+        </button>
+      </div>
+
+      <!-- Блок Своя норма (Ручной ввод) -->
+      <div id="targetManualBox" class="space-y-3 mb-4">
+        <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-3">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs text-zinc-300 font-semibold">Калории (ккал)</label>
+            <span class="text-[10.5px] text-zinc-500 mono">базовая цель</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="stepManualTarget('cal', -100)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">-100</button>
+            <input id="inputManualCal" type="number" oninput="updateManualPreview()" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
+            <button type="button" onclick="stepManualTarget('cal', 100)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">+100</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-2.5">
+            <div class="text-[10px] uppercase font-semibold text-zinc-400 mb-1" style="color: var(--accent-p)">Белок (г)</div>
+            <div class="flex items-center gap-1 mb-1">
+              <button type="button" onclick="stepManualTarget('p', -5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">-</button>
+              <input id="inputManualP" type="number" oninput="updateManualPreview()" class="w-full bg-black/40 border border-white/10 rounded-lg text-center font-bold mono text-sm text-white py-1" />
+              <button type="button" onclick="stepManualTarget('p', 5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">+</button>
+            </div>
+            <div id="manualKcalP" class="text-[9.5px] text-zinc-500 text-center mono">0 ккал</div>
+          </div>
+
+          <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-2.5">
+            <div class="text-[10px] uppercase font-semibold text-zinc-400 mb-1" style="color: var(--accent-f)">Жиры (г)</div>
+            <div class="flex items-center gap-1 mb-1">
+              <button type="button" onclick="stepManualTarget('f', -5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">-</button>
+              <input id="inputManualF" type="number" oninput="updateManualPreview()" class="w-full bg-black/40 border border-white/10 rounded-lg text-center font-bold mono text-sm text-white py-1" />
+              <button type="button" onclick="stepManualTarget('f', 5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">+</button>
+            </div>
+            <div id="manualKcalF" class="text-[9.5px] text-zinc-500 text-center mono">0 ккал</div>
+          </div>
+
+          <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-2.5">
+            <div class="text-[10px] uppercase font-semibold text-zinc-400 mb-1" style="color: var(--accent-c)">Угли (г)</div>
+            <div class="flex items-center gap-1 mb-1">
+              <button type="button" onclick="stepManualTarget('c', -10)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">-</button>
+              <input id="inputManualC" type="number" oninput="updateManualPreview()" class="w-full bg-black/40 border border-white/10 rounded-lg text-center font-bold mono text-sm text-white py-1" />
+              <button type="button" onclick="stepManualTarget('c', 10)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">+</button>
+            </div>
+            <div id="manualKcalC" class="text-[9.5px] text-zinc-500 text-center mono">0 ккал</div>
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
+          <span class="text-zinc-400">Сумма БЖУ:</span>
+          <span id="manualMacroSumPreview" class="mono font-bold text-white">0 ккал</span>
+          <button type="button" onclick="balanceManualCarbs()" class="text-[10px] px-2.5 py-1 rounded bg-white/10 hover:bg-white/15 text-zinc-300 font-mono active:scale-95 transition">
+            Выровнять У
+          </button>
+        </div>
+      </div>
+
+      <!-- Блок Авторасчет -->
+      <div id="targetAutoBox" class="hidden space-y-3 mb-4">
+        <div class="p-3.5 bg-zinc-900/70 border border-white/[0.08] rounded-xl text-xs space-y-2">
+          <div class="text-zinc-300">
+            Калории и БЖУ рассчитываются автоматически на основе параметров тела (Миффлин — Сан-Жеор) и режима цели (набор / сушка / поддержка).
+          </div>
+          <div id="targetAutoSummaryText" class="p-2.5 rounded-lg bg-black/50 mono text-[11px] text-zinc-300">
+            Расчет...
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeTargetEditorModal()" class="w-1/3 py-3 rounded-xl bg-white/[0.06] text-zinc-300 font-semibold text-xs border border-white/10 active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="saveTargetEditorModal()" class="flex-1 py-3 rounded-xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Сохранить норму
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- МОДАЛКА 5: РЕДАКТИРОВАНИЕ ПОРЦИИ ЕДЫ -->
   <div id="editModal" class="sheet-backdrop" onclick="if(event.target===this) closeEditModal()">
     <div class="sheet-panel">
@@ -2610,7 +2876,7 @@
 
       // Проверяем, была ли уже применена умная корректировка для этого замера веса
       const adj = state.smartAdjustment;
-      const isAlreadyAdjusted = adj && (adj.weight === latestW || adj.date === getTodayKey());
+      const isAlreadyAdjusted = adj && (adj.applied || Math.abs(Number(adj.weight) - Number(latestW)) < 0.2 || adj.date === getTodayKey());
 
       let adviceHtml = "";
       if (logs.length === 1) {
@@ -2738,15 +3004,17 @@
       state.targets = { cal: newCal, p, f, c };
       state.smartAdjustment = {
         date: getTodayKey(),
-        weight: latestW,
+        weight: Number(latestW),
         deltaCal: deltaCal,
         baselineCal: formula.targetCal,
-        appliedCal: newCal
+        appliedCal: newCal,
+        applied: true
       };
 
       saveState();
       renderAll();
       renderMetabolismAnalysis();
+      syncNativeWidget();
       showToast(`✓ Цель адаптирована: ${newCal} ккал (${c}г углей)`);
     }
 
@@ -4891,8 +5159,14 @@
           const rawProxy = localStorage.getItem("form_gemini_proxy");
           if (rawProxy && !state.apiProxy) state.apiProxy = rawProxy;
         } catch (e) {}
-        if (!state.customExerciseGuides || typeof state.customExerciseGuides !== "object") {
-          state.customExerciseGuides = {};
+        if (!state.dailySteps || typeof state.dailySteps !== "object") {
+          state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
+        } else if (state.dailySteps.date !== getTodayKey()) {
+          state.dailySteps.count = 0;
+          state.dailySteps.date = getTodayKey();
+        }
+        if (!state.manualTargets || typeof state.manualTargets !== "object") {
+          state.manualTargets = { cal: Number(state.targets?.cal) || 2800, p: Number(state.targets?.p) || 140, f: Number(state.targets?.f) || 65, c: Number(state.targets?.c) || 215 };
         }
         if (!state.uiStyleSettings) {
           state.uiStyleSettings = { corners: "soft", glow: true };
@@ -5035,7 +5309,7 @@
           cHex: activeTheme.c || "#C2593F",
           fHex: activeTheme.f || "#8C8275",
           cal: Math.round(totalCal),
-          targetCal: Math.max(500, Math.round(Number(state.targets?.cal) || 2000)),
+          targetCal: Math.max(500, Math.round((Number(state.targets?.cal) || 2000) + ((state.dailySteps?.autoAddTarget) ? (typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0) : 0))),
           p: Math.round(totalP),
           targetP: Math.max(10, Math.round(Number(state.targets?.p) || 140)),
           f: Math.round(totalF),
@@ -5062,6 +5336,298 @@
     }
     window.syncNativeWidget = syncNativeWidget;
 
+
+    // =========================================================================
+    // АКТИВНОСТЬ, ШАГИ (NEAT) И РАСЧЕТ РАСХОДА КАЛОРИЙ
+    // =========================================================================
+    function calcStepBurn(steps, weight) {
+      const w = weight || (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
+      const s = Math.max(0, Number(steps) || 0);
+      return Math.round(s * w * 0.00057);
+    }
+
+    function renderStepsCard() {
+      const card = document.getElementById("stepsNeatCard");
+      if (!card) return;
+
+      if (!state.dailySteps || typeof state.dailySteps !== "object") {
+        state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
+      } else if (state.dailySteps.date !== getTodayKey()) {
+        state.dailySteps.count = 0;
+        state.dailySteps.date = getTodayKey();
+      }
+
+      const steps = Number(state.dailySteps.count) || 0;
+      const burn = calcStepBurn(steps);
+
+      const countDisplay = document.getElementById("stepsCountDisplay");
+      const burnDisplay = document.getElementById("stepsBurnDisplay");
+      const sourceBadge = document.getElementById("stepsSourceBadge");
+      const chk = document.getElementById("stepBurnCheckbox");
+      const deltaLabel = document.getElementById("stepBurnTargetDelta");
+
+      if (countDisplay) countDisplay.textContent = steps.toLocaleString("ru-RU");
+      if (burnDisplay) burnDisplay.textContent = `+${burn} ккал`;
+      if (deltaLabel) deltaLabel.textContent = `+${burn} ккал к цели`;
+
+      const isNative = !!window.webkit?.messageHandlers?.widgetBridge;
+      if (sourceBadge) {
+        if (state.dailySteps.source === "motion" || (isNative && state.dailySteps.source !== "manual")) {
+          sourceBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
+          sourceBadge.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>Здоровье Live`;
+        } else {
+          sourceBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400";
+          sourceBadge.textContent = isNative ? "Ручной ввод" : "Веб / PWA";
+        }
+      }
+
+      if (chk) {
+        if (state.dailySteps.autoAddTarget) {
+          chk.className = "w-4 h-4 rounded border flex items-center justify-center text-[10px] font-bold text-black border-transparent";
+          chk.style.backgroundColor = "var(--accent-cal)";
+          chk.textContent = "✓";
+        } else {
+          chk.className = "w-4 h-4 rounded border border-white/20 bg-transparent flex items-center justify-center text-[10px] font-bold text-transparent";
+          chk.style.backgroundColor = "transparent";
+          chk.textContent = "";
+        }
+      }
+    }
+
+    function stepDailySteps(delta) {
+      if (!state.dailySteps || typeof state.dailySteps !== "object") {
+        state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
+      }
+      state.dailySteps.count = Math.max(0, (Number(state.dailySteps.count) || 0) + delta);
+      state.dailySteps.source = "manual";
+      state.dailySteps.date = getTodayKey();
+      saveState();
+      renderAll();
+      syncNativeWidget();
+    }
+
+    function setDailyStepsPreset(count) {
+      if (!state.dailySteps || typeof state.dailySteps !== "object") {
+        state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
+      }
+      state.dailySteps.count = Math.max(0, count);
+      state.dailySteps.source = "manual";
+      state.dailySteps.date = getTodayKey();
+      saveState();
+      renderAll();
+      syncNativeWidget();
+      showToast(`Шаги: ${count.toLocaleString("ru-RU")} (+${calcStepBurn(count)} ккал)`);
+    }
+
+    function promptCustomSteps() {
+      const current = Number(state.dailySteps?.count) || 0;
+      const res = prompt("Количество шагов за сегодня:", current > 0 ? String(current) : "10000");
+      if (res !== null) {
+        const num = Math.max(0, parseInt(res.replace(/\D/g, ""), 10) || 0);
+        setDailyStepsPreset(num);
+      }
+    }
+
+    function toggleStepBurnCompensation() {
+      if (!state.dailySteps || typeof state.dailySteps !== "object") {
+        state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
+      }
+      state.dailySteps.autoAddTarget = !state.dailySteps.autoAddTarget;
+      saveState();
+      renderAll();
+      syncNativeWidget();
+      const burn = calcStepBurn(state.dailySteps.count);
+      if (state.dailySteps.autoAddTarget) {
+        showToast(`✓ Расход шагов (+${burn} ккал) добавлен в суточный калораж`);
+      } else {
+        showToast(`✓ Суточный калораж вернулся к базовой норме`);
+      }
+    }
+
+    function requestNativeStepsSync() {
+      if (window.webkit?.messageHandlers?.widgetBridge) {
+        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps" });
+        showToast("Синхронизация с датчиком шагов iPhone...");
+      } else {
+        if (!state.dailySteps) state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "pwa" };
+        state.dailySteps.source = "pwa";
+        renderStepsCard();
+        showToast("Веб / PWA режим: используй пресеты или нажми на число шагов");
+      }
+    }
+
+    function onNativeStepsReceived(steps) {
+      if (!state.dailySteps || typeof state.dailySteps !== "object") {
+        state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "motion" };
+      }
+      state.dailySteps.count = Math.max(0, Number(steps) || 0);
+      state.dailySteps.date = getTodayKey();
+      state.dailySteps.source = "motion";
+      saveState();
+      renderAll();
+      syncNativeWidget();
+      showToast(`✓ Шаги обновлены: ${Number(steps).toLocaleString("ru-RU")}`);
+    }
+
+    function onNativeStepsUnavailable() {
+      if (state.dailySteps) state.dailySteps.source = "pwa";
+      renderStepsCard();
+    }
+
+    function checkNativeStepsOnStartup() {
+      if (window.webkit?.messageHandlers?.widgetBridge) {
+        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps" });
+      }
+    }
+
+    // =========================================================================
+    // БЫСТРЫЙ РУЧНОЙ ВВОД И НАСТРОЙКА ЦЕЛЕЙ КБЖУ (СВОЯ НОРМА)
+    // =========================================================================
+    function openTargetEditorModal() {
+      const modal = document.getElementById("targetEditorModal");
+      if (!modal) return;
+
+      const mode = state.goalCalcMode === "manual" ? "manual" : "auto";
+      selectTargetEditorMode(mode);
+
+      const cal = Number(state.targets?.cal) || 2800;
+      const p = Number(state.targets?.p) || 140;
+      const f = Number(state.targets?.f) || 65;
+      const c = Number(state.targets?.c) || 215;
+
+      const inCal = document.getElementById("inputManualCal");
+      const inP = document.getElementById("inputManualP");
+      const inF = document.getElementById("inputManualF");
+      const inC = document.getElementById("inputManualC");
+
+      if (inCal) inCal.value = cal;
+      if (inP) inP.value = p;
+      if (inF) inF.value = f;
+      if (inC) inC.value = c;
+
+      updateManualPreview();
+      modal.classList.add("open");
+    }
+
+    function closeTargetEditorModal() {
+      document.getElementById("targetEditorModal")?.classList.remove("open");
+    }
+
+    function selectTargetEditorMode(mode) {
+      const isAuto = mode === "auto";
+      const btnAuto = document.getElementById("btnTargetTabAuto");
+      const btnManual = document.getElementById("btnTargetTabManual");
+      const autoBox = document.getElementById("targetAutoBox");
+      const manualBox = document.getElementById("targetManualBox");
+
+      if (btnAuto) {
+        btnAuto.className = isAuto
+          ? "py-2 rounded-lg text-xs font-bold transition text-center bg-white/10 text-white shadow-sm border border-white/10"
+          : "py-2 rounded-lg text-xs font-semibold transition text-center text-zinc-400 hover:text-white";
+      }
+      if (btnManual) {
+        btnManual.className = !isAuto
+          ? "py-2 rounded-lg text-xs font-bold transition text-center bg-white/10 text-white shadow-sm border border-white/10"
+          : "py-2 rounded-lg text-xs font-semibold transition text-center text-zinc-400 hover:text-white";
+      }
+
+      if (autoBox) autoBox.classList.toggle("hidden", !isAuto);
+      if (manualBox) manualBox.classList.toggle("hidden", isAuto);
+
+      if (isAuto) {
+        const latestW = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
+        const formula = getBodyFormulaBaseline(latestW);
+        const summaryEl = document.getElementById("targetAutoSummaryText");
+        if (summaryEl) {
+          summaryEl.innerHTML = `
+            Вес: <strong class="text-white mono">${latestW} кг</strong> · BMR: <strong class="text-white mono">${Math.round(formula.bmr)} ккал</strong><br>
+            TDEE: <strong class="text-white mono">${Math.round(formula.tdee)} ккал</strong> → Цель: <strong class="text-white mono">${formula.targetCal} ккал</strong><br>
+            Б: <strong class="text-white mono">${formula.p}г</strong> · Ж: <strong class="text-white mono">${formula.f}г</strong> · У: <strong class="text-white mono">${formula.c}г</strong>
+          `;
+        }
+      }
+    }
+
+    function stepManualTarget(field, delta) {
+      const map = {
+        cal: document.getElementById("inputManualCal"),
+        p: document.getElementById("inputManualP"),
+        f: document.getElementById("inputManualF"),
+        c: document.getElementById("inputManualC")
+      };
+      const input = map[field];
+      if (!input) return;
+      const current = Number(input.value) || 0;
+      const minVal = field === "cal" ? 800 : 10;
+      input.value = Math.max(minVal, current + delta);
+      updateManualPreview();
+    }
+
+    function updateManualPreview() {
+      const cal = Number(document.getElementById("inputManualCal")?.value) || 0;
+      const p = Number(document.getElementById("inputManualP")?.value) || 0;
+      const f = Number(document.getElementById("inputManualF")?.value) || 0;
+      const c = Number(document.getElementById("inputManualC")?.value) || 0;
+
+      const kP = p * 4;
+      const kF = f * 9;
+      const kC = c * 4;
+      const sumKcal = kP + kF + kC;
+
+      const elKP = document.getElementById("manualKcalP");
+      const elKF = document.getElementById("manualKcalF");
+      const elKC = document.getElementById("manualKcalC");
+      const elSum = document.getElementById("manualMacroSumPreview");
+
+      if (elKP) elKP.textContent = `${kP} ккал`;
+      if (elKF) elKF.textContent = `${kF} ккал`;
+      if (elKC) elKC.textContent = `${kC} ккал`;
+      if (elSum) {
+        const diff = cal - sumKcal;
+        elSum.textContent = `${sumKcal} ккал (${diff >= 0 ? "разница " + diff : "перебор " + Math.abs(diff)})`;
+        elSum.style.color = Math.abs(diff) <= 30 ? "var(--accent-cal)" : "var(--accent-c)";
+      }
+    }
+
+    function balanceManualCarbs() {
+      const cal = Number(document.getElementById("inputManualCal")?.value) || 0;
+      const p = Number(document.getElementById("inputManualP")?.value) || 0;
+      const f = Number(document.getElementById("inputManualF")?.value) || 0;
+      const rem = cal - (p * 4) - (f * 9);
+      const c = Math.max(20, Math.round(rem / 4));
+      const elC = document.getElementById("inputManualC");
+      if (elC) {
+        elC.value = c;
+        updateManualPreview();
+        showToast(`✓ Углеводы сбалансированы: ${c}г`);
+      }
+    }
+
+    function saveTargetEditorModal() {
+      const isAuto = !document.getElementById("targetAutoBox")?.classList.contains("hidden");
+      if (isAuto) {
+        state.goalCalcMode = "auto";
+        const latestW = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
+        const formula = getBodyFormulaBaseline(latestW);
+        state.targets = { cal: formula.targetCal, p: formula.p, f: formula.f, c: formula.c };
+        showToast(`✓ Включен авторасчет: ${formula.targetCal} ккал`);
+      } else {
+        state.goalCalcMode = "manual";
+        const cal = Math.max(800, Number(document.getElementById("inputManualCal")?.value) || 2800);
+        const p = Math.max(20, Number(document.getElementById("inputManualP")?.value) || 140);
+        const f = Math.max(15, Number(document.getElementById("inputManualF")?.value) || 65);
+        const c = Math.max(20, Number(document.getElementById("inputManualC")?.value) || 215);
+        state.targets = { cal, p, f, c };
+        state.manualTargets = { cal, p, f, c };
+        showToast(`✓ Своя норма сохранена: ${cal} ккал`);
+      }
+
+      saveState();
+      renderAll();
+      syncNativeWidget();
+      closeTargetEditorModal();
+    }
+
     function renderAll() {
       const listEl = document.getElementById("foodList");
       const countEl = document.getElementById("itemsCountLabel");
@@ -5083,10 +5649,13 @@
       totalF = Math.round(totalF);
       totalC = Math.round(totalC);
 
-      const tCal = Math.max(500, Number(state.targets?.cal) || 2000);
+      const baseCal = Math.max(500, Number(state.targets?.cal) || 2000);
       const tP = Math.max(10, Number(state.targets?.p) || 140);
       const tF = Math.max(10, Number(state.targets?.f) || 65);
       const tC = Math.max(10, Number(state.targets?.c) || 215);
+
+      const stepBurn = (state.dailySteps?.autoAddTarget) ? (typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0) : 0;
+      const tCal = baseCal + stepBurn;
 
       document.getElementById("calEaten").textContent = totalCal;
       document.getElementById("calTarget").textContent = tCal;
@@ -5108,7 +5677,7 @@
       const pctBadge = document.getElementById("calPercentBadge");
 
       if (diff >= 0) {
-        pctBadge.textContent = `Осталось ${diff} ккал`;
+        pctBadge.textContent = stepBurn > 0 ? `Осталось ${diff} (+ ${stepBurn}ш)` : `Осталось ${diff} ккал`;
         pctBadge.style.color = "var(--accent-cal)";
         statusDot.style.backgroundColor = "var(--accent-cal)";
       } else {
@@ -5117,6 +5686,18 @@
         statusDot.style.backgroundColor = "var(--accent-c)";
       }
 
+      const targetModeBadge = document.getElementById("dietTargetModeBadge");
+      if (targetModeBadge) {
+        if (state.goalCalcMode === "manual") {
+          targetModeBadge.textContent = "Своя норма";
+          targetModeBadge.parentElement.className = "ml-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/15 border border-white/20 text-[10px] mono text-white font-semibold active:scale-95 transition";
+        } else {
+          targetModeBadge.textContent = "Авто";
+          targetModeBadge.parentElement.className = "ml-1 px-2 py-0.5 rounded-md bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-[10px] mono text-zinc-400 font-semibold active:scale-95 transition";
+        }
+      }
+
+      if (typeof renderStepsCard === "function") renderStepsCard();
       renderStackAndWeightStrip();
 
       countEl.textContent = state.todayItems.length > 0 ? `${state.todayItems.length} поз.` : "";
@@ -6249,39 +6830,7 @@
   <script id="formUpgradePatchV10">
   (function() {
     // 1. Стили шапки, карточки Умного Веса и полей в Пушах
-    const style = document.createElement("style");
-    style.textContent = `
-      .app-shell {
-        padding-top: calc(env(safe-area-inset-top, 44px) + 16px) !important;
-      }
-      .smart-weight-card {
-        background: linear-gradient(180deg, rgba(24, 24, 28, 0.85) 0%, rgba(14, 14, 17, 0.92) 100%);
-        border: 1px solid var(--card-border);
-        border-radius: 18px;
-        padding: 12px 15px;
-        margin-bottom: 12px;
-        cursor: pointer;
-        transition: transform 0.12s ease, border-color 0.2s ease;
-      }
-      .smart-weight-card:active {
-        transform: scale(0.985);
-      }
-      #panelPush textarea {
-        font-size: 12.5px !important;
-        line-height: 1.45 !important;
-        padding: 10px 12px !important;
-        min-height: 76px !important;
-        height: auto !important;
-        resize: none !important;
-        overflow-y: auto !important;
-        display: block !important;
-      }
-      #panelPush input[type="text"] {
-        font-size: 12.5px !important;
-        padding: 9px 11px !important;
-      }
-    `;
-    document.head.appendChild(style);
+    // Dynamic styles consolidated into static <head> style
 
     function fitPushTextareas() {
       document.querySelectorAll("#panelPush textarea").forEach(ta => {
@@ -7003,35 +7552,7 @@
   <script id="formPolishV11">
   (function() {
     // 1. CSS-фиксы: центровка дневной цели калорий, защита БЖУ от разрыва на 2 строки и фикс высоты промпта пушей
-    const polishStyle = document.createElement("style");
-    polishStyle.textContent = `
-      /* Центрируем цифру Дневной цели калорий (2979) ровно по середине бокса */
-      #inputTargetCal {
-        text-align: center !important;
-        padding-left: 8px !important;
-        padding-right: 8px !important;
-      }
-
-      /* Запрещаем разрыв "Б 5.4" на две вертикальные строчки из-за длинного штрихкода */
-      #foodList .food-row .mono.text-zinc-500 {
-        flex-wrap: wrap !important;
-        row-gap: 3px !important;
-      }
-      #foodList .food-row .mono.text-zinc-500 > span {
-        white-space: nowrap !important;
-      }
-
-      /* Убираем обрезку нижней строки в промпте генератора пушей */
-      #panelPush textarea {
-        font-size: 12.5px !important;
-        line-height: 1.45 !important;
-        padding: 10px 12px !important;
-        min-height: 92px !important;
-        box-sizing: border-box !important;
-        overflow-y: hidden !important;
-      }
-    `;
-    document.head.appendChild(polishStyle);
+    // Polish styles consolidated into static <head> style
 
     // 2. Меняем заголовок «Ателье и Настройки» -> «Настройки»
     const settingsTitle = document.querySelector("#settingsModal h2");
@@ -7086,62 +7607,7 @@
   <script id="formScannerAndBackupPatch">
   (function() {
     // 1. Стили: портретный видоискатель без зума и без черных полос, чипсы порций и компактные кружки подходов
-    const style = document.createElement("style");
-    style.textContent = `
-      .mod-chip {
-        padding: 6px 8px;
-        border-radius: 10px;
-        font-size: 10px;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        background: rgba(255, 255, 255, 0.03);
-        color: #a1a1aa;
-        transition: all 0.15s ease;
-        text-align: center;
-        cursor: pointer;
-      }
-      .mod-chip.active {
-        border-color: var(--accent-cal);
-        color: var(--accent-cal);
-        background: rgba(255, 255, 255, 0.09);
-      }
-      .piece-btn {
-        padding: 5px 8px;
-        border-radius: 9px;
-        font-size: 10.5px;
-        font-weight: 700;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(255, 255, 255, 0.04);
-        color: #e4e4e7;
-        cursor: pointer;
-        transition: all 0.12s ease;
-      }
-      .piece-btn.active {
-        background: var(--accent-cal);
-        color: var(--accent-cal-text);
-        border-color: var(--accent-cal);
-      }
-      #backupJsonArea {
-        font-size: 11.5px !important;
-        line-height: 1.4 !important;
-        padding: 10px 12px !important;
-        min-height: 74px !important;
-        resize: none !important;
-      }
-      .sets-row-compact .set-dot {
-        width: 27px !important;
-        height: 27px !important;
-        font-size: 10.5px !important;
-      }
-      /* Естественные пропорции камеры iPhone без сильного кроп-зума и без черных рамок */
-      #cameraStream, #photoPreview {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-        background: #08080a !important;
-      }
-    `;
-    document.head.appendChild(style);
+    // Scanner & backup styles consolidated into static <head> style
 
     // Делаем видоискатель выше (300px), чтобы вертикальный кадр камеры iPhone не зумился
     const viewfinderBox = document.getElementById("cameraStream")?.parentElement;
@@ -8579,6 +9045,7 @@
         settingsModal: () => typeof closeSettings === "function" && closeSettings(),
         formulaModal: () => typeof closeFormulaModal === "function" && closeFormulaModal(),
         editModal: () => typeof closeEditModal === "function" && closeEditModal(),
+        targetEditorModal: () => typeof closeTargetEditorModal === "function" && closeTargetEditorModal(),
         dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal(),
         exerciseNotesModal: () => typeof closeExerciseNotesModal === "function" && closeExerciseNotesModal()
       };

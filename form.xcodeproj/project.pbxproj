@@ -451,6 +451,7 @@
 				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Для сканирования продуктов, этикеток БЖУ и штрихкодов";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Для подсчета дневных шагов и точного расчета расхода калорий";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -496,6 +497,7 @@
 				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Для сканирования продуктов, этикеток БЖУ и штрихкодов";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Для подсчета дневных шагов и точного расчета расхода калорий";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

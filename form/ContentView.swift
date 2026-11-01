@@ -2,6 +2,7 @@ import SwiftUI
 import WebKit
 import WidgetKit
 import UserNotifications
+import CoreMotion
 #if canImport(ActivityKit)
 import ActivityKit
 #endif
@@ -114,6 +115,8 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ uiView: WKWebView, context: Context) {}
     
     class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
+        private let pedometer = CMPedometer()
+        
         @available(iOS 15.0, *)
         func webView(_ webView: WKWebView,
                      requestMediaCapturePermissionFor origin: WKSecurityOrigin,
@@ -130,6 +133,9 @@ struct WebView: UIViewRepresentable {
                     webView.evaluateJavaScript("switchMainView('\(route)');", completionHandler: nil)
                 }
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                webView.evaluateJavaScript("if (typeof checkNativeStepsOnStartup === 'function') { checkNativeStepsOnStartup(); }", completionHandler: nil)
+            }
         }
         
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -137,6 +143,25 @@ struct WebView: UIViewRepresentable {
                   let dict = message.body as? [String: Any] else { return }
             
             let action = dict["action"] as? String ?? "syncData"
+            if action == "fetchMotionSteps" {
+                let wv = message.webView
+                if CMPedometer.isStepCountingAvailable() {
+                    let cal = Calendar.current
+                    let startOfDay = cal.startOfDay(for: Date())
+                    pedometer.queryPedometerData(from: startOfDay, to: Date()) { data, error in
+                        guard let data = data, error == nil else { return }
+                        let steps = data.numberOfSteps.intValue
+                        DispatchQueue.main.async {
+                            wv?.evaluateJavaScript("if (typeof onNativeStepsReceived === 'function') { onNativeStepsReceived(\(steps)); }", completionHandler: nil)
+                        }
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        wv?.evaluateJavaScript("if (typeof onNativeStepsUnavailable === 'function') { onNativeStepsUnavailable(); }", completionHandler: nil)
+                    }
+                }
+                return
+            }
             if action == "testNotification" {
                 let text = dict["text"] as? String ?? "Проверь остаток по калориям и белку."
                 scheduleTestPush(text: text)
