@@ -481,10 +481,16 @@ struct WebView: UIViewRepresentable {
             }
 
             let noteId = self.pendingNoteId
+            let exName = self.pendingExName
             let uuid = UUID().uuidString
             let mediaDir = FormMediaSchemeHandler.notesMediaDirectory
+            let isVideo = provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier)
 
-            if provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+            DispatchQueue.main.async {
+                self.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaLoading === 'function') { window.onNoteMediaLoading({ type: '\(isVideo ? "video" : "photo")', exName: '\(exName)' }); }", completionHandler: nil)
+            }
+
+            if isVideo {
                 provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { [weak self] tempUrl, error in
                     guard let tempUrl = tempUrl, error == nil else {
                         DispatchQueue.main.async {
@@ -513,50 +519,47 @@ struct WebView: UIViewRepresentable {
                         }
                     }
 
+                    // Мгновенный вызов JS: превью и возможность сразу сохранить заметку без задержки!
+                    DispatchQueue.main.async {
+                        let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
+                        let durValue = duration.isNaN ? 0.0 : duration
+                        let js = """
+                        if (typeof window.onNoteMediaPicked === 'function') {
+                            window.onNoteMediaPicked({
+                                success: true,
+                                noteId: '\(noteId)',
+                                exName: '\(exName)',
+                                type: 'video',
+                                url: 'form-media://video_\(uuid).mp4',
+                                audioUrl: null,
+                                thumbUrl: \(thumbParam),
+                                duration: \(durValue)
+                            });
+                        }
+                        """
+                        self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
+                    }
+
+                    // Фоновое извлечение аудиодорожки .m4a
                     if let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) {
                         try? FileManager.default.removeItem(at: audioDst)
                         exportSession.outputURL = audioDst
                         exportSession.outputFileType = .m4a
                         exportSession.exportAsynchronously { [weak self] in
-                            let hasAudio = exportSession.status == .completed
-                            DispatchQueue.main.async {
-                                let audioParam = hasAudio ? "'form-media://audio_\(uuid).m4a'" : "null"
-                                let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
-                                let durValue = duration.isNaN ? 0.0 : duration
-                                let js = """
-                                if (typeof window.onNoteMediaPicked === 'function') {
-                                    window.onNoteMediaPicked({
-                                        success: true,
-                                        noteId: '\(noteId)',
-                                        type: 'video',
-                                        url: 'form-media://video_\(uuid).mp4',
-                                        audioUrl: \(audioParam),
-                                        thumbUrl: \(thumbParam),
-                                        duration: \(durValue)
-                                    });
+                            if exportSession.status == .completed {
+                                DispatchQueue.main.async {
+                                    let updateJs = """
+                                    if (typeof window.onNoteAudioExtracted === 'function') {
+                                        window.onNoteAudioExtracted({
+                                            noteId: '\(noteId)',
+                                            videoUrl: 'form-media://video_\(uuid).mp4',
+                                            audioUrl: 'form-media://audio_\(uuid).m4a'
+                                        });
+                                    }
+                                    """
+                                    self?.currentWebView?.evaluateJavaScript(updateJs, completionHandler: nil)
                                 }
-                                """
-                                self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
                             }
-                        }
-                    } else {
-                        DispatchQueue.main.async {
-                            let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
-                            let durValue = duration.isNaN ? 0.0 : duration
-                            let js = """
-                            if (typeof window.onNoteMediaPicked === 'function') {
-                                window.onNoteMediaPicked({
-                                    success: true,
-                                    noteId: '\(noteId)',
-                                    type: 'video',
-                                    url: 'form-media://video_\(uuid).mp4',
-                                    audioUrl: null,
-                                    thumbUrl: \(thumbParam),
-                                    duration: \(durValue)
-                                });
-                            }
-                            """
-                            self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
                         }
                     }
                 }
@@ -593,6 +596,7 @@ struct WebView: UIViewRepresentable {
                             window.onNoteMediaPicked({
                                 success: true,
                                 noteId: '\(noteId)',
+                                exName: '\(exName)',
                                 type: 'photo',
                                 url: 'form-media://photo_\(uuid).jpg',
                                 thumbUrl: 'form-media://photo_\(uuid).jpg'

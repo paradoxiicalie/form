@@ -1082,24 +1082,24 @@
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 mb-1">
             <span id="exNotesMuscleBadge" class="px-2 py-0.5 rounded-full text-[9px] font-semibold mono uppercase tracking-wide bg-white/10 text-zinc-300">Мышцы</span>
-            <span class="text-[10px] uppercase tracking-wider font-semibold mono text-zinc-400">База заметок</span>
+            <span class="text-[9px] uppercase tracking-wider font-semibold mono text-zinc-400">База заметок</span>
           </div>
-          <h3 id="exNotesModalTitle" class="text-base font-bold text-white truncate">Упражнение</h3>
+          <h3 id="exNotesModalTitle" class="text-sm font-semibold text-white truncate">Упражнение</h3>
         </div>
         <button type="button" onclick="closeExerciseNotesModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 ml-2">✕</button>
       </div>
 
       <!-- Список заметок к упражнению в стиле GitHub alerts -->
-      <div id="exNotesListContainer" class="space-y-2.5 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3.5"></div>
+      <div id="exNotesListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3"></div>
 
       <!-- Форма создания новой заметки -->
-      <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 space-y-3">
-        <div class="text-[11px] font-bold uppercase tracking-wider mono text-zinc-400">
-          <span>+ Добавить запись</span>
+      <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+          Новая запись
         </div>
 
         <!-- Выбор категории -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] mono">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[10px] mono">
           <button type="button" onclick="selectNoteCategory('coach')" id="noteCatBtn_coach" class="note-cat-pill active active-coach px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="coach">
             Совет тренера
           </button>
@@ -1117,42 +1117,40 @@
           </button>
         </div>
 
-        <!-- Панель действий: AI Форматирование и Медиа -->
+        <!-- Панель действий: Быстрое форматирование и Медиа -->
         <div class="flex items-center justify-between gap-2 pt-0.5">
-          <div class="flex items-center gap-1.5">
-            <button type="button" onclick="pickNoteMediaForNewNote()" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition">
-              <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+          <div class="flex items-center gap-1.5 flex-nowrap">
+            <button type="button" id="pickNoteMediaBtn" onclick="pickNoteMediaForNewNote()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
+              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
               <span>+ Медиа</span>
             </button>
             <input type="file" id="noteMediaFileInput" accept="image/*,video/*" class="hidden" onchange="handleWebNoteMediaPicked(event)" />
-            <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextWithAI()" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition">
-              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+            <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextClient()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
+              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
               <span>Форматировать</span>
             </button>
           </div>
-          <span id="noteFormatStatus" class="hidden text-[10px] mono text-amber-400 animate-pulse">ИИ форматирует...</span>
         </div>
 
         <!-- Превью прикрепленного медиафайла перед сохранением -->
         <div id="newNoteMediaPreview" class="hidden relative rounded-xl border border-white/10 overflow-hidden bg-black/50 p-2">
           <div class="flex items-center justify-between gap-2">
-            <div id="newNoteMediaThumbBox" class="flex items-center gap-2 min-w-0">
-              <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0"></div>
+            <div id="newNoteMediaThumbBox" class="flex items-center gap-2.5 min-w-0">
+              <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden"></div>
               <div class="min-w-0">
                 <div id="newNoteMediaTitle" class="text-xs font-semibold text-white truncate">Медиафайл</div>
-                <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400">Готов к сохранению</div>
+                <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400 truncate">Готов к сохранению</div>
               </div>
             </div>
-            <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition">✕</button>
+            <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition shrink-0">✕</button>
           </div>
         </div>
 
         <!-- Поле ввода текста -->
-        <textarea id="newExNoteText" rows="3" placeholder="Что сказал тренер / техника / веса разминки (напр. 10 кг × 12, 15 кг × 8)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
+        <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
 
-        <div class="flex items-center justify-between pt-0.5">
-          <div class="text-[10px] text-zinc-500 mono">Поддерживает разминочные веса</div>
-          <button type="button" onclick="submitNewExerciseNote()" class="py-2 px-4 rounded-xl accent-btn text-xs font-semibold">
+        <div class="flex items-center justify-end pt-0.5">
+          <button type="button" id="submitNoteBtn" onclick="submitNewExerciseNote()" class="py-1.5 px-4 rounded-xl accent-btn text-xs font-semibold">
             + Записать
           </button>
         </div>
@@ -8194,58 +8192,98 @@
 
     window.renderWarmupPillsHtml = function(sets) {
       if (!Array.isArray(sets) || sets.length === 0) return "";
-      return sets.map((item, idx) => `
-        <div class="warmup-pill">
-          <span class="warmup-dot">Р${idx + 1}</span>
-          <span class="font-semibold text-zinc-100">${item.weight === 0 ? "Свой вес" : item.weight + " кг"} × ${item.reps}</span>
-        </div>
-      `).join(" ");
+      return sets.map((item, idx) => {
+        const numPrefix = sets.length > 1 ? `<span class="text-amber-500/70 mr-1 font-mono">${idx + 1}·</span>` : "";
+        const wtStr = item.weight === 0 ? "Свой вес" : `${item.weight} кг`;
+        return `
+          <div class="inline-flex items-center px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[11px] font-mono text-zinc-200">
+            ${numPrefix}<span class="font-semibold text-amber-200">${wtStr}</span><span class="text-zinc-500 mx-1">×</span><span class="font-semibold text-zinc-100">${item.reps}</span>
+          </div>
+        `;
+      }).join(" ");
     };
 
     const NOTE_CATEGORY_META = {
       coach: {
         title: "СОВЕТ ТРЕНЕРА",
-        border: "border-sky-500/30",
+        border: "border-sky-500/25",
         bg: "bg-sky-950/20",
-        borderLeft: "border-l-4 border-l-sky-400",
-        badge: "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+        borderLeft: "border-l-2 border-l-sky-400",
+        badge: "bg-sky-500/15 text-sky-300 border border-sky-500/25"
       },
       warmup: {
         title: "РАЗМИНКА",
-        border: "border-amber-500/30",
+        border: "border-amber-500/25",
         bg: "bg-amber-950/20",
-        borderLeft: "border-l-4 border-l-amber-400",
-        badge: "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+        borderLeft: "border-l-2 border-l-amber-400",
+        badge: "bg-amber-500/15 text-amber-300 border border-amber-500/25"
       },
       technique: {
         title: "ТЕХНИКА",
-        border: "border-red-500/30",
+        border: "border-red-500/25",
         bg: "bg-red-950/20",
-        borderLeft: "border-l-4 border-l-red-500",
-        badge: "bg-red-500/20 text-red-300 border border-red-500/30"
+        borderLeft: "border-l-2 border-l-red-500",
+        badge: "bg-red-500/15 text-red-300 border border-red-500/25"
       },
       setup: {
         title: "НАСТРОЙКА",
-        border: "border-purple-500/30",
+        border: "border-purple-500/25",
         bg: "bg-purple-950/20",
-        borderLeft: "border-l-4 border-l-purple-400",
-        badge: "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+        borderLeft: "border-l-2 border-l-purple-400",
+        badge: "bg-purple-500/15 text-purple-300 border border-purple-500/25"
       },
       general: {
         title: "ЗАМЕТКА",
         border: "border-white/10",
         bg: "bg-zinc-900/60",
-        borderLeft: "border-l-4 border-l-zinc-400",
+        borderLeft: "border-l-2 border-l-zinc-400",
         badge: "bg-white/10 text-zinc-300 border border-white/10"
       }
     };
 
     let pendingNoteMedia = null;
 
+    window.renderNewNoteMediaPreview = function() {
+      const preview = document.getElementById("newNoteMediaPreview");
+      const title = document.getElementById("newNoteMediaTitle");
+      const sub = document.getElementById("newNoteMediaSub");
+      const icon = document.getElementById("newNoteMediaIcon");
+      const submitBtn = document.getElementById("submitNoteBtn");
+
+      if (!pendingNoteMedia) {
+        if (preview) preview.classList.add("hidden");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-50", "pointer-events-none");
+        }
+        return;
+      }
+
+      if (title) title.textContent = pendingNoteMedia.type === "video" ? "Видео техники тренера" : "Фото настройки тренажера";
+      if (sub) {
+        if (pendingNoteMedia.type === "video") {
+          sub.textContent = pendingNoteMedia.audioUrl ? "Видео и звук (.m4a) готовы" : "Видео готово к записи";
+        } else {
+          sub.textContent = "Фото готово к анализу";
+        }
+      }
+      if (icon) {
+        if (pendingNoteMedia.thumbUrl) {
+          icon.innerHTML = `<img src="${pendingNoteMedia.thumbUrl}" class="w-full h-full object-cover rounded-lg" />`;
+        } else {
+          icon.innerHTML = `<span class="text-[10px] mono text-zinc-400 font-bold">${pendingNoteMedia.type === "video" ? "VID" : "IMG"}</span>`;
+        }
+      }
+      if (preview) preview.classList.remove("hidden");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-50", "pointer-events-none");
+      }
+    };
+
     window.clearNewNoteMedia = function() {
       pendingNoteMedia = null;
-      const preview = document.getElementById("newNoteMediaPreview");
-      if (preview) preview.classList.add("hidden");
+      renderNewNoteMediaPreview();
       const fileInput = document.getElementById("noteMediaFileInput");
       if (fileInput) fileInput.value = "";
     };
@@ -8271,6 +8309,7 @@
         showToast("Выберите фото или видео", true);
         return;
       }
+      window.onNoteMediaLoading?.({ type: isVideo ? "video" : "photo" });
       const reader = new FileReader();
       reader.onload = () => {
         window.onNoteMediaPicked({
@@ -8283,76 +8322,138 @@
       reader.readAsDataURL(file);
     };
 
-    window.onNoteMediaPicked = function(data) {
-      if (!data || data.cancelled) return;
-      if (data.error) {
-        showToast(data.error, true);
-        return;
-      }
-      pendingNoteMedia = data;
+    window.onNoteMediaLoading = function(info) {
       const preview = document.getElementById("newNoteMediaPreview");
       const title = document.getElementById("newNoteMediaTitle");
       const sub = document.getElementById("newNoteMediaSub");
       const icon = document.getElementById("newNoteMediaIcon");
+      const submitBtn = document.getElementById("submitNoteBtn");
 
-      if (title) title.textContent = data.type === "video" ? "Видео техники тренера" : "Фото настройки тренажера";
-      if (sub) {
-        sub.textContent = data.type === "video"
-          ? (data.audioUrl ? "Аудиодорожка извлечена (.m4a)" : "Видео готово")
-          : "Фото готово к анализу";
-      }
+      if (title) title.textContent = info?.type === "video" ? "Загрузка видео..." : "Загрузка фото...";
+      if (sub) sub.textContent = "Обработка и создание превью...";
       if (icon) {
-        if (data.thumbUrl) {
-          icon.innerHTML = `<img src="${data.thumbUrl}" class="w-full h-full object-cover rounded-lg" />`;
-        } else {
-          icon.innerHTML = `<span class="text-xs mono">${data.type === "video" ? "VID" : "IMG"}</span>`;
-        }
+        icon.innerHTML = `<svg class="w-4 h-4 text-zinc-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>`;
       }
       if (preview) preview.classList.remove("hidden");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("opacity-50", "pointer-events-none");
+      }
+    };
+
+    window.onNoteMediaPicked = function(data) {
+      const submitBtn = document.getElementById("submitNoteBtn");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-50", "pointer-events-none");
+      }
+      if (!data || data.cancelled) {
+        if (!pendingNoteMedia) {
+          document.getElementById("newNoteMediaPreview")?.classList.add("hidden");
+        }
+        return;
+      }
+      if (data.error) {
+        showToast(data.error, true);
+        if (!pendingNoteMedia) {
+          document.getElementById("newNoteMediaPreview")?.classList.add("hidden");
+        }
+        return;
+      }
+      pendingNoteMedia = {
+        ...data,
+        exName: data.exName || currentActiveNotesExName || ""
+      };
+      renderNewNoteMediaPreview();
       showToast(data.type === "video" ? "Видео прикреплено" : "Фото прикреплено");
     };
 
-    window.formatNewNoteTextWithAI = async function() {
+    window.onNoteAudioExtracted = function(data) {
+      if (!data?.audioUrl) return;
+      if (pendingNoteMedia && pendingNoteMedia.url === data.videoUrl) {
+        pendingNoteMedia.audioUrl = data.audioUrl;
+        renderNewNoteMediaPreview();
+      }
+      if (state.workout?.exerciseNotes) {
+        let updated = false;
+        Object.keys(state.workout.exerciseNotes).forEach(k => {
+          (state.workout.exerciseNotes[k] || []).forEach(n => {
+            if (n.media && n.media.url === data.videoUrl) {
+              n.media.audioUrl = data.audioUrl;
+              updated = true;
+            }
+          });
+        });
+        if (updated) {
+          saveState();
+          if (currentActiveNotesExName) {
+            renderExerciseNotesList(currentActiveNotesExName);
+            renderSetLoggerNotesPreview(currentActiveNotesExName);
+          }
+        }
+      }
+    };
+
+    window.formatNoteTextClientCode = function(text) {
+      if (!text || !text.trim()) return "";
+      let s = text.trim();
+
+      // Быстрые исправления распространенных опечаток и спортивной терминологии
+      s = s.replace(/\bподьем\b/gi, "подъем")
+           .replace(/\bподьема\b/gi, "подъема")
+           .replace(/\bподьеме\b/gi, "подъеме")
+           .replace(/\bострыи\b/gi, "острый")
+           .replace(/\bлоктеи\b/gi, "локтей")
+           .replace(/\bтяжелыи\b/gi, "тяжелый")
+           .replace(/\bсильныи\b/gi, "сильный")
+           .replace(/\bнизкии\b/gi, "низкий")
+           .replace(/\bпервыи\b/gi, "первый")
+           .replace(/\bвторои\b/gi, "второй")
+           .replace(/\bсвои\b/gi, "свой")
+           .replace(/\bкистеи\b/gi, "кистей")
+           .replace(/\bплечеи\b/gi, "плечей");
+
+      // Стандартизация разминки и весов: "10кг на 8", "15x10" -> "10 кг × 8"
+      s = s.replace(/(\d+(?:[.,]\d+)?)\s*(?:кг|kg)?\s*(?:[xх×*]|на)\s*(\d+)(?:\s*раз[а-я]*)?/gi, "$1 кг × $2");
+
+      let items = [];
+      if (s.includes("+")) {
+        items = s.split("+");
+      } else if (s.includes("\n")) {
+        items = s.split("\n");
+      } else if (s.includes(";")) {
+        items = s.split(";");
+      } else if (/[.!?]\s+[А-Яа-яA-Za-z]/.test(s)) {
+        items = s.split(/(?<=[.!?])\s+/);
+      } else {
+        items = [s];
+      }
+
+      const cleaned = items.map(item => {
+        let line = item.replace(/\s+/g, " ").trim();
+        line = line.replace(/^[\s\-•*–—]+\s*/, "");
+        line = line.replace(/[\s+,;]+$/, "");
+        if (!line) return "";
+        line = line.replace(/\s+-\s+/g, " — ");
+        line = line.charAt(0).toUpperCase() + line.slice(1);
+        return line;
+      }).filter(Boolean);
+
+      if (cleaned.length === 0) return text.trim();
+      if (cleaned.length === 1) return cleaned[0];
+      return cleaned.map(it => `• ${it}`).join("\n");
+    };
+
+    window.formatNewNoteTextClient = function() {
       const input = document.getElementById("newExNoteText");
-      const status = document.getElementById("noteFormatStatus");
-      const btn = document.getElementById("formatNoteBtn");
-      const rawText = input ? input.value.trim() : "";
-      if (!rawText) {
-        showToast("Сначала введите заметку со слов тренера", true);
+      const rawText = input ? input.value : "";
+      if (!rawText || !rawText.trim()) {
+        showToast("Сначала введи черновик заметки", true);
         return;
       }
-      if (status) status.classList.remove("hidden");
-      if (btn) btn.disabled = true;
-
-      const prompt = `Ты строгий профессиональный редактор заметок с тренировок. Твоя задача — ТОЛЬКО аккуратно отформатировать черновик заметки со слов тренера.
-СТРОЖАЙШИЕ ПРАВИЛА:
-1. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО заменять, сокращать, удалять или перефразировать слова тренера. Сохраняй всю авторскую лексику, спортивный сленг и профессиональные реплики БЕЗ изменений.
-2. Исправляй ТОЛЬКО явные опечатки («подьем» -> «подъем», «накланная» -> «наклонная»).
-3. Расставь недостающие знаки препинания (тире, запятые, точки).
-4. Структурируй разминочные и рабочие подходы в четкий единообразный вид (например: «10 кг × 12, 15 кг × 10»).
-5. Выведи ИСКЛЮЧИТЕЛЬНО исправленный текст заметки. Никаких вступлений, пояснений и вежливостей.
-
-Черновик:
-${rawText}`;
-
-      try {
-        const res = await callGemini3Flash({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.0 }
-        });
-        const formatted = (res?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
-        if (formatted) {
-          input.value = formatted;
-          showToast("Заметка отформатирована");
-        } else {
-          showToast("ИИ не вернул текст", true);
-        }
-      } catch (e) {
-        showToast(e.message || "Ошибка форматирования", true);
-      } finally {
-        if (status) status.classList.add("hidden");
-        if (btn) btn.disabled = false;
-      }
+      const formatted = formatNoteTextClientCode(rawText);
+      input.value = formatted;
+      showToast("Текст отформатирован");
     };
 
     window.toggleNoteAudioOnly = function(noteId) {
@@ -8438,6 +8539,19 @@ ${rawText}`;
       const warmups = parseWarmupSets(note.text);
       const warmupPillsHtml = warmups.length > 0 ? renderWarmupPillsHtml(warmups) : "";
 
+      let displayNoteText = (note.text || "").trim();
+      if (warmups.length > 0 && note.category === "warmup") {
+        let residual = displayNoteText
+          .replace(/(?:[РрPpWw]\d+[:.\s]*)?(\d+(?:[.,]\d+)?)\s*(?:кг|kg)?\s*(?:[xх×*]|на)\s*(\d+)\s*(?:раз[а-я]*)?/gi, "")
+          .replace(/разминочн[а-я]*/gi, "")
+          .replace(/подход[а-я]*/gi, "")
+          .replace(/[,;.\-+]/g, "")
+          .trim();
+        if (residual.length <= 2) {
+          displayNoteText = "";
+        }
+      }
+
       let mediaHtml = "";
       if (note.media) {
         if (note.media.type === "video") {
@@ -8448,7 +8562,7 @@ ${rawText}`;
               </div>
               ${note.media.audioUrl ? `
                 <div class="flex items-center justify-between pt-0.5">
-                  <button type="button" onclick="toggleNoteAudioOnly('${note.id}')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] mono text-sky-300 flex items-center gap-1.5 transition active:scale-95">
+                  <button type="button" onclick="toggleNoteAudioOnly('${note.id}')" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] mono text-sky-300 flex items-center gap-1.5 transition active:scale-95">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                     <span id="noteAudioBtnText_${note.id}">Слушать аудио</span>
                   </button>
@@ -8466,7 +8580,7 @@ ${rawText}`;
                 <img src="${note.media.url}" alt="Настройка" class="w-full max-h-48 object-cover" />
               </div>
               <div class="flex items-center justify-between pt-0.5">
-                <button type="button" onclick="analyzeEquipmentSetup('${note.id}', '${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.media.url}')" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[10px] mono text-purple-300 flex items-center gap-1.5 transition active:scale-95">
+                <button type="button" onclick="analyzeEquipmentSetup('${note.id}', '${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.media.url}')" class="px-2 py-0.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[10px] mono text-purple-300 flex items-center gap-1.5 transition active:scale-95">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                   <span>Анализ настройки</span>
                 </button>
@@ -8484,27 +8598,27 @@ ${rawText}`;
       }
 
       return `
-        <div class="rounded-2xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-3 space-y-1.5 transition">
+        <div class="rounded-2xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2.5 space-y-1.5 transition">
           <div class="flex items-center justify-between text-[10px] mono">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px] ${meta.badge}">
+            <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[9px] ${meta.badge}">
                 ${meta.title}
               </span>
-              <span class="text-zinc-500">${escapeHtml(note.date || "")}</span>
+              <span class="text-zinc-500 text-[9px]">${escapeHtml(note.date || "")}</span>
             </div>
-            <button type="button" onclick="deleteExNote('${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-2 py-0.5 rounded transition">
+            <button type="button" onclick="deleteExNote('${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-1.5 py-0.5 rounded transition">
               ✕
             </button>
           </div>
-          ${warmupPillsHtml ? `<div class="flex flex-wrap gap-1.5 pt-1">${warmupPillsHtml}</div>` : ""}
-          <div class="text-xs text-zinc-200 leading-relaxed font-mono whitespace-pre-wrap">${escapeHtml(note.text)}</div>
+          ${warmupPillsHtml ? `<div class="flex flex-wrap gap-1.5 pt-0.5">${warmupPillsHtml}</div>` : ""}
+          ${displayNoteText ? `<div class="text-[12px] text-zinc-200 leading-relaxed font-mono whitespace-pre-wrap pt-0.5">${escapeHtml(displayNoteText)}</div>` : ""}
           ${mediaHtml}
         </div>
       `;
     };
 
     window.addExerciseNote = function(name, category, text, media) {
-      if (!name || !text || !text.trim()) return;
+      if (!name || ((!text || !text.trim()) && !media)) return;
       if (!state.workout) state.workout = {};
       if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
         state.workout.exerciseNotes = {};
@@ -8515,7 +8629,7 @@ ${rawText}`;
       }
 
       let finalCat = category || "coach";
-      let cleanText = text.trim();
+      let cleanText = (text || "").trim();
       const alertMatch = cleanText.match(/^>\s*\[!(NOTE|TIP|WARNING|IMPORTANT|CAUTION)\]\s*(.*)$/is);
       if (alertMatch) {
         const tag = alertMatch[1].toUpperCase();
@@ -8623,16 +8737,21 @@ ${rawText}`;
       }
 
       selectNoteCategory("coach");
-      clearNewNoteMedia();
+      if (pendingNoteMedia && pendingNoteMedia.exName === exName) {
+        renderNewNoteMediaPreview();
+      } else {
+        clearNewNoteMedia();
+      }
       const input = document.getElementById("newExNoteText");
-      if (input) input.value = "";
+      if (input && (!pendingNoteMedia || pendingNoteMedia.exName !== exName)) {
+        input.value = "";
+      }
 
       renderExerciseNotesList(exName);
       if (modal) modal.classList.add("open");
     };
 
     window.closeExerciseNotesModal = function() {
-      clearNewNoteMedia();
       const modal = document.getElementById("exerciseNotesModal");
       if (modal) modal.classList.remove("open");
     };
@@ -8640,8 +8759,8 @@ ${rawText}`;
     window.submitNewExerciseNote = function() {
       const input = document.getElementById("newExNoteText");
       const text = input ? input.value : "";
-      if (!text || !text.trim()) {
-        showToast("Введи текст заметки");
+      if ((!text || !text.trim()) && !pendingNoteMedia) {
+        showToast("Введи текст или прикрепи медиа", true);
         return;
       }
       addExerciseNote(currentActiveNotesExName, selectedNoteCategory, text, pendingNoteMedia);
@@ -8681,7 +8800,7 @@ ${rawText}`;
         const warmups = parseWarmupSets(warmupNote.text);
         if (warmups.length > 0) {
           warmHtml = `
-            <div class="rounded-2xl border border-amber-500/25 bg-amber-950/20 p-2.5 border-l-4 border-l-amber-400">
+            <div class="rounded-2xl border border-amber-500/25 bg-amber-950/20 p-2.5 border-l-2 border-l-amber-400">
               <div class="flex items-center justify-between text-[10px] font-bold mono text-amber-300 uppercase tracking-wider mb-1">
                 <span>Разминочный план</span>
                 <span class="text-zinc-500 text-[9px]">${escapeHtml(warmupNote.date || "")}</span>
