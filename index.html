@@ -444,22 +444,22 @@
       border-color: rgba(56, 189, 248, 0.5) !important;
       color: #7dd3fc !important;
     }
-    .note-cat-pill.active[data-cat="warmup"] {
+    .note-cat-pill.active[data-cat="warmup"], .note-cat-pill.active-warmup {
       background: rgba(245, 158, 11, 0.16) !important;
       border-color: rgba(245, 158, 11, 0.5) !important;
       color: #fcd34d !important;
     }
-    .note-cat-pill.active[data-cat="technique"] {
-      background: rgba(16, 185, 129, 0.16) !important;
-      border-color: rgba(52, 211, 153, 0.5) !important;
-      color: #6ee7b7 !important;
+    .note-cat-pill.active[data-cat="technique"], .note-cat-pill.active-technique {
+      background: rgba(239, 68, 68, 0.16) !important;
+      border-color: rgba(239, 68, 68, 0.5) !important;
+      color: #fca5a5 !important;
     }
-    .note-cat-pill.active[data-cat="setup"] {
+    .note-cat-pill.active[data-cat="setup"], .note-cat-pill.active-setup {
       background: rgba(168, 85, 247, 0.16) !important;
       border-color: rgba(192, 132, 252, 0.5) !important;
       color: #d8b4fe !important;
     }
-    .note-cat-pill.active[data-cat="general"] {
+    .note-cat-pill.active[data-cat="general"], .note-cat-pill.active-general {
       background: rgba(255, 255, 255, 0.12) !important;
       border-color: rgba(255, 255, 255, 0.28) !important;
       color: #ffffff !important;
@@ -1117,6 +1117,36 @@
           </button>
         </div>
 
+        <!-- Панель действий: AI Форматирование и Медиа -->
+        <div class="flex items-center justify-between gap-2 pt-0.5">
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="pickNoteMediaForNewNote()" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition">
+              <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+              <span>+ Медиа</span>
+            </button>
+            <input type="file" id="noteMediaFileInput" accept="image/*,video/*" class="hidden" onchange="handleWebNoteMediaPicked(event)" />
+            <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextWithAI()" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              <span>Форматировать</span>
+            </button>
+          </div>
+          <span id="noteFormatStatus" class="hidden text-[10px] mono text-amber-400 animate-pulse">ИИ форматирует...</span>
+        </div>
+
+        <!-- Превью прикрепленного медиафайла перед сохранением -->
+        <div id="newNoteMediaPreview" class="hidden relative rounded-xl border border-white/10 overflow-hidden bg-black/50 p-2">
+          <div class="flex items-center justify-between gap-2">
+            <div id="newNoteMediaThumbBox" class="flex items-center gap-2 min-w-0">
+              <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0"></div>
+              <div class="min-w-0">
+                <div id="newNoteMediaTitle" class="text-xs font-semibold text-white truncate">Медиафайл</div>
+                <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400">Готов к сохранению</div>
+              </div>
+            </div>
+            <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition">✕</button>
+          </div>
+        </div>
+
         <!-- Поле ввода текста -->
         <textarea id="newExNoteText" rows="3" placeholder="Что сказал тренер / техника / веса разминки (напр. 10 кг × 12, 15 кг × 8)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
 
@@ -1242,7 +1272,7 @@
         <button type="button" id="tabModeBarcode" onclick="setScannerMode('barcode')" class="py-2 text-xs font-semibold rounded-xl text-zinc-400 transition">Штрихкод</button>
       </div>
 
-      <div class="relative w-full h-56 bg-black rounded-2xl overflow-hidden border border-white/10 mb-3 flex items-center justify-center">
+      <div id="scannerCameraContainer" class="relative w-full h-56 bg-black rounded-2xl overflow-hidden border border-white/10 mb-3 flex items-center justify-center">
         <video id="cameraStream" playsinline autoplay muted class="w-full h-full object-contain hidden bg-black"></video>
         <img id="photoPreview" alt="Preview" class="w-full h-full object-contain hidden bg-black" />
         <canvas id="scannerOverlayCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
@@ -1258,7 +1288,7 @@
           <p class="text-[11px] text-zinc-500">Контур штрихкода подсветится автоматически</p>
         </div>
 
-        <div class="pointer-events-none absolute inset-4 border border-white/10 rounded-xl z-10">
+        <div id="scannerViewfinderFrame" class="pointer-events-none absolute inset-4 border border-white/10 rounded-xl z-10">
           <div class="absolute -top-0.5 -left-0.5 w-5 h-5 border-t-2 border-l-2 rounded-tl" style="border-color: var(--accent-cal)"></div>
           <div class="absolute -top-0.5 -right-0.5 w-5 h-5 border-t-2 border-r-2 rounded-tr" style="border-color: var(--accent-cal)"></div>
           <div class="absolute -bottom-0.5 -left-0.5 w-5 h-5 border-b-2 border-l-2 rounded-bl" style="border-color: var(--accent-cal)"></div>
@@ -1287,6 +1317,12 @@
           </div>
         </div>
 
+        <!-- Чипы массы нетто (100г vs Вся упаковка) -->
+        <div id="scannedPackageWeightBar" class="hidden flex items-center gap-1.5 mb-2.5">
+          <button type="button" id="scannedChip100" onclick="setScannedWeightPreset(100)" class="px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-300 bg-white/5 active:scale-95 transition">100 г</button>
+          <button type="button" id="scannedChipPackage" onclick="setScannedWeightPreset('package')" class="px-2.5 py-1 rounded-lg border border-white/20 text-[10px] mono text-white bg-white/10 active:scale-95 transition">Вся пачка (<span id="scannedChipPackageVal">200</span> г)</button>
+        </div>
+
         <div class="flex items-center justify-between gap-2 bg-black/45 rounded-xl px-3 py-2 mb-2.5">
           <span class="text-xs text-zinc-400">Вес порции / упаковки (г):</span>
           <div class="flex items-center gap-1.5">
@@ -1296,10 +1332,22 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-around text-xs mono bg-black/30 rounded-xl py-1.5 mb-3">
+        <div class="flex items-center justify-around text-xs mono bg-black/30 rounded-xl py-1.5 mb-2.5">
           <span style="color:var(--accent-p)">Белки: <b id="scannedResP">0</b>г</span>
           <span style="color:var(--accent-f)">Жиры: <b id="scannedResF">0</b>г</span>
           <span style="color:var(--accent-c)">Углеводы: <b id="scannedResC">0</b>г</span>
+        </div>
+
+        <!-- Поштучный продукт / эталонный вес 1 шт -->
+        <div class="mb-3 pt-2.5 border-t border-white/[0.08] flex items-center justify-between text-xs mono">
+          <button type="button" id="scannedPieceToggle" onclick="toggleScannedPieceMode()" class="px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition">
+            Поштучный продукт
+          </button>
+          <div id="scannedPieceWeightBox" class="hidden items-center gap-1.5 text-xs mono">
+            <span class="text-zinc-500 text-[10px]">1 шт =</span>
+            <input id="scannedPieceWeightInput" type="number" oninput="onScannedPieceWeightChange()" placeholder="5" class="w-14 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-center font-bold text-white text-xs outline-none focus:border-white/30" />
+            <span class="text-zinc-500 text-[10px]">г</span>
+          </div>
         </div>
 
         <button type="button" onclick="confirmScannedProduct()" class="w-full py-2.5 rounded-xl accent-btn text-xs">
@@ -2220,6 +2268,18 @@
           <div><div class="text-[10px] text-zinc-500">Б</div><div id="editPrevP" class="font-bold text-white mt-0.5">0г</div></div>
           <div><div class="text-[10px] text-zinc-500">Ж</div><div id="editPrevF" class="font-bold text-white mt-0.5">0г</div></div>
           <div><div class="text-[10px] text-zinc-500">У</div><div id="editPrevC" class="font-bold text-white mt-0.5">0г</div></div>
+        </div>
+
+        <!-- Поштучный продукт / эталонный вес 1 шт -->
+        <div class="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs mono">
+          <button type="button" id="editPieceToggle" onclick="toggleEditPieceMode()" class="px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition">
+            Поштучный продукт
+          </button>
+          <div id="editPieceWeightBox" class="hidden items-center gap-1.5 text-xs mono">
+            <span class="text-zinc-500 text-[10px]">1 шт =</span>
+            <input id="editPieceWeightInput" type="number" oninput="onEditPieceWeightChange()" placeholder="5" class="w-14 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-center font-bold text-white text-xs outline-none focus:border-white/30" />
+            <span class="text-zinc-500 text-[10px]">г</span>
+          </div>
         </div>
       </div>
 
@@ -5871,12 +5931,43 @@
       return { query: namePart.toLowerCase(), rawText: cleaned, explicitWeight: weight, pieceCount };
     }
 
+    function normalizeSearchText(str) {
+      if (!str) return "";
+      return String(str)
+        .toLowerCase()
+        .replace(/ё/g, "е")
+        .replace(/[«»""''`]/g, " ")
+        .replace(/[^a-zа-я0-9\s]/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function matchItemQuery(item, queryTokens, rawQuery) {
+      const normName = normalizeSearchText(item.name);
+      const aliases = Array.isArray(item.aliases) ? item.aliases.map(normalizeSearchText) : [];
+      const fullHaystack = normName + " " + aliases.join(" ");
+
+      const normRaw = normalizeSearchText(rawQuery);
+      if (normName === normRaw) return 1000 + (item.useCount || 0);
+      if (normName.startsWith(normRaw)) return 800 + (item.useCount || 0);
+      if (normName.includes(normRaw)) return 600 + (item.useCount || 0);
+
+      const allTokensFound = queryTokens.length > 0 && queryTokens.every(token => fullHaystack.includes(token));
+      if (allTokensFound) {
+        return 400 + (item.isRecent ? 150 : 0) + (item.useCount || 0);
+      }
+      return 0;
+    }
+
     function getCombinedDatabase() {
       const map = new Map();
-      (state.customHistory || []).forEach(item => map.set(item.name.toLowerCase(), { ...item, isRecent: true }));
+      (state.customHistory || []).forEach(item => {
+        const key = normalizeSearchText(item.name);
+        if (key) map.set(key, { ...item, isRecent: true });
+      });
       LOCAL_DB.forEach(item => {
-        const key = item.name.toLowerCase();
-        if (!map.has(key)) map.set(key, item);
+        const key = normalizeSearchText(item.name);
+        if (key && !map.has(key)) map.set(key, item);
       });
       return Array.from(map.values());
     }
@@ -5898,12 +5989,26 @@
       const { query, explicitWeight, pieceCount } = parseQueryAndWeight(val);
       if (query.length < 1) { box.classList.add("hidden"); return; }
 
-      const matches = getCombinedDatabase().filter(item => item.name.toLowerCase().includes(query)).slice(0, 5);
+      const normQuery = normalizeSearchText(query);
+      const tokens = normQuery.split(" ").filter(Boolean);
+      if (tokens.length === 0) { box.classList.add("hidden"); return; }
+
+      const allDb = getCombinedDatabase();
+      const scored = [];
+      allDb.forEach(item => {
+        const score = matchItemQuery(item, tokens, query);
+        if (score > 0) {
+          scored.push({ item, score });
+        }
+      });
+      scored.sort((a, b) => b.score - a.score);
+      const matches = scored.slice(0, 6).map(s => s.item);
+
       if (matches.length === 0) { box.classList.add("hidden"); return; }
 
       box.classList.remove("hidden");
       list.innerHTML = matches.map((item, idx) => {
-        const unitW = item.pieceWeight || item.defaultWeight || 100;
+        const unitW = item.standardUnitWeight || item.pieceWeight || item.defaultWeight || 100;
         const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : (item.defaultWeight || 100));
         const ratio = w / 100;
         return `
@@ -5929,7 +6034,9 @@
       if (!item) return;
       addFoodEntryFrom100g({
         name: item.name, cal100: item.cal, p100: item.p, f100: item.f, c100: item.c,
-        weight: weight || item.defaultWeight || 100, source: ""
+        weight: weight || item.defaultWeight || 100, source: "",
+        standardUnitWeight: item.standardUnitWeight || item.pieceWeight,
+        isPiece: Boolean(item.isPiece || item.standardUnitWeight)
       });
       const input = document.getElementById("foodInput");
       input.value = "";
@@ -5945,17 +6052,21 @@
       document.getElementById("liveSuggestBox").classList.add("hidden");
 
       const { query, explicitWeight, pieceCount } = parseQueryAndWeight(raw);
-      const exactOrClose = getCombinedDatabase().find(i =>
-        i.name.toLowerCase() === query || (query.length >= 4 && i.name.toLowerCase().includes(query))
-      );
+      const normQuery = normalizeSearchText(query);
+      const exactOrClose = getCombinedDatabase().find(i => {
+        const norm = normalizeSearchText(i.name);
+        return norm === normQuery || (normQuery.length >= 4 && norm.includes(normQuery));
+      });
 
       if (exactOrClose) {
-        const unitW = exactOrClose.pieceWeight || exactOrClose.defaultWeight || 100;
+        const unitW = exactOrClose.standardUnitWeight || exactOrClose.pieceWeight || exactOrClose.defaultWeight || 100;
         const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : (exactOrClose.defaultWeight || 100));
         addFoodEntryFrom100g({
           name: pieceCount ? `${exactOrClose.name} (${pieceCount} шт)` : exactOrClose.name,
           cal100: exactOrClose.cal, p100: exactOrClose.p, f100: exactOrClose.f, c100: exactOrClose.c,
-          weight: w, source: ""
+          weight: w, source: "",
+          standardUnitWeight: unitW,
+          isPiece: Boolean(exactOrClose.isPiece || pieceCount)
         });
         input.value = "";
         handleInputSuggest("");
@@ -6104,6 +6215,9 @@
     }
 
     function showScannedCard(product) {
+      if (typeof window.showScannedCard === "function" && window.showScannedCard !== showScannedCard) {
+        return window.showScannedCard(product);
+      }
       pendingScannedProduct = product;
       document.getElementById("scannedResSource").textContent = product.source || "Скан";
       document.getElementById("scannedResName").textContent = product.name;
@@ -6113,6 +6227,9 @@
     }
 
     function stepScannedWeight(delta) {
+      if (typeof window.stepScannedWeight === "function" && window.stepScannedWeight !== stepScannedWeight) {
+        return window.stepScannedWeight(delta);
+      }
       const inp = document.getElementById("scannedResWeightInput");
       inp.value = Math.max(5, (Number(inp.value) || 100) + delta);
       recalcScannedCard();
@@ -6130,6 +6247,9 @@
     }
 
     function confirmScannedProduct() {
+      if (typeof window.confirmScannedProduct === "function" && window.confirmScannedProduct !== confirmScannedProduct) {
+        return window.confirmScannedProduct();
+      }
       if (!pendingScannedProduct) return;
       addFoodEntryFrom100g(pendingScannedProduct);
       document.getElementById("scannedResultCard")?.classList.add("hidden");
@@ -6376,19 +6496,69 @@
       }
     }
 
-    function addFoodEntryFrom100g({ name, cal100, p100, f100, c100, weight, source }) {
+    function upsertCustomHistory(item) {
+      if (!Array.isArray(state.customHistory)) state.customHistory = [];
+      const normName = normalizeSearchText(item.name);
+      if (!normName) return;
+
+      let existing = state.customHistory.find(h => normalizeSearchText(h.name) === normName);
+      if (existing) {
+        existing.useCount = (existing.useCount || 1) + 1;
+        existing.lastUsedAt = Date.now();
+        if (item.cal100 !== undefined) existing.cal = item.cal100;
+        if (item.p100 !== undefined) existing.p = item.p100;
+        if (item.f100 !== undefined) existing.f = item.f100;
+        if (item.c100 !== undefined) existing.c = item.c100;
+        if (item.standardUnitWeight) existing.standardUnitWeight = item.standardUnitWeight;
+        if (item.isPiece !== undefined) existing.isPiece = item.isPiece;
+        if (item.packageNetWeight) existing.packageNetWeight = item.packageNetWeight;
+      } else {
+        state.customHistory.unshift({
+          id: "cust_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+          name: item.name.trim(),
+          cal: item.cal100 || 0,
+          p: item.p100 || 0,
+          f: item.f100 || 0,
+          c: item.c100 || 0,
+          standardUnitWeight: item.standardUnitWeight || null,
+          isPiece: Boolean(item.isPiece),
+          packageNetWeight: item.packageNetWeight || null,
+          useCount: 1,
+          lastUsedAt: Date.now()
+        });
+        if (state.customHistory.length > 300) state.customHistory.pop();
+      }
+    }
+
+    function addFoodEntryFrom100g({ name, cal100, p100, f100, c100, weight, source, standardUnitWeight, isPiece, packageNetWeight }) {
       checkDayRollover();
       const w = Math.max(1, Number(weight) || 100), ratio = w / 100;
       state.todayItems.push({
         id: "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
-        name: name.trim(), weight: Math.round(w),
-        cal: Math.round(cal100 * ratio), p: round1(p100 * ratio), f: round1(f100 * ratio), c: round1(c100 * ratio),
-        cal100: Number(cal100) || 0, p100: Number(p100) || 0, f100: Number(f100) || 0, c100: Number(c100) || 0,
-        source: source || ""
+        name: name.trim(),
+        weight: Math.round(w),
+        cal: Math.round(cal100 * ratio),
+        p: round1(p100 * ratio),
+        f: round1(f100 * ratio),
+        c: round1(c100 * ratio),
+        cal100: Number(cal100) || 0,
+        p100: Number(p100) || 0,
+        f100: Number(f100) || 0,
+        c100: Number(c100) || 0,
+        source: source || "",
+        standardUnitWeight: standardUnitWeight || undefined,
+        isPiece: Boolean(isPiece)
       });
+
+      upsertCustomHistory({
+        name, cal100, p100, f100, c100, standardUnitWeight, isPiece, packageNetWeight
+      });
+
       saveState();
       renderAll();
     }
+
+    let editPieceModeActive = false;
 
     function openEditModal(id) {
       const item = state.todayItems.find(i => i.id === id);
@@ -6396,9 +6566,50 @@
       editingItemId = id;
       document.getElementById("editItemTitle").textContent = item.name;
       document.getElementById("editItemWeight").value = item.weight;
+
+      const normName = normalizeSearchText(item.name);
+      const hist = (state.customHistory || []).find(h => normalizeSearchText(h.name) === normName);
+      const unitW = item.standardUnitWeight || (hist ? hist.standardUnitWeight : null);
+
+      editPieceModeActive = Boolean(item.isPiece || (hist && hist.isPiece) || unitW);
+      const toggleBtn = document.getElementById("editPieceToggle");
+      const box = document.getElementById("editPieceWeightBox");
+      const input = document.getElementById("editPieceWeightInput");
+
+      if (toggleBtn && box && input) {
+        if (editPieceModeActive) {
+          toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
+          box.classList.remove("hidden");
+          box.classList.add("flex");
+          input.value = unitW || 5;
+        } else {
+          toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition";
+          box.classList.add("hidden");
+          box.classList.remove("flex");
+          input.value = "";
+        }
+      }
+
       updateEditPreview();
       document.getElementById("editModal")?.classList.add("open");
     }
+
+    function toggleEditPieceMode() {
+      editPieceModeActive = !editPieceModeActive;
+      const toggleBtn = document.getElementById("editPieceToggle");
+      const box = document.getElementById("editPieceWeightBox");
+      const input = document.getElementById("editPieceWeightInput");
+      if (editPieceModeActive) {
+        if (toggleBtn) toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
+        if (box) { box.classList.remove("hidden"); box.classList.add("flex"); }
+        if (input && !input.value) input.value = "5";
+      } else {
+        if (toggleBtn) toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition";
+        if (box) { box.classList.add("hidden"); box.classList.remove("flex"); }
+      }
+    }
+
+    function onEditPieceWeightChange() {}
 
     function closeEditModal() {
       editingItemId = null;
@@ -6430,7 +6641,24 @@
       item.p = round1(item.p100 * ratio);
       item.f = round1(item.f100 * ratio);
       item.c = round1(item.c100 * ratio);
+
+      const unitInput = document.getElementById("editPieceWeightInput");
+      const unitW = editPieceModeActive ? (parseFloat(unitInput ? unitInput.value : "") || 5) : null;
+      item.isPiece = editPieceModeActive;
+      item.standardUnitWeight = unitW;
+
+      upsertCustomHistory({
+        name: item.name,
+        cal100: item.cal100,
+        p100: item.p100,
+        f100: item.f100,
+        c100: item.c100,
+        standardUnitWeight: unitW,
+        isPiece: editPieceModeActive
+      });
+
       saveState(); renderAll(); closeEditModal();
+      showToast("Порция и эталон сохранены");
     }
 
     function deleteEditingItem() {
@@ -7991,10 +8219,10 @@
       },
       technique: {
         title: "ТЕХНИКА",
-        border: "border-emerald-500/30",
-        bg: "bg-emerald-950/20",
-        borderLeft: "border-l-4 border-l-emerald-400",
-        badge: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+        border: "border-red-500/30",
+        bg: "bg-red-950/20",
+        borderLeft: "border-l-4 border-l-red-500",
+        badge: "bg-red-500/20 text-red-300 border border-red-500/30"
       },
       setup: {
         title: "НАСТРОЙКА",
@@ -8012,10 +8240,248 @@
       }
     };
 
+    let pendingNoteMedia = null;
+
+    window.clearNewNoteMedia = function() {
+      pendingNoteMedia = null;
+      const preview = document.getElementById("newNoteMediaPreview");
+      if (preview) preview.classList.add("hidden");
+      const fileInput = document.getElementById("noteMediaFileInput");
+      if (fileInput) fileInput.value = "";
+    };
+
+    window.pickNoteMediaForNewNote = function() {
+      if (window.webkit?.messageHandlers?.widgetBridge) {
+        window.webkit.messageHandlers.widgetBridge.postMessage({
+          action: "pickNoteMedia",
+          noteId: "note_" + Date.now(),
+          exName: currentActiveNotesExName || ""
+        });
+      } else {
+        document.getElementById("noteMediaFileInput")?.click();
+      }
+    };
+
+    window.handleWebNoteMediaPicked = function(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const isVideo = file.type.startsWith("video/");
+      const isImage = file.type.startsWith("image/");
+      if (!isVideo && !isImage) {
+        showToast("Выберите фото или видео", true);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        window.onNoteMediaPicked({
+          success: true,
+          type: isVideo ? "video" : "photo",
+          url: reader.result,
+          thumbUrl: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.onNoteMediaPicked = function(data) {
+      if (!data || data.cancelled) return;
+      if (data.error) {
+        showToast(data.error, true);
+        return;
+      }
+      pendingNoteMedia = data;
+      const preview = document.getElementById("newNoteMediaPreview");
+      const title = document.getElementById("newNoteMediaTitle");
+      const sub = document.getElementById("newNoteMediaSub");
+      const icon = document.getElementById("newNoteMediaIcon");
+
+      if (title) title.textContent = data.type === "video" ? "Видео техники тренера" : "Фото настройки тренажера";
+      if (sub) {
+        sub.textContent = data.type === "video"
+          ? (data.audioUrl ? "Аудиодорожка извлечена (.m4a)" : "Видео готово")
+          : "Фото готово к анализу";
+      }
+      if (icon) {
+        if (data.thumbUrl) {
+          icon.innerHTML = `<img src="${data.thumbUrl}" class="w-full h-full object-cover rounded-lg" />`;
+        } else {
+          icon.innerHTML = `<span class="text-xs mono">${data.type === "video" ? "VID" : "IMG"}</span>`;
+        }
+      }
+      if (preview) preview.classList.remove("hidden");
+      showToast(data.type === "video" ? "Видео прикреплено" : "Фото прикреплено");
+    };
+
+    window.formatNewNoteTextWithAI = async function() {
+      const input = document.getElementById("newExNoteText");
+      const status = document.getElementById("noteFormatStatus");
+      const btn = document.getElementById("formatNoteBtn");
+      const rawText = input ? input.value.trim() : "";
+      if (!rawText) {
+        showToast("Сначала введите заметку со слов тренера", true);
+        return;
+      }
+      if (status) status.classList.remove("hidden");
+      if (btn) btn.disabled = true;
+
+      const prompt = `Ты строгий профессиональный редактор заметок с тренировок. Твоя задача — ТОЛЬКО аккуратно отформатировать черновик заметки со слов тренера.
+СТРОЖАЙШИЕ ПРАВИЛА:
+1. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО заменять, сокращать, удалять или перефразировать слова тренера. Сохраняй всю авторскую лексику, спортивный сленг и профессиональные реплики БЕЗ изменений.
+2. Исправляй ТОЛЬКО явные опечатки («подьем» -> «подъем», «накланная» -> «наклонная»).
+3. Расставь недостающие знаки препинания (тире, запятые, точки).
+4. Структурируй разминочные и рабочие подходы в четкий единообразный вид (например: «10 кг × 12, 15 кг × 10»).
+5. Выведи ИСКЛЮЧИТЕЛЬНО исправленный текст заметки. Никаких вступлений, пояснений и вежливостей.
+
+Черновик:
+${rawText}`;
+
+      try {
+        const res = await callGemini3Flash({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.0 }
+        });
+        const formatted = (res?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+        if (formatted) {
+          input.value = formatted;
+          showToast("Заметка отформатирована");
+        } else {
+          showToast("ИИ не вернул текст", true);
+        }
+      } catch (e) {
+        showToast(e.message || "Ошибка форматирования", true);
+      } finally {
+        if (status) status.classList.add("hidden");
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    window.toggleNoteAudioOnly = function(noteId) {
+      const vidWrap = document.getElementById("noteVideoWrap_" + noteId);
+      const audWrap = document.getElementById("noteAudioOnlyWrap_" + noteId);
+      const btnText = document.getElementById("noteAudioBtnText_" + noteId);
+      if (!audWrap) return;
+      const isAudioOpen = !audWrap.classList.contains("hidden");
+      if (isAudioOpen) {
+        audWrap.classList.add("hidden");
+        if (vidWrap) vidWrap.classList.remove("hidden");
+        if (btnText) btnText.textContent = "Слушать аудио";
+      } else {
+        audWrap.classList.remove("hidden");
+        if (vidWrap) {
+          vidWrap.classList.add("hidden");
+          const vid = vidWrap.querySelector("video");
+          if (vid && !vid.paused) vid.pause();
+        }
+        if (btnText) btnText.textContent = "Показать видео";
+      }
+    };
+
+    window.analyzeEquipmentSetup = async function(noteId, exName, photoUrl) {
+      const status = document.getElementById("noteAiAnalysisStatus_" + noteId);
+      if (status) status.classList.remove("hidden");
+
+      try {
+        // Получаем base64 картинки
+        let base64Data = "";
+        let mimeType = "image/jpeg";
+        if (photoUrl.startsWith("data:")) {
+          const parts = photoUrl.split(",");
+          mimeType = parts[0].split(";")[0].replace("data:", "");
+          base64Data = parts[1];
+        } else {
+          const resp = await fetch(photoUrl);
+          const blob = await resp.blob();
+          mimeType = blob.type || "image/jpeg";
+          base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(",")[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+
+        const prompt = `Ты эксперт по спортивной биомеханике и настройке силовых тренажеров. Оцени правильность настройки тренажера/угла скамьи на этом фото для выполнения упражнения "${exName}".
+Требования:
+1. Выдай краткий технический вердикт в 1–2 предложениях: корректность углов спинки/сиденья/рычагов и рекомендации по фиксаторам для безопасности суставов.
+2. Без приветствий, вводных слов и воды. Только чистый вердикт.`;
+
+        const res = await callGemini3Flash({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: base64Data } }
+            ]
+          }],
+          generationConfig: { temperature: 0.2 }
+        });
+
+        const verdict = (res?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+        if (verdict) {
+          const notes = getExerciseNotes(exName);
+          const target = notes.find(n => n.id === noteId);
+          if (target) {
+            target.aiSetupVerdict = { verdict, analyzedAt: Date.now() };
+            saveState();
+            renderExerciseNotesList(exName);
+            showToast("Анализ настройки завершен");
+          }
+        }
+      } catch (e) {
+        showToast("Ошибка анализа: " + (e.message || "сбой"), true);
+      } finally {
+        if (status) status.classList.add("hidden");
+      }
+    };
+
     window.renderSingleNoteCardHtml = function(note, exName) {
       const meta = NOTE_CATEGORY_META[note.category] || NOTE_CATEGORY_META.general;
       const warmups = parseWarmupSets(note.text);
       const warmupPillsHtml = warmups.length > 0 ? renderWarmupPillsHtml(warmups) : "";
+
+      let mediaHtml = "";
+      if (note.media) {
+        if (note.media.type === "video") {
+          mediaHtml = `
+            <div class="mt-2 space-y-1.5">
+              <div id="noteVideoWrap_${note.id}" class="relative rounded-xl overflow-hidden bg-black border border-white/10">
+                <video playsinline controls preload="metadata" class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}"></video>
+              </div>
+              ${note.media.audioUrl ? `
+                <div class="flex items-center justify-between pt-0.5">
+                  <button type="button" onclick="toggleNoteAudioOnly('${note.id}')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] mono text-sky-300 flex items-center gap-1.5 transition active:scale-95">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                    <span id="noteAudioBtnText_${note.id}">Слушать аудио</span>
+                  </button>
+                </div>
+                <div id="noteAudioOnlyWrap_${note.id}" class="hidden p-2 rounded-xl bg-black/60 border border-white/10">
+                  <audio controls class="w-full h-8" src="${note.media.audioUrl}"></audio>
+                </div>
+              ` : ""}
+            </div>
+          `;
+        } else if (note.media.type === "photo") {
+          mediaHtml = `
+            <div class="mt-2 space-y-1.5">
+              <div class="relative rounded-xl overflow-hidden bg-black border border-white/10">
+                <img src="${note.media.url}" alt="Настройка" class="w-full max-h-48 object-cover" />
+              </div>
+              <div class="flex items-center justify-between pt-0.5">
+                <button type="button" onclick="analyzeEquipmentSetup('${note.id}', '${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.media.url}')" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[10px] mono text-purple-300 flex items-center gap-1.5 transition active:scale-95">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <span>Анализ настройки</span>
+                </button>
+                <span id="noteAiAnalysisStatus_${note.id}" class="hidden text-[10px] mono text-purple-400 animate-pulse">Анализ биомеханики...</span>
+              </div>
+              ${note.aiSetupVerdict ? `
+                <div class="p-2 rounded-xl bg-purple-950/30 border border-purple-500/25 text-[11px] mono text-purple-200 leading-snug">
+                  <span class="font-bold text-purple-300 block mb-0.5">ВЕРДИКТ ИИ:</span>
+                  ${escapeHtml(note.aiSetupVerdict.verdict)}
+                </div>
+              ` : ""}
+            </div>
+          `;
+        }
+      }
 
       return `
         <div class="rounded-2xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-3 space-y-1.5 transition">
@@ -8032,11 +8498,12 @@
           </div>
           ${warmupPillsHtml ? `<div class="flex flex-wrap gap-1.5 pt-1">${warmupPillsHtml}</div>` : ""}
           <div class="text-xs text-zinc-200 leading-relaxed font-mono whitespace-pre-wrap">${escapeHtml(note.text)}</div>
+          ${mediaHtml}
         </div>
       `;
     };
 
-    window.addExerciseNote = function(name, category, text) {
+    window.addExerciseNote = function(name, category, text, media) {
       if (!name || !text || !text.trim()) return;
       if (!state.workout) state.workout = {};
       if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
@@ -8068,7 +8535,8 @@
         category: finalCat,
         text: cleanText,
         date: dateStr,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        media: media || undefined
       });
 
       saveState();
@@ -8078,6 +8546,18 @@
       if (!state.workout?.exerciseNotes) return;
       const key = getExerciseNoteKey(name);
       if (!Array.isArray(state.workout.exerciseNotes[key])) return;
+      
+      const targetNote = state.workout.exerciseNotes[key].find(n => n.id === noteId);
+      if (targetNote && targetNote.media) {
+        const files = [targetNote.media.url, targetNote.media.audioUrl, targetNote.media.thumbUrl].filter(Boolean);
+        if (files.length > 0 && window.webkit?.messageHandlers?.widgetBridge) {
+          window.webkit.messageHandlers.widgetBridge.postMessage({
+            action: "deleteNoteMedia",
+            fileNames: files
+          });
+        }
+      }
+
       state.workout.exerciseNotes[key] = state.workout.exerciseNotes[key].filter(n => n.id !== noteId);
       saveState();
 
@@ -8143,6 +8623,7 @@
       }
 
       selectNoteCategory("coach");
+      clearNewNoteMedia();
       const input = document.getElementById("newExNoteText");
       if (input) input.value = "";
 
@@ -8151,6 +8632,7 @@
     };
 
     window.closeExerciseNotesModal = function() {
+      clearNewNoteMedia();
       const modal = document.getElementById("exerciseNotesModal");
       if (modal) modal.classList.remove("open");
     };
@@ -8162,7 +8644,8 @@
         showToast("Введи текст заметки");
         return;
       }
-      addExerciseNote(currentActiveNotesExName, selectedNoteCategory, text);
+      addExerciseNote(currentActiveNotesExName, selectedNoteCategory, text, pendingNoteMedia);
+      clearNewNoteMedia();
       if (input) input.value = "";
       renderExerciseNotesList(currentActiveNotesExName);
       renderSetLoggerNotesPreview(currentActiveNotesExName);
@@ -8581,31 +9064,75 @@
       }
     };
 
-    // Бережное кадрирование под высокий портретный видоискатель (800x700 вместо 800x600) — убирает эффект сильного зума!
-    function cropImageToViewfinder(img, targetW = 760, targetH = 680, quality = 0.84) {
+    function getCameraCropROI(element) {
+      const container = document.getElementById("scannerCameraContainer") || element.parentElement;
+      const frame = document.getElementById("scannerViewfinderFrame");
+      if (!container || !frame) return null;
+
+      const cRect = container.getBoundingClientRect();
+      const fRect = frame.getBoundingClientRect();
+      if (cRect.width <= 0 || cRect.height <= 0 || fRect.width <= 0 || fRect.height <= 0) return null;
+
+      const srcW = element.naturalWidth || element.videoWidth || element.width || 760;
+      const srcH = element.naturalHeight || element.videoHeight || element.height || 680;
+
+      // С учетом object-contain
+      const scale = Math.min(cRect.width / srcW, cRect.height / srcH);
+      if (scale <= 0) return null;
+
+      const renderedW = srcW * scale;
+      const renderedH = srcH * scale;
+      const renderedX = (cRect.width - renderedW) / 2;
+      const renderedY = (cRect.height - renderedH) / 2;
+
+      const relFrameLeft = Math.max(0, fRect.left - cRect.left - renderedX);
+      const relFrameTop = Math.max(0, fRect.top - cRect.top - renderedY);
+      const relFrameRight = Math.min(renderedW, fRect.right - cRect.left - renderedX);
+      const relFrameBottom = Math.min(renderedH, fRect.bottom - cRect.top - renderedY);
+
+      if (relFrameRight <= relFrameLeft || relFrameBottom <= relFrameTop) return null;
+
+      const cropX = Math.round(relFrameLeft / scale);
+      const cropY = Math.round(relFrameTop / scale);
+      const cropW = Math.max(30, Math.round((relFrameRight - relFrameLeft) / scale));
+      const cropH = Math.max(30, Math.round((relFrameBottom - relFrameTop) / scale));
+
+      return { cropX, cropY, cropW, cropH };
+    }
+
+    // Точное кадрирование области строго внутри красных уголков видоискателя
+    function cropImageToViewfinder(img, targetW = 800, targetH = 640, quality = 0.84) {
       const srcW = img.naturalWidth || img.videoWidth || img.width || 760;
       const srcH = img.naturalHeight || img.videoHeight || img.height || 680;
-      const targetRatio = targetW / targetH;
-      const srcRatio = srcW / srcH;
 
-      let cropW = srcW;
-      let cropH = srcH;
-      let offsetX = 0;
-      let offsetY = 0;
+      const roi = getCameraCropROI(img);
+      let cropX = 0, cropY = 0, cropW = srcW, cropH = srcH;
 
-      if (srcRatio > targetRatio) {
-        cropW = Math.round(srcH * targetRatio);
-        offsetX = Math.round((srcW - cropW) / 2);
+      if (roi && roi.cropW > 40 && roi.cropH > 40) {
+        cropX = roi.cropX;
+        cropY = roi.cropY;
+        cropW = roi.cropW;
+        cropH = roi.cropH;
       } else {
-        cropH = Math.round(srcW / targetRatio);
-        offsetY = Math.round((srcH - cropH) / 2);
+        const targetRatio = targetW / targetH;
+        const srcRatio = srcW / srcH;
+        if (srcRatio > targetRatio) {
+          cropW = Math.round(srcH * targetRatio);
+          cropX = Math.round((srcW - cropW) / 2);
+        } else {
+          cropH = Math.round(srcW / targetRatio);
+          cropY = Math.round((srcH - cropH) / 2);
+        }
       }
 
+      const outW = Math.min(1000, Math.max(480, cropW));
+      const outH = Math.round(outW * (cropH / cropW));
+
       const canvas = document.createElement("canvas");
-      canvas.width = targetW;
-      canvas.height = targetH;
+      canvas.width = outW;
+      canvas.height = outH;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, offsetX, offsetY, cropW, cropH, 0, 0, targetW, targetH);
+      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
       return canvas.toDataURL("image/jpeg", quality);
     }
 
@@ -8682,20 +9209,97 @@
       return 0;
     }
 
+    function getKnownPieceItemsPromptContext() {
+      const items = (state.customHistory || [])
+        .filter(i => (i.isPiece || (i.standardUnitWeight && i.standardUnitWeight > 0)))
+        .slice(0, 25);
+      if (items.length === 0) return "";
+      const lines = items.map(i => `- "${i.name}": эталонный вес 1 шт = ${i.standardUnitWeight || 5} г`);
+      return "\nБАЗА ЭТАЛОНОВ ПОЛЬЗОВАТЕЛЯ (СТРОГО используй эти точные граммовки за 1 шт, если распознан продукт):\n" + lines.join("\n") + "\n";
+    }
+
+    let scannedPieceModeActive = false;
+
+    window.updateScannedWeightChipHighlight = function(mode) {
+      const chip100 = document.getElementById("scannedChip100");
+      const chipPkg = document.getElementById("scannedChipPackage");
+      if (!chip100 || !chipPkg) return;
+      if (mode === 100) {
+        chip100.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
+        chipPkg.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/5 active:scale-95 transition";
+      } else {
+        chipPkg.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
+        chip100.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/5 active:scale-95 transition";
+      }
+    };
+
+    window.setScannedWeightPreset = function(preset) {
+      const inp = document.getElementById("scannedResWeightInput");
+      if (!inp || !pendingScannedProduct) return;
+      if (preset === 100) {
+        inp.value = 100;
+        pendingScannedProduct.weight = 100;
+        updateScannedWeightChipHighlight(100);
+      } else if (preset === "package") {
+        const pkgW = pendingScannedProduct.packageNetWeight || 200;
+        inp.value = pkgW;
+        pendingScannedProduct.weight = pkgW;
+        updateScannedWeightChipHighlight("package");
+      }
+      recalcScannedCard();
+    };
+
+    window.toggleScannedPieceMode = function() {
+      scannedPieceModeActive = !scannedPieceModeActive;
+      const toggleBtn = document.getElementById("scannedPieceToggle");
+      const box = document.getElementById("scannedPieceWeightBox");
+      const input = document.getElementById("scannedPieceWeightInput");
+      if (scannedPieceModeActive) {
+        if (toggleBtn) toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
+        if (box) { box.classList.remove("hidden"); box.classList.add("flex"); }
+        if (input && !input.value) input.value = pendingScannedProduct?.pieceWeight || "5";
+      } else {
+        if (toggleBtn) toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition";
+        if (box) { box.classList.add("hidden"); box.classList.remove("flex"); }
+      }
+    };
+
+    window.onScannedPieceWeightChange = function() {
+      if (!pendingScannedProduct) return;
+      const unitW = parseFloat(document.getElementById("scannedPieceWeightInput")?.value);
+      if (unitW > 0) {
+        pendingScannedProduct.pieceWeight = unitW;
+      }
+    };
+
     window.showScannedCard = function(product) {
-      const unitPieceW = inferPieceWeightIfNeeded(product.name, product.weight, product.pieceWeight);
-      const isPiece = Boolean(product.isPiece || unitPieceW > 0);
+      const normName = normalizeSearchText(product.name);
+      const hist = (state.customHistory || []).find(h => {
+        const hNorm = normalizeSearchText(h.name);
+        return hNorm === normName || normName.includes(hNorm) || hNorm.includes(normName);
+      });
+
+      let unitPieceW = (hist && hist.standardUnitWeight) ? hist.standardUnitWeight : inferPieceWeightIfNeeded(product.name, product.weight, product.pieceWeight);
+      const isPiece = Boolean(product.isPiece || (hist && hist.isPiece) || (hist && hist.standardUnitWeight) || unitPieceW > 0);
       const baseName = String(product.name || "Продукт").replace(/\s*\(\d+\s*шт\)/i, "").trim();
+
+      const netW = product.packageNetWeight || (hist ? hist.packageNetWeight : null);
 
       let startWeight = Math.round(Number(product.weight) || 100);
       let startCount = product.pieceCount || 1;
+
       if (isPiece && unitPieceW > 0) {
-        if (startWeight > unitPieceW * 3 && !product.keepPackWeight) {
+        if (product.pieceCount) {
+          startCount = product.pieceCount;
+          startWeight = Math.round(startCount * unitPieceW);
+        } else if (startWeight > unitPieceW * 3 && !netW) {
           startWeight = unitPieceW;
           startCount = 1;
         } else {
           startCount = Math.max(1, Math.round(startWeight / unitPieceW));
         }
+      } else if (netW && netW > 0 && netW !== 100) {
+        startWeight = netW;
       }
 
       const cleanSource = String(product.source || "Порция").replace(/штучно/i, "Порция");
@@ -8705,6 +9309,7 @@
         baseName,
         name: isPiece ? `${baseName} (${startCount} шт)` : baseName,
         weight: startWeight,
+        packageNetWeight: netW,
         isPiece,
         pieceWeight: unitPieceW,
         pieceCount: startCount,
@@ -8728,10 +9333,41 @@
       if (pieceRow) {
         if (isPiece && unitPieceW > 0) {
           pieceRow.classList.remove("hidden");
-          if (pieceHint) pieceHint.textContent = `1 шт ≈ ${unitPieceW}г`;
+          if (pieceHint) pieceHint.textContent = `1 шт = ${unitPieceW}г`;
           updatePieceButtonsHighlight(startCount);
         } else {
           pieceRow.classList.add("hidden");
+        }
+      }
+
+      // Настройка панели веса пачки
+      const pkgBar = document.getElementById("scannedPackageWeightBar");
+      const pkgVal = document.getElementById("scannedChipPackageVal");
+      if (netW && netW > 0 && netW !== 100) {
+        if (pkgBar) pkgBar.classList.remove("hidden");
+        if (pkgVal) pkgVal.textContent = netW;
+        updateScannedWeightChipHighlight("package");
+      } else {
+        if (pkgBar) pkgBar.classList.add("hidden");
+        updateScannedWeightChipHighlight(100);
+      }
+
+      // Настройка переключателя поштучного продукта
+      scannedPieceModeActive = isPiece;
+      const toggleBtn = document.getElementById("scannedPieceToggle");
+      const box = document.getElementById("scannedPieceWeightBox");
+      const input = document.getElementById("scannedPieceWeightInput");
+      if (toggleBtn && box && input) {
+        if (isPiece) {
+          toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
+          box.classList.remove("hidden");
+          box.classList.add("flex");
+          input.value = unitPieceW || 5;
+        } else {
+          toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition";
+          box.classList.add("hidden");
+          box.classList.remove("flex");
+          input.value = "";
         }
       }
 
@@ -8740,6 +9376,30 @@
       document.getElementById("scannedResWeightInput").value = startWeight;
       recalcScannedCard();
       document.getElementById("scannedResultCard")?.classList.remove("hidden");
+    };
+
+    window.confirmScannedProduct = function() {
+      if (!pendingScannedProduct) return;
+      const unitInput = document.getElementById("scannedPieceWeightInput");
+      const unitW = scannedPieceModeActive ? (parseFloat(unitInput ? unitInput.value : "") || pendingScannedProduct.pieceWeight || 5) : null;
+      
+      const currentW = Math.max(1, Number(document.getElementById("scannedResWeightInput")?.value) || pendingScannedProduct.weight || 100);
+
+      addFoodEntryFrom100g({
+        name: pendingScannedProduct.name,
+        cal100: pendingScannedProduct.cal100,
+        p100: pendingScannedProduct.p100,
+        f100: pendingScannedProduct.f100,
+        c100: pendingScannedProduct.c100,
+        weight: currentW,
+        source: pendingScannedProduct.source,
+        standardUnitWeight: unitW,
+        isPiece: scannedPieceModeActive,
+        packageNetWeight: pendingScannedProduct.packageNetWeight
+      });
+
+      document.getElementById("scannedResultCard")?.classList.add("hidden");
+      closeScanner();
     };
 
     function updatePieceButtonsHighlight(count) {
@@ -8819,12 +9479,15 @@
             drawHighlightedRegion(localBarcode.normBox, `ШТРИХКОД // ${localBarcode.code}`, true);
             document.getElementById("barcodeInput").value = localBarcode.code;
             loadingText.textContent = `Штрихкод ${localBarcode.code}: загружаем КБЖУ...`;
-            if (await fetchProductByBarcode(localBarcode.code, true)) return;
+            const found = await fetchProductByBarcode(localBarcode.code, true);
+            if (found) return;
+            // Бесшовный фоллбэк: если штрихкод не найден в базе — читаем состав и БЖУ этикетки через ИИ
+            loadingText.textContent = "Штрихкод не в базе: читаем этикетку через ИИ...";
           }
         }
 
         loadingText.textContent = scannerMode === "barcode"
-          ? "Считываем упаковку и штрихкод..."
+          ? "Считываем состав и массу с упаковки..."
           : "Определяем продукт и вес порции...";
         await analyzeImageWithGemini(base64Data, "image/jpeg");
       } catch (err) {
@@ -8836,37 +9499,48 @@
     };
 
     window.analyzeImageWithGemini = async function(base64Data, mimeType) {
-      const prompt = `Ты точный визуальный сканер еды, перекусов, напитков и упаковок.
-  Внимательно посмотри на фото и соблюдай 3 правила:
+      const knownPiecesContext = getKnownPieceItemsPromptContext();
+      const prompt = `Ты высокоточный сканер продуктов питания, упаковок, напитков и блюд.
+Внимательно прочитай текст на этикетке и проанализируй фото:
 
-  1) ЕСЛИ В КАДРЕ ЕДИНИЧНЫЙ ПРОДУКТ В РУКЕ ИЛИ НА СТОЛЕ (например: 1 печенье или крекер даже на фоне пачки, вафля, конфета, сырок, яйцо, котлета, кусок хлеба, батончик):
-     - Оценивай вес ИМЕННО ОДНОЙ ШТУКИ (например: 1 печенье «Кременкульское» = 8 г, 1 вафля = 40 г), а НЕ всей пачки!
-     - Поставь "is_piece": true и укажи вес 1 штуки в "piece_weight" (в граммах). В "weight" укажи вес 1 штуки.
-     - В "source" напиши "Порция".
+1) НАИМЕНОВАНИЕ И БРЕНД: Укажи точное название продукта (например: "Пудинг молочный High Protein шоколадный", "Крекер Французский Яшкино").
 
-  2) ЕСЛИ В КАДРЕ ТАРЕЛКА С БЛЮДОМ, КРУЖКА ИЛИ БУТЫЛКА / УПАКОВКА:
-     - Определи название продукта или блюда (например: "Протеиновый коктейль Let's Go Hi-Pro", "Борщ", "Кофе с молоком").
-     - Оцени реальный вес/объем ("weight"): маленькая бутылочка Let's Go Hi-Pro = 250-300 г, большая бутылка = 500 г, стандартная кружка = 300 мл, тарелка супа = 350 г.
-     - Поставь "is_piece": false, "piece_weight": 0. В "source" напиши "Блюдо", "Кружка" или "Упаковка".
+2) МАССА НЕТТО УПАКОВКИ ("package_net_weight"):
+   - Внимательно ищи на упаковке текст "Масса нетто", "Объем", "Вес", "Net Wt", "g", "мл" (например: 200г, 150г, 330мл, 450г).
+   - Если нашел, запиши это число в "package_net_weight" (например 200). Иначе укажи 0.
 
-  3) КОНТУР ОБЪЕКТА ("object_box") И ШТРИХКОД ("barcode"):
-     - В "object_box": [ymin, xmin, ymax, xmax] (0..1000) укажи рамку вокруг всего главного объекта в кадре (всей бутылки, кружки, тарелки или печенья).
-     - Если в кадре четко виден штрихкод — впиши его цифры в "barcode" (иначе оставь "").
+3) ПОШТУЧНЫЙ УЧЕТ ("is_piece", "piece_weight", "piece_count"):
+   - Если в кадре поштучные предметы (крекеры, печенье, конфеты, сырки, яйца):
+     Посчитай число штук в "piece_count", укажи вес 1 шт в "piece_weight" (в граммах) и поставь "is_piece": true.
+${knownPiecesContext}
+4) КБЖУ НА 100 ГРАММ (СТРОГО НА 100Г, с таблицы пищевой ценности или оцени по составу):
+   - "cal100", "p100", "f100", "c100".
 
-  Верни строго JSON:
-  {
-    "name": "Название продукта или блюда",
-    "weight": число_граммов,
-    "piece_weight": вес_1_штуки_или_0,
-    "is_piece": true_или_false,
-    "cal100": ккал_на_100г,
-    "p100": белки_на_100г,
-    "f100": жиры_на_100г,
-    "c100": углеводы_на_100г,
-    "source": "Порция" или "Блюдо" или "Кружка" или "Упаковка",
-    "barcode": "",
-    "object_box": [ymin, xmin, ymax, xmax]
-  }`;
+5) ВЕС В КАДРЕ ("weight"):
+   - Если это целая упаковка/банка, укажи полную массу нетто упаковки в "weight".
+   - Если это порция блюда/кружка — оцени реальный вес порции.
+   - Если поштучно — вес = piece_count * piece_weight.
+
+6) КОНТУР ОБЪЕКТА ("object_box") И ШТРИХКОД ("barcode"):
+   - "object_box": [ymin, xmin, ymax, xmax] (0..1000).
+   - "barcode": цифры штрихкода если видны, иначе "".
+
+Верни строго JSON:
+{
+  "name": "Название",
+  "weight": число_граммов,
+  "package_net_weight": число_граммов_или_0,
+  "is_piece": true_или_false,
+  "piece_count": число_штук_или_1,
+  "piece_weight": вес_1_штуки_или_0,
+  "cal100": ккал_на_100г,
+  "p100": белки_на_100г,
+  "f100": жиры_на_100г,
+  "c100": углеводы_на_100г,
+  "source": "Упаковка" или "Порция" или "Блюдо" или "Кружка",
+  "barcode": "",
+  "object_box": [ymin, xmin, ymax, xmax]
+}`;
 
       try {
         const data = await callGemini3Flash({
@@ -8903,16 +9577,35 @@
         }
 
         if (parsed && parsed.name) {
-          const unitW = inferPieceWeightIfNeeded(parsed.name, parsed.weight, parsed.piece_weight);
-          const isPiece = Boolean(parsed.is_piece || unitW > 0);
-          const estW = isPiece && unitW > 0 && Number(parsed.weight) > unitW * 3
-            ? unitW
-            : Math.round(Number(parsed.weight) || (unitW || 250));
+          const normName = normalizeSearchText(parsed.name);
+          const knownPiece = (state.customHistory || []).find(h => {
+            if (!h.standardUnitWeight) return false;
+            const hNorm = normalizeSearchText(h.name);
+            return normName.includes(hNorm) || hNorm.includes(normName);
+          });
+
+          let unitW = (knownPiece && knownPiece.standardUnitWeight)
+            ? knownPiece.standardUnitWeight
+            : inferPieceWeightIfNeeded(parsed.name, parsed.weight, parsed.piece_weight);
+
+          const isPiece = Boolean(parsed.is_piece || knownPiece || unitW > 0);
+          let estCount = Number(parsed.piece_count) || (unitW > 0 && parsed.weight ? Math.max(1, Math.round(parsed.weight / unitW)) : 1);
+          
+          const netPackW = Number(parsed.package_net_weight) || (knownPiece ? knownPiece.packageNetWeight : null);
+
+          let estW = 100;
+          if (isPiece && unitW > 0) {
+            estW = Math.round(estCount * unitW);
+          } else if (netPackW && netPackW > 0) {
+            estW = netPackW;
+          } else {
+            estW = Math.round(Number(parsed.weight) || 100);
+          }
 
           const srcLabel = String(parsed.source || (isPiece ? "Порция" : "Фото")).replace(/штучно/i, "Порция");
           const badgeTitle = isPiece
-            ? `ПОРЦИЯ // 1 ШТ (~${unitW || estW}Г)`
-            : `${srcLabel.toUpperCase()} // ~${estW}Г`;
+            ? `ПОРЦИЯ // ${estCount} ШТ (~${estW}Г)`
+            : (netPackW ? `ПАЧКА // ${netPackW}Г` : `${srcLabel.toUpperCase()} // ~${estW}Г`);
 
           drawHighlightedRegion(normBox, badgeTitle, false);
 
@@ -8923,8 +9616,10 @@
             f100: Number(parsed.f100) || 5,
             c100: Number(parsed.c100) || 15,
             weight: estW,
+            packageNetWeight: netPackW,
             isPiece,
             pieceWeight: unitW,
+            pieceCount: estCount,
             source: srcLabel
           });
           showToast(`Определено: ${parsed.name} (${estW}г)`);

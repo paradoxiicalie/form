@@ -3,6 +3,9 @@ import WebKit
 import WidgetKit
 import UserNotifications
 import CoreMotion
+import PhotosUI
+import AVFoundation
+import UniformTypeIdentifiers
 #if canImport(ActivityKit)
 import ActivityKit
 #endif
@@ -55,6 +58,106 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
+class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
+    static var notesMediaDirectory: URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("NotesMedia", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: docs.path) {
+            try? FileManager.default.createDirectory(at: docs, withIntermediateDirectories: true)
+        }
+        return docs
+    }
+    
+    static func deleteMediaFile(urlStringOrName: String) {
+        guard !urlStringOrName.isEmpty else { return }
+        var cleanName = urlStringOrName
+        if cleanName.hasPrefix("form-media://") {
+            cleanName = String(cleanName.dropFirst("form-media://".count))
+        }
+        cleanName = cleanName.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !cleanName.isEmpty else { return }
+        let fileURL = notesMediaDirectory.appendingPathComponent(cleanName)
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let url = urlSchemeTask.request.url else {
+            urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 400, userInfo: nil))
+            return
+        }
+        
+        let rawName = (url.host ?? "").isEmpty ? url.lastPathComponent : (url.host ?? "")
+        let fileName = rawName.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let fileURL = Self.notesMediaDirectory.appendingPathComponent(fileName)
+        
+        guard FileManager.default.fileExists(atPath: fileURL.path),
+              let data = try? Data(contentsOf: fileURL) else {
+            let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Access-Control-Allow-Origin": "*"])
+            if let resp = resp {
+                urlSchemeTask.didReceive(resp)
+            }
+            urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 404, userInfo: [NSLocalizedDescriptionKey: "File not found"]))
+            return
+        }
+        
+        let ext = fileURL.pathExtension.lowercased()
+        let mimeType: String
+        switch ext {
+        case "mp4", "m4v", "mov": mimeType = "video/mp4"
+        case "m4a", "aac": mimeType = "audio/mp4"
+        case "mp3": mimeType = "audio/mpeg"
+        case "jpg", "jpeg": mimeType = "image/jpeg"
+        case "png": mimeType = "image/png"
+        case "webp": mimeType = "image/webp"
+        default: mimeType = "application/octet-stream"
+        }
+        
+        let totalSize = data.count
+        
+        // Поддержка HTTP Range для стриминга и перемотки аудио/видео без фризов
+        if let rangeHeader = urlSchemeTask.request.value(forHTTPHeaderField: "Range"),
+           rangeHeader.hasPrefix("bytes=") {
+            let spec = String(rangeHeader.dropFirst(6))
+            let parts = spec.split(separator: "-", omittingEmptySubsequences: false)
+            var start = 0
+            var end = totalSize - 1
+            if let first = parts.first, let s = Int(first) {
+                start = max(0, min(s, totalSize - 1))
+            }
+            if parts.count > 1, !parts[1].isEmpty, let e = Int(parts[1]) {
+                end = max(start, min(e, totalSize - 1))
+            }
+            let subData = data.subdata(in: start..<(end + 1))
+            let headers: [String: String] = [
+                "Content-Type": mimeType,
+                "Content-Length": "\(subData.count)",
+                "Content-Range": "bytes \(start)-\(end)/\(totalSize)",
+                "Accept-Ranges": "bytes",
+                "Access-Control-Allow-Origin": "*"
+            ]
+            if let response = HTTPURLResponse(url: url, statusCode: 206, httpVersion: "HTTP/1.1", headerFields: headers) {
+                urlSchemeTask.didReceive(response)
+                urlSchemeTask.didReceive(subData)
+                urlSchemeTask.didFinish()
+                return
+            }
+        }
+        
+        let headers: [String: String] = [
+            "Content-Type": mimeType,
+            "Content-Length": "\(totalSize)",
+            "Accept-Ranges": "bytes",
+            "Access-Control-Allow-Origin": "*"
+        ]
+        if let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) {
+            urlSchemeTask.didReceive(response)
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+        }
+    }
+    
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+}
+
 struct WebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
     
@@ -65,6 +168,7 @@ struct WebView: UIViewRepresentable {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+        config.setURLSchemeHandler(FormMediaSchemeHandler(), forURLScheme: "form-media")
         
         let sharedDefaults = UserDefaults(suiteName: "group.com.macro.shared")
         let savedKey = sharedDefaults?.string(forKey: "nativeApiKey") ?? ""
@@ -114,8 +218,11 @@ struct WebView: UIViewRepresentable {
     
     func updateUIView(_ uiView: WKWebView, context: Context) {}
     
-    class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
+    class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler, PHPickerViewControllerDelegate {
         private let pedometer = CMPedometer()
+        weak var currentWebView: WKWebView?
+        var pendingNoteId: String = ""
+        var pendingExName: String = ""
         
         @available(iOS 15.0, *)
         func webView(_ webView: WKWebView,
@@ -196,6 +303,20 @@ struct WebView: UIViewRepresentable {
                     d.set(0.0, forKey: "restTimerEndDate")
                     d.synchronize()
                     WidgetCenter.shared.reloadAllTimelines()
+                }
+                return
+            }
+            if action == "pickNoteMedia" {
+                let noteId = dict["noteId"] as? String ?? "note_\(Int(Date().timeIntervalSince1970 * 1000))"
+                let exName = dict["exName"] as? String ?? ""
+                presentMediaPicker(noteId: noteId, exName: exName, webView: message.webView)
+                return
+            }
+            if action == "deleteNoteMedia" {
+                if let fileNames = dict["fileNames"] as? [String] {
+                    for name in fileNames {
+                        FormMediaSchemeHandler.deleteMediaFile(urlStringOrName: name)
+                    }
                 }
                 return
             }
@@ -308,6 +429,177 @@ struct WebView: UIViewRepresentable {
                             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
                             center.add(UNNotificationRequest(identifier: "form_daily_\(dayOffset)_\(idx)", content: content, trigger: trigger))
                         }
+                    }
+                }
+            }
+        }
+        
+        static func topViewController(base: UIViewController? = nil) -> UIViewController? {
+            let root: UIViewController?
+            if let base = base {
+                root = base
+            } else {
+                root = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap { $0.windows }
+                    .first { $0.isKeyWindow }?
+                    .rootViewController
+            }
+            if let nav = root as? UINavigationController {
+                return topViewController(base: nav.visibleViewController)
+            }
+            if let tab = root as? UITabBarController {
+                return topViewController(base: tab.selectedViewController)
+            }
+            if let presented = root?.presentedViewController {
+                return topViewController(base: presented)
+            }
+            return root
+        }
+
+        func presentMediaPicker(noteId: String, exName: String, webView: WKWebView?) {
+            self.currentWebView = webView
+            self.pendingNoteId = noteId
+            self.pendingExName = exName
+            var config = PHPickerConfiguration()
+            config.selectionLimit = 1
+            config.filter = .any(of: [.images, .videos])
+            let picker = PHPickerViewController(configuration: config)
+            picker.delegate = self
+            DispatchQueue.main.async {
+                Self.topViewController()?.present(picker, animated: true)
+            }
+        }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            guard let provider = results.first?.itemProvider else {
+                DispatchQueue.main.async {
+                    self.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaPicked === 'function') { window.onNoteMediaPicked({ cancelled: true }); }", completionHandler: nil)
+                }
+                return
+            }
+
+            let noteId = self.pendingNoteId
+            let uuid = UUID().uuidString
+            let mediaDir = FormMediaSchemeHandler.notesMediaDirectory
+
+            if provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+                provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { [weak self] tempUrl, error in
+                    guard let tempUrl = tempUrl, error == nil else {
+                        DispatchQueue.main.async {
+                            self?.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaPicked === 'function') { window.onNoteMediaPicked({ error: 'Не удалось загрузить видео' }); }", completionHandler: nil)
+                        }
+                        return
+                    }
+
+                    let videoDst = mediaDir.appendingPathComponent("video_\(uuid).mp4")
+                    let audioDst = mediaDir.appendingPathComponent("audio_\(uuid).m4a")
+                    let thumbDst = mediaDir.appendingPathComponent("thumb_\(uuid).jpg")
+
+                    try? FileManager.default.removeItem(at: videoDst)
+                    try? FileManager.default.copyItem(at: tempUrl, to: videoDst)
+
+                    let asset = AVURLAsset(url: videoDst)
+                    let duration = CMTimeGetSeconds(asset.duration)
+
+                    let gen = AVAssetImageGenerator(asset: asset)
+                    gen.appliesPreferredTrackTransform = true
+                    let time = CMTime(seconds: 0.1, preferredTimescale: 600)
+                    if let imageRef = try? gen.copyCGImage(at: time, actualTime: nil) {
+                        let thumbImg = UIImage(cgImage: imageRef)
+                        if let thumbData = thumbImg.jpegData(compressionQuality: 0.75) {
+                            try? thumbData.write(to: thumbDst)
+                        }
+                    }
+
+                    if let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) {
+                        try? FileManager.default.removeItem(at: audioDst)
+                        exportSession.outputURL = audioDst
+                        exportSession.outputFileType = .m4a
+                        exportSession.exportAsynchronously { [weak self] in
+                            let hasAudio = exportSession.status == .completed
+                            DispatchQueue.main.async {
+                                let audioParam = hasAudio ? "'form-media://audio_\(uuid).m4a'" : "null"
+                                let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
+                                let durValue = duration.isNaN ? 0.0 : duration
+                                let js = """
+                                if (typeof window.onNoteMediaPicked === 'function') {
+                                    window.onNoteMediaPicked({
+                                        success: true,
+                                        noteId: '\(noteId)',
+                                        type: 'video',
+                                        url: 'form-media://video_\(uuid).mp4',
+                                        audioUrl: \(audioParam),
+                                        thumbUrl: \(thumbParam),
+                                        duration: \(durValue)
+                                    });
+                                }
+                                """
+                                self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
+                            }
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
+                            let durValue = duration.isNaN ? 0.0 : duration
+                            let js = """
+                            if (typeof window.onNoteMediaPicked === 'function') {
+                                window.onNoteMediaPicked({
+                                    success: true,
+                                    noteId: '\(noteId)',
+                                    type: 'video',
+                                    url: 'form-media://video_\(uuid).mp4',
+                                    audioUrl: null,
+                                    thumbUrl: \(thumbParam),
+                                    duration: \(durValue)
+                                });
+                            }
+                            """
+                            self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
+                        }
+                    }
+                }
+            } else if provider.canLoadObject(ofClass: UIImage.self) {
+                provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+                    guard let image = object as? UIImage, error == nil else {
+                        DispatchQueue.main.async {
+                            self?.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaPicked === 'function') { window.onNoteMediaPicked({ error: 'Не удалось загрузить фото' }); }", completionHandler: nil)
+                        }
+                        return
+                    }
+
+                    let maxSide: CGFloat = 2048
+                    var finalImg = image
+                    if max(image.size.width, image.size.height) > maxSide {
+                        let ratio = maxSide / max(image.size.width, image.size.height)
+                        let newSize = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
+                        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+                        image.draw(in: CGRect(origin: .zero, size: newSize))
+                        if let scaled = UIGraphicsGetImageFromCurrentImageContext() {
+                            finalImg = scaled
+                        }
+                        UIGraphicsEndImageContext()
+                    }
+
+                    let photoDst = mediaDir.appendingPathComponent("photo_\(uuid).jpg")
+                    if let jpegData = finalImg.jpegData(compressionQuality: 0.85) {
+                        try? jpegData.write(to: photoDst)
+                    }
+
+                    DispatchQueue.main.async {
+                        let js = """
+                        if (typeof window.onNoteMediaPicked === 'function') {
+                            window.onNoteMediaPicked({
+                                success: true,
+                                noteId: '\(noteId)',
+                                type: 'photo',
+                                url: 'form-media://photo_\(uuid).jpg',
+                                thumbUrl: 'form-media://photo_\(uuid).jpg'
+                            });
+                        }
+                        """
+                        self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
                     }
                 }
             }
