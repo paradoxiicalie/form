@@ -90,7 +90,8 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         let fileURL = Self.notesMediaDirectory.appendingPathComponent(fileName)
         
         guard FileManager.default.fileExists(atPath: fileURL.path),
-              let data = try? Data(contentsOf: fileURL) else {
+              let attr = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+              let fileSize = attr[.size] as? UInt64, fileSize > 0 else {
             let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Access-Control-Allow-Origin": "*"])
             if let resp = resp {
                 urlSchemeTask.didReceive(resp)
@@ -111,9 +112,15 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         default: mimeType = "application/octet-stream"
         }
         
-        let totalSize = data.count
+        let totalSize = Int(fileSize)
         
-        // Поддержка HTTP Range для стриминга и перемотки аудио/видео без фризов
+        guard let fileHandle = try? FileHandle(forReadingFrom: fileURL) else {
+            urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 500, userInfo: nil))
+            return
+        }
+        defer { try? fileHandle.close() }
+        
+        // Поддержка HTTP Range через FileHandle: читаем ровно запрошенный чанк без выгрузки гигабайтов в RAM
         if let rangeHeader = urlSchemeTask.request.value(forHTTPHeaderField: "Range"),
            rangeHeader.hasPrefix("bytes=") {
             let spec = String(rangeHeader.dropFirst(6))
@@ -126,7 +133,10 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
             if parts.count > 1, !parts[1].isEmpty, let e = Int(parts[1]) {
                 end = max(start, min(e, totalSize - 1))
             }
-            let subData = data.subdata(in: start..<(end + 1))
+            let lengthToRead = end - start + 1
+            try? fileHandle.seek(toOffset: UInt64(start))
+            let subData = fileHandle.readData(ofLength: lengthToRead)
+            
             let headers: [String: String] = [
                 "Content-Type": mimeType,
                 "Content-Length": "\(subData.count)",
@@ -142,6 +152,7 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
             }
         }
         
+        let data = fileHandle.readDataToEndOfFile()
         let headers: [String: String] = [
             "Content-Type": mimeType,
             "Content-Length": "\(totalSize)",
@@ -499,14 +510,15 @@ struct WebView: UIViewRepresentable {
                         return
                     }
 
+                    let rawTemp = mediaDir.appendingPathComponent("raw_\(uuid).mov")
                     let videoDst = mediaDir.appendingPathComponent("video_\(uuid).mp4")
                     let audioDst = mediaDir.appendingPathComponent("audio_\(uuid).m4a")
                     let thumbDst = mediaDir.appendingPathComponent("thumb_\(uuid).jpg")
 
-                    try? FileManager.default.removeItem(at: videoDst)
-                    try? FileManager.default.copyItem(at: tempUrl, to: videoDst)
+                    try? FileManager.default.removeItem(at: rawTemp)
+                    try? FileManager.default.copyItem(at: tempUrl, to: rawTemp)
 
-                    let asset = AVURLAsset(url: videoDst)
+                    let asset = AVURLAsset(url: rawTemp)
                     let duration = CMTimeGetSeconds(asset.duration)
 
                     let gen = AVAssetImageGenerator(asset: asset)
@@ -519,47 +531,84 @@ struct WebView: UIViewRepresentable {
                         }
                     }
 
-                    // Мгновенный вызов JS: превью и возможность сразу сохранить заметку без задержки!
-                    DispatchQueue.main.async {
-                        let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
-                        let durValue = duration.isNaN ? 0.0 : duration
-                        let js = """
-                        if (typeof window.onNoteMediaPicked === 'function') {
-                            window.onNoteMediaPicked({
-                                success: true,
-                                noteId: '\(noteId)',
-                                exName: '\(exName)',
-                                type: 'video',
-                                url: 'form-media://video_\(uuid).mp4',
-                                audioUrl: null,
-                                thumbUrl: \(thumbParam),
-                                duration: \(durValue)
-                            });
-                        }
-                        """
-                        self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
-                    }
+                    // Аппаратное транскодирование в оптимизированный 720p H.264 с fast-start moov атомом
+                    try? FileManager.default.removeItem(at: videoDst)
+                    if let exportVideo = AVAssetExportSession(asset: asset, presetName: AVAssetExportPreset1280x720) {
+                        exportVideo.outputURL = videoDst
+                        exportVideo.outputFileType = .mp4
+                        exportVideo.shouldOptimizeForNetworkUse = true
+                        exportVideo.exportAsynchronously { [weak self] in
+                            let success = exportVideo.status == .completed
+                            if !success {
+                                try? FileManager.default.copyItem(at: rawTemp, to: videoDst)
+                            }
+                            try? FileManager.default.removeItem(at: rawTemp)
 
-                    // Фоновое извлечение аудиодорожки .m4a
-                    if let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) {
-                        try? FileManager.default.removeItem(at: audioDst)
-                        exportSession.outputURL = audioDst
-                        exportSession.outputFileType = .m4a
-                        exportSession.exportAsynchronously { [weak self] in
-                            if exportSession.status == .completed {
-                                DispatchQueue.main.async {
-                                    let updateJs = """
-                                    if (typeof window.onNoteAudioExtracted === 'function') {
-                                        window.onNoteAudioExtracted({
-                                            noteId: '\(noteId)',
-                                            videoUrl: 'form-media://video_\(uuid).mp4',
-                                            audioUrl: 'form-media://audio_\(uuid).m4a'
-                                        });
+                            DispatchQueue.main.async {
+                                let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
+                                let durValue = duration.isNaN ? 0.0 : duration
+                                let js = """
+                                if (typeof window.onNoteMediaPicked === 'function') {
+                                    window.onNoteMediaPicked({
+                                        success: true,
+                                        noteId: '\(noteId)',
+                                        exName: '\(exName)',
+                                        type: 'video',
+                                        url: 'form-media://video_\(uuid).mp4',
+                                        audioUrl: null,
+                                        thumbUrl: \(thumbParam),
+                                        duration: \(durValue)
+                                    });
+                                }
+                                """
+                                self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
+                            }
+
+                            // Фоновое извлечение аудиодорожки .m4a
+                            let transAsset = AVURLAsset(url: videoDst)
+                            if let exportAudio = AVAssetExportSession(asset: transAsset, presetName: AVAssetExportPresetAppleM4A) {
+                                try? FileManager.default.removeItem(at: audioDst)
+                                exportAudio.outputURL = audioDst
+                                exportAudio.outputFileType = .m4a
+                                exportAudio.exportAsynchronously { [weak self] in
+                                    if exportAudio.status == .completed {
+                                        DispatchQueue.main.async {
+                                            let updateJs = """
+                                            if (typeof window.onNoteAudioExtracted === 'function') {
+                                                window.onNoteAudioExtracted({
+                                                    noteId: '\(noteId)',
+                                                    videoUrl: 'form-media://video_\(uuid).mp4',
+                                                    audioUrl: 'form-media://audio_\(uuid).m4a'
+                                                });
+                                            }
+                                            """
+                                            self?.currentWebView?.evaluateJavaScript(updateJs, completionHandler: nil)
+                                        }
                                     }
-                                    """
-                                    self?.currentWebView?.evaluateJavaScript(updateJs, completionHandler: nil)
                                 }
                             }
+                        }
+                    } else {
+                        try? FileManager.default.copyItem(at: rawTemp, to: videoDst)
+                        try? FileManager.default.removeItem(at: rawTemp)
+                        DispatchQueue.main.async {
+                            let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
+                            let durValue = duration.isNaN ? 0.0 : duration
+                            let js = """
+                            if (typeof window.onNoteMediaPicked === 'function') {
+                                window.onNoteMediaPicked({
+                                    success: true,
+                                    noteId: '\(noteId)',
+                                    exName: '\(exName)',
+                                    type: 'video',
+                                    url: 'form-media://video_\(uuid).mp4',
+                                    audioUrl: null,
+                                    thumbUrl: \(thumbParam),
+                                    duration: \(durValue)
+                                });
+                            }
+                            """
+                            self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
                         }
                     }
                 }

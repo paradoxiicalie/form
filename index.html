@@ -3370,7 +3370,7 @@
             const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
             return `
               <div class="py-3.5 flex items-center justify-between gap-3">
-                <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${prog.id}', '${ex.id}', 0)">
+                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
                   <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
                     <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
@@ -7423,7 +7423,7 @@
             const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
             return `
               <div class="py-3.5 flex items-center justify-between gap-3">
-                <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${activeProg.id}', '${ex.id}', 0)">
+                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
                   <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
                     <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
@@ -8139,10 +8139,27 @@
           }
         }
 
+        const exNotes = getExerciseNotes(ex.name);
+        let notesBadge = "";
+        if (exNotes.length > 0) {
+          const hasVid = exNotes.some(n => n.media?.type === "video");
+          const hasPhoto = exNotes.some(n => n.media?.type === "photo");
+          const bLabel = hasVid ? "Видео" : (hasPhoto ? "Фото" : "Заметка");
+          notesBadge = `
+            <span class="px-1.5 py-0.5 rounded text-[9px] mono font-semibold bg-white/[0.08] text-zinc-300 border border-white/10 shrink-0 leading-none flex items-center gap-1">
+              <span>${bLabel}</span>
+              <span class="text-zinc-500 font-bold">${exNotes.length}</span>
+            </span>
+          `;
+        }
+
         return `
           <div class="py-3.5 flex items-center justify-between gap-2.5">
-            <div class="min-w-0 flex-1" onclick="openSetLoggerModal('${activeProg.id}', '${ex.id}', 0)">
-              <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
+            <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
+                ${notesBadge}
+              </div>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong>${setsBreakdown}</span>
@@ -8792,15 +8809,15 @@
         return;
       }
 
-      const warmupNote = notes.find(n => n.category === "warmup") || notes.find(n => parseWarmupSets(n.text).length > 0);
-      const coachNote = notes.find(n => n.category === "coach") || notes[0];
-
+      // 1. Разминочный план
+      const warmupNote = notes.find(n => n.category === "warmup" && parseWarmupSets(n.text).length > 0)
+                      || notes.find(n => parseWarmupSets(n.text).length > 0);
       let warmHtml = "";
       if (warmupNote) {
         const warmups = parseWarmupSets(warmupNote.text);
         if (warmups.length > 0) {
           warmHtml = `
-            <div class="rounded-2xl border border-amber-500/25 bg-amber-950/20 p-2.5 border-l-2 border-l-amber-400">
+            <div class="rounded-xl border border-amber-500/25 bg-amber-950/20 p-2 border-l-2 border-l-amber-400">
               <div class="flex items-center justify-between text-[10px] font-bold mono text-amber-300 uppercase tracking-wider mb-1">
                 <span>Разминочный план</span>
                 <span class="text-zinc-500 text-[9px]">${escapeHtml(warmupNote.date || "")}</span>
@@ -8813,16 +8830,53 @@
         }
       }
 
-      let tipHtml = "";
-      if (coachNote && coachNote !== warmupNote) {
-        const meta = NOTE_CATEGORY_META[coachNote.category] || NOTE_CATEGORY_META.coach;
-        tipHtml = `
-          <div class="rounded-2xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2.5">
+      // 2. Текстовая подсказка по технике или совет тренера (ТОЛЬКО если есть непустой текст!)
+      const textNotes = notes.filter(n => n.text && n.text.trim() && n !== warmupNote);
+      const topCue = textNotes.find(n => n.category === "technique")
+                  || textNotes.find(n => n.category === "coach")
+                  || textNotes[0];
+
+      let cueHtml = "";
+      if (topCue) {
+        const meta = NOTE_CATEGORY_META[topCue.category] || NOTE_CATEGORY_META.coach;
+        cueHtml = `
+          <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')">
             <div class="flex items-center justify-between text-[10px] font-bold mono ${meta.badge.split(' ')[1] || 'text-sky-300'} uppercase tracking-wider mb-0.5">
               <span>${meta.title}</span>
-              <span class="text-zinc-500 text-[9px]">${escapeHtml(coachNote.date || "")}</span>
+              <span class="text-zinc-500 text-[9px]">${escapeHtml(topCue.date || "")}</span>
             </div>
-            <div class="text-xs text-zinc-200 font-mono leading-relaxed truncate">${escapeHtml(coachNote.text)}</div>
+            <div class="text-[11.5px] text-zinc-200 font-mono leading-relaxed line-clamp-2">${escapeHtml(topCue.text)}</div>
+          </div>
+        `;
+      }
+
+      // 3. Медиафайлы (Видео техники и Фото настройки)
+      const mediaNotes = notes.filter(n => n.media);
+      let mediaBadgesHtml = "";
+      if (mediaNotes.length > 0) {
+        mediaBadgesHtml = `
+          <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+            ${mediaNotes.map(mNote => {
+              const isVid = mNote.media.type === "video";
+              const pillTheme = isVid
+                ? "bg-sky-500/10 border-sky-500/30 text-sky-200 hover:bg-sky-500/20"
+                : "bg-purple-500/10 border-purple-500/30 text-purple-200 hover:bg-purple-500/20";
+              const label = isVid ? "Видео техники" : "Фото настройки";
+              const thumbImg = mNote.media.thumbUrl
+                ? `<img src="${mNote.media.thumbUrl}" class="w-4 h-4 rounded object-cover shrink-0" />`
+                : `<span class="text-[9px] mono">${isVid ? "▶" : "IMG"}</span>`;
+              return `
+                <button
+                  type="button"
+                  onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
+                  class="flex items-center gap-1.5 px-2 py-1 rounded-lg border ${pillTheme} text-[10px] mono font-medium active:scale-95 transition"
+                >
+                  ${thumbImg}
+                  <span>${label}</span>
+                  <span class="text-zinc-500 text-[9px]">→</span>
+                </button>
+              `;
+            }).join("")}
           </div>
         `;
       }
@@ -8830,14 +8884,16 @@
       box.innerHTML = `
         <div class="space-y-1.5">
           ${warmHtml}
-          ${tipHtml}
-          <div class="flex justify-end pt-0.5">
+          ${cueHtml}
+          ${mediaBadgesHtml}
+          <div class="flex items-center justify-between pt-0.5 text-[10px] mono">
+            <span class="text-zinc-500">Заметок в базе: ${notes.length}</span>
             <button
               type="button"
               onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
-              class="text-[10px] mono text-zinc-400 hover:text-white underline flex items-center gap-1"
+              class="text-zinc-400 hover:text-white underline flex items-center gap-1"
             >
-              <span>База заметок (${notes.length}) →</span>
+              <span>Открыть базу →</span>
             </button>
           </div>
         </div>
