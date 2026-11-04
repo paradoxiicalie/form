@@ -5015,10 +5015,6 @@
       }
       throw lastError || new Error("Ошибка пула Gemini API");
     }
-        throw new Error("Лимиты всех ключей и каскада моделей исчерпаны. Добавьте резервный ключ из другого аккаунта.");
-      }
-      throw lastError || new Error("Ошибка пула Gemini API");
-    }
 
     async function callGemini3Flash(payload) {
       return await callGeminiWithFallback(payload);
