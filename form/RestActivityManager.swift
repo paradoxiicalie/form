@@ -82,20 +82,9 @@ final class RestActivityManager {
         autoStopTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
             guard !Task.isCancelled else { return }
-
-            let finalState = RestActivityAttributes.ContentState(
-                startDate: now,
-                endDate: end,
-                exerciseName: cleanName,
-                themeCalHex: themeCalHex
-            )
-            let finalContent = ActivityContent(state: finalState, staleDate: nil)
-
             for activity in Activity<RestActivityAttributes>.activities {
-                // .default: убирает с Dynamic Island сразу, оставляет на локскрине в состоянии завершения
-                await activity.end(finalContent, dismissalPolicy: .default)
+                await activity.end(nil, dismissalPolicy: .immediate)
             }
-
             self?.stopSilentAudioKeepAlive()
             self?.endBackgroundTask()
         }

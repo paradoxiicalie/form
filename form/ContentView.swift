@@ -183,7 +183,7 @@ struct WebView: UIViewRepresentable {
         
         let sharedDefaults = UserDefaults(suiteName: "group.com.macro.shared")
         let savedKey = sharedDefaults?.string(forKey: "nativeApiKey") ?? ""
-        let savedState = sharedDefaults?.string(forKey: "nativeStateJson") ?? ""
+        let savedState = sharedDefaults?.string(forKey: "nativeStateJson") ?? sharedDefaults?.string(forKey: "formNativeBackupJSON") ?? ""
         
         let escapedKey = savedKey
             .replacingOccurrences(of: "\\", with: "\\\\")
@@ -198,6 +198,7 @@ struct WebView: UIViewRepresentable {
         let userScript = WKUserScript(source: preloadJS, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         config.userContentController.addUserScript(userScript)
         config.userContentController.add(context.coordinator, name: "widgetBridge")
+        config.userContentController.add(context.coordinator, name: "iosBridge")
         
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.uiDelegate = context.coordinator
@@ -215,7 +216,25 @@ struct WebView: UIViewRepresentable {
                 if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
                 var bar = document.getElementById('rest-timer-bar') || document.getElementById('rest-bar');
                 if (bar) { bar.classList.remove('active', 'open', 'visible'); bar.style.display = 'none'; }
+                if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
             """, completionHandler: nil)
+        }
+
+        // При возврате из фона — проверяем, не нажал ли юзер ✕ на острове/лок-скрине
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            if let d = UserDefaults(suiteName: "group.com.macro.shared"),
+               d.bool(forKey: "restTimerStoppedExternally") {
+                d.set(false, forKey: "restTimerStoppedExternally")
+                d.synchronize()
+                webView.evaluateJavaScript("""
+                    if (typeof stopRestTimer === 'function') { stopRestTimer(); }
+                    if (typeof closeRestTimer === 'function') { closeRestTimer(); }
+                    if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
+                    var bar = document.getElementById('rest-timer-bar') || document.getElementById('rest-bar');
+                    if (bar) { bar.classList.remove('active', 'open', 'visible'); bar.style.display = 'none'; }
+                    if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
+                """, completionHandler: nil)
+            }
         }
         
         WebViewModel.shared.webView = webView
@@ -254,10 +273,33 @@ struct WebView: UIViewRepresentable {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 webView.evaluateJavaScript("if (typeof checkNativeStepsOnStartup === 'function') { checkNativeStepsOnStartup(); }", completionHandler: nil)
             }
+            // Задача 5: восстанавливаем базу из нативного бэкапа, если localStorage пуст
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if let d = UserDefaults(suiteName: "group.com.macro.shared"),
+                   let json = d.string(forKey: "formNativeBackupJSON"), !json.isEmpty {
+                    let escaped = json
+                        .replacingOccurrences(of: "\\", with: "\\\\")
+                        .replacingOccurrences(of: "`", with: "\\`")
+                    webView.evaluateJavaScript("""
+                        (function(){
+                            var KEYS = ['macro_minimal_ios_v9','macro_minimal_ios_v8','macro_minimal_ios_v7'];
+                            var hasData = KEYS.some(function(k){ var v = localStorage.getItem(k); return v && v.length > 50; });
+                            if (!hasData) {
+                                try {
+                                    var json = `\(escaped)`;
+                                    localStorage.setItem(KEYS[0], json);
+                                    if (typeof loadState === 'function') { loadState(); }
+                                    if (typeof renderAll === 'function') { renderAll(); }
+                                } catch(e) {}
+                            }
+                        })();
+                    """, completionHandler: nil)
+                }
+            }
         }
         
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard message.name == "widgetBridge",
+            guard message.name == "widgetBridge" || message.name == "iosBridge",
                   let dict = message.body as? [String: Any] else { return }
             
             let action = dict["action"] as? String ?? "syncData"
@@ -332,6 +374,15 @@ struct WebView: UIViewRepresentable {
                 return
             }
             
+            if action == "syncFullBackup" {
+                if let jsonString = dict["data"] as? String, !jsonString.isEmpty {
+                    if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+                        d.set(jsonString, forKey: "formNativeBackupJSON")
+                        d.synchronize()
+                    }
+                }
+                return
+            }
             guard let d = UserDefaults(suiteName: "group.com.macro.shared") else { return }
             if let apiKey = dict["apiKey"] as? String { d.set(apiKey, forKey: "nativeApiKey") }
             if let stateJson = dict["stateJson"] as? String, !stateJson.isEmpty { d.set(stateJson, forKey: "nativeStateJson") }

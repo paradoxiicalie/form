@@ -974,9 +974,6 @@
       </div>
 
       <div class="flex gap-2">
-        <button type="button" onclick="deleteExerciseFromSplit()" class="py-3 px-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold">
-          Удалить упр.
-        </button>
         <button type="button" id="btnUncheckSet" onclick="uncheckCurrentSet()" class="hidden py-3 px-4 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold">
           Снять
         </button>
@@ -1271,7 +1268,7 @@
       </div>
 
       <div id="scannerCameraContainer" class="relative w-full h-56 bg-black rounded-2xl overflow-hidden border border-white/10 mb-3 flex items-center justify-center">
-        <video id="cameraStream" playsinline autoplay muted class="w-full h-full object-contain hidden bg-black"></video>
+        <video id="cameraStream" playsinline webkit-playsinline autoplay muted class="w-full h-full object-contain hidden bg-black"></video>
         <img id="photoPreview" alt="Preview" class="w-full h-full object-contain hidden bg-black" />
         <canvas id="scannerOverlayCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
 
@@ -3383,6 +3380,7 @@
               </div>
             `;
           }).join("");
+          attachExerciseSwipeDelete(exContainer, prog.id);
         }
       }
 
@@ -3494,14 +3492,177 @@
       showToast("Подход снят");
     }
 
+    let lastDeletedExercise = null;
+    let undoDeleteTimer = null;
+
     function deleteExerciseFromSplit() {
       const prog = state.workout.programs?.[activeSetEdit.progId];
       if (!prog) return;
-      prog.exercises = (prog.exercises || []).filter(e => e.id !== activeSetEdit.exId);
+      const exList = prog.exercises || [];
+      const idx = exList.findIndex(e => e.id === activeSetEdit.exId);
+      if (idx === -1) return;
+      lastDeletedExercise = { progId: activeSetEdit.progId, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
+      prog.exercises = exList.filter(e => e.id !== activeSetEdit.exId);
       saveState();
       renderWorkoutAll();
       closeSetLoggerModal();
-      showToast("Упражнение удалено");
+      showUndoExerciseToast();
+    }
+
+    function deleteExerciseFromSplitById(progId, exId) {
+      const prog = state.workout.programs?.[progId];
+      if (!prog) return;
+      const exList = prog.exercises || [];
+      const idx = exList.findIndex(e => e.id === exId);
+      if (idx === -1) return;
+      lastDeletedExercise = { progId, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
+      prog.exercises = exList.filter(e => e.id !== exId);
+      saveState();
+      renderWorkoutAll();
+      showUndoExerciseToast();
+    }
+
+    function showUndoExerciseToast() {
+      if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+      let toast = document.getElementById("undoExerciseToast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "undoExerciseToast";
+        toast.style.cssText = "position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+72px);left:50%;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:14px;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(16px);opacity:0;transition:opacity 0.22s ease,transform 0.22s ease;white-space:nowrap;";
+        toast.innerHTML = '<span style="font-size:12px;font-family:ui-monospace,monospace;color:#d1d5db">Упражнение удалено</span><button onclick="undoDeleteExercise()" style="font-size:11px;font-weight:800;font-family:ui-monospace,monospace;color:var(--accent-cal,#E63946);background:none;border:none;padding:0;cursor:pointer;letter-spacing:0.04em">ВЕРНУТЬ</button>';
+        document.body.appendChild(toast);
+      }
+      requestAnimationFrame(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateX(-50%) translateY(0)";
+      });
+      undoDeleteTimer = setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(-50%) translateY(20px)";
+        setTimeout(() => { lastDeletedExercise = null; }, 300);
+      }, 4500);
+    }
+
+    function undoDeleteExercise() {
+      if (!lastDeletedExercise) return;
+      if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+      const { progId, ex, idx } = lastDeletedExercise;
+      lastDeletedExercise = null;
+      const prog = state.workout.programs?.[progId];
+      if (!prog) return;
+      const list = prog.exercises || [];
+      list.splice(idx, 0, ex);
+      prog.exercises = list;
+      saveState();
+      renderWorkoutAll();
+      const toast = document.getElementById("undoExerciseToast");
+      if (toast) { toast.style.opacity = "0"; toast.style.transform = "translateX(-50%) translateY(20px)"; }
+      showToast("Упражнение возвращено");
+    }
+
+    // =========================================================================
+    // СВАЙП ВЛЕВО ДЛЯ УДАЛЕНИЯ УПРАЖНЕНИЯ (Telegram-стиль)
+    // =========================================================================
+    function attachExerciseSwipeDelete(container, progId) {
+      if (!container) return;
+      const rows = container.querySelectorAll(".py-3\\.5.flex.items-center");
+      rows.forEach((row, rowIdx) => {
+        if (row.dataset.swipeDeleteAttached) return;
+        row.dataset.swipeDeleteAttached = "true";
+
+        // Определяем ex.id из кнопки подхода внутри
+        const circleBtn = row.querySelector(".set-dot");
+        if (!circleBtn) return;
+        const oc = circleBtn.getAttribute("onclick") || "";
+        const m = oc.match(/openSetLoggerModal\('([^']+)',\s*'([^']+)'/);
+        if (!m) return;
+        const exId = m[2];
+
+        // Обёртка для swipe
+        const wrap = document.createElement("div");
+        wrap.style.cssText = "position:relative;overflow:hidden;";
+        const deleteBtn = document.createElement("div");
+        deleteBtn.style.cssText = "position:absolute;top:0;right:0;bottom:0;width:84px;display:flex;align-items:center;justify-content:center;background:#991b1b;border-radius:12px;transform:translateX(100%);transition:transform 0.22s ease;pointer-events:none;";
+        deleteBtn.innerHTML = '<svg style="width:22px;height:22px;stroke:white" fill="none" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
+
+        row.parentNode.insertBefore(wrap, row);
+        wrap.appendChild(deleteBtn);
+        wrap.appendChild(row);
+        row.style.cssText = (row.style.cssText || "") + "position:relative;background:inherit;transition:transform 0.22s ease;border-radius:12px;";
+
+        let startX = 0, startY = 0, dx = 0, isSwiping = false, dirDecided = false;
+        let currentOpen = false;
+
+        row.addEventListener("touchstart", e => {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          dx = 0; isSwiping = false; dirDecided = false;
+        }, { passive: true });
+
+        row.addEventListener("touchmove", e => {
+          if (!dirDecided) {
+            const ax = Math.abs(e.touches[0].clientX - startX);
+            const ay = Math.abs(e.touches[0].clientY - startY);
+            if (ax < 5 && ay < 5) return;
+            dirDecided = true;
+            isSwiping = ax > ay * 1.4 && e.touches[0].clientX < startX;
+            if (!isSwiping) return;
+          }
+          if (!isSwiping) return;
+          dx = Math.min(0, e.touches[0].clientX - startX);
+          if (e.cancelable) e.stopPropagation();
+          const clamped = Math.max(-155, dx);
+          row.style.transform = `translateX(${clamped}px)`;
+          if (clamped < -20) {
+            deleteBtn.style.transform = "translateX(0)";
+            deleteBtn.style.pointerEvents = "auto";
+          } else {
+            deleteBtn.style.transform = "translateX(100%)";
+          }
+          if (clamped <= -155) {
+            deleteBtn.querySelector("svg").style.transform = "scale(1.35)";
+          } else {
+            deleteBtn.querySelector("svg").style.transform = "scale(1)";
+          }
+        }, { passive: false });
+
+        row.addEventListener("touchend", e => {
+          if (!isSwiping) return;
+          if (dx <= -155) {
+            if (typeof haptic === "function") haptic("medium"); else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
+            row.style.transform = "translateX(-100%)";
+            wrap.style.maxHeight = wrap.offsetHeight + "px";
+            wrap.style.overflow = "hidden";
+            setTimeout(() => {
+              wrap.style.transition = "max-height 0.28s ease, opacity 0.2s";
+              wrap.style.maxHeight = "0px";
+              wrap.style.opacity = "0";
+              setTimeout(() => { deleteExerciseFromSplitById(progId, exId); }, 280);
+            }, 160);
+          } else if (dx <= -84) {
+            row.style.transform = "translateX(-84px)";
+            currentOpen = true;
+            deleteBtn.style.pointerEvents = "auto";
+          } else {
+            row.style.transform = "translateX(0)";
+            deleteBtn.style.transform = "translateX(100%)";
+            deleteBtn.style.pointerEvents = "none";
+            currentOpen = false;
+          }
+        }, { passive: true });
+
+        deleteBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          if (typeof haptic === "function") haptic("medium"); else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
+          row.style.transform = "translateX(-100%)";
+          setTimeout(() => {
+            wrap.style.transition = "max-height 0.28s ease, opacity 0.2s";
+            wrap.style.maxHeight = "0px";
+            wrap.style.opacity = "0";
+            setTimeout(() => { deleteExerciseFromSplitById(progId, exId); }, 280);
+          }, 100);
+        });
+      });
     }
 
     function openAddExerciseModal() {
@@ -4435,7 +4596,7 @@
               // Проверка на геоблокировку (Россия / отсутствие VPN)
               if (/location is not supported|unsupported location/i.test(errMsg)) {
                 hasLocationError = true;
-                throw new Error("Включите VPN (location not supported)");
+                throw new Error("Включи VPN! Запрос к Gemini пошел с российского IP");
               }
 
               // Если лимит (429), недействительный ключ или перегрузка модели — пробуем следующий ключ/модель с микропаузой
@@ -4453,10 +4614,10 @@
             return data;
 
           } catch (err) {
-            if (hasLocationError || /location is not supported|Включите VPN/i.test(err.message)) {
+            if (hasLocationError || /location is not supported|Включи VPN|Включите VPN/i.test(err.message)) {
               apiKeyVerifiedStatus = false;
               syncKeyFieldUI();
-              throw err;
+              throw new Error("Включи VPN! Запрос к Gemini пошел с российского IP");
             }
             lastError = err;
           }
@@ -5353,6 +5514,9 @@
         } else {
           localStorage.removeItem("form_gemini_proxy");
         }
+        // Задача 5: Нативный бэкап всей базы в UserDefaults через Swift-мост
+        const bridge = window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge;
+        bridge?.postMessage({ action: "syncFullBackup", data: JSON.stringify(state) });
       } catch (e) {}
       syncNativeWidget();
     }
@@ -7434,6 +7598,7 @@
               </div>
             `;
           }).join("");
+          attachExerciseSwipeDelete(exContainer, activeProg.id);
         }
       }
 
@@ -8170,6 +8335,7 @@
           </div>
         `;
       }).join("");
+      attachExerciseSwipeDelete(exContainer, activeProg.id);
     };
 
     // =========================================================================
@@ -8494,6 +8660,40 @@
       }
     };
 
+    window.handleNoteVideoError = function(vid, url, noteId) {
+      if (!vid) return;
+      vid.classList.add("hidden");
+      const wrap = document.getElementById("noteVideoWrap_" + noteId) || vid.parentElement;
+      if (!wrap || wrap.querySelector(".video-error-fallback")) return;
+      const fb = document.createElement("div");
+      fb.className = "video-error-fallback flex flex-col items-center justify-center p-4 bg-zinc-900/90 border border-red-500/30 rounded-xl text-center space-y-2";
+      fb.innerHTML = `
+        <div class="flex items-center gap-1.5 text-xs font-bold mono text-red-400">
+          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span>СБОЙ ЗАГРУЗКИ ВИДЕО</span>
+        </div>
+        <p class="text-[10px] text-zinc-400 font-mono">Проверьте соединение в зале</p>
+        <button type="button" onclick="retryNoteVideo('${noteId}', '${escapeHtml(url).replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] mono text-white font-semibold transition active:scale-95">
+          ПОВТОРИТЬ ЗАГРУЗКУ
+        </button>
+      `;
+      wrap.appendChild(fb);
+    };
+
+    window.retryNoteVideo = function(noteId, url) {
+      const wrap = document.getElementById("noteVideoWrap_" + noteId);
+      if (!wrap) return;
+      const errFallback = wrap.querySelector(".video-error-fallback");
+      if (errFallback) errFallback.remove();
+      const vid = wrap.querySelector("video");
+      if (vid) {
+        vid.classList.remove("hidden");
+        vid.src = url;
+        vid.load();
+        vid.play().catch(() => {});
+      }
+    };
+
     window.analyzeEquipmentSetup = async function(noteId, exName, photoUrl) {
       const status = document.getElementById("noteAiAnalysisStatus_" + noteId);
       if (status) status.classList.remove("hidden");
@@ -8575,7 +8775,7 @@
           mediaHtml = `
             <div class="mt-2 space-y-1.5">
               <div id="noteVideoWrap_${note.id}" class="relative rounded-xl overflow-hidden bg-black border border-white/10">
-                <video playsinline controls preload="metadata" class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}"></video>
+                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" onerror="handleNoteVideoError(this, '${escapeHtml(note.media.url)}', '${note.id}')"></video>
               </div>
               ${note.media.audioUrl ? `
                 <div class="flex items-center justify-between pt-0.5">
@@ -8770,7 +8970,16 @@
 
     window.closeExerciseNotesModal = function() {
       const modal = document.getElementById("exerciseNotesModal");
-      if (modal) modal.classList.remove("open");
+      if (modal) {
+        // Task 3: принудительно выгружаем видеопотоки из RAM декодера iOS
+        modal.querySelectorAll("video").forEach(vid => {
+          try { vid.pause(); vid.removeAttribute("src"); vid.load(); } catch(e) {}
+        });
+        modal.querySelectorAll("audio").forEach(aud => {
+          try { aud.pause(); aud.removeAttribute("src"); aud.load(); } catch(e) {}
+        });
+        modal.classList.remove("open");
+      }
     };
 
     window.submitNewExerciseNote = function() {
