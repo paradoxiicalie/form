@@ -1910,17 +1910,23 @@
           </div>
 
           <!-- Дефолты отдыха под науку и тяжесть -->
-          <div class="space-y-2 pt-0.5">
+          <div class="space-y-3 pt-0.5">
             <div>
               <div class="flex items-center justify-between text-[11px] mb-1.5">
                 <span class="text-zinc-300 font-medium">Тяжелая база (Жим, Присед, Тяга):</span>
-                <span id="labelHeavyRest" class="mono text-white font-bold">04:00</span>
+                <span id="labelHeavyRest" class="mono text-white font-bold">02:00</span>
               </div>
-              <div class="grid grid-cols-4 gap-1.5">
+              <div class="grid grid-cols-4 gap-1.5 mb-2">
+                <button type="button" onclick="setRestDefaultPreset('heavy', 90)" id="restHeavy90" class="py-1.5 rounded-lg border text-xs mono transition">1:30</button>
+                <button type="button" onclick="setRestDefaultPreset('heavy', 120)" id="restHeavy120" class="py-1.5 rounded-lg border text-xs mono transition">2:00</button>
                 <button type="button" onclick="setRestDefaultPreset('heavy', 180)" id="restHeavy180" class="py-1.5 rounded-lg border text-xs mono transition">3:00</button>
                 <button type="button" onclick="setRestDefaultPreset('heavy', 240)" id="restHeavy240" class="py-1.5 rounded-lg border text-xs mono transition">4:00</button>
-                <button type="button" onclick="setRestDefaultPreset('heavy', 300)" id="restHeavy300" class="py-1.5 rounded-lg border text-xs mono transition">5:00</button>
-                <button type="button" onclick="setRestDefaultPreset('heavy', 420)" id="restHeavy420" class="py-1.5 rounded-lg border text-xs mono transition">7:00</button>
+              </div>
+              <!-- Ввод своего произвольного времени -->
+              <div class="flex items-center gap-1.5 bg-black/40 border border-white/10 rounded-xl p-1.5">
+                <button type="button" onclick="stepRestTime('heavy', -15)" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold active:scale-90 transition">-15с</button>
+                <input id="inputCustomHeavyRest" type="text" placeholder="Свое время (напр. 1:45 или 105)" onchange="onCustomRestInput('heavy', this.value)" class="flex-1 bg-transparent text-center mono text-xs font-bold text-white outline-none" />
+                <button type="button" onclick="stepRestTime('heavy', 15)" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold active:scale-90 transition">+15с</button>
               </div>
             </div>
 
@@ -1929,11 +1935,17 @@
                 <span class="text-zinc-300 font-medium">Изоляция и руки (Бицепс, Пресс, Дельты):</span>
                 <span id="labelIsoRest" class="mono text-white font-bold">01:30</span>
               </div>
-              <div class="grid grid-cols-4 gap-1.5">
+              <div class="grid grid-cols-4 gap-1.5 mb-2">
                 <button type="button" onclick="setRestDefaultPreset('iso', 60)" id="restIso60" class="py-1.5 rounded-lg border text-xs mono transition">1:00</button>
                 <button type="button" onclick="setRestDefaultPreset('iso', 90)" id="restIso90" class="py-1.5 rounded-lg border text-xs mono transition">1:30</button>
                 <button type="button" onclick="setRestDefaultPreset('iso', 120)" id="restIso120" class="py-1.5 rounded-lg border text-xs mono transition">2:00</button>
                 <button type="button" onclick="setRestDefaultPreset('iso', 150)" id="restIso150" class="py-1.5 rounded-lg border text-xs mono transition">2:30</button>
+              </div>
+              <!-- Ввод своего произвольного времени -->
+              <div class="flex items-center gap-1.5 bg-black/40 border border-white/10 rounded-xl p-1.5">
+                <button type="button" onclick="stepRestTime('iso', -15)" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold active:scale-90 transition">-15с</button>
+                <input id="inputCustomIsoRest" type="text" placeholder="Свое время (напр. 1:15 или 75)" onchange="onCustomRestInput('iso', this.value)" class="flex-1 bg-transparent text-center mono text-xs font-bold text-white outline-none" />
+                <button type="button" onclick="stepRestTime('iso', 15)" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold active:scale-90 transition">+15с</button>
               </div>
             </div>
           </div>
@@ -2331,6 +2343,7 @@
         <span class="text-[9px] mono uppercase tracking-wider text-zinc-500 mr-0.5 shrink-0">Пресеты:</span>
         <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
           <button type="button" onclick="setRestTimerDirect(90)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">1:30</button>
+          <button type="button" onclick="setRestTimerDirect(120)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">2:00</button>
           <button type="button" onclick="setRestTimerDirect(150)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">2:30</button>
           <button type="button" onclick="setRestTimerDirect(240)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">4:00</button>
           <button type="button" onclick="setRestTimerDirect(300)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">5:00</button>
@@ -5306,12 +5319,12 @@
 
     function isHeavyCompoundExercise(name, muscle) {
       const n = (name || "").toLowerCase();
-      if (n.includes("жим штанги") || n.includes("жим лежа") || n.includes("присед") || 
-          n.includes("станов") || n.includes("тяга штанги") || n.includes("жим ногами") || 
+      if (n.includes("жим") || n.includes("присед") || 
+          n.includes("станов") || n.includes("тяга") || 
           n.includes("подтягиван") || n.includes("армейск") || n.includes("брусьях")) {
         return true;
       }
-      if (muscle === "legs" || muscle === "back") return true;
+      if (muscle === "legs" || muscle === "back" || muscle === "chest") return true;
       return false;
     }
 
@@ -5565,6 +5578,45 @@
       syncRestSettingsUI();
     }
 
+    function parseRestTimeString(str) {
+      if (!str) return null;
+      const clean = String(str).trim().toLowerCase().replace(",", ".");
+      if (clean.includes(":")) {
+        const parts = clean.split(":");
+        const m = parseInt(parts[0], 10) || 0;
+        const s = parseInt(parts[1], 10) || 0;
+        return m * 60 + s;
+      }
+      const num = parseFloat(clean);
+      if (isNaN(num)) return null;
+      if (num <= 10 && !clean.includes("с") && !clean.includes("s")) {
+        return Math.round(num * 60);
+      }
+      return Math.round(num);
+    }
+
+    function stepRestTime(type, deltaSec) {
+      if (!state.restTimerSettings) {
+        state.restTimerSettings = { autoStart: true, sound: true, heavySeconds: 240, isolationSeconds: 90, customMessages: [] };
+      }
+      const cur = type === "heavy" 
+        ? (state.restTimerSettings.heavySeconds || 240)
+        : (state.restTimerSettings.isolationSeconds || 90);
+      const nextSec = Math.max(15, Math.min(900, cur + deltaSec));
+      setRestDefaultPreset(type, nextSec);
+    }
+
+    function onCustomRestInput(type, val) {
+      const parsed = parseRestTimeString(val);
+      if (parsed && parsed >= 15 && parsed <= 900) {
+        setRestDefaultPreset(type, parsed);
+        showToast(`Отдых установлен: ${formatMMSS(parsed)}`);
+      } else {
+        showToast("Введите время в формате ММ:СС (напр. 1:30)", true);
+        syncRestSettingsUI();
+      }
+    }
+
     function setRestDefaultPreset(type, sec) {
       if (!state.restTimerSettings) {
         state.restTimerSettings = { autoStart: true, sound: true, heavySeconds: 240, isolationSeconds: 90, customMessages: [] };
@@ -5643,7 +5695,9 @@
       const hSec = s.heavySeconds || 240;
       const lblH = document.getElementById("labelHeavyRest");
       if (lblH) lblH.textContent = formatMMSS(hSec);
-      [180, 240, 300, 420].forEach(val => {
+      const inpCustomH = document.getElementById("inputCustomHeavyRest");
+      if (inpCustomH && document.activeElement !== inpCustomH) inpCustomH.value = formatMMSS(hSec);
+      [90, 120, 180, 240].forEach(val => {
         const el = document.getElementById(`restHeavy${val}`);
         if (el) {
           el.className = (val === hSec)
@@ -5655,6 +5709,8 @@
       const iSec = s.isolationSeconds || 90;
       const lblI = document.getElementById("labelIsoRest");
       if (lblI) lblI.textContent = formatMMSS(iSec);
+      const inpCustomI = document.getElementById("inputCustomIsoRest");
+      if (inpCustomI && document.activeElement !== inpCustomI) inpCustomI.value = formatMMSS(iSec);
       [60, 90, 120, 150].forEach(val => {
         const el = document.getElementById(`restIso${val}`);
         if (el) {
@@ -6132,8 +6188,8 @@
 
     function requestNativeStepsSync() {
       if (window.webkit?.messageHandlers?.widgetBridge) {
-        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps" });
-        showToast("Синхронизация с датчиком шагов iPhone...");
+        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps", silent: false });
+        showToast("Синхронизация с шагомером iPhone...");
       } else {
         if (!state.dailySteps) state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "pwa" };
         state.dailySteps.source = "pwa";
@@ -6142,17 +6198,21 @@
       }
     }
 
-    function onNativeStepsReceived(steps) {
+    function onNativeStepsReceived(steps, isSilent) {
       if (!state.dailySteps || typeof state.dailySteps !== "object") {
         state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "motion" };
       }
-      state.dailySteps.count = Math.max(0, Number(steps) || 0);
+      const newSteps = Math.max(0, Number(steps) || 0);
+      state.dailySteps.count = newSteps;
       state.dailySteps.date = getTodayKey();
       state.dailySteps.source = "motion";
+      state.dailySteps.lastSyncedAt = Date.now();
       saveState();
       renderAll();
       syncNativeWidget();
-      showToast(`✓ Шаги обновлены: ${Number(steps).toLocaleString("ru-RU")}`);
+      if (isSilent !== true) {
+        showToast(`✓ Шаги обновлены: ${newSteps.toLocaleString("ru-RU")}`);
+      }
     }
 
     function onNativeStepsUnavailable() {
@@ -6160,9 +6220,9 @@
       renderStepsCard();
     }
 
-    function checkNativeStepsOnStartup() {
+    function checkNativeStepsOnStartup(silent = true) {
       if (window.webkit?.messageHandlers?.widgetBridge) {
-        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps" });
+        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps", silent: Boolean(silent) });
       }
     }
 
@@ -7751,11 +7811,17 @@
         checkDayRollover();
         checkWorkoutWeekRollover();
         if (state.activeRest) tickRestTimer();
+        checkNativeStepsOnStartup(true);
         renderAll();
       }
     });
 
     setInterval(checkDayRollover, 30000);
+
+    // Фоновое тихое автообновление шагов каждые 3 часа
+    setInterval(() => {
+      checkNativeStepsOnStartup(true);
+    }, 3 * 3600 * 1000);
 
     loadState();
     renderAll();

@@ -380,6 +380,7 @@ struct WebView: UIViewRepresentable {
         }
         
         WebViewModel.shared.webView = webView
+        context.coordinator.currentWebView = webView
         
         if let filePath = Bundle.main.path(forResource: "index", ofType: "html"),
            let htmlString = try? String(contentsOfFile: filePath, encoding: .utf8) {
@@ -396,6 +397,39 @@ struct WebView: UIViewRepresentable {
         var pendingNoteId: String = ""
         var pendingExName: String = ""
         
+        override init() {
+            super.init()
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleWillEnterForeground),
+                name: UIApplication.willEnterForegroundNotification,
+                object: nil
+            )
+        }
+        
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+        
+        @objc private func handleWillEnterForeground() {
+            syncStepsSilently(webView: currentWebView ?? WebViewModel.shared.webView)
+        }
+        
+        func syncStepsSilently(webView: WKWebView?) {
+            guard let wv = webView ?? currentWebView ?? WebViewModel.shared.webView else { return }
+            if CMPedometer.isStepCountingAvailable() {
+                let cal = Calendar.current
+                let startOfDay = cal.startOfDay(for: Date())
+                pedometer.queryPedometerData(from: startOfDay, to: Date()) { [weak wv] data, error in
+                    guard let data = data, error == nil else { return }
+                    let steps = data.numberOfSteps.intValue
+                    DispatchQueue.main.async {
+                        wv?.evaluateJavaScript("if (typeof onNativeStepsReceived === 'function') { onNativeStepsReceived(\(steps), true); }", completionHandler: nil)
+                    }
+                }
+            }
+        }
+        
         @available(iOS 15.0, *)
         func webView(_ webView: WKWebView,
                      requestMediaCapturePermissionFor origin: WKSecurityOrigin,
@@ -406,6 +440,7 @@ struct WebView: UIViewRepresentable {
         }
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            self.currentWebView = webView
             if let route = WebViewModel.shared.pendingRoute {
                 WebViewModel.shared.pendingRoute = nil
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -413,7 +448,7 @@ struct WebView: UIViewRepresentable {
                 }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                webView.evaluateJavaScript("if (typeof checkNativeStepsOnStartup === 'function') { checkNativeStepsOnStartup(); }", completionHandler: nil)
+                self.syncStepsSilently(webView: webView)
             }
             // Задача 5: восстанавливаем базу из нативного бэкапа, если localStorage пуст
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -447,6 +482,7 @@ struct WebView: UIViewRepresentable {
             let action = dict["action"] as? String ?? "syncData"
             if action == "fetchMotionSteps" {
                 let wv = message.webView
+                let isSilent = dict["silent"] as? Bool ?? false
                 if CMPedometer.isStepCountingAvailable() {
                     let cal = Calendar.current
                     let startOfDay = cal.startOfDay(for: Date())
@@ -454,7 +490,7 @@ struct WebView: UIViewRepresentable {
                         guard let data = data, error == nil else { return }
                         let steps = data.numberOfSteps.intValue
                         DispatchQueue.main.async {
-                            wv?.evaluateJavaScript("if (typeof onNativeStepsReceived === 'function') { onNativeStepsReceived(\(steps)); }", completionHandler: nil)
+                            wv?.evaluateJavaScript("if (typeof onNativeStepsReceived === 'function') { onNativeStepsReceived(\(steps), \(isSilent)); }", completionHandler: nil)
                         }
                     }
                 } else {
