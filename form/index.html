@@ -1144,7 +1144,7 @@
         </div>
 
         <!-- Поле ввода текста -->
-        <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
+        <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка (необязательно при фото/видео)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
 
         <div class="flex items-center justify-end pt-0.5">
           <button type="button" id="submitNoteBtn" onclick="submitNewExerciseNote()" class="py-1.5 px-4 rounded-xl accent-btn text-xs font-semibold">
@@ -1349,6 +1349,11 @@
           + Добавить в Сегодня
         </button>
       </div>
+
+      <button type="button" onclick="startNativeBarcodeScan()" class="w-full py-3 mb-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition">
+        <svg class="w-4 h-4" style="color: var(--accent-cal)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2"/></svg>
+        <span>Нативный сканер штрихкодов iOS</span>
+      </button>
 
       <div class="grid grid-cols-2 gap-2.5 mb-2">
         <div class="ios-file-trigger py-3 px-4 rounded-2xl accent-btn text-xs flex items-center justify-center gap-2">
@@ -2076,6 +2081,20 @@
             />
           </div>
 
+          <div class="space-y-1.5 pt-1 border-t border-white/[0.06]">
+            <div class="flex items-center justify-between text-[11px] text-zinc-400">
+              <span class="font-medium text-zinc-300">Резервный ключ Groq / OpenRouter</span>
+              <span class="text-[10px] mono text-zinc-500">Офлайн фоллбэк</span>
+            </div>
+            <input
+              id="inputGroqApiKey"
+              type="text"
+              placeholder="gsk_... (Groq) или sk-or-... (OpenRouter)"
+              class="dark-field text-xs text-zinc-200 font-mono"
+              oninput="handleGroqApiKeyInput(this.value)"
+            />
+          </div>
+
           <div id="apiKeyCheckStatusBox" class="rounded-xl p-3 bg-black/50 border border-white/[0.06] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
               <span id="apiKeyCheckDot" class="w-2.5 h-2.5 rounded-full bg-zinc-500 shrink-0"></span>
@@ -2396,7 +2415,39 @@
       "Мышцы растут, когда сходится профицит. Проверь дневник.",
       "Вечерний чек-ин: закрыл норму по белку или еще коктейль?",
       "Трекер пустует. Занеси еду, пока не забыл граммовки.",
-      "Держи фокус: проверь, сколько калорий осталось в запасе."
+      "Держи фокус: проверь, сколько калорий осталось в запасе.",
+      "Осталось добрать калории. Не ложись спать голодным.",
+      "Каждый пропущенный прием пищи — шаг назад. Запиши обед.",
+      "Дисциплина отделяет любителя от профи. Внеси БЖУ.",
+      "Остаток по белку сам не закроется. Время для творога или шейка.",
+      "Ты пахал на тренировке не ради того, чтобы недоесть калорий.",
+      "Зафиксируй граммовки, пока помнишь. 5 секунд на запись.",
+      "Качественный рельеф строится по граммам. Открой рацион.",
+      "Хватит откладывать. Проверь, сколько углей осталось на ужин.",
+      "Профицит должен быть чистым. Загляни в форму.",
+      "Еда взвешена? Занеси в трекер и продолжай день.",
+      "Энергия на завтрашний жим берется из сегодняшних калорий.",
+      "Точный учет — залог стабильной прогрессии в рабочих весах.",
+      "Не гадай на глаз: открой сканер или вбей еду текстом.",
+      "Белок — фундамент роста. Убедись, что закрыл планку.",
+      "Твой сплит требует топлива. Запиши перекус.",
+      "День почти завершен. Проверь итоговую калорийность.",
+      "Тайминг питания решает. Внеси последний прием пищи.",
+      "Следи за жирами и белком — это гормоны и гипертрофия.",
+      "Грамм за граммом к лучшей форме. Занеси рацион.",
+      "Углеводы после тренировки — восстановление гликогена. Записал?",
+      "Никакого рандома в питании. Только строгий учет.",
+      "Осталось немного до целевого калоража. Проверь баланс.",
+      "Не теряй контроль над дефицитом/профицитом. Внеси еду.",
+      "Сила растет, когда закрыты все макросы. Открой form.",
+      "Качественная масса требует регулярности. Что съел на полдник?",
+      "Отсканируй штрихкод за секунду и забудь. Запиши прием.",
+      "Защити мышечную массу: проверь норму аминокислот на день.",
+      "В зале выкладываешься на 100%? На кухне делай так же.",
+      "Режим не терпит пропусков. Зафиксируй калории прямо сейчас.",
+      "Твое отражение в зеркале скажет спасибо за этот прием пищи.",
+      "Контролируй форму. Запиши ужин в дневник.",
+      "Финальный расчет за день: проверь калории перед сном."
     ];
 
     const DEFAULT_REST_MESSAGES = {
@@ -2510,38 +2561,8 @@
       { key: 0, short: "ВС", full: "Воскресенье" }
     ];
 
-    const LOCAL_DB = [
-      { name: "Куриная грудка (филе)", cal: 165, p: 31, f: 3.6, c: 0, defaultWeight: 200 },
-      { name: "Индейка (филе)", cal: 135, p: 29, f: 1.5, c: 0, defaultWeight: 200 },
-      { name: "Говядина постная", cal: 187, p: 26, f: 9, c: 0, defaultWeight: 180 },
-      { name: "Лосось / Сёмга", cal: 208, p: 20, f: 13, c: 0, defaultWeight: 150 },
-      { name: "Яйцо куриное", cal: 155, p: 12.7, f: 11.5, c: 0.7, defaultWeight: 110, pieceWeight: 55 },
-      { name: "Творог 5%", cal: 121, p: 17, f: 5, c: 1.8, defaultWeight: 200 },
-      { name: "Творог 0% обезжиренный", cal: 71, p: 16.5, f: 0.2, c: 1.3, defaultWeight: 200 },
-      { name: "Гречка (в сухом виде)", cal: 343, p: 13.2, f: 3.4, c: 71.5, defaultWeight: 80 },
-      { name: "Гречка отварная", cal: 110, p: 4.2, f: 1.1, c: 21.3, defaultWeight: 200 },
-      { name: "Рис Басмати (сухой)", cal: 350, p: 7.5, f: 0.6, c: 78, defaultWeight: 80 },
-      { name: "Рис отварной", cal: 130, p: 2.7, f: 0.3, c: 28, defaultWeight: 200 },
-      { name: "Овсянка (геркулес)", cal: 366, p: 12.5, f: 6.2, c: 61, defaultWeight: 70 },
-      { name: "Макароны (твердые сорта)", cal: 350, p: 12, f: 1.5, c: 71.5, defaultWeight: 85 },
-      { name: "Картофель запеченный / отварной", cal: 86, p: 2, f: 0.1, c: 19.7, defaultWeight: 250 },
-      { name: "Банан", cal: 89, p: 1.1, f: 0.3, c: 22.8, defaultWeight: 120, pieceWeight: 120 },
-      { name: "Яблоко", cal: 52, p: 0.3, f: 0.2, c: 14, defaultWeight: 160, pieceWeight: 160 },
-      { name: "Авокадо", cal: 160, p: 2, f: 14.7, c: 1.8, defaultWeight: 100, pieceWeight: 140 },
-      { name: "Оливковое масло", cal: 884, p: 0, f: 100, c: 0, defaultWeight: 15 },
-      { name: "Миндаль / Орехи", cal: 579, p: 21, f: 50, c: 22, defaultWeight: 30 },
-      { name: "Арахисовая паста", cal: 588, p: 25, f: 50, c: 20, defaultWeight: 30 },
-      { name: "Сывороточный протеин (Whey)", cal: 390, p: 78, f: 5.5, c: 7, defaultWeight: 30, pieceWeight: 30 },
-      { name: "Протеиновый батончик Bombbar", cal: 272, p: 33, f: 11, c: 7, defaultWeight: 60, pieceWeight: 60 },
-      { name: "Коктейль протеиновый Пестравский Let's Go 0%", cal: 43, p: 6.0, f: 0.0, c: 4.8, defaultWeight: 500, pieceWeight: 500 },
-      { name: "Коктейль протеиновый Exponenta High-Pro", cal: 60, p: 12, f: 0, c: 2.5, defaultWeight: 250, pieceWeight: 250 },
-      { name: "Молоко 2.5%", cal: 52, p: 2.8, f: 2.5, c: 4.7, defaultWeight: 250 },
-      { name: "Хлеб цельнозерновой / тост", cal: 247, p: 13, f: 3.4, c: 41, defaultWeight: 40, pieceWeight: 40 },
-      { name: "Бутерброд с маслом и сыром", cal: 345, p: 12, f: 21, c: 27, defaultWeight: 80, pieceWeight: 80 },
-      { name: "Сырок глазированный", cal: 410, p: 7.5, f: 26, c: 36, defaultWeight: 45, pieceWeight: 45 },
-      { name: "Вафля Яшкино глазированная", cal: 520, p: 8, f: 28, c: 56, defaultWeight: 40, pieceWeight: 40 },
-      { name: "Вафля Яшкино с орехами", cal: 520, p: 8, f: 28, c: 56, defaultWeight: 40, pieceWeight: 40 }
-    ];
+    window.LOCAL_FOOD_DB = [{"name": "Куриная грудка (филе вареное)", "cal": 165, "p": 31.0, "f": 3.6, "c": 0.0, "unitWeight": 200, "keywords": ["курица", "грудка", "филе", "куриная", "вареная", "птица"]}, {"name": "Куриная грудка (сырая)", "cal": 113, "p": 23.6, "f": 1.9, "c": 0.4, "unitWeight": 200, "keywords": ["курица", "грудка", "филе", "сырая"]}, {"name": "Куриная грудка (запеченная / гриль)", "cal": 150, "p": 29.8, "f": 3.2, "c": 0.0, "unitWeight": 200, "keywords": ["курица", "грудка", "гриль", "запеченная"]}, {"name": "Бедро куриное (без кожи)", "cal": 185, "p": 24.0, "f": 10.0, "c": 0.0, "unitWeight": 140, "keywords": ["бедро", "куриное", "курица", "мякоть"]}, {"name": "Бедро куриное (с кожей)", "cal": 221, "p": 19.7, "f": 15.5, "c": 0.0, "unitWeight": 160, "keywords": ["бедро", "куриное", "с кожей"]}, {"name": "Голень куриная (запеченная)", "cal": 170, "p": 23.0, "f": 8.5, "c": 0.0, "unitWeight": 90, "keywords": ["голень", "куриная", "ножка", "курица"]}, {"name": "Филе индейки (вареное)", "cal": 135, "p": 29.0, "f": 1.5, "c": 0.0, "unitWeight": 200, "keywords": ["индейка", "филе", "грудка"]}, {"name": "Филе индейки (сырое)", "cal": 104, "p": 21.6, "f": 1.6, "c": 0.0, "unitWeight": 200, "keywords": ["индейка", "филе", "сырая"]}, {"name": "Бедро индейки (запеченное)", "cal": 160, "p": 21.0, "f": 8.5, "c": 0.0, "unitWeight": 180, "keywords": ["бедро", "индейки", "индейка"]}, {"name": "Говядина постная (вареная)", "cal": 187, "p": 26.0, "f": 9.0, "c": 0.0, "unitWeight": 180, "keywords": ["говядина", "постная", "мясо", "вырезка"]}, {"name": "Говядина постная (сырая)", "cal": 144, "p": 21.0, "f": 6.5, "c": 0.0, "unitWeight": 200, "keywords": ["говядина", "сырая", "телятина"]}, {"name": "Фарш говяжий постный", "cal": 215, "p": 24.0, "f": 13.0, "c": 0.0, "unitWeight": 150, "keywords": ["фарш", "говяжий"]}, {"name": "Фарш куриный (из грудки)", "cal": 140, "p": 23.0, "f": 5.0, "c": 0.0, "unitWeight": 150, "keywords": ["фарш", "куриный"]}, {"name": "Фарш из индейки", "cal": 150, "p": 22.0, "f": 7.0, "c": 0.0, "unitWeight": 150, "keywords": ["фарш", "индейка"]}, {"name": "Свинина нежирная (запеченная)", "cal": 195, "p": 26.0, "f": 10.0, "c": 0.0, "unitWeight": 150, "keywords": ["свинина", "вырезка", "карбонад"]}, {"name": "Ветчина из индейки / курицы", "cal": 95, "p": 15.0, "f": 3.0, "c": 2.0, "unitWeight": 40, "keywords": ["ветчина", "индейка"]}, {"name": "Печень куриная тушеная", "cal": 136, "p": 19.0, "f": 6.0, "c": 1.5, "unitWeight": 150, "keywords": ["печень", "куриная"]}, {"name": "Печень говяжья тушеная", "cal": 127, "p": 18.0, "f": 3.8, "c": 5.3, "unitWeight": 150, "keywords": ["печень", "говяжья"]}, {"name": "Котлета куриная на пару", "cal": 145, "p": 18.0, "f": 7.0, "c": 4.0, "unitWeight": 90, "keywords": ["котлета", "куриная", "биточек"]}, {"name": "Котлета говяжья", "cal": 210, "p": 17.0, "f": 14.0, "c": 5.0, "unitWeight": 90, "keywords": ["котлета", "говяжья"]}, {"name": "Тунец в собственном соку", "cal": 105, "p": 24.0, "f": 1.0, "c": 0.0, "unitWeight": 130, "keywords": ["тунец", "консервы", "рыба"]}, {"name": "Лосось / Сёмга (запеченная)", "cal": 208, "p": 22.0, "f": 13.0, "c": 0.0, "unitWeight": 150, "keywords": ["лосось", "семга", "красная рыба", "стейк лосося"]}, {"name": "Лосось слабосоленый", "cal": 195, "p": 21.0, "f": 12.0, "c": 0.0, "unitWeight": 50, "keywords": ["лосось", "слабосоленый", "семга с/с"]}, {"name": "Форель запеченная", "cal": 162, "p": 21.0, "f": 8.5, "c": 0.0, "unitWeight": 150, "keywords": ["форель", "рыба"]}, {"name": "Минтай отварной", "cal": 72, "p": 16.0, "f": 0.9, "c": 0.0, "unitWeight": 150, "keywords": ["минтай", "белая рыба"]}, {"name": "Треска отварная / на пару", "cal": 78, "p": 17.5, "f": 0.7, "c": 0.0, "unitWeight": 150, "keywords": ["треска", "белая рыба"]}, {"name": "Хек вареный", "cal": 86, "p": 17.0, "f": 2.0, "c": 0.0, "unitWeight": 150, "keywords": ["хек", "рыба"]}, {"name": "Креветки вареные (очищенные)", "cal": 85, "p": 18.5, "f": 1.0, "c": 0.5, "unitWeight": 15, "keywords": ["креветки", "морепродукты"]}, {"name": "Кальмар вареный", "cal": 100, "p": 18.0, "f": 2.2, "c": 2.0, "unitWeight": 150, "keywords": ["кальмар", "морепродукты"]}, {"name": "Яйцо куриное (вареное/жареное)", "cal": 155, "p": 12.7, "f": 11.5, "c": 0.7, "unitWeight": 55, "keywords": ["яйцо", "яйца", "яичница", "омлет", "вареное яйцо"]}, {"name": "Белок яичный (вареный)", "cal": 48, "p": 11.0, "f": 0.2, "c": 0.7, "unitWeight": 35, "keywords": ["белок", "яичный", "белки"]}, {"name": "Желток яичный", "cal": 322, "p": 16.0, "f": 28.0, "c": 1.0, "unitWeight": 20, "keywords": ["желток", "яичный"]}, {"name": "Творог 0% обезжиренный", "cal": 71, "p": 16.5, "f": 0.2, "c": 1.3, "unitWeight": 200, "keywords": ["творог 0%", "обезжиренный", "творог 0"]}, {"name": "Творог 2%", "cal": 86, "p": 18.0, "f": 2.0, "c": 1.5, "unitWeight": 200, "keywords": ["творог 2%", "творог 2"]}, {"name": "Творог 5%", "cal": 121, "p": 17.0, "f": 5.0, "c": 1.8, "unitWeight": 200, "keywords": ["творог 5%", "творог 5", "творог"]}, {"name": "Творог 9%", "cal": 159, "p": 16.0, "f": 9.0, "c": 2.0, "unitWeight": 200, "keywords": ["творог 9%", "творог 9"]}, {"name": "Творог зерненый со сливками", "cal": 95, "p": 11.0, "f": 5.0, "c": 2.5, "unitWeight": 130, "keywords": ["зерненый", "творог со сливками", "савушкин"]}, {"name": "Молоко 1.5%", "cal": 44, "p": 2.9, "f": 1.5, "c": 4.7, "unitWeight": 250, "keywords": ["молоко 1.5", "молоко 1.5%"]}, {"name": "Молоко 2.5%", "cal": 52, "p": 2.8, "f": 2.5, "c": 4.7, "unitWeight": 250, "keywords": ["молоко 2.5", "молоко 2.5%", "молоко"]}, {"name": "Молоко 3.2%", "cal": 60, "p": 3.0, "f": 3.2, "c": 4.7, "unitWeight": 250, "keywords": ["молоко 3.2", "молоко 3.2%"]}, {"name": "Молоко миндальное без сахара", "cal": 15, "p": 0.6, "f": 1.2, "c": 0.3, "unitWeight": 250, "keywords": ["миндальное молоко", "растительное"]}, {"name": "Молоко овсяное (Ne moloko)", "cal": 45, "p": 1.0, "f": 1.5, "c": 6.5, "unitWeight": 250, "keywords": ["немолоко", "овсяное молоко"]}, {"name": "Кефир 1%", "cal": 40, "p": 3.0, "f": 1.0, "c": 4.0, "unitWeight": 250, "keywords": ["кефир 1%", "кефир 1"]}, {"name": "Кефир 2.5%", "cal": 50, "p": 3.0, "f": 2.5, "c": 4.0, "unitWeight": 250, "keywords": ["кефир 2.5%", "кефир 2.5", "кефир"]}, {"name": "Греческий йогурт Teos 2%", "cal": 68, "p": 8.0, "f": 2.0, "c": 4.2, "unitWeight": 140, "keywords": ["теос", "teos", "греческий", "йогурт"]}, {"name": "Йогурт Epica натуральный", "cal": 70, "p": 6.0, "f": 2.7, "c": 5.5, "unitWeight": 130, "keywords": ["эпика", "epica", "йогурт"]}, {"name": "Сыр Российский", "cal": 360, "p": 24.0, "f": 29.5, "c": 0.0, "unitWeight": 30, "keywords": ["сыр", "российский"]}, {"name": "Сыр Гауда", "cal": 356, "p": 25.0, "f": 27.0, "c": 0.0, "unitWeight": 30, "keywords": ["сыр", "гауда"]}, {"name": "Сыр Моцарелла", "cal": 280, "p": 20.0, "f": 22.0, "c": 2.0, "unitWeight": 125, "keywords": ["моцарелла", "сыр"]}, {"name": "Сыр Пармезан", "cal": 392, "p": 35.8, "f": 25.8, "c": 3.2, "unitWeight": 20, "keywords": ["пармезан", "сыр"]}, {"name": "Сыр легкий 15%", "cal": 210, "p": 28.0, "f": 10.0, "c": 1.0, "unitWeight": 30, "keywords": ["сыр легкий", "сыр 15%"]}, {"name": "Сыр Сулугуни", "cal": 285, "p": 19.5, "f": 22.0, "c": 0.0, "unitWeight": 50, "keywords": ["сулугуни", "сыр"]}, {"name": "Сметана 15%", "cal": 160, "p": 2.6, "f": 15.0, "c": 3.6, "unitWeight": 40, "keywords": ["сметана 15%", "сметана"]}, {"name": "Сливки 10%", "cal": 118, "p": 2.8, "f": 10.0, "c": 4.0, "unitWeight": 30, "keywords": ["сливки", "сливки 10%"]}, {"name": "Сливочное масло 82.5%", "cal": 748, "p": 0.6, "f": 82.5, "c": 0.8, "unitWeight": 15, "keywords": ["масло сливочное", "масло 82.5%"]}, {"name": "Напиток Exponenta High-Pro", "cal": 64, "p": 12.0, "f": 0.0, "c": 2.5, "unitWeight": 250, "keywords": ["экспонента", "exponenta", "high-pro", "хай про"]}, {"name": "Протеиновый пудинг Ehrmann High Protein", "cal": 80, "p": 10.0, "f": 1.5, "c": 6.0, "unitWeight": 200, "keywords": ["эрман", "пудинг", "ehrmann", "хай протеин"]}, {"name": "Овсянка (геркулес) сухая", "cal": 366, "p": 12.5, "f": 6.2, "c": 61.0, "unitWeight": 60, "keywords": ["овсянка", "геркулес", "хлопья овсяные"]}, {"name": "Овсяная каша на воде", "cal": 88, "p": 3.0, "f": 1.8, "c": 15.0, "unitWeight": 250, "keywords": ["овсянка на воде", "каша овсяная"]}, {"name": "Овсяная каша на молоке", "cal": 110, "p": 4.5, "f": 3.5, "c": 16.0, "unitWeight": 250, "keywords": ["овсянка на молоке"]}, {"name": "Гречка (в сухом виде)", "cal": 343, "p": 13.2, "f": 3.4, "c": 71.5, "unitWeight": 75, "keywords": ["гречка сухая", "гречневая крупа"]}, {"name": "Гречка отварная", "cal": 110, "p": 4.2, "f": 1.1, "c": 21.3, "unitWeight": 200, "keywords": ["гречка", "гречка вареная"]}, {"name": "Рис Басмати / Жасмин сухой", "cal": 350, "p": 7.5, "f": 0.6, "c": 78.0, "unitWeight": 75, "keywords": ["рис сухой", "басмати", "жасмин"]}, {"name": "Рис белый отварной", "cal": 130, "p": 2.7, "f": 0.3, "c": 28.0, "unitWeight": 200, "keywords": ["рис", "рис вареный", "рис белый"]}, {"name": "Рис бурый нешлифованный сухой", "cal": 335, "p": 7.5, "f": 1.9, "c": 72.0, "unitWeight": 75, "keywords": ["бурый рис", "коричневый рис"]}, {"name": "Рис бурый отварной", "cal": 115, "p": 2.6, "f": 0.9, "c": 24.0, "unitWeight": 200, "keywords": ["бурый рис вареный"]}, {"name": "Макароны (твердые сорта) сухие", "cal": 350, "p": 12.0, "f": 1.5, "c": 71.5, "unitWeight": 80, "keywords": ["макароны сухие", "паста сухая", "спагетти сухие"]}, {"name": "Макароны отварные", "cal": 135, "p": 4.8, "f": 0.6, "c": 27.5, "unitWeight": 220, "keywords": ["макароны", "паста", "спагетти", "рожки"]}, {"name": "Киноа сухая", "cal": 368, "p": 14.1, "f": 6.1, "c": 64.0, "unitWeight": 70, "keywords": ["киноа сухая"]}, {"name": "Киноа отварная", "cal": 120, "p": 4.4, "f": 1.9, "c": 21.3, "unitWeight": 200, "keywords": ["киноа", "киноа вареная"]}, {"name": "Булгур сухой", "cal": 342, "p": 12.3, "f": 1.3, "c": 68.0, "unitWeight": 70, "keywords": ["булгур сухой"]}, {"name": "Булгур отварной", "cal": 112, "p": 3.8, "f": 0.5, "c": 23.0, "unitWeight": 200, "keywords": ["булгур", "булгур вареный"]}, {"name": "Кускус сухой", "cal": 355, "p": 12.8, "f": 0.6, "c": 72.0, "unitWeight": 70, "keywords": ["кускус"]}, {"name": "Чечевица красная/зеленая сухая", "cal": 310, "p": 24.0, "f": 1.5, "c": 50.0, "unitWeight": 75, "keywords": ["чечевица сухая"]}, {"name": "Чечевица отварная", "cal": 116, "p": 9.0, "f": 0.5, "c": 19.0, "unitWeight": 200, "keywords": ["чечевица", "чечевица вареная"]}, {"name": "Фасоль красная консервированная", "cal": 95, "p": 6.8, "f": 0.5, "c": 16.0, "unitWeight": 220, "keywords": ["фасоль", "фасоль консервы"]}, {"name": "Картофель отварной / запеченный", "cal": 86, "p": 2.0, "f": 0.1, "c": 19.7, "unitWeight": 200, "keywords": ["картофель", "картошка", "печеный картофель"]}, {"name": "Картофельное пюре с молоком", "cal": 106, "p": 2.2, "f": 3.5, "c": 16.5, "unitWeight": 220, "keywords": ["пюре", "картофельное пюре"]}, {"name": "Картофель фри", "cal": 312, "p": 3.4, "f": 15.0, "c": 41.0, "unitWeight": 150, "keywords": ["картофель фри", "фри"]}, {"name": "Батат запеченный", "cal": 86, "p": 1.6, "f": 0.1, "c": 20.1, "unitWeight": 200, "keywords": ["батат", "сладкий картофель"]}, {"name": "Хлеб цельнозерновой", "cal": 247, "p": 13.0, "f": 3.4, "c": 41.0, "unitWeight": 35, "keywords": ["хлеб", "цельнозерновой", "тост"]}, {"name": "Хлеб ржаной / Бородинский", "cal": 210, "p": 6.8, "f": 1.3, "c": 40.7, "unitWeight": 35, "keywords": ["хлеб ржаной", "бородинский", "черный хлеб"]}, {"name": "Хлеб белый / батон", "cal": 265, "p": 7.5, "f": 2.9, "c": 51.0, "unitWeight": 30, "keywords": ["батон", "белый хлеб"]}, {"name": "Хлебцы цельнозерновые (Dr.Korner)", "cal": 310, "p": 9.5, "f": 2.1, "c": 63.0, "unitWeight": 10, "keywords": ["хлебцы", "корнер", "dr.korner", "хлебец"]}, {"name": "Лаваш армянский тонкий", "cal": 236, "p": 7.9, "f": 1.0, "c": 48.0, "unitWeight": 70, "keywords": ["лаваш", "армянский"]}, {"name": "Тортилья пшеничная", "cal": 290, "p": 7.5, "f": 6.5, "c": 50.0, "unitWeight": 45, "keywords": ["тортилья", "лепешка"]}, {"name": "Сывороточный протеин (Whey)", "cal": 390, "p": 78.0, "f": 6.0, "c": 6.0, "unitWeight": 30, "keywords": ["протеин", "whey", "сывороточный", "скуп протеина"]}, {"name": "Изолят сывороточный (Isolate)", "cal": 370, "p": 88.0, "f": 1.5, "c": 2.0, "unitWeight": 30, "keywords": ["изолят", "isolate"]}, {"name": "Казеин мицеллярный", "cal": 360, "p": 76.0, "f": 2.0, "c": 5.0, "unitWeight": 30, "keywords": ["казеин", "casein"]}, {"name": "Креатин моногидрат", "cal": 0, "p": 0.0, "f": 0.0, "c": 0.0, "unitWeight": 5, "keywords": ["креатин", "creatine"]}, {"name": "BCAA / EAA порошок", "cal": 370, "p": 85.0, "f": 0.0, "c": 5.0, "unitWeight": 10, "keywords": ["бцаа", "bcaa", "eaa"]}, {"name": "Изотоник Maxler Max Motion", "cal": 360, "p": 0.0, "f": 0.0, "c": 88.0, "unitWeight": 20, "keywords": ["изотоник", "макс motion", "maxler"]}, {"name": "Батончик протеиновый Bombbar", "cal": 288, "p": 33.0, "f": 12.0, "c": 7.0, "unitWeight": 60, "keywords": ["бомббар", "bombbar", "протеиновый батончик"]}, {"name": "Печенье протеиновое Bombbar", "cal": 270, "p": 25.0, "f": 10.0, "c": 15.0, "unitWeight": 40, "keywords": ["печенье бомббар", "протеиновое печенье"]}, {"name": "Батончик протеиновый Chikalab", "cal": 340, "p": 25.0, "f": 18.0, "c": 12.0, "unitWeight": 60, "keywords": ["чикалаб", "chikalab"]}, {"name": "Протеиновый шейк на молоке", "cal": 180, "p": 30.0, "f": 6.0, "c": 13.0, "unitWeight": 330, "keywords": ["протеиновый коктейль", "шейк"]}, {"name": "Гейнер углеводно-белковый", "cal": 390, "p": 20.0, "f": 3.0, "c": 70.0, "unitWeight": 100, "keywords": ["гейнер", "gainer"]}, {"name": "Банан", "cal": 89, "p": 1.1, "f": 0.3, "c": 22.8, "unitWeight": 120, "keywords": ["банан", "бананы"]}, {"name": "Яблоко", "cal": 52, "p": 0.3, "f": 0.2, "c": 14.0, "unitWeight": 150, "keywords": ["яблоко", "яблоки"]}, {"name": "Апельсин", "cal": 47, "p": 0.9, "f": 0.1, "c": 11.8, "unitWeight": 150, "keywords": ["апельсин", "апельсины"]}, {"name": "Мандарин", "cal": 38, "p": 0.8, "f": 0.2, "c": 7.5, "unitWeight": 60, "keywords": ["мандарин", "мандарины"]}, {"name": "Груша", "cal": 57, "p": 0.4, "f": 0.1, "c": 15.0, "unitWeight": 150, "keywords": ["груша", "груши"]}, {"name": "Киви", "cal": 61, "p": 1.1, "f": 0.5, "c": 14.7, "unitWeight": 75, "keywords": ["киви"]}, {"name": "Голубика / Черника", "cal": 57, "p": 0.7, "f": 0.3, "c": 14.5, "unitWeight": 100, "keywords": ["голубика", "черника", "ягоды"]}, {"name": "Клубника", "cal": 33, "p": 0.7, "f": 0.3, "c": 7.7, "unitWeight": 100, "keywords": ["клубника"]}, {"name": "Малина", "cal": 52, "p": 1.2, "f": 0.7, "c": 12.0, "unitWeight": 100, "keywords": ["малина"]}, {"name": "Огурец свежий", "cal": 15, "p": 0.7, "f": 0.1, "c": 3.6, "unitWeight": 120, "keywords": ["огурец", "огурцы"]}, {"name": "Помидор / Томат", "cal": 18, "p": 0.9, "f": 0.2, "c": 3.9, "unitWeight": 120, "keywords": ["помидор", "томат", "помидоры"]}, {"name": "Помидоры черри", "cal": 20, "p": 1.0, "f": 0.2, "c": 4.2, "unitWeight": 20, "keywords": ["черри"]}, {"name": "Авокадо", "cal": 160, "p": 2.0, "f": 14.7, "c": 1.8, "unitWeight": 140, "keywords": ["авокадо"]}, {"name": "Брокколи на пару", "cal": 34, "p": 2.8, "f": 0.4, "c": 6.6, "unitWeight": 150, "keywords": ["брокколи"]}, {"name": "Цветная капуста", "cal": 25, "p": 2.0, "f": 0.3, "c": 5.0, "unitWeight": 150, "keywords": ["цветная капуста"]}, {"name": "Капуста белокочанная", "cal": 25, "p": 1.3, "f": 0.1, "c": 5.8, "unitWeight": 150, "keywords": ["капуста"]}, {"name": "Салат Айсберг / листовой", "cal": 14, "p": 0.9, "f": 0.1, "c": 2.9, "unitWeight": 50, "keywords": ["айсберг", "салат листовой", "зелень"]}, {"name": "Морковь свежая", "cal": 41, "p": 0.9, "f": 0.2, "c": 9.6, "unitWeight": 80, "keywords": ["морковь", "морковка"]}, {"name": "Перец болгарский сладкий", "cal": 27, "p": 1.0, "f": 0.3, "c": 5.3, "unitWeight": 130, "keywords": ["перец", "болгарский перец"]}, {"name": "Шпинат свежий", "cal": 23, "p": 2.9, "f": 0.4, "c": 3.6, "unitWeight": 50, "keywords": ["шпинат"]}, {"name": "Грецкий орех", "cal": 654, "p": 15.2, "f": 65.2, "c": 7.0, "unitWeight": 25, "keywords": ["грецкий орех", "орехи"]}, {"name": "Миндаль", "cal": 579, "p": 21.2, "f": 49.9, "c": 21.6, "unitWeight": 25, "keywords": ["миндаль", "орехи"]}, {"name": "Кешью", "cal": 553, "p": 18.2, "f": 43.8, "c": 30.2, "unitWeight": 25, "keywords": ["кешью"]}, {"name": "Фундук", "cal": 628, "p": 15.0, "f": 60.8, "c": 16.7, "unitWeight": 25, "keywords": ["фундук", "лесной орех"]}, {"name": "Арахис жареный", "cal": 587, "p": 24.4, "f": 49.7, "c": 21.6, "unitWeight": 30, "keywords": ["арахис"]}, {"name": "Арахисовая паста (без сахара)", "cal": 588, "p": 25.0, "f": 50.0, "c": 20.0, "unitWeight": 30, "keywords": ["арахисовая паста", "урбеч"]}, {"name": "Масло оливковое", "cal": 884, "p": 0.0, "f": 100.0, "c": 0.0, "unitWeight": 10, "keywords": ["масло оливковое", "оливковое"]}, {"name": "Масло подсолнечное", "cal": 884, "p": 0.0, "f": 100.0, "c": 0.0, "unitWeight": 10, "keywords": ["масло подсолнечное", "растительное масло"]}, {"name": "Мед натуральный", "cal": 304, "p": 0.3, "f": 0.0, "c": 82.4, "unitWeight": 20, "keywords": ["мед"]}, {"name": "Сахар", "cal": 387, "p": 0.0, "f": 0.0, "c": 99.9, "unitWeight": 10, "keywords": ["сахар"]}, {"name": "Шоколад темный 70%", "cal": 545, "p": 7.8, "f": 34.0, "c": 52.0, "unitWeight": 25, "keywords": ["темный шоколад", "горький шоколад"]}, {"name": "Шоколад молочный", "cal": 535, "p": 7.6, "f": 29.7, "c": 59.4, "unitWeight": 25, "keywords": ["молочный шоколад", "шоколадка"]}, {"name": "Кетчуп томатный", "cal": 98, "p": 1.2, "f": 0.1, "c": 23.5, "unitWeight": 20, "keywords": ["кетчуп"]}, {"name": "Майонез 67%", "cal": 624, "p": 1.0, "f": 67.0, "c": 2.6, "unitWeight": 20, "keywords": ["майонез"]}, {"name": "Соус соевый", "cal": 53, "p": 8.1, "f": 0.6, "c": 4.9, "unitWeight": 15, "keywords": ["соевый соус"]}, {"name": "Шаурма с курицей", "cal": 185, "p": 9.5, "f": 8.5, "c": 18.0, "unitWeight": 350, "keywords": ["шаурма", "шаверма", "донер"]}, {"name": "Пицца Пепперони (кусок)", "cal": 275, "p": 11.0, "f": 12.0, "c": 31.0, "unitWeight": 120, "keywords": ["пепперони", "пицца"]}, {"name": "Пицца Маргарита (кусок)", "cal": 240, "p": 10.0, "f": 9.0, "c": 30.0, "unitWeight": 110, "keywords": ["маргарита", "пицца"]}, {"name": "Бургер с говядиной", "cal": 260, "p": 13.0, "f": 12.0, "c": 25.0, "unitWeight": 180, "keywords": ["бургер", "гамбургер"]}, {"name": "Чизбургер", "cal": 275, "p": 14.0, "f": 13.0, "c": 26.0, "unitWeight": 120, "keywords": ["чизбургер"]}, {"name": "Наггетсы куриные", "cal": 260, "p": 15.0, "f": 16.0, "c": 14.0, "unitWeight": 20, "keywords": ["наггетсы", "наггетс"]}, {"name": "Пельмени вареные (говядина/свинина)", "cal": 245, "p": 10.0, "f": 12.0, "c": 24.0, "unitWeight": 200, "keywords": ["пельмени"]}, {"name": "Сырники творожные", "cal": 195, "p": 14.0, "f": 6.0, "c": 21.0, "unitWeight": 60, "keywords": ["сырники", "сырник"]}, {"name": "Блины классические", "cal": 227, "p": 6.1, "f": 10.2, "c": 27.8, "unitWeight": 50, "keywords": ["блины", "блинчики", "блин"]}, {"name": "Борщ с говядиной", "cal": 58, "p": 3.5, "f": 2.5, "c": 5.2, "unitWeight": 350, "keywords": ["борщ", "суп"]}, {"name": "Суп куриный с вермишелью", "cal": 45, "p": 3.2, "f": 1.5, "c": 4.5, "unitWeight": 350, "keywords": ["куриный суп", "лапша"]}, {"name": "Салат Цезарь с курицей", "cal": 180, "p": 11.0, "f": 12.0, "c": 7.0, "unitWeight": 220, "keywords": ["цезарь", "салат цезарь"]}, {"name": "Салат Греческий", "cal": 110, "p": 2.5, "f": 9.5, "c": 3.5, "unitWeight": 200, "keywords": ["греческий салат"]}, {"name": "Роллы Филадельфия (8 шт)", "cal": 195, "p": 7.5, "f": 8.0, "c": 23.0, "unitWeight": 240, "keywords": ["филадельфия", "роллы", "суши"]}, {"name": "Роллы Калифорния (8 шт)", "cal": 175, "p": 5.5, "f": 6.5, "c": 24.0, "unitWeight": 220, "keywords": ["калифорния", "роллы"]}, {"name": "Капучино на обычном молоке (300 мл)", "cal": 42, "p": 2.2, "f": 2.0, "c": 3.8, "unitWeight": 300, "keywords": ["капучино", "кофе"]}, {"name": "Латте на обычном молоке (300 мл)", "cal": 52, "p": 2.6, "f": 2.4, "c": 4.8, "unitWeight": 300, "keywords": ["латте", "кофе"]}, {"name": "Американо без сахара", "cal": 2, "p": 0.1, "f": 0.0, "c": 0.3, "unitWeight": 250, "keywords": ["американо", "черный кофе"]}, {"name": "Чай черный / зеленый без сахара", "cal": 1, "p": 0.0, "f": 0.0, "c": 0.2, "unitWeight": 250, "keywords": ["чай"]}, {"name": "Кола Zero / Pepsi Max", "cal": 0.3, "p": 0.0, "f": 0.0, "c": 0.0, "unitWeight": 330, "keywords": ["кола зеро", "кола", "cola zero", "пепси"]}];
+    const LOCAL_DB = window.LOCAL_FOOD_DB;
 
     const RU_BARCODE_DB = {
       "4630288090699": { name: "Коктейль протеиновый Пестравский Let's Go 0%", cal100: 43, p100: 6.0, f100: 0.0, c100: 4.8, weight: 500 },
@@ -2557,6 +2578,10 @@
       deletedThemeIds: [],
       backupApiKeys: [],
       apiProxy: "",
+      customGeminiBaseUrl: "",
+      groqApiKey: "",
+      barcodeCache: {},
+      foodCache: {},
       customTheme: {
         id: "custom",
         title: "CUSTOM // ТВОЙ КОНЦЕПТ",
@@ -4454,6 +4479,16 @@
       saveState();
     }
 
+    function handleGroqApiKeyInput(val) {
+      const clean = (val || "").trim();
+      state.groqApiKey = clean;
+      try {
+        if (clean) localStorage.setItem("form_groq_api_key", clean);
+        else localStorage.removeItem("form_groq_api_key");
+      } catch (e) {}
+      saveState();
+    }
+
     async function saveApiKeyAndVerify() {
       const input = document.getElementById("inputApiKey");
       const val = input ? input.value.trim() : "";
@@ -4506,121 +4541,469 @@
 
     function parseFoodLocally(query, explicitWeight) {
       if (!query || typeof query !== "string") return null;
-      const q = query.toLowerCase().trim();
+      const rawText = query.trim();
+      if (!rawText) return null;
 
-      let extractedWeight = explicitWeight || null;
-      const numMatch = q.match(/(\d+(?:[.,]\d+)?)\s*(г|гр|g|грамм|штук|шт|pcs)?/i);
-      let countOrWeight = null;
-      let isPiece = false;
+      // 1. Разбиение строки на фрагменты: запятые, переносы строк, плюс, союз «и», «с»
+      let rawFragments = [rawText];
+      if (rawText.includes("\n")) {
+        rawFragments = rawText.split("\n");
+      } else if (rawText.includes(",")) {
+        rawFragments = rawText.split(",");
+      } else if (rawText.includes("+")) {
+        rawFragments = rawText.split("+");
+      } else if (/\s+(?:и|\+)\s+/i.test(rawText)) {
+        rawFragments = rawText.split(/\s+(?:и|\+)\s+/i);
+      }
 
-      if (numMatch) {
-        const val = parseFloat(numMatch[1].replace(",", "."));
-        const unit = (numMatch[2] || "").toLowerCase();
-        if (["шт", "штук", "pcs"].includes(unit)) {
+      const fragments = rawFragments.map(f => f.trim()).filter(Boolean);
+      const isMulti = fragments.length > 1;
+
+      const matchedList = [];
+      const unmatchedList = [];
+
+      const dbList = Array.isArray(window.LOCAL_FOOD_DB) ? window.LOCAL_FOOD_DB : LOCAL_DB;
+
+      for (const frag of fragments) {
+        let fragWeight = explicitWeight || null;
+        let isPiece = false;
+        let count = 1;
+
+        // Поиск граммовок, килограммов, штук, скупов: "200г", "200 гр", "0.2кг", "2 шт", "2 яйца", "1 скуп"
+        const kgMatch = frag.match(/(\d+(?:[.,]\d+)?)\s*(?:кг|kg)\b/i);
+        const gMatch = frag.match(/(\d+(?:[.,]\d+)?)\s*(?:г|гр|g|грамм[а-я]*)\b/i);
+        const pieceMatch = frag.match(/(\d+(?:[.,]\d+)?)\s*(?:шт|штук[а-я]*|pcs)\b/i);
+        const scoopMatch = frag.match(/(\d+(?:[.,]\d+)?)\s*(?:скуп[а-я]*|порци[а-я]*|черпак[а-я]*)\b/i);
+
+        if (kgMatch) {
+          fragWeight = Math.round(parseFloat(kgMatch[1].replace(",", ".")) * 1000);
+        } else if (gMatch) {
+          fragWeight = Math.round(parseFloat(gMatch[1].replace(",", ".")));
+        } else if (pieceMatch) {
           isPiece = true;
-          countOrWeight = val;
+          count = parseFloat(pieceMatch[1].replace(",", ".")) || 1;
+        } else if (scoopMatch) {
+          count = parseFloat(scoopMatch[1].replace(",", ".")) || 1;
+          fragWeight = Math.round(count * 30);
         } else {
-          extractedWeight = val;
+          // Число в начале или конце без явных единиц: "яйцо 2", "2 яйца", "курица 200"
+          const leadNum = frag.match(/^(\d+(?:[.,]\d+)?)\s+([а-яa-z]+)/i);
+          const trailNum = frag.match(/([а-яa-z]+)\s+(\d+(?:[.,]\d+)?)$/i);
+          if (leadNum) {
+            const val = parseFloat(leadNum[1].replace(",", "."));
+            if (val > 10) fragWeight = Math.round(val);
+            else { isPiece = true; count = val; }
+          } else if (trailNum) {
+            const val = parseFloat(trailNum[2].replace(",", "."));
+            if (val > 10) fragWeight = Math.round(val);
+            else { isPiece = true; count = val; }
+          }
+        }
+
+        // Очищаем фрагмент от цифр и единиц для поиска
+        let cleanName = frag
+          .replace(/(\d+(?:[.,]\d+)?)\s*(?:кг|kg|г|гр|g|грамм[а-я]*|шт|штук[а-я]*|скуп[а-я]*|порци[а-я]*|pcs)\b/gi, "")
+          .replace(/^[\s+,\-–•*]+|[\s+,\-–•*]+$/g, "")
+          .trim()
+          .toLowerCase();
+
+        if (!cleanName) continue;
+
+        // Поиск по локальным кэшам пользователя
+        let found = null;
+        if (state.foodCache && state.foodCache[cleanName]) {
+          found = state.foodCache[cleanName];
+        }
+
+        // Поиск по LOCAL_FOOD_DB
+        if (!found) {
+          let bestItem = null;
+          let bestScore = 0;
+
+          for (const item of dbList) {
+            const itemName = (item.name || "").toLowerCase();
+            const keywords = Array.isArray(item.keywords) ? item.keywords : [];
+            let score = 0;
+
+            if (itemName === cleanName) {
+              score = 1000;
+            } else if (itemName.startsWith(cleanName)) {
+              score = 500;
+            } else if (itemName.includes(cleanName)) {
+              score = 300;
+            }
+
+            for (const kw of keywords) {
+              const kwLow = kw.toLowerCase();
+              if (cleanName === kwLow) score = Math.max(score, 600);
+              else if (cleanName.includes(kwLow)) score = Math.max(score, 250);
+            }
+
+            const cleanTokens = cleanName.split(/[\s,()\/]+/).filter(t => t.length > 2);
+            for (const t of cleanTokens) {
+              if (itemName.includes(t)) score += 50;
+              for (const kw of keywords) {
+                if (kw.toLowerCase().includes(t)) score += 40;
+              }
+            }
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestItem = item;
+            }
+          }
+
+          if (bestItem && bestScore >= 50) {
+            found = bestItem;
+          }
+        }
+
+        if (found) {
+          const unitW = found.unitWeight || found.pieceWeight || found.defaultWeight || 100;
+          let finalW = fragWeight;
+          if (!finalW) {
+            finalW = isPiece ? Math.round(count * unitW) : (found.defaultWeight || unitW);
+          }
+          const itemRes = {
+            name: isPiece && count > 1 ? `${found.name} (${count} шт)` : found.name,
+            cal100: Number(found.cal || found.cal100) || 0,
+            p100: Number(found.p || found.p100) || 0,
+            f100: Number(found.f || found.f100) || 0,
+            c100: Number(found.c || found.c100) || 0,
+            weight: finalW,
+            standardUnitWeight: unitW,
+            isPiece: isPiece || Boolean(found.unitWeight),
+            source: "База"
+          };
+          matchedList.push(itemRes);
+        } else {
+          unmatchedList.push({ rawFragment: frag, cleanName: cleanName, weight: fragWeight });
         }
       }
 
-      let bestMatch = null;
-      let maxScore = 0;
+      if (matchedList.length === 0) return null;
 
-      for (const item of LOCAL_DB) {
-        const itemName = item.name.toLowerCase();
-        const words = itemName.split(/[\s,()\/]+/).filter(w => w.length > 2);
-        let score = 0;
-        for (const w of words) {
-          if (q.includes(w)) score += 2;
-        }
-        if (q.includes(itemName.slice(0, 5))) score += 3;
+      // Если режим одиночного продукта (или legacy вызов)
+      const primary = Object.assign({}, matchedList[0], {
+        matched: matchedList,
+        unmatched: unmatchedList
+      });
 
-        if (score > maxScore) {
-          maxScore = score;
-          bestMatch = item;
-        }
-      }
+      return primary;
+    }
 
-      if (bestMatch && maxScore > 0) {
-        let finalWeight = extractedWeight || bestMatch.defaultWeight || 100;
-        if (isPiece && bestMatch.pieceWeight) {
-          finalWeight = Math.round(countOrWeight * bestMatch.pieceWeight);
-        }
+    // =========================================================================
+    // OPENFOODFACTS: ОТКРЫТАЯ БАЗА ПРОДУКТОВ И ШТРИХКОДОВ
+    // =========================================================================
+    window.fetchProductByBarcodeOFF = async function(barcode) {
+      if (!barcode) return null;
+      const cleanCode = String(barcode).trim();
+
+      if (RU_BARCODE_DB[cleanCode]) {
+        const b = RU_BARCODE_DB[cleanCode];
         return {
-          name: bestMatch.name,
-          cal100: bestMatch.cal,
-          p100: bestMatch.p,
-          f100: bestMatch.f,
-          c100: bestMatch.c,
-          weight: finalWeight,
-          source: "База"
+          name: b.name,
+          cal100: b.cal100,
+          p100: b.p100,
+          f100: b.f100,
+          c100: b.c100,
+          weight: b.weight || 100,
+          standardUnitWeight: b.weight || 100,
+          barcode: cleanCode,
+          source: "Локально"
         };
       }
 
-      return null;
+      if (state.barcodeCache && state.barcodeCache[cleanCode]) {
+        return state.barcodeCache[cleanCode];
+      }
+
+      try {
+        const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanCode)}.json?fields=product_name,product_name_ru,nutriments,serving_size,quantity`;
+        const res = await fetch(url, { headers: { "User-Agent": "FormFitnessApp/1.0" } });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (data.status !== 1 || !data.product) {
+          throw new Error("Товар не найден в базе");
+        }
+
+        const p = data.product;
+        const nut = p.nutriments || {};
+        const name = p.product_name_ru || p.product_name || `Штрихкод ${cleanCode}`;
+        const cal100 = Math.round(Number(nut["energy-kcal_100g"] || nut["energy-kcal"] || (Number(nut["energy_100g"] || 0) / 4.184)) || 0);
+        const p100 = round1(Number(nut.proteins_100g || nut.proteins || 0));
+        const f100 = round1(Number(nut.fat_100g || nut.fat || 0));
+        const c100 = round1(Number(nut.carbohydrates_100g || nut.carbohydrates || 0));
+
+        let defWeight = 100;
+        const qStr = p.quantity || p.serving_size || "";
+        const wm = qStr.match(/(\d+(?:[.,]\d+)?)\s*(?:г|g|мл|ml)/i);
+        if (wm) defWeight = Math.round(parseFloat(wm[1].replace(",", ".")));
+
+        const entry = {
+          name,
+          cal100,
+          p100,
+          f100,
+          c100,
+          weight: defWeight,
+          standardUnitWeight: defWeight,
+          barcode: cleanCode,
+          source: "OpenFoodFacts"
+        };
+
+        if (!state.barcodeCache) state.barcodeCache = {};
+        state.barcodeCache[cleanCode] = entry;
+        if (!state.foodCache) state.foodCache = {};
+        state.foodCache[name.toLowerCase()] = entry;
+        saveState();
+        return entry;
+      } catch (err) {
+        return null;
+      }
+    };
+
+    window.searchOpenFoodFacts = async function(query) {
+      if (!query || !query.trim()) return [];
+      const q = encodeURIComponent(query.trim());
+      try {
+        const url = `https://ru.openfoodfacts.org/cgi/search.pl?search_terms=${q}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,product_name_ru,nutriments,quantity`;
+        const res = await fetch(url, { headers: { "User-Agent": "FormFitnessApp/1.0" } });
+        if (!res.ok) return [];
+        const data = await res.json();
+        const list = data.products || [];
+        return list.map(p => {
+          const nut = p.nutriments || {};
+          const name = p.product_name_ru || p.product_name || query;
+          const cal = Math.round(Number(nut["energy-kcal_100g"] || (Number(nut["energy_100g"] || 0) / 4.184)) || 0);
+          return {
+            name,
+            cal,
+            p: round1(Number(nut.proteins_100g || 0)),
+            f: round1(Number(nut.fat_100g || 0)),
+            c: round1(Number(nut.carbohydrates_100g || 0)),
+            defaultWeight: 100,
+            source: "OpenFoodFacts"
+          };
+        }).filter(item => item.cal > 0 || item.p > 0);
+      } catch (e) {
+        return [];
+      }
+    };
+
+    // =========================================================================
+    // НАТИВНЫЙ СКАНЕР ШТРИХКОДОВ (AVCaptureSession iOS)
+    // =========================================================================
+    window.startNativeBarcodeScan = function() {
+      if (window.webkit?.messageHandlers?.widgetBridge) {
+        window.webkit.messageHandlers.widgetBridge.postMessage({ action: "scanBarcodeNative" });
+      } else {
+        openScanner("barcode");
+      }
+    };
+
+    window.onNativeBarcodeScanned = async function(code) {
+      if (!code) return;
+      showToast(`Штрихкод: ${code}`);
+      const modal = document.getElementById("scannerModal");
+      const product = await fetchProductByBarcodeOFF(code);
+      if (product) {
+        if (modal?.classList.contains("open")) {
+          showScannedResult(product);
+        } else {
+          addFoodEntryFrom100g(product);
+          showToast(`Добавлено: ${product.name}`);
+        }
+      } else {
+        showToast("Товар не найден в базе, введите вручную", true);
+        if (!modal?.classList.contains("open")) {
+          const input = document.getElementById("foodInput");
+          if (input) {
+            input.value = `Штрихкод ${code} `;
+            input.focus();
+          }
+        }
+      }
+    };
+
+    // =========================================================================
+    // НАТИВНЫЙ URLSESSION ДЛЯ GEMINI & АЛЬТЕРНАТИВНЫЙ ПРОВАЙДЕР (GROQ / OPENROUTER)
+    // =========================================================================
+    const _pendingNativeFetches = new Map();
+    window.onNativeFetchGeminiResult = function(reqId, status, dataStr, errStr) {
+      const handler = _pendingNativeFetches.get(reqId);
+      if (!handler) return;
+      _pendingNativeFetches.delete(reqId);
+      if (errStr && status >= 400) {
+        handler.reject(new Error(errStr));
+      } else {
+        try {
+          handler.resolve(JSON.parse(dataStr));
+        } catch (e) {
+          handler.resolve({ text: dataStr });
+        }
+      }
+    };
+
+    function nativeFetchGemini(url, payload) {
+      return new Promise((resolve, reject) => {
+        if (!window.webkit?.messageHandlers?.widgetBridge) {
+          return reject(new Error("Нативный мост недоступен"));
+        }
+        const reqId = "req_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        const timer = setTimeout(() => {
+          _pendingNativeFetches.delete(reqId);
+          reject(new Error("Таймаут нативного запроса"));
+        }, 25000);
+
+        _pendingNativeFetches.set(reqId, {
+          resolve: (val) => { clearTimeout(timer); resolve(val); },
+          reject: (err) => { clearTimeout(timer); reject(err); }
+        });
+
+        window.webkit.messageHandlers.widgetBridge.postMessage({
+          action: "nativeFetchGemini",
+          reqId: reqId,
+          url: url,
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      });
+    }
+
+    async function callAlternativeProvider(apiKey, geminiPayload) {
+      const key = (apiKey || "").trim();
+      if (!key) throw new Error("Ключ альтернативного провайдера не задан");
+
+      const isGroq = key.startsWith("gsk_");
+      const endpoint = isGroq
+        ? "https://api.groq.com/openai/v1/chat/completions"
+        : "https://openrouter.ai/api/v1/chat/completions";
+      const model = isGroq ? "llama-3.3-70b-versatile" : "meta-llama/llama-3.3-70b-instruct";
+
+      const parts = geminiPayload?.contents?.[0]?.parts || [];
+      const userText = parts.map(p => p.text || "").filter(Boolean).join("\n");
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: "user", content: userText }],
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson?.error?.message || `HTTP ${res.status} [${isGroq ? 'Groq' : 'OpenRouter'}]`);
+      }
+
+      const resJson = await res.json();
+      const content = resJson.choices?.[0]?.message?.content || "{}";
+
+      return {
+        candidates: [{
+          content: {
+            parts: [{ text: content }]
+          }
+        }]
+      };
     }
 
     async function callGeminiWithFallback(payload) {
       const keys = getAllApiKeys();
-      if (keys.length === 0) {
+      const groqKey = (state.groqApiKey || localStorage.getItem("form_groq_api_key") || "").trim();
+
+      if (keys.length === 0 && !groqKey) {
         throw new Error("Ключ не задан в настройках");
       }
 
-      const baseHost = (state.apiProxy || localStorage.getItem("form_gemini_proxy") || "").trim();
-      const apiBase = baseHost ? baseHost.replace(/\/+$/, "") : "https://generativelanguage.googleapis.com";
+      const customBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_proxy") || "").trim();
+      const apiBase = customBase ? customBase.replace(/\/+$/, "") : "https://generativelanguage.googleapis.com";
 
       let lastError = null;
       let hasLocationError = false;
 
-      for (let m = 0; m < GEMINI_MODELS_CASCADE.length; m++) {
-        const model = GEMINI_MODELS_CASCADE[m];
+      if (keys.length > 0) {
+        for (let m = 0; m < GEMINI_MODELS_CASCADE.length; m++) {
+          const model = GEMINI_MODELS_CASCADE[m];
 
-        for (let k = 0; k < keys.length; k++) {
-          const apiKey = keys[k];
-          const keyNumber = k + 1;
+          for (let k = 0; k < keys.length; k++) {
+            const apiKey = keys[k];
+            const keyNumber = k + 1;
 
-          try {
-            const url = `${apiBase}/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-            const res = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
+            try {
+              const url = `${apiBase}/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+              let data = null;
 
-            const data = await res.json().catch(() => ({}));
-
-            if (!res.ok) {
-              const errMsg = data?.error?.message || `HTTP ${res.status}`;
-              
-              // Проверка на геоблокировку (Россия / отсутствие VPN)
-              if (/location is not supported|unsupported location/i.test(errMsg)) {
-                hasLocationError = true;
-                throw new Error("Включи VPN! Запрос к Gemini пошел с российского IP");
+              try {
+                const res = await fetch(url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload)
+                });
+                data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  const errMsg = data?.error?.message || `HTTP ${res.status}`;
+                  if (/location is not supported|unsupported location/i.test(errMsg)) {
+                    hasLocationError = true;
+                    throw new Error("LOCATION_ERROR");
+                  }
+                  lastError = new Error(`[${model} · K#${keyNumber}] ${errMsg}`);
+                  await new Promise(r => setTimeout(r, 200));
+                  continue;
+                }
+              } catch (fetchErr) {
+                if (fetchErr.message === "LOCATION_ERROR" || /location is not supported|unsupported location/i.test(fetchErr.message)) {
+                  hasLocationError = true;
+                  // Попытка нативного запроса через iOS URLSession (минуя WebKit sandbox)
+                  try {
+                    data = await nativeFetchGemini(url, payload);
+                  } catch (nativeErr) {
+                    throw new Error("Включи VPN! Запрос к Gemini заблокирован в РФ");
+                  }
+                } else {
+                  throw fetchErr;
+                }
               }
 
-              // Если лимит (429), недействительный ключ или перегрузка модели — пробуем следующий ключ/модель с микропаузой
-              lastError = new Error(`[${model} · K#${keyNumber}] ${errMsg}`);
-              await new Promise(r => setTimeout(r, 200));
-              continue;
-            }
-
-            // Успешный запрос
-            lastActiveGeminiModel = model;
-            lastActiveKeyIndex = keyNumber;
-            apiKeyVerifiedStatus = true;
-            updateActiveModelBadge(model, keyNumber, true);
-            syncKeyFieldUI();
-            return data;
-
-          } catch (err) {
-            if (hasLocationError || /location is not supported|Включи VPN|Включите VPN/i.test(err.message)) {
-              apiKeyVerifiedStatus = false;
+              lastActiveGeminiModel = model;
+              lastActiveKeyIndex = keyNumber;
+              apiKeyVerifiedStatus = true;
+              updateActiveModelBadge(model, keyNumber, true);
               syncKeyFieldUI();
-              throw new Error("Включи VPN! Запрос к Gemini пошел с российского IP");
+              return data;
+
+            } catch (err) {
+              if (hasLocationError || /location is not supported|Включи VPN|Включите VPN/i.test(err.message)) {
+                apiKeyVerifiedStatus = false;
+                syncKeyFieldUI();
+                lastError = err;
+                break;
+              }
+              lastError = err;
             }
-            lastError = err;
           }
+          if (hasLocationError) break;
+        }
+      }
+
+      // Фоллбэк на альтернативный провайдер (Groq / OpenRouter) при геоблокировке или исчерпании квоты
+      if (groqKey) {
+        try {
+          const altData = await callAlternativeProvider(groqKey, payload);
+          apiKeyVerifiedStatus = true;
+          updateActiveModelBadge(groqKey.startsWith("gsk_") ? "Groq Llama-3.3" : "OpenRouter", 1, true);
+          syncKeyFieldUI();
+          return altData;
+        } catch (altErr) {
+          lastError = altErr;
         }
       }
 
@@ -4628,6 +5011,10 @@
       syncKeyFieldUI();
 
       if (lastError && /quota|RESOURCE_EXHAUSTED|429/i.test(lastError.message)) {
+        throw new Error("Лимиты всех ключей и каскада моделей исчерпаны. Добавьте резервный ключ из другого аккаунта.");
+      }
+      throw lastError || new Error("Ошибка пула Gemini API");
+    }
         throw new Error("Лимиты всех ключей и каскада моделей исчерпаны. Добавьте резервный ключ из другого аккаунта.");
       }
       throw lastError || new Error("Ошибка пула Gemini API");
@@ -4809,6 +5196,32 @@
       }
     }
 
+    window.generateOfflinePushPool = function() {
+      const totals = calcTodayTotals();
+      const leftCal = Math.max(0, (state.targets?.cal || 2000) - totals.cal);
+      const leftP = Math.max(0, (state.targets?.p || 140) - totals.p);
+      const splitProg = state.workout?.programs?.[activeProgramId];
+      const splitTitle = splitProg?.title || "тренировку";
+
+      const dynamicTemplates = [
+        `Осталось добрать ${leftCal} ккал и ${leftP}г белка. Не ложись с недобором!`,
+        `Сегодня по плану: ${splitTitle}. Закрой БЖУ для восстановления мышц.`,
+        `Баланс дня: ${leftCal} ккал до нормы. 5 секунд на запись рациона.`,
+        `Твой прогресс в ${splitTitle} зависит от питания. Зафиксируй прием пищи.`,
+        `Остаток по белку: ${leftP}г. Время для творога, рыбы или протеина.`,
+        `Ты пахал в зале не зря. Запиши калории и закрой цель на день.`,
+        `Точный учет макросов — фундамент чистой гипертрофии. Проверь дневник.`,
+        `Режим не терпит пропусков: осталось ${leftCal} ккал. Занеси ужин.`
+      ];
+
+      const pool = dynamicTemplates.concat(DEFAULT_PUSH_MESSAGES.slice(0, 20));
+      state.push.messages = pool.sort(() => Math.random() - 0.5);
+      rollRandomPushPreview();
+      savePushSettings(false);
+      showToast("Пуши обновлены из встроенной базы под твои калории");
+      return pool;
+    };
+
     async function generateAiPushPool() {
       showToast("Генерируем новые фразы через Gemini 3...");
       try {
@@ -4824,9 +5237,11 @@
           rollRandomPushPreview();
           savePushSettings(false);
           showToast("База пушей обновлена свежими фразами!");
+        } else {
+          generateOfflinePushPool();
         }
       } catch (e) {
-        showToast("Не удалось обновить фразы (проверь ключ API)", true);
+        generateOfflinePushPool();
       }
     }
 
@@ -5415,6 +5830,10 @@
           const rawProxy = localStorage.getItem("form_gemini_proxy");
           if (rawProxy && !state.apiProxy) state.apiProxy = rawProxy;
         } catch (e) {}
+        if (typeof state.customGeminiBaseUrl !== "string") state.customGeminiBaseUrl = localStorage.getItem("form_gemini_base_url") || "";
+        if (typeof state.groqApiKey !== "string") state.groqApiKey = localStorage.getItem("form_groq_api_key") || "";
+        if (!state.barcodeCache || typeof state.barcodeCache !== "object") state.barcodeCache = {};
+        if (!state.foodCache || typeof state.foodCache !== "object") state.foodCache = {};
         if (!state.dailySteps || typeof state.dailySteps !== "object") {
           state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
         } else if (state.dailySteps.date !== getTodayKey()) {
@@ -6166,10 +6585,18 @@
       scored.sort((a, b) => b.score - a.score);
       const matches = scored.slice(0, 6).map(s => s.item);
 
-      if (matches.length === 0) { box.classList.add("hidden"); return; }
+      if (matches.length === 0) {
+        box.classList.remove("hidden");
+        list.innerHTML = `
+          <button type="button" onclick="searchOpenFoodFactsAndShow('${escapeHtml(query).replace(/'/g, "\\'")}')" class="w-full py-2.5 px-3 text-center text-xs mono text-zinc-300 hover:text-white hover:bg-white/[0.04] transition flex items-center justify-center gap-1.5">
+            <span>🌐 Найти «${escapeHtml(query)}» в OpenFoodFacts</span>
+          </button>
+        `;
+        return;
+      }
 
       box.classList.remove("hidden");
-      list.innerHTML = matches.map((item, idx) => {
+      const matchesHtml = matches.map((item, idx) => {
         const unitW = item.standardUnitWeight || item.pieceWeight || item.defaultWeight || 100;
         const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : (item.defaultWeight || 100));
         const ratio = w / 100;
@@ -6188,8 +6615,49 @@
           </button>
         `;
       }).join("");
+
+      list.innerHTML = matchesHtml + `
+        <button type="button" onclick="searchOpenFoodFactsAndShow('${escapeHtml(query).replace(/'/g, "\\'")}')" class="w-full py-2 px-3 border-t border-white/[0.06] text-center text-[10.5px] mono text-zinc-400 hover:text-white hover:bg-white/[0.04] transition">
+          🌐 Найти в интернет-базе OpenFoodFacts →
+        </button>
+      `;
       window._currentMatches = matches;
     }
+
+    window.searchOpenFoodFactsAndShow = async function(query) {
+      if (!query || !query.trim()) return;
+      showToast("Ищем в базе OpenFoodFacts...");
+      const results = await searchOpenFoodFacts(query);
+      const box = document.getElementById("liveSuggestBox");
+      const list = document.getElementById("liveSuggestList");
+      if (!box || !list) return;
+
+      if (!results || results.length === 0) {
+        showToast("В OpenFoodFacts ничего не найдено", true);
+        return;
+      }
+
+      window._currentMatches = results;
+      box.classList.remove("hidden");
+      list.innerHTML = results.map((item, idx) => {
+        const w = item.defaultWeight || 100;
+        const ratio = w / 100;
+        return `
+          <button type="button" onclick="selectSuggestedItem(${idx}, ${w})" class="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition">
+            <div class="min-w-0 pr-2">
+              <div class="text-sm font-medium text-white truncate">${escapeHtml(item.name)}</div>
+              <div class="text-[11px] mono text-zinc-500">
+                ${w}г · <span style="color:var(--accent-p)">Б ${round1(item.p * ratio)}</span> · <span style="color:var(--accent-f)">Ж ${round1(item.f * ratio)}</span> · <span style="color:var(--accent-c)">У ${round1(item.c * ratio)}</span> · <span class="text-zinc-600">OFF</span>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-sm font-bold mono" style="color:var(--accent-cal)">+${Math.round(item.cal * ratio)}</span>
+              <span class="text-[10px] text-zinc-500 block mono">ккал</span>
+            </div>
+          </button>
+        `;
+      }).join("");
+    };
 
     function selectSuggestedItem(idx, weight) {
       const item = (window._currentMatches || [])[idx];
@@ -6214,6 +6682,25 @@
       document.getElementById("liveSuggestBox").classList.add("hidden");
 
       const { query, explicitWeight, pieceCount } = parseQueryAndWeight(raw);
+
+      // 1. Быстрый локальный парсер (0мс, офлайн, multi-item)
+      const localParsed = parseFoodLocally(raw, explicitWeight);
+      if (localParsed && Array.isArray(localParsed.matched) && localParsed.matched.length > 0) {
+        if (!localParsed.unmatched || localParsed.unmatched.length === 0) {
+          localParsed.matched.forEach(item => addFoodEntryFrom100g(item));
+          input.value = "";
+          handleInputSuggest("");
+          showToast(localParsed.matched.length === 1 
+            ? `Добавлено: ${localParsed.matched[0].name}` 
+            : `Добавлено ${localParsed.matched.length} прод.: ${localParsed.matched.map(m => m.name).join(", ")}`);
+          return;
+        } else {
+          localParsed.matched.forEach(item => addFoodEntryFrom100g(item));
+          showToast(`Добавлено: ${localParsed.matched.map(m => m.name).join(", ")}`);
+        }
+      }
+
+      // 2. Поиск точного совпадения в Combined Database
       const normQuery = normalizeSearchText(query);
       const exactOrClose = getCombinedDatabase().find(i => {
         const norm = normalizeSearchText(i.name);
@@ -6234,6 +6721,27 @@
         handleInputSuggest("");
         return;
       }
+
+      // 3. Открытая интернет-база OpenFoodFacts (без Gemini / без VPN)
+      try {
+        const offResults = await searchOpenFoodFacts(query);
+        if (offResults && offResults.length > 0) {
+          const best = offResults[0];
+          const w = explicitWeight || (pieceCount ? Math.round(pieceCount * (best.standardUnitWeight || 100)) : (best.defaultWeight || 100));
+          addFoodEntryFrom100g({
+            name: best.name,
+            cal100: best.cal, p100: best.p, f100: best.f, c100: best.c,
+            weight: w,
+            source: "OpenFoodFacts"
+          });
+          input.value = "";
+          handleInputSuggest("");
+          showToast(`Добавлено из OpenFoodFacts: ${best.name}`);
+          return;
+        }
+      } catch (offErr) {}
+
+      // 4. Если базы не помогли — обращение к AI каскаду (Gemini / Groq / OpenRouter)
       await analyzeTextWithAI(raw, explicitWeight);
       input.value = "";
       handleInputSuggest("");
@@ -6627,34 +7135,22 @@
 
     async function fetchProductByBarcode(code, silentIfNotFound) {
       const cleanCode = String(code).replace(/\D/g, "");
-      if (RU_BARCODE_DB[cleanCode]) {
-        const item = RU_BARCODE_DB[cleanCode];
-        showScannedCard({ ...item, weight: item.weight || 100, source: `Штрихкод ${cleanCode}` });
-        showToast(`Считан штрихкод: ${item.name}`);
-        return true;
-      }
       const loading = document.getElementById("scannerLoading");
-      loading.classList.remove("hidden"); loading.classList.add("flex");
+      if (loading) { loading.classList.remove("hidden"); loading.classList.add("flex"); }
       try {
-        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanCode)}.json`);
-        const data = await res.json();
-        if (data && data.status === 1 && data.product) {
-          const prod = data.product, nut = prod.nutriments || {};
-          const name = prod.product_name_ru || prod.product_name || `Продукт (${cleanCode})`;
-          let cal100 = Number(nut["energy-kcal_100g"]) || 0;
-          let p100 = Number(nut["proteins_100g"]) || 0;
-          let f100 = Number(nut["fat_100g"]) || 0;
-          let c100 = Number(nut["carbohydrates_100g"]) || 0;
-          showScannedCard({ name, cal100, p100, f100, c100, weight: 100, source: `Штрихкод ${cleanCode}` });
-          showToast(`Найден: ${name}`);
+        const item = await fetchProductByBarcodeOFF(cleanCode);
+        if (item) {
+          showScannedCard({ ...item, weight: item.weight || 100, source: `Штрихкод ${cleanCode}` });
+          showToast(`Найден: ${item.name}`);
           return true;
         }
-        if (!silentIfNotFound) showToast(`Штрихкод ${cleanCode} не найден`, true);
+        if (!silentIfNotFound) showToast(`Штрихкод ${cleanCode} не найден в базе`, true);
         return false;
       } catch (err) {
+        if (!silentIfNotFound) showToast(`Ошибка поиска штрихкода: ${err.message}`, true);
         return false;
       } finally {
-        loading.classList.add("hidden"); loading.classList.remove("flex");
+        if (loading) { loading.classList.add("hidden"); loading.classList.remove("flex"); }
       }
     }
 
@@ -6860,6 +7356,10 @@
         const proxyInput = document.getElementById("inputApiProxy");
         if (proxyInput) {
           proxyInput.value = state.apiProxy || localStorage.getItem("form_gemini_proxy") || "";
+        }
+        const groqInput = document.getElementById("inputGroqApiKey");
+        if (groqInput) {
+          groqInput.value = state.groqApiKey || localStorage.getItem("form_groq_api_key") || "";
         }
         renderBackupKeysUI();
         syncKeyFieldUI();
@@ -8751,6 +9251,18 @@
       }
     };
 
+    window.onNoteVideoPlay = function(vid, noteId) {
+      const audWrap = document.getElementById("noteAudioOnlyWrap_" + noteId);
+      const aud = audWrap ? audWrap.querySelector("audio") : null;
+      if (aud && !aud.paused) aud.pause();
+    };
+
+    window.onNoteAudioPlay = function(aud, noteId) {
+      const vidWrap = document.getElementById("noteVideoWrap_" + noteId);
+      const vid = vidWrap ? vidWrap.querySelector("video") : null;
+      if (vid && !vid.paused) vid.pause();
+    };
+
     window.renderSingleNoteCardHtml = function(note, exName) {
       const meta = NOTE_CATEGORY_META[note.category] || NOTE_CATEGORY_META.general;
       const warmups = parseWarmupSets(note.text);
@@ -8769,13 +9281,21 @@
         }
       }
 
+      // Если текст заметки совпадает с названием категории (напр. «Настройка») и есть фото/видео — не дублируем
+      const isPureCategoryLabel = displayNoteText.toLowerCase() === meta.title.toLowerCase() || 
+                                  displayNoteText.toLowerCase() === "настройка" || 
+                                  displayNoteText.toLowerCase() === "техника";
+      if (isPureCategoryLabel && note.media) {
+        displayNoteText = "";
+      }
+
       let mediaHtml = "";
       if (note.media) {
         if (note.media.type === "video") {
           mediaHtml = `
             <div class="mt-2 space-y-1.5">
               <div id="noteVideoWrap_${note.id}" class="relative rounded-xl overflow-hidden bg-black border border-white/10">
-                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" onerror="handleNoteVideoError(this, '${escapeHtml(note.media.url)}', '${note.id}')"></video>
+                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" onplay="onNoteVideoPlay(this, '${note.id}')" onerror="handleNoteVideoError(this, '${escapeHtml(note.media.url)}', '${note.id}')"></video>
               </div>
               ${note.media.audioUrl ? `
                 <div class="flex items-center justify-between pt-0.5">
@@ -8785,7 +9305,7 @@
                   </button>
                 </div>
                 <div id="noteAudioOnlyWrap_${note.id}" class="hidden p-2 rounded-xl bg-black/60 border border-white/10">
-                  <audio controls class="w-full h-8" src="${note.media.audioUrl}"></audio>
+                  <audio controls class="w-full h-8" src="${note.media.audioUrl}" onplay="onNoteAudioPlay(this, '${note.id}')"></audio>
                 </div>
               ` : ""}
             </div>
@@ -9039,24 +9559,24 @@
         }
       }
 
-      // 2. Текстовая подсказка по технике или совет тренера (ТОЛЬКО если есть непустой текст!)
+      // 2. Текстовые подсказки по технике или советы тренера (ТОЛЬКО непустой текст!)
       const textNotes = notes.filter(n => n.text && n.text.trim() && n !== warmupNote);
-      const topCue = textNotes.find(n => n.category === "technique")
-                  || textNotes.find(n => n.category === "coach")
-                  || textNotes[0];
-
       let cueHtml = "";
-      if (topCue) {
-        const meta = NOTE_CATEGORY_META[topCue.category] || NOTE_CATEGORY_META.coach;
-        cueHtml = `
-          <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')">
-            <div class="flex items-center justify-between text-[10px] font-bold mono ${meta.badge.split(' ')[1] || 'text-sky-300'} uppercase tracking-wider mb-0.5">
-              <span>${meta.title}</span>
-              <span class="text-zinc-500 text-[9px]">${escapeHtml(topCue.date || "")}</span>
+      if (textNotes.length > 0) {
+        // Показываем до 2 самых актуальных текстовых заметок
+        const topCues = textNotes.slice(0, 2);
+        cueHtml = topCues.map(cueNote => {
+          const meta = NOTE_CATEGORY_META[cueNote.category] || NOTE_CATEGORY_META.coach;
+          return `
+            <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')">
+              <div class="flex items-center justify-between text-[10px] font-bold mono ${meta.badge.split(' ')[1] || 'text-sky-300'} uppercase tracking-wider mb-0.5">
+                <span>${meta.title}</span>
+                <span class="text-zinc-500 text-[9px]">${escapeHtml(cueNote.date || "")}</span>
+              </div>
+              <div class="text-[11.5px] text-zinc-200 font-mono leading-relaxed line-clamp-2">${escapeHtml(cueNote.text)}</div>
             </div>
-            <div class="text-[11.5px] text-zinc-200 font-mono leading-relaxed line-clamp-2">${escapeHtml(topCue.text)}</div>
-          </div>
-        `;
+          `;
+        }).join("");
       }
 
       // 3. Медиафайлы (Видео техники и Фото настройки)
@@ -9071,6 +9591,7 @@
                 ? "bg-sky-500/10 border-sky-500/30 text-sky-200 hover:bg-sky-500/20"
                 : "bg-purple-500/10 border-purple-500/30 text-purple-200 hover:bg-purple-500/20";
               const label = isVid ? "Видео техники" : "Фото настройки";
+              const dateShort = (mNote.date || "").split("·")[0]?.trim() || "";
               const thumbImg = mNote.media.thumbUrl
                 ? `<img src="${mNote.media.thumbUrl}" class="w-4 h-4 rounded object-cover shrink-0" />`
                 : `<span class="text-[9px] mono">${isVid ? "▶" : "IMG"}</span>`;
@@ -9078,10 +9599,11 @@
                 <button
                   type="button"
                   onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
-                  class="flex items-center gap-1.5 px-2 py-1 rounded-lg border ${pillTheme} text-[10px] mono font-medium active:scale-95 transition"
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${pillTheme} text-[10px] mono font-medium active:scale-95 transition"
                 >
                   ${thumbImg}
                   <span>${label}</span>
+                  ${dateShort ? `<span class="text-zinc-500 text-[9px]">${dateShort}</span>` : ""}
                   <span class="text-zinc-500 text-[9px]">→</span>
                 </button>
               `;
@@ -9102,7 +9624,7 @@
               onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
               class="text-zinc-400 hover:text-white underline flex items-center gap-1"
             >
-              <span>Открыть базу →</span>
+              <span>База заметок (${notes.length}) →</span>
             </button>
           </div>
         </div>

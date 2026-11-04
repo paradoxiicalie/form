@@ -58,6 +58,143 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
+class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+    var onCodeScanned: ((String) -> Void)?
+    private var captureSession: AVCaptureSession?
+    private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var hasDetected = false
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        setupCamera()
+        setupUI()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        hasDetected = false
+        if let session = captureSession, !session.isRunning {
+            DispatchQueue.global(qos: .userInitiated).async {
+                session.startRunning()
+            }
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if let session = captureSession, session.isRunning {
+            session.stopRunning()
+        }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = view.bounds
+    }
+
+    private func setupCamera() {
+        let session = AVCaptureSession()
+        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video),
+              let videoInput = try? AVCaptureDeviceInput(device: videoCaptureDevice),
+              session.canAddInput(videoInput) else {
+            return
+        }
+
+        session.addInput(videoInput)
+
+        let metadataOutput = AVCaptureMetadataOutput()
+        guard session.canAddOutput(metadataOutput) else { return }
+        session.addOutput(metadataOutput)
+
+        metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+        metadataOutput.metadataObjectTypes = [.ean13, .ean8, .upce, .code128, .code39, .qr]
+
+        let preview = AVCaptureVideoPreviewLayer(session: session)
+        preview.videoGravity = .resizeAspectFill
+        preview.frame = view.layer.bounds
+        view.layer.addSublayer(preview)
+        self.previewLayer = preview
+        self.captureSession = session
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
+    }
+
+    private func setupUI() {
+        let reticle = UIView()
+        reticle.translatesAutoresizingMaskIntoConstraints = false
+        reticle.layer.borderColor = UIColor.white.withAlphaComponent(0.85).cgColor
+        reticle.layer.borderWidth = 2
+        reticle.layer.cornerRadius = 16
+        reticle.backgroundColor = .clear
+        view.addSubview(reticle)
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "FORM // СКАНЕР ШТРИХКОДОВ"
+        label.textColor = .white
+        label.font = UIFont.monospacedSystemFont(ofSize: 12, weight: .bold)
+        label.textAlignment = .center
+        view.addSubview(label)
+
+        let hint = UILabel()
+        hint.translatesAutoresizingMaskIntoConstraints = false
+        hint.text = "Наведите рамку на штрихкод товара"
+        hint.textColor = UIColor(white: 0.65, alpha: 1.0)
+        hint.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        hint.textAlignment = .center
+        view.addSubview(hint)
+
+        let closeBtn = UIButton(type: .system)
+        closeBtn.translatesAutoresizingMaskIntoConstraints = false
+        closeBtn.setTitle("✕", for: .normal)
+        closeBtn.setTitleColor(.white, for: .normal)
+        closeBtn.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        closeBtn.backgroundColor = UIColor(white: 0.15, alpha: 0.85)
+        closeBtn.layer.cornerRadius = 20
+        closeBtn.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        view.addSubview(closeBtn)
+
+        NSLayoutConstraint.activate([
+            closeBtn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            closeBtn.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            closeBtn.widthAnchor.constraint(equalToConstant: 40),
+            closeBtn.heightAnchor.constraint(equalToConstant: 40),
+
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 26),
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            reticle.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            reticle.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
+            reticle.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.78),
+            reticle.heightAnchor.constraint(equalToConstant: 180),
+
+            hint.topAnchor.constraint(equalTo: reticle.bottomAnchor, constant: 20),
+            hint.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+    }
+
+    @objc private func didTapClose() {
+        dismiss(animated: true)
+    }
+
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        guard !hasDetected,
+              let metadataObj = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+              let stringVal = metadataObj.stringValue else {
+            return
+        }
+        hasDetected = true
+        captureSession?.stopRunning()
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        dismiss(animated: true) { [weak self] in
+            self?.onCodeScanned?(stringVal)
+        }
+    }
+}
+
 class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
     static var notesMediaDirectory: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("NotesMedia", isDirectory: true)
@@ -132,6 +269,11 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
             }
             if parts.count > 1, !parts[1].isEmpty, let e = Int(parts[1]) {
                 end = max(start, min(e, totalSize - 1))
+            }
+            // Ограничиваем максимальный размер чанка до 1 МБ для плавной подгрузки и моментальной паузы без лагов звука
+            let maxChunk = 1024 * 1024 // 1 MB
+            if (end - start + 1) > maxChunk {
+                end = start + maxChunk - 1
             }
             let lengthToRead = end - start + 1
             try? fileHandle.seek(toOffset: UInt64(start))
@@ -373,6 +515,14 @@ struct WebView: UIViewRepresentable {
                 }
                 return
             }
+            if action == "scanBarcodeNative" {
+                presentBarcodeScanner(webView: message.webView)
+                return
+            }
+            if action == "nativeFetchGemini" {
+                executeNativeGeminiFetch(dict: dict, webView: message.webView)
+                return
+            }
             
             if action == "syncFullBackup" {
                 if let jsonString = dict["data"] as? String, !jsonString.isEmpty {
@@ -531,6 +681,69 @@ struct WebView: UIViewRepresentable {
             DispatchQueue.main.async {
                 Self.topViewController()?.present(picker, animated: true)
             }
+        }
+
+        func presentBarcodeScanner(webView: WKWebView?) {
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                guard granted else {
+                    DispatchQueue.main.async {
+                        webView?.evaluateJavaScript("if (typeof showToast === 'function') { showToast('Разрешите доступ к камере в Настройках iPhone', true); }", completionHandler: nil)
+                    }
+                    return
+                }
+                DispatchQueue.main.async {
+                    let scanner = BarcodeScannerViewController()
+                    scanner.modalPresentationStyle = .fullScreen
+                    scanner.onCodeScanned = { code in
+                        let cleanCode = code.replacingOccurrences(of: "'", with: "")
+                        webView?.evaluateJavaScript("if (typeof window.onNativeBarcodeScanned === 'function') { window.onNativeBarcodeScanned('\(cleanCode)'); }", completionHandler: nil)
+                    }
+                    Self.topViewController()?.present(scanner, animated: true)
+                }
+            }
+        }
+
+        func executeNativeGeminiFetch(dict: [String: Any], webView: WKWebView?) {
+            guard let reqId = dict["reqId"] as? String,
+                  let urlString = dict["url"] as? String,
+                  let url = URL(string: urlString) else { return }
+
+            let method = dict["method"] as? String ?? "POST"
+            let bodyString = dict["body"] as? String
+            let headers = dict["headers"] as? [String: String] ?? [:]
+
+            var request = URLRequest(url: url, timeoutInterval: 25.0)
+            request.httpMethod = method
+            for (k, v) in headers {
+                request.setValue(v, forHTTPHeaderField: k)
+            }
+            if let bodyString = bodyString {
+                request.httpBody = bodyString.data(using: .utf8)
+            }
+
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? (error != nil ? 500 : 200)
+                let respDataString: String
+                if let data = data, let str = String(data: data, encoding: .utf8) {
+                    respDataString = str
+                } else {
+                    respDataString = "{}"
+                }
+                let errString = error?.localizedDescription ?? ""
+
+                DispatchQueue.main.async {
+                    let escapedResp = respDataString
+                        .replacingOccurrences(of: "\\", with: "\\\\")
+                        .replacingOccurrences(of: "`", with: "\\`")
+                    let escapedErr = errString.replacingOccurrences(of: "'", with: "\\'")
+                    let js = """
+                    if (typeof window.onNativeFetchGeminiResult === 'function') {
+                        window.onNativeFetchGeminiResult('\(reqId)', \(statusCode), `\(escapedResp)`, \(errString.isEmpty ? "null" : "'\(escapedErr)'"));
+                    }
+                    """
+                    webView?.evaluateJavaScript(js, completionHandler: nil)
+                }
+            }.resume()
         }
 
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
