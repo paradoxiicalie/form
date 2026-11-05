@@ -732,7 +732,7 @@
         <!-- FatSecret Style: Процентное распределение макросов (% калорий) и Быстрые калории -->
         <div id="macroRatioBarWrap" class="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10.5px] mono text-zinc-400">
           <div class="flex items-center gap-1.5">
-            <span class="text-zinc-500 font-medium">Баланс:</span>
+            <span class="text-zinc-500 font-medium">Норма:</span>
             <span id="pPctLabel" class="font-bold" style="color: var(--accent-p)">Б 0%</span>
             <span class="text-zinc-600">·</span>
             <span id="fPctLabel" class="font-bold" style="color: var(--accent-f)">Ж 0%</span>
@@ -782,7 +782,7 @@
           Ужин <span id="mealCalDinner" class="text-white font-semibold"></span>
         </button>
         <button type="button" data-meal="snack" onclick="setMealFilter('snack')" class="meal-filter-btn text-[11px] mono px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
-          Перекус <span id="mealCalSnack" class="text-white font-semibold"></span>
+          Снек <span id="mealCalSnack" class="text-white font-semibold"></span>
         </button>
       </div>
 
@@ -2334,7 +2334,7 @@
               <option value="breakfast">Завтрак</option>
               <option value="lunch">Обед</option>
               <option value="dinner">Ужин</option>
-              <option value="snack">Перекус</option>
+              <option value="snack">Снек</option>
             </select>
           </div>
         </div>
@@ -2404,15 +2404,16 @@
           </div>
         </div>
 
-        <!-- FatSecret Style: Привязка к приёму пищи -->
-        <div class="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs mono">
-          <span class="text-zinc-400 text-xs">Приём пищи:</span>
-          <select id="editItemMeal" class="bg-black/50 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white mono outline-none">
-            <option value="breakfast">Завтрак</option>
-            <option value="lunch">Обед</option>
-            <option value="dinner">Ужин</option>
-            <option value="snack">Перекус</option>
-          </select>
+        <!-- Привязка к приёму пищи (Сегмент-контрол) -->
+        <div class="mt-2.5 pt-2.5 border-t border-white/[0.08]">
+          <div class="text-[10px] text-zinc-400 mono uppercase tracking-wider mb-1.5 text-center">Приём пищи</div>
+          <input type="hidden" id="editItemMeal" value="breakfast" />
+          <div class="grid grid-cols-4 gap-1 p-1 bg-black/50 border border-white/10 rounded-xl">
+            <button type="button" onclick="setEditMealSegment('breakfast')" data-edit-meal="breakfast" class="edit-meal-btn py-1.5 rounded-lg text-xs mono font-medium transition text-center">Завтрак</button>
+            <button type="button" onclick="setEditMealSegment('lunch')" data-edit-meal="lunch" class="edit-meal-btn py-1.5 rounded-lg text-xs mono font-medium transition text-center">Обед</button>
+            <button type="button" onclick="setEditMealSegment('dinner')" data-edit-meal="dinner" class="edit-meal-btn py-1.5 rounded-lg text-xs mono font-medium transition text-center">Ужин</button>
+            <button type="button" onclick="setEditMealSegment('snack')" data-edit-meal="snack" class="edit-meal-btn py-1.5 rounded-lg text-xs mono font-medium transition text-center">Снек</button>
+          </div>
         </div>
       </div>
 
@@ -7225,21 +7226,17 @@
 
       countEl.textContent = state.todayItems.length > 0 ? `${state.todayItems.length} поз.` : "";
 
-      // FatSecret Style: Процентный баланс макросов от суммарных калорий
-      const pCal = totalP * 4;
-      const fCal = totalF * 9;
-      const cCal = totalC * 4;
-      const macroTotalCal = pCal + fCal + cCal || 1;
-      const pPct = Math.round((pCal / macroTotalCal) * 100);
-      const fPct = Math.round((fCal / macroTotalCal) * 100);
-      const cPct = Math.max(0, 100 - pPct - fPct);
+      // Процент выполнения суточной нормы БЖУ
+      const pTargetPct = Math.round((totalP / tP) * 100);
+      const fTargetPct = Math.round((totalF / tF) * 100);
+      const cTargetPct = Math.round((totalC / tC) * 100);
 
       const pPctEl = document.getElementById("pPctLabel");
       const fPctEl = document.getElementById("fPctLabel");
       const cPctEl = document.getElementById("cPctLabel");
-      if (pPctEl) pPctEl.textContent = `Б ${pPct}%`;
-      if (fPctEl) fPctEl.textContent = `Ж ${fPct}%`;
-      if (cPctEl) cPctEl.textContent = `У ${cPct}%`;
+      if (pPctEl) pPctEl.textContent = `Б ${pTargetPct}%`;
+      if (fPctEl) fPctEl.textContent = `Ж ${fTargetPct}%`;
+      if (cPctEl) cPctEl.textContent = `У ${cTargetPct}%`;
 
       // Подсчет калорий по приемам пищи (FatSecret Meal Summary)
       let calBreakfast = 0, calLunch = 0, calDinner = 0, calSnack = 0;
@@ -7812,10 +7809,11 @@
       }
       const boxW = canvas.width, boxH = canvas.height;
       if (!mediaW || !mediaH) return { x: 0, y: 0, w: boxW, h: boxH };
-      const scale = Math.max(boxW / mediaW, boxH / mediaH); // object-fit: cover !important math
+      const scale = Math.min(boxW / mediaW, boxH / mediaH); // object-contain exact math
       const renderW = mediaW * scale, renderH = mediaH * scale;
       return { x: (boxW - renderW) / 2, y: (boxH - renderH) / 2, w: renderW, h: renderH };
     }
+    window.getRenderedMediaRect = getRenderedMediaRect;
 
     function drawHighlightedRegion(normBox, codeText) {
       const canvas = document.getElementById("scannerOverlayCanvas");
@@ -8001,13 +7999,14 @@
         if (res) cropMeta = { ox, oy };
       }
       if (res && res.codeResult && res.codeResult.code) {
-        let normBox = { x: 0.15, y: 0.36, w: 0.70, h: 0.24 };
+        let normBox = null;
         if (res.box && res.box.length === 4) {
           const xs = res.box.map(p => p[0] + cropMeta.ox), ys = res.box.map(p => p[1] + cropMeta.oy);
           const fullW = imgEl.naturalWidth || 800, fullH = imgEl.naturalHeight || 800;
           normBox = {
             x: Math.min(...xs) / fullW, y: Math.min(...ys) / fullH,
-            w: (Math.max(...xs) - Math.min(...xs)) / fullW, h: (Math.max(...ys) - Math.min(...ys)) / fullH
+            w: (Math.max(...xs) - Math.min(...xs)) / fullW, h: (Math.max(...ys) - Math.min(...ys)) / fullH,
+            isReal: true
           };
         }
         return { code: res.codeResult.code, normBox };
@@ -8179,7 +8178,7 @@
       breakfast: "Завтрак",
       lunch: "Обед",
       dinner: "Ужин",
-      snack: "Перекус"
+      snack: "Снек"
     };
 
     function getAutoMealType() {
@@ -8289,6 +8288,20 @@
       renderAll();
     }
 
+    function setEditMealSegment(mealKey) {
+      const hiddenInput = document.getElementById("editItemMeal");
+      const key = mealKey || "dinner";
+      if (hiddenInput) hiddenInput.value = key;
+      document.querySelectorAll(".edit-meal-btn").forEach(btn => {
+        if (btn.getAttribute("data-edit-meal") === key) {
+          btn.className = "edit-meal-btn py-1.5 rounded-lg text-xs mono font-bold bg-white/20 text-white border border-white/30 shadow-sm transition text-center";
+        } else {
+          btn.className = "edit-meal-btn py-1.5 rounded-lg text-xs mono font-medium text-zinc-400 hover:text-white transition text-center";
+        }
+      });
+    }
+    window.setEditMealSegment = setEditMealSegment;
+
     let editPieceModeActive = false;
 
     function openEditModal(id) {
@@ -8297,8 +8310,8 @@
       editingItemId = id;
       document.getElementById("editItemTitle").textContent = item.name;
       document.getElementById("editItemWeight").value = item.weight;
-      const mealEl = document.getElementById("editItemMeal");
-      if (mealEl) mealEl.value = item.meal || getAutoMealType();
+      const curMeal = item.meal || getAutoMealType();
+      setEditMealSegment(curMeal);
 
       const normName = normalizeSearchText(item.name);
       const hist = (state.customHistory || []).find(h => normalizeSearchText(h.name) === normName);
@@ -11181,18 +11194,28 @@
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      if (codeText) {
+        setScannerBadgeText(codeText);
+      }
+
+      if (!normBox || !normBox.isReal) {
+        return;
+      }
+
+      const mediaRect = typeof getRenderedMediaRect === "function"
+        ? getRenderedMediaRect(canvas)
+        : (window.getRenderedMediaRect ? window.getRenderedMediaRect(canvas) : { x: 0, y: 0, w: canvas.width, h: canvas.height });
+
       const accent = getActiveThemeObject().cal;
-      const pad = 10;
+      const nx = Math.max(0, Math.min(0.98, Number(normBox.x) || 0));
+      const ny = Math.max(0, Math.min(0.98, Number(normBox.y) || 0));
+      const nw = Math.max(0.02, Math.min(1 - nx, Number(normBox.w) || 0.2));
+      const nh = Math.max(0.02, Math.min(1 - ny, Number(normBox.h) || 0.1));
 
-      let nx = Math.max(0.03, Math.min(0.88, Number(normBox?.x) || 0.12));
-      let ny = Math.max(0.04, Math.min(0.88, Number(normBox?.y) || 0.12));
-      let nw = Math.max(0.15, Math.min(0.94 - nx, Number(normBox?.w) || 0.76));
-      let nh = Math.max(0.15, Math.min(0.94 - ny, Number(normBox?.h) || 0.76));
-
-      const x = Math.max(pad, nx * canvas.width);
-      const y = Math.max(pad, ny * canvas.height);
-      const w = Math.min(canvas.width - x - pad, nw * canvas.width);
-      const h = Math.min(canvas.height - y - pad, nh * canvas.height);
+      const x = mediaRect.x + nx * mediaRect.w;
+      const y = mediaRect.y + ny * mediaRect.h;
+      const w = nw * mediaRect.w;
+      const h = nh * mediaRect.h;
 
       ctx.save();
       ctx.strokeStyle = accent;
@@ -11202,7 +11225,7 @@
       ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
 
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 14);
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 12);
       else ctx.rect(x, y, w, h);
       ctx.fill();
       ctx.stroke();
@@ -11211,15 +11234,11 @@
         ctx.beginPath();
         ctx.strokeStyle = accent;
         ctx.lineWidth = 2;
-        ctx.moveTo(x + 10, y + h / 2);
-        ctx.lineTo(x + w - 10, y + h / 2);
+        ctx.moveTo(x + 6, y + h / 2);
+        ctx.lineTo(x + w - 6, y + h / 2);
         ctx.stroke();
       }
       ctx.restore();
-
-      if (codeText) {
-        setScannerBadgeText(codeText);
-      }
     };
 
     function getCameraCropROI(element) {
@@ -11635,7 +11654,12 @@
           loadingText.textContent = "Ищем штрихкод на упаковке...";
           const localBarcode = await detectBarcodeMultiPass(dataUrl, imgElement);
           if (localBarcode && localBarcode.code) {
-            drawHighlightedRegion(localBarcode.normBox, `ШТРИХКОД // ${localBarcode.code}`, true);
+            if (localBarcode.normBox && localBarcode.normBox.isReal) {
+              drawHighlightedRegion(localBarcode.normBox, `ШТРИХКОД // ${localBarcode.code}`, true);
+            } else {
+              setScannerBadgeText(`ШТРИХКОД // ${localBarcode.code}`);
+              clearScannerOverlay();
+            }
             document.getElementById("barcodeInput").value = localBarcode.code;
             loadingText.textContent = `Штрихкод ${localBarcode.code}: загружаем КБЖУ...`;
             const found = await fetchProductByBarcode(localBarcode.code, true);
@@ -11683,6 +11707,7 @@ ${knownPiecesContext}
 6) КОНТУР ОБЪЕКТА ("object_box") И ШТРИХКОД ("barcode"):
    - "object_box": [ymin, xmin, ymax, xmax] (0..1000).
    - "barcode": цифры штрихкода если видны, иначе "".
+   - "barcode_box": точные координаты прямоугольника штрихкода [ymin, xmin, ymax, xmax] (0..1000) если штрихкод виден, иначе [0, 0, 0, 0].
 
 Верни строго JSON:
 {
@@ -11731,21 +11756,27 @@ ${knownPiecesContext}
           }
         }
 
-        let barcodeBox = { x: 0.15, y: 0.38, w: 0.70, h: 0.26 };
+        let barcodeBox = null;
         if (Array.isArray(parsed?.barcode_box) && parsed.barcode_box.length === 4) {
           const [bYmin, bXmin, bYmax, bXmax] = parsed.barcode_box.map(Number);
-          if (bYmax > bYmin && bXmax > bXmin && (bYmax - bYmin) >= 30) {
+          if (bYmax > bYmin && bXmax > bXmin && (bYmax - bYmin) >= 15 && (bXmax - bXmin) >= 15 && !(bYmin === 0 && bXmin === 0 && bYmax === 0 && bXmax === 0)) {
             barcodeBox = {
               x: bXmin / 1000,
               y: bYmin / 1000,
               w: (bXmax - bXmin) / 1000,
-              h: (bYmax - bYmin) / 1000
+              h: (bYmax - bYmin) / 1000,
+              isReal: true
             };
           }
         }
 
         if (cleanCode.length >= 8 && scannerMode !== "dish") {
-          drawHighlightedRegion(barcodeBox, `ШТРИХКОД // ${cleanCode}`, true);
+          if (barcodeBox && barcodeBox.isReal) {
+            drawHighlightedRegion(barcodeBox, `ШТРИХКОД // ${cleanCode}`, true);
+          } else {
+            setScannerBadgeText(`ШТРИХКОД // ${cleanCode}`);
+            clearScannerOverlay();
+          }
           document.getElementById("barcodeInput").value = cleanCode;
           if (await fetchProductByBarcode(cleanCode, true)) return;
         }
