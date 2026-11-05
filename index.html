@@ -4297,8 +4297,7 @@
       "gemini-3-flash-preview",
       "gemini-2.5-flash",
       "gemini-2.5-flash-lite",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash"
+      "gemini-2.0-flash"
     ];
     let lastActiveGeminiModel = GEMINI_MODELS_CASCADE[0];
     let lastActiveKeyIndex = 1;
@@ -4306,11 +4305,18 @@
 
     function getShortModelLabel(modelName) {
       if (!modelName) return "Gemini 3";
+      if (modelName.includes("scout")) return "Llama 4 Scout";
+      if (modelName.includes("maverick")) return "Llama 4 Mav";
+      if (modelName.includes("llama-4")) return "Llama 4";
+      if (modelName.includes("llama-3.3")) return "Llama 3.3";
+      if (modelName.includes("llama-3.2")) return "Llama 3.2";
+      if (modelName.includes("llama-3.1")) return "Llama 3.1";
+      if (modelName.includes("gemma")) return "Gemma 2";
+      if (modelName.includes("groq") || modelName.includes("Groq")) return "Groq";
       if (modelName.includes("3")) return "Gemini 3";
       if (modelName.includes("2.5") && modelName.includes("lite")) return "G2.5 Lite";
       if (modelName.includes("2.5")) return "Gemini 2.5";
       if (modelName.includes("2.0")) return "Gemini 2.0";
-      if (modelName.includes("1.5")) return "Gemini 1.5";
       return "Gemini";
     }
 
@@ -4522,11 +4528,17 @@
     }
 
     function handleApiProxyInput(val) {
-      const clean = (val || "").trim();
+      const clean = (val || "").trim().replace(/\/+$/, "").replace(/\/v1beta\/?$/i, "").replace(/\/v1\/?$/i, "");
       state.apiProxy = clean;
+      state.customGeminiBaseUrl = clean;
       try {
-        if (clean) localStorage.setItem("form_gemini_proxy", clean);
-        else localStorage.removeItem("form_gemini_proxy");
+        if (clean) {
+          localStorage.setItem("form_gemini_proxy", clean);
+          localStorage.setItem("form_gemini_base_url", clean);
+        } else {
+          localStorage.removeItem("form_gemini_proxy");
+          localStorage.removeItem("form_gemini_base_url");
+        }
       } catch (e) {}
       saveState();
     }
@@ -5006,40 +5018,174 @@
       const endpoint = isGroq
         ? "https://api.groq.com/openai/v1/chat/completions"
         : "https://openrouter.ai/api/v1/chat/completions";
-      const model = isGroq ? "llama-3.3-70b-versatile" : "meta-llama/llama-3.3-70b-instruct";
 
       const parts = geminiPayload?.contents?.[0]?.parts || [];
       const userText = parts.map(p => p.text || "").filter(Boolean).join("\n");
+      const inlineDataPart = parts.find(p => p.inlineData && p.inlineData.data);
+      const hasImage = Boolean(inlineDataPart);
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${key}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: "user", content: userText }],
-          temperature: 0.1,
-          response_format: { type: "json_object" }
-        })
-      });
+      let msgContent;
+      if (hasImage) {
+        const mime = inlineDataPart.inlineData.mimeType || "image/jpeg";
+        const b64 = inlineDataPart.inlineData.data;
+        msgContent = [
+          { type: "text", text: userText || "Определи продукт и рассчитай КБЖУ в JSON" },
+          { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } }
+        ];
+      } else {
+        msgContent = userText;
+      }
+      const messages = [{ role: "user", content: msgContent }];
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || `HTTP ${res.status} [${isGroq ? 'Groq' : 'OpenRouter'}]`);
+      let candidateModels;
+      if (isGroq) {
+        candidateModels = hasImage
+          ? [
+              "meta-llama/llama-4-scout-17b-16e-instruct",
+              "meta-llama/llama-4-maverick-17b-128e-instruct",
+              "llama-3.2-90b-vision-preview",
+              "llama-3.2-11b-vision-preview"
+            ]
+          : [
+              "meta-llama/llama-4-scout-17b-16e-instruct",
+              "llama-3.3-70b-versatile",
+              "llama-3.1-8b-instant",
+              "gemma2-9b-it"
+            ];
+        if (window._cachedGroqModel && !candidateModels.includes(window._cachedGroqModel)) {
+          candidateModels.unshift(window._cachedGroqModel);
+        }
+      } else {
+        candidateModels = hasImage
+          ? ["meta-llama/llama-3.2-11b-vision-instruct", "google/gemini-2.0-flash-001"]
+          : ["meta-llama/llama-3.3-70b-instruct", "google/gemini-2.0-flash-001", "deepseek/deepseek-chat"];
       }
 
-      const resJson = await res.json();
-      const content = resJson.choices?.[0]?.message?.content || "{}";
+      let lastErr = null;
+      let needDynamicLookup = false;
 
-      return {
-        candidates: [{
-          content: {
-            parts: [{ text: content }]
+      for (let i = 0; i < candidateModels.length; i++) {
+        const model = candidateModels[i];
+        try {
+          const reqBody = {
+            model: model,
+            messages: messages,
+            temperature: 0.1
+          };
+          if (!hasImage) {
+            reqBody.response_format = { type: "json_object" };
           }
-        }]
-      };
+
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${key}`
+            },
+            body: JSON.stringify(reqBody)
+          });
+
+          if (res.status === 403) {
+            throw new Error("Groq API заблокирован (403 Forbidden). Включите VPN или используйте зеркало");
+          }
+
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            const errMsg = errJson?.error?.message || errJson?.error?.code || `HTTP ${res.status} [${model}]`;
+            
+            if (res.status === 404 || /does not exist|not_found|do not have access|decommissioned/i.test(errMsg)) {
+              lastErr = new Error(`[${model}] ${errMsg}`);
+              needDynamicLookup = true;
+              continue;
+            }
+            throw new Error(errMsg);
+          }
+
+          const resJson = await res.json();
+          const content = resJson.choices?.[0]?.message?.content || "{}";
+          window._lastUsedAlternativeModel = model;
+          if (isGroq) window._cachedGroqModel = model;
+
+          return {
+            candidates: [{
+              content: {
+                parts: [{ text: content }]
+              }
+            }]
+          };
+        } catch (fetchErr) {
+          if (/403|Forbidden|VPN/i.test(fetchErr.message)) {
+            throw fetchErr;
+          }
+          lastErr = fetchErr;
+        }
+      }
+
+      // Динамический опрос доступных моделей Groq при model_not_found / does not exist
+      if (isGroq && needDynamicLookup) {
+        try {
+          const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+            headers: { "Authorization": `Bearer ${key}` }
+          });
+
+          if (modelsRes.status === 403) {
+            throw new Error("Groq API заблокирован (403 Forbidden). Включите VPN или используйте зеркало");
+          }
+
+          if (modelsRes.ok) {
+            const mData = await modelsRes.json();
+            const list = Array.isArray(mData?.data) ? mData.data : [];
+            const chatModels = list
+              .map(m => m.id)
+              .filter(id => {
+                const low = String(id || "").toLowerCase();
+                if (hasImage) return /vision|scout|maverick/i.test(low);
+                return !/whisper|tts|embed|guard|moderation|safeguard/i.test(low);
+              });
+
+            const dynModel = chatModels[0] || (list.find(m => !/whisper|tts|embed/i.test(m.id))?.id);
+            if (dynModel) {
+              const reqBody = {
+                model: dynModel,
+                messages: messages,
+                temperature: 0.1
+              };
+              if (!hasImage) reqBody.response_format = { type: "json_object" };
+
+              const dynRes = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${key}`
+                },
+                body: JSON.stringify(reqBody)
+              });
+
+              if (dynRes.status === 403) {
+                throw new Error("Groq API заблокирован (403 Forbidden). Включите VPN или используйте зеркало");
+              }
+
+              if (dynRes.ok) {
+                const dynJson = await dynRes.json();
+                const content = dynJson.choices?.[0]?.message?.content || "{}";
+                window._lastUsedAlternativeModel = dynModel;
+                window._cachedGroqModel = dynModel;
+                return {
+                  candidates: [{
+                    content: {
+                      parts: [{ text: content }]
+                    }
+                  }]
+                };
+              }
+            }
+          }
+        } catch (dynErr) {
+          if (/403|Forbidden|VPN/i.test(dynErr.message)) throw dynErr;
+        }
+      }
+
+      throw lastErr || new Error("Не удалось выполнить запрос к альтернативному провайдеру");
     }
 
     async function callGeminiWithFallback(payload) {
@@ -5050,8 +5196,9 @@
         throw new Error("Ключ не задан в настройках");
       }
 
-      const customBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_proxy") || "").trim();
-      const apiBase = customBase ? customBase.replace(/\/+$/, "") : "https://generativelanguage.googleapis.com";
+      let rawBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || "").trim();
+      rawBase = rawBase.replace(/\/+$/, "").replace(/\/v1beta\/?$/i, "").replace(/\/v1\/?$/i, "");
+      const apiBase = rawBase || "https://generativelanguage.googleapis.com";
 
       let lastError = null;
       let hasLocationError = false;
@@ -5125,7 +5272,7 @@
         try {
           const altData = await callAlternativeProvider(groqKey, payload);
           apiKeyVerifiedStatus = true;
-          updateActiveModelBadge(groqKey.startsWith("gsk_") ? "Groq Llama-3.3" : "OpenRouter", 1, true);
+          updateActiveModelBadge(window._lastUsedAlternativeModel || (groqKey.startsWith("gsk_") ? "Groq" : "OpenRouter"), 1, true);
           syncKeyFieldUI();
           return altData;
         } catch (altErr) {
