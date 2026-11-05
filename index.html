@@ -2583,6 +2583,24 @@
     }
 
     window.stripEmojis = stripEmojis;
+
+    const RU_STOP_WORDS = new Set(["с", "со", "в", "во", "и", "на", "по", "из", "изо", "под", "ко", "к", "от", "до", "для", "без", "о", "об", "при", "гр", "г", "кг", "мл", "л", "шт", "g", "kg", "ml"]);
+    window.RU_STOP_WORDS = RU_STOP_WORDS;
+
+    function stemRu(word) {
+      if (!word || typeof word !== "string") return "";
+      let w = word.toLowerCase().replace(/ё/g, "е").trim();
+      if (w.length <= 3) return w;
+      w = w.replace(/(?:ыми|ими|ого|его|ому|ему|ых|их|ую|юю|ая|яя|ое|ее|ые|ие|ым|им|ом|ем|ам|ям|ами|ями|ах|ях|ов|ев|ей|ий|ый|ой|а|я|у|ю|е|о|ы|и)$/i, "");
+      w = w.replace(/(.)\1$/i, "$1");
+      if (w.length >= 6) {
+        const withoutSuffix = w.replace(/(?:очк|ечк|ик|чик|ок|к)$/i, "");
+        if (withoutSuffix.length >= 4) w = withoutSuffix;
+      }
+      return w;
+    }
+    window.stemRu = stemRu;
+
     window.LOCAL_FOOD_DB = [
       {"name": "Гречка с мясом (говядина/свинина)", "cal": 175, "p": 9.5, "f": 6.5, "c": 20.0, "unitWeight": 250, "keywords": ["гречка с мясом", "гречка с говядиной", "гречка по-купечески", "мясо с гречкой", "гречка"]},
       {"name": "Гречка с курицей / индейкой", "cal": 155, "p": 13.0, "f": 4.0, "c": 18.0, "unitWeight": 250, "keywords": ["гречка с курицей", "гречка с индейкой", "гречка с птицей", "курица с гречкой"]},
@@ -4953,6 +4971,8 @@
           showToast(`Добавлено: ${product.name}`);
         }
       } else {
+        document.getElementById("scannedResultCard")?.classList.add("hidden");
+        window.pendingScannedProduct = null;
         showToast("Товар не найден в базе, введите вручную", true);
         if (!modal?.classList.contains("open")) {
           const input = document.getElementById("foodInput");
@@ -6842,20 +6862,7 @@
         .trim();
     }
 
-    const RU_STOP_WORDS = new Set(["с", "со", "в", "во", "и", "на", "по", "из", "изо", "под", "ко", "к", "от", "до", "для", "без", "о", "об", "при", "гр", "г", "кг", "мл", "л", "шт", "g", "kg", "ml"]);
-
-    function stemRu(word) {
-      if (!word || typeof word !== "string") return "";
-      let w = word.toLowerCase().replace(/ё/g, "е").trim();
-      if (w.length <= 3) return w;
-      w = w.replace(/(?:ыми|ими|ого|его|ому|ему|ых|их|ую|юю|ая|яя|ое|ее|ые|ие|ым|им|ом|ем|ам|ям|ами|ями|ах|ях|ов|ев|ей|ий|ый|ой|а|я|у|ю|е|о|ы|и)$/i, "");
-      w = w.replace(/(.)\1$/i, "$1");
-      if (w.length >= 6) {
-        const withoutSuffix = w.replace(/(?:очк|ечк|ик|чик|ок|к)$/i, "");
-        if (withoutSuffix.length >= 4) w = withoutSuffix;
-      }
-      return w;
-    }
+    // RU_STOP_WORDS and stemRu hoisted to top for global availability
 
     function matchItemQuery(item, queryTokens, rawQuery) {
       const normName = normalizeSearchText(item.name);
@@ -7218,6 +7225,8 @@
     }
 
     function openScanner(mode = "auto") {
+      document.getElementById("scannedResultCard")?.classList.add("hidden");
+      window.pendingScannedProduct = null;
       document.getElementById("scannerModal")?.classList.add("open");
       setScannerMode(mode);
       clearScannerOverlay();
@@ -7256,7 +7265,7 @@
       }
       const boxW = canvas.width, boxH = canvas.height;
       if (!mediaW || !mediaH) return { x: 0, y: 0, w: boxW, h: boxH };
-      const scale = Math.min(boxW / mediaW, boxH / mediaH);
+      const scale = Math.max(boxW / mediaW, boxH / mediaH); // object-fit: cover !important math
       const renderW = mediaW * scale, renderH = mediaH * scale;
       return { x: (boxW - renderW) / 2, y: (boxH - renderH) / 2, w: renderW, h: renderH };
     }
@@ -7561,9 +7570,13 @@
           showToast(`Найден: ${item.name}`);
           return true;
         }
+        document.getElementById("scannedResultCard")?.classList.add("hidden");
+        window.pendingScannedProduct = null;
         if (!silentIfNotFound) showToast(`Штрихкод ${cleanCode} не найден в базе`, true);
         return false;
       } catch (err) {
+        document.getElementById("scannedResultCard")?.classList.add("hidden");
+        window.pendingScannedProduct = null;
         if (!silentIfNotFound) showToast(`Ошибка поиска штрихкода: ${err.message}`, true);
         return false;
       } finally {
@@ -10114,7 +10127,7 @@
         box.innerHTML = `
           <button
             type="button"
-            onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
+            onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\'")}')"
             class="w-full py-2 px-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.05] text-[11px] mono text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition"
           >
             <span>+ Заметка / Совет тренера / Разминка</span>
@@ -10144,69 +10157,76 @@
         }
       }
 
-      // 2. Текстовые подсказки по технике или советы тренера (ТОЛЬКО непустой текст!)
-      const textNotes = notes.filter(n => n.text && n.text.trim() && n !== warmupNote);
-      let cueHtml = "";
-      if (textNotes.length > 0) {
-        // Показываем до 2 самых актуальных текстовых заметок
-        const topCues = textNotes.slice(0, 2);
-        cueHtml = topCues.map(cueNote => {
-          const meta = NOTE_CATEGORY_META[cueNote.category] || NOTE_CATEGORY_META.coach;
+      // 2. Все актуальные карточки (техника, совет тренера, настройка)
+      // Включаем как текстовые заметки, так и медиазаметки (с видео/фото превью)
+      const nonWarmupNotes = notes.filter(n => n !== warmupNote);
+      let cardsHtml = "";
+      if (nonWarmupNotes.length > 0) {
+        // Показываем до 3 самых свежих заметок
+        const topNotes = nonWarmupNotes.slice(0, 3);
+        cardsHtml = topNotes.map(n => {
+          const meta = NOTE_CATEGORY_META[n.category] || NOTE_CATEGORY_META.coach;
+          const cleanText = (n.text || "").trim();
+          const hasMeaningfulText = Boolean(cleanText && cleanText.toLowerCase() !== meta.title.toLowerCase());
+          
+          let mediaSnippet = "";
+          if (n.media) {
+            if (n.media.type === "video") {
+              const thumbSrc = n.media.thumbUrl || "";
+              mediaSnippet = `
+                <div class="mt-1.5 flex items-center gap-2 p-1.5 rounded-lg bg-black/40 border border-sky-500/25 text-sky-200">
+                  <div class="w-8 h-8 rounded bg-sky-950/60 border border-sky-500/40 flex items-center justify-center shrink-0 overflow-hidden relative">
+                    ${thumbSrc ? `<img src="${thumbSrc}" class="w-full h-full object-cover" />` : `<span class="text-[10px]">▶</span>`}
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center"><span class="text-white text-[9px]">▶</span></div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10.5px] font-bold text-sky-200 truncate">Видео техники тренера</div>
+                    <div class="text-[8.5px] text-zinc-400 mono">${n.media.audioUrl ? "Видео + звук" : "Нажми для просмотра"}</div>
+                  </div>
+                  <span class="text-zinc-500 text-[10px]">→</span>
+                </div>
+              `;
+            } else if (n.media.type === "photo") {
+              mediaSnippet = `
+                <div class="mt-1.5 flex items-center gap-2 p-1.5 rounded-lg bg-black/40 border border-purple-500/25 text-purple-200">
+                  <div class="w-8 h-8 rounded bg-purple-950/60 border border-purple-500/40 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src="${n.media.url}" class="w-full h-full object-cover" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10.5px] font-bold text-purple-200 truncate">Фото настройки тренажера</div>
+                    <div class="text-[8.5px] text-zinc-400 mono">Нажми для просмотра</div>
+                  </div>
+                  <span class="text-zinc-500 text-[10px]">→</span>
+                </div>
+              `;
+            }
+          }
+
+          // Если в заметке нет ни текста, ни медиа — не рендерим пустую плашку
+          if (!hasMeaningfulText && !mediaSnippet) return "";
+
           return `
-            <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')">
+            <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\'")}')">
               <div class="flex items-center justify-between text-[10px] font-bold mono ${meta.badge.split(' ')[1] || 'text-sky-300'} uppercase tracking-wider mb-0.5">
                 <span>${meta.title}</span>
-                <span class="text-zinc-500 text-[9px]">${escapeHtml(cueNote.date || "")}</span>
+                <span class="text-zinc-500 text-[9px]">${escapeHtml(n.date || "")}</span>
               </div>
-              <div class="text-[11.5px] text-zinc-200 font-mono leading-relaxed line-clamp-2">${escapeHtml(cueNote.text)}</div>
+              ${hasMeaningfulText ? `<div class="text-[11.5px] text-zinc-200 font-mono leading-relaxed line-clamp-3">${escapeHtml(cleanText)}</div>` : ""}
+              ${mediaSnippet}
             </div>
           `;
-        }).join("");
-      }
-
-      // 3. Медиафайлы (Видео техники и Фото настройки)
-      const mediaNotes = notes.filter(n => n.media);
-      let mediaBadgesHtml = "";
-      if (mediaNotes.length > 0) {
-        mediaBadgesHtml = `
-          <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-            ${mediaNotes.map(mNote => {
-              const isVid = mNote.media.type === "video";
-              const pillTheme = isVid
-                ? "bg-sky-500/10 border-sky-500/30 text-sky-200 hover:bg-sky-500/20"
-                : "bg-purple-500/10 border-purple-500/30 text-purple-200 hover:bg-purple-500/20";
-              const label = isVid ? "Видео техники" : "Фото настройки";
-              const dateShort = (mNote.date || "").split("·")[0]?.trim() || "";
-              const thumbImg = mNote.media.thumbUrl
-                ? `<img src="${mNote.media.thumbUrl}" class="w-4 h-4 rounded object-cover shrink-0" />`
-                : `<span class="text-[9px] mono">${isVid ? "▶" : "IMG"}</span>`;
-              return `
-                <button
-                  type="button"
-                  onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
-                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${pillTheme} text-[10px] mono font-medium active:scale-95 transition"
-                >
-                  ${thumbImg}
-                  <span>${label}</span>
-                  ${dateShort ? `<span class="text-zinc-500 text-[9px]">${dateShort}</span>` : ""}
-                  <span class="text-zinc-500 text-[9px]">→</span>
-                </button>
-              `;
-            }).join("")}
-          </div>
-        `;
+        }).filter(Boolean).join("");
       }
 
       box.innerHTML = `
         <div class="space-y-1.5">
           ${warmHtml}
-          ${cueHtml}
-          ${mediaBadgesHtml}
+          ${cardsHtml}
           <div class="flex items-center justify-between pt-0.5 text-[10px] mono">
             <span class="text-zinc-500">Заметок в базе: ${notes.length}</span>
             <button
               type="button"
-              onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\\'")}')"
+              onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\'")}')"
               class="text-zinc-400 hover:text-white underline flex items-center gap-1"
             >
               <span>База заметок (${notes.length}) →</span>
