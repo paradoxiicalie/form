@@ -1581,7 +1581,7 @@
         </div>
 
         <!-- Блок 3: Шаги и расход калорий (NEAT) -->
-        <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
+        <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-xs text-white font-semibold uppercase tracking-wider">Активность // Шаги (NEAT)</span>
             <div id="settingsStepsBadge" class="text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400">
@@ -1589,36 +1589,37 @@
             </div>
           </div>
 
-          <div class="flex items-baseline justify-between">
+          <div class="flex items-center justify-between pt-0.5">
             <div class="flex items-baseline gap-2 cursor-pointer active:opacity-70 transition" onclick="promptCustomSteps()" title="Нажми для ввода точного числа шагов">
-              <span id="settingsStepsCount" class="text-2xl font-black mono text-white">0</span>
+              <span id="settingsStepsCount" class="text-2xl font-black mono text-white leading-none">0</span>
               <span class="text-xs text-zinc-500 mono">шагов</span>
             </div>
             <div class="flex items-center gap-2">
-              <span id="settingsStepsBurn" class="text-xs font-bold mono px-2 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/25">+0 ккал</span>
-              <button type="button" onclick="requestNativeStepsSync()" class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/10 flex items-center justify-center text-zinc-300 active:scale-90 transition" title="Синхронизировать с Apple Здоровьем">
+              <span id="settingsStepsBurn" class="text-xs font-bold mono px-2.5 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/25 whitespace-nowrap">+0 ккал</span>
+              <button type="button" onclick="requestNativeStepsSync()" class="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/10 flex items-center justify-center text-zinc-300 active:scale-90 transition shrink-0" title="Синхронизировать с Apple Здоровьем">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
               </button>
             </div>
           </div>
 
           <!-- Быстрые пресеты шагов в 1 тап -->
-          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-            <button type="button" onclick="stepDailySteps(-1000)" class="preset-chip shrink-0">-1k</button>
-            <button type="button" onclick="setDailyStepsPreset(5000)" class="preset-chip shrink-0">5 000</button>
-            <button type="button" onclick="setDailyStepsPreset(10000)" class="preset-chip shrink-0">10 000</button>
-            <button type="button" onclick="setDailyStepsPreset(15000)" class="preset-chip shrink-0">15 000</button>
-            <button type="button" onclick="setDailyStepsPreset(20000)" class="preset-chip shrink-0">20 000</button>
-            <button type="button" onclick="stepDailySteps(1000)" class="preset-chip shrink-0">+1k</button>
+          <div class="grid grid-cols-6 gap-1 pt-0.5">
+            <button type="button" onclick="stepDailySteps(-1000)" class="preset-chip text-center px-0 py-1.5">-1k</button>
+            <button type="button" onclick="setDailyStepsPreset(5000)" class="preset-chip text-center px-0 py-1.5">5k</button>
+            <button type="button" onclick="setDailyStepsPreset(10000)" class="preset-chip text-center px-0 py-1.5">10k</button>
+            <button type="button" onclick="setDailyStepsPreset(15000)" class="preset-chip text-center px-0 py-1.5">15k</button>
+            <button type="button" onclick="setDailyStepsPreset(20000)" class="preset-chip text-center px-0 py-1.5">20k</button>
+            <button type="button" onclick="stepDailySteps(1000)" class="preset-chip text-center px-0 py-1.5">+1k</button>
           </div>
 
-          <!-- Расчет автоматического списания расхода шагов из наетого -->
-          <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
-            <span class="text-zinc-400">Списание активности (NEAT):</span>
-            <span id="settingsStepBurnTargetDelta" class="mono font-bold text-orange-400">−0 ккал из наетого</span>
+          <!-- Расчет автоматического списания расхода шагов из наетого: компактная 1-строчная плашка без переносов -->
+          <div class="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between">
+            <span class="text-zinc-400 text-xs">Списание из наетого:</span>
+            <span id="settingsStepBurnTargetDelta" class="mono font-bold text-orange-400 whitespace-nowrap text-xs">−0 ккал</span>
           </div>
-          <div class="text-[11px] text-zinc-500 leading-relaxed px-1">
-            Калории от шагов автоматически вычитаются из текущего наетого калоража за день. Суточная норма остается фиксированной.
+
+          <div class="text-[10.5px] text-zinc-500 font-mono leading-tight px-0.5">
+            Расход от шагов вычитается из наеденного. Суточная норма зафиксирована.
           </div>
         </div>
 
@@ -6377,7 +6378,7 @@
 
       if (setSteps) setSteps.textContent = steps.toLocaleString("ru-RU");
       if (setBurn) setBurn.textContent = `+${burn} ккал`;
-      if (setDelta) setDelta.textContent = `−${burn} ккал из наетого`;
+      if (setDelta) setDelta.textContent = `−${burn} ккал`;
 
       if (setBadge) {
         if (state.dailySteps.source === "motion" || isNative) {
