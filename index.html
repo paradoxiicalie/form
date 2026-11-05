@@ -928,7 +928,7 @@
       <div id="splitProgramPills" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2 no-scrollbar"></div>
 
       <!-- Список упражнений выбранного дня (или карточка ОТДЫХА) -->
-      <div id="workoutExercisesContainer" class="divide-y divide-white/[0.06]"></div>
+      <div id="workoutExercisesContainer" class="divide-y divide-white/[0.06] touch-pan-y"></div>
 
       <div class="flex-1 min-h-[24px]"></div>
 
@@ -3898,7 +3898,7 @@
 
             const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
             return `
-              <div class="py-3.5 flex items-center justify-between gap-3">
+              <div class="exercise-row py-3.5 flex items-center justify-between gap-3" data-ex-id="${ex.id}">
                 <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
                   <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
@@ -4098,18 +4098,19 @@
     function attachExerciseSwipeDelete(container, progId) {
       if (!container) return;
       container.style.overflowX = "hidden";
-      const rows = container.querySelectorAll(".py-3\.5.flex.items-center");
+      const rows = container.querySelectorAll(".exercise-row, [class*='py-3'][class*='items-center']");
       rows.forEach((row) => {
         if (row.dataset.swipeDeleteAttached) return;
         row.dataset.swipeDeleteAttached = "true";
 
-        // Определяем ex.id из кнопки подхода внутри
-        const circleBtn = row.querySelector(".set-dot");
-        if (!circleBtn) return;
-        const oc = circleBtn.getAttribute("onclick") || "";
-        const m = oc.match(/openSetLoggerModal\('([^']+)',\s*'([^']+)'/);
-        if (!m) return;
-        const exId = m[2];
+        const exId = row.dataset.exId || (() => {
+          const circleBtn = row.querySelector(".set-dot");
+          if (!circleBtn) return null;
+          const oc = circleBtn.getAttribute("onclick") || "";
+          const m = oc.match(/openSetLoggerModal\('([^']+)',\s*'([^']+)'/);
+          return m ? m[2] : null;
+        })();
+        if (!exId) return;
 
         // Обёртка для свайпа с жесткой изоляцией вертикального скролла
         const wrap = document.createElement("div");
@@ -4125,11 +4126,12 @@
         wrap.appendChild(deleteBtn);
         wrap.appendChild(row);
 
-        row.style.cssText = (row.style.cssText || "") + "position:relative;background:#0c0c0e;border-radius:14px;touch-action:pan-y;will-change:transform;";
+        row.style.cssText = (row.style.cssText || "") + "position:relative;background:#0c0c0e;border-radius:14px;touch-action:pan-y;will-change:transform;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;";
 
         let startX = 0, startY = 0, dx = 0, isSwiping = false, dirDecided = false;
+        let isDraggingGesture = false;
         let thresholdReached = false;
-        const DELETE_THRESHOLD = -125;
+        const DELETE_THRESHOLD = -100;
 
         row.addEventListener("touchstart", e => {
           if (e.touches.length !== 1) return;
@@ -4138,6 +4140,7 @@
           dx = 0;
           isSwiping = false;
           dirDecided = false;
+          isDraggingGesture = false;
           thresholdReached = false;
           row.style.transition = "none";
           deleteBtn.style.transition = "none";
@@ -4153,14 +4156,15 @@
           if (!dirDecided) {
             const ax = Math.abs(diffX);
             const ay = Math.abs(diffY);
-            if (ax < 6 && ay < 6) return;
+            if (ax < 5 && ay < 5) return;
             dirDecided = true;
-            // Распознаем только явный горизонтальный жест влево
-            isSwiping = ax > ay * 1.2 && diffX < 0;
+            // Распознаем только горизонтальный жест влево
+            isSwiping = ax > ay * 1.15 && diffX < 0;
             if (!isSwiping) return;
           }
 
           if (!isSwiping) return;
+          isDraggingGesture = true;
 
           // Жестко блокируем нативный свайп экрана и смещение фона
           if (e.cancelable) e.preventDefault();
@@ -4176,7 +4180,7 @@
 
           row.style.transform = `translate3d(${visualDx}px,0,0)`;
 
-          if (visualDx < -15) {
+          if (visualDx < -12) {
             deleteBtn.style.transform = "translate3d(0,0,0)";
             deleteBtn.style.pointerEvents = "auto";
           } else {
@@ -4206,7 +4210,7 @@
           if (!isSwiping) return;
           isSwiping = false;
 
-          const springEase = "transform 0.32s cubic-bezier(0.18, 0.9, 0.28, 1)";
+          const springEase = "transform 0.30s cubic-bezier(0.18, 0.9, 0.28, 1)";
           row.style.transition = springEase;
           deleteBtn.style.transition = springEase;
 
@@ -4241,6 +4245,13 @@
 
         row.addEventListener("touchend", finishSwipe, { passive: true });
         row.addEventListener("touchcancel", finishSwipe, { passive: true });
+
+        row.addEventListener("click", e => {
+          if (isDraggingGesture || Math.abs(dx) > 6) {
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        }, true);
 
         deleteBtn.addEventListener("click", e => {
           e.stopPropagation();
@@ -9433,7 +9444,7 @@
             }
             const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
             return `
-              <div class="py-3.5 flex items-center justify-between gap-3">
+              <div class="exercise-row py-3.5 flex items-center justify-between gap-3" data-ex-id="${ex.id}">
                 <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
                   <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
@@ -10190,7 +10201,7 @@
         }
 
         return `
-          <div class="py-3.5 flex items-center justify-between gap-2.5">
+          <div class="exercise-row py-3.5 flex items-center justify-between gap-2.5" data-ex-id="${ex.id}">
             <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
               <div class="flex items-center gap-2 min-w-0">
                 <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
