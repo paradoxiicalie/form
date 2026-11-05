@@ -1846,7 +1846,7 @@
           <div id="customPushPromptBlock" class="bg-black/45 border border-white/[0.07] rounded-2xl p-3 space-y-2.5">
             <div class="flex items-center justify-between">
               <label class="text-[10px] mono uppercase tracking-wider text-zinc-400 font-semibold">
-                Твой промпт для Gemini (стиль напоминаний):
+                Твой промпт для ИИ (стиль напоминаний):
               </label>
               <button type="button" onclick="clearPushPoolToCustomOnly()" class="text-[10px] mono text-zinc-500 underline hover:text-zinc-300">
                 Сброс к базе
@@ -1881,7 +1881,7 @@
           </div>
 
           <button type="button" id="btnGenPushAi" onclick="generateAiPushPool()" class="w-full py-2.5 px-3 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.09] text-xs text-zinc-200 font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
-            ✦ Сгенерировать фразы через Gemini 3
+            ✦ Сгенерировать фразы через ИИ
           </button>
         </div>
 
@@ -1973,7 +1973,7 @@
           <div id="customRestPromptBlock" class="bg-black/45 border border-white/[0.07] rounded-2xl p-3 space-y-2.5">
             <div class="flex items-center justify-between">
               <label class="text-[10px] mono uppercase tracking-wider text-zinc-400 font-semibold">
-                Твой промпт для Gemini (стиль фраз отдыха):
+                Твой промпт для ИИ (стиль фраз отдыха):
               </label>
               <button type="button" onclick="clearRestPoolToDefaults()" class="text-[10px] mono text-zinc-500 underline hover:text-zinc-300">
                 Сброс к базе
@@ -2008,7 +2008,7 @@
           </div>
 
           <button type="button" id="btnGenRestAi" onclick="generateAiRestPhrases()" class="w-full py-2.5 px-3 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.09] text-xs text-zinc-200 font-semibold active:scale-98 transition flex items-center justify-center gap-1.5 leading-snug">
-            ✦ Сгенерировать фразы через Gemini 3
+            ✦ Сгенерировать фразы через ИИ
           </button>
         </div>
       </div>
@@ -2017,11 +2017,11 @@
       <div id="panelApi" class="settings-slide-panel space-y-3">
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-semibold text-white uppercase tracking-wide">Ключи Gemini API</span>
+            <span class="text-xs font-semibold text-white uppercase tracking-wide">Пул ключей API (ИИ)</span>
             <div class="flex items-center gap-1.5 shrink-0">
               <span id="activeModelBadge" class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
                 <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span>
-                <span>Gemini 3 Flash</span>
+                <span>ИИ</span>
               </span>
               <span id="keySourceBadge" class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/15 text-zinc-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center">
                 <span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-400"></span>
@@ -2040,7 +2040,7 @@
               <input
                 id="inputApiKey"
                 type="password"
-                placeholder="Вставьте основной ключ (AIza...)"
+                placeholder="Вставьте основной ключ (AIza... или gsk_...)"
                 class="dark-field mono text-xs pr-10"
                 oninput="handleApiKeyInput()"
               />
@@ -2088,7 +2088,7 @@
             <input
               id="inputApiProxy"
               type="text"
-              placeholder="По умолчанию: Google API"
+              placeholder="https://твое-зеркало.workers.dev (без VPN)"
               class="dark-field text-xs text-zinc-200"
               oninput="handleApiProxyInput(this.value)"
             />
@@ -2136,11 +2136,11 @@
           <div class="text-[11px] text-zinc-400 space-y-2 pt-2 border-t border-white/[0.06] leading-normal">
             <div class="flex items-start gap-2">
               <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-zinc-400 shrink-0 font-medium uppercase">SYS</span>
-              <span class="text-zinc-400">При лимите (429) движок перебирает все ключи и переключает модели: Gemini 3 Flash → 2.5 Flash → 2.5 Lite → 2.0 Flash → 1.5 Flash.</span>
+              <span class="text-zinc-400">При исчерпании лимита (429) движок перебирает все ключи пула и переключает модели: Gemini 3 Flash → 2.5 Flash → 2.5 Lite → 2.0 Flash либо Groq (Llama).</span>
             </div>
             <div class="flex items-start gap-2">
               <span class="text-[9px] mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-zinc-400 shrink-0 font-medium uppercase">NET</span>
-              <span class="text-zinc-400">Для прямого подключения к Google API требуется VPN (ограничение региона) либо указание зеркала/прокси.</span>
+              <span class="text-zinc-400">Для прямого подключения к Google API требуется VPN, либо укажи свой Cloudflare Worker или используй Groq без VPN.</span>
             </div>
           </div>
         </div>
@@ -4322,21 +4322,64 @@
     let lastActiveKeyIndex = 1;
     let apiKeyVerifiedStatus = null; // null: не проверялся, true: в сети, false: ошибка
 
+    function getEffectiveGroqKey() {
+      const gInput = document.getElementById("inputGroqApiKey");
+      if (gInput && gInput.value && gInput.value.trim().length > 8) {
+        return gInput.value.trim();
+      }
+      const prim = getEffectiveApiKey();
+      if (prim && (prim.startsWith("gsk_") || prim.startsWith("sk-or-"))) {
+        return prim;
+      }
+      return (state.groqApiKey || localStorage.getItem("form_groq_api_key") || "").trim();
+    }
+
+    function getActiveRoutingChannel() {
+      const rawBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || "").trim();
+      const currentModel = String(lastActiveGeminiModel || "").toLowerCase();
+      const isAlt = currentModel.includes("llama") || currentModel.includes("groq") || currentModel.includes("gemma") || currentModel.includes("deepseek");
+
+      if (isAlt) {
+        return {
+          type: "groq",
+          name: "Groq (без VPN)",
+          short: "Groq"
+        };
+      }
+
+      if (rawBase) {
+        const isCloudflare = /workers\.dev|cloudflare/i.test(rawBase);
+        return {
+          type: isCloudflare ? "cloudflare" : "proxy",
+          name: isCloudflare ? "Cloudflare Worker (без VPN)" : "Шлюз / Прокси",
+          short: isCloudflare ? "CF Worker" : "Proxy"
+        };
+      }
+
+      return {
+        type: "direct",
+        name: "Google API (VPN)",
+        short: "Google API"
+      };
+    }
+
     function getShortModelLabel(modelName) {
-      if (!modelName) return "Gemini 3";
-      if (modelName.includes("scout")) return "Llama 4 Scout";
-      if (modelName.includes("maverick")) return "Llama 4 Mav";
-      if (modelName.includes("llama-4")) return "Llama 4";
-      if (modelName.includes("llama-3.3")) return "Llama 3.3";
-      if (modelName.includes("llama-3.2")) return "Llama 3.2";
-      if (modelName.includes("llama-3.1")) return "Llama 3.1";
-      if (modelName.includes("gemma")) return "Gemma 2";
-      if (modelName.includes("groq") || modelName.includes("Groq")) return "Groq";
-      if (modelName.includes("3")) return "Gemini 3";
-      if (modelName.includes("2.5") && modelName.includes("lite")) return "G2.5 Lite";
-      if (modelName.includes("2.5")) return "Gemini 2.5";
-      if (modelName.includes("2.0")) return "Gemini 2.0";
-      return "Gemini";
+      if (!modelName) return "ИИ";
+      const m = String(modelName).toLowerCase();
+      if (m.includes("scout")) return "Llama 4 Scout";
+      if (m.includes("maverick")) return "Llama 4 Mav";
+      if (m.includes("llama-4")) return "Llama 4";
+      if (m.includes("llama-3.3")) return "Llama 3.3";
+      if (m.includes("llama-3.2")) return "Llama 3.2";
+      if (m.includes("llama-3.1")) return "Llama 3.1";
+      if (m.includes("gemma")) return "Gemma 2";
+      if (m.includes("groq")) return "Llama";
+      if (m.includes("gemini-3") || m.includes("3-flash")) return "Gemini 3";
+      if (m.includes("2.5") && m.includes("lite")) return "G2.5 Lite";
+      if (m.includes("2.5")) return "Gemini 2.5";
+      if (m.includes("2.0")) return "Gemini 2.0";
+      if (m.includes("deepseek")) return "DeepSeek";
+      return "ИИ";
     }
 
     function getAllApiKeys() {
@@ -4360,14 +4403,26 @@
       const modelBadge = document.getElementById("activeModelBadge");
       if (!modelBadge) return;
       const shortModel = getShortModelLabel(modelName);
-      const keyLabel = keyNumber ? ` · K#${keyNumber}` : "";
+      const channel = getActiveRoutingChannel();
+      let label = "";
+
+      if (channel.type === "groq") {
+        label = `Groq · ${shortModel}`;
+      } else if (channel.type === "cloudflare") {
+        label = `CF · ${shortModel}${keyNumber ? ` · K#${keyNumber}` : ""}`;
+      } else if (channel.type === "proxy") {
+        label = `Proxy · ${shortModel}${keyNumber ? ` · K#${keyNumber}` : ""}`;
+      } else {
+        label = `${shortModel}${keyNumber ? ` · K#${keyNumber}` : ""}`;
+      }
+
       const dotColor = isLive ? "bg-emerald-400" : "bg-zinc-500";
       const badgeClass = isLive 
         ? "text-[10px] mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 flex items-center gap-1 shrink-0 whitespace-nowrap"
         : "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
 
       modelBadge.className = badgeClass;
-      modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block ${dotColor}"></span><span>${shortModel}${keyLabel}</span>`;
+      modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block ${dotColor}"></span><span>${label}</span>`;
     }
 
     function syncKeyFieldUI() {
@@ -4387,19 +4442,25 @@
       }
 
       const allKeys = getAllApiKeys();
+      const groqKey = getEffectiveGroqKey();
 
-      if (allKeys.length === 0) {
+      if (allKeys.length === 0 && !groqKey) {
         apiKeyVerifiedStatus = false;
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Не задан</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
         if (modelBadge) {
-          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>Gemini 3 Flash</span>`;
+          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>ИИ</span>`;
           modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 flex items-center gap-1 shrink-0 whitespace-nowrap";
         }
         return;
       }
 
-      const totalPoolText = allKeys.length > 1 ? `Пул: ${allKeys.length}` : "Сохранён";
+      let totalPoolText = "Сохранён";
+      if (allKeys.length > 1) {
+        totalPoolText = `Пул: ${allKeys.length}`;
+      } else if (allKeys.length === 0 && groqKey) {
+        totalPoolText = "Groq";
+      }
 
       if (apiKeyVerifiedStatus === true) {
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-emerald-400"></span><span>В сети</span>`;
@@ -4409,15 +4470,13 @@
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Ошибка</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
         if (modelBadge) {
-          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-red-400"></span><span>Gemini 3 Flash</span>`;
-          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 flex items-center gap-1 shrink-0 whitespace-nowrap";
+          updateActiveModelBadge(lastActiveGeminiModel, lastActiveKeyIndex, false);
         }
       } else {
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-400"></span><span>${totalPoolText}</span>`;
         badge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/15 text-zinc-300 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap min-w-[62px] text-center";
         if (modelBadge) {
-          modelBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full inline-block bg-zinc-500"></span><span>Gemini 3 Flash</span>`;
-          modelBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap";
+          updateActiveModelBadge(lastActiveGeminiModel, lastActiveKeyIndex, false);
         }
       }
     }
@@ -4576,8 +4635,9 @@
       const input = document.getElementById("inputApiKey");
       const val = input ? input.value.trim() : "";
       const allKeys = getAllApiKeys();
-      if (!val && allKeys.length === 0) {
-        showToast("Вставьте хотя бы один ключ Gemini API", true);
+      const groqKey = getEffectiveGroqKey();
+      if (!val && allKeys.length === 0 && !groqKey) {
+        showToast("Вставьте хотя бы один API-ключ", true);
         return;
       }
 
@@ -5260,7 +5320,7 @@
                   try {
                     data = await nativeFetchGemini(url, payload);
                   } catch (nativeErr) {
-                    throw new Error("Включи VPN! Запрос к Gemini заблокирован в РФ");
+                    throw new Error("Включите VPN или укажите Cloudflare шлюз в настройках API");
                   }
                 } else {
                   throw fetchErr;
@@ -5293,7 +5353,10 @@
         try {
           const altData = await callAlternativeProvider(groqKey, payload);
           apiKeyVerifiedStatus = true;
-          updateActiveModelBadge(window._lastUsedAlternativeModel || (groqKey.startsWith("gsk_") ? "Groq" : "OpenRouter"), 1, true);
+          const altModel = window._lastUsedAlternativeModel || (groqKey.startsWith("gsk_") ? "Groq" : "OpenRouter");
+          lastActiveGeminiModel = altModel;
+          lastActiveKeyIndex = 1;
+          updateActiveModelBadge(altModel, 1, true);
           syncKeyFieldUI();
           return altData;
         } catch (altErr) {
@@ -5307,7 +5370,7 @@
       if (lastError && /quota|RESOURCE_EXHAUSTED|429/i.test(lastError.message)) {
         throw new Error("Лимиты всех ключей и каскада моделей исчерпаны. Добавьте резервный ключ из другого аккаунта.");
       }
-      throw lastError || new Error("Ошибка пула Gemini API");
+      throw lastError || new Error("Ошибка пула API (ИИ)");
     }
 
     async function callGemini3Flash(payload) {
@@ -5316,13 +5379,14 @@
 
     async function checkApiKeyLive(isFromSave) {
       const keys = getAllApiKeys();
+      const groqKey = getEffectiveGroqKey();
       const dot = document.getElementById("apiKeyCheckDot");
       const txt = document.getElementById("apiKeyCheckText");
       const lat = document.getElementById("apiKeyLatency");
       const modelBadge = document.getElementById("activeModelBadge");
       const keyBadge = document.getElementById("keySourceBadge");
 
-      if (keys.length === 0) {
+      if (keys.length === 0 && !groqKey) {
         apiKeyVerifiedStatus = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shrink-0";
         if (txt) txt.textContent = "Ключ пустой — вставьте ключ выше";
@@ -5333,7 +5397,16 @@
       }
 
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0";
-      if (txt) txt.textContent = `Пингуем пул ключей (${keys.length} шт.)...`;
+      const channel = getActiveRoutingChannel();
+      if (txt) {
+        if (keys.length > 0) {
+          txt.textContent = channel.type === "cloudflare"
+            ? "Пингуем через Cloudflare..."
+            : `Пингуем пул ключей (${keys.length} шт.)...`;
+        } else {
+          txt.textContent = "Пингуем Groq API...";
+        }
+      }
       if (lat) lat.textContent = "";
 
       if (keyBadge) {
@@ -5352,14 +5425,27 @@
         apiKeyVerifiedStatus = true;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0";
         const shortModel = getShortModelLabel(lastActiveGeminiModel);
-        if (txt) txt.textContent = `Активен: ${shortModel} · K#${lastActiveKeyIndex}`;
+        const curChannel = getActiveRoutingChannel();
+
+        let statusStr = "";
+        if (curChannel.type === "groq") {
+          statusStr = `Groq → ${shortModel} (без VPN)`;
+        } else if (curChannel.type === "cloudflare") {
+          statusStr = `CF Worker → ${shortModel} · K#${lastActiveKeyIndex}`;
+        } else if (curChannel.type === "proxy") {
+          statusStr = `Шлюз → ${shortModel} · K#${lastActiveKeyIndex}`;
+        } else {
+          statusStr = `Google API → ${shortModel} · K#${lastActiveKeyIndex}`;
+        }
+
+        if (txt) txt.textContent = statusStr;
         if (lat) lat.textContent = `${ms} мс`;
 
         syncKeyFieldUI();
 
         showToast(isFromSave
-          ? `Ключи сохранены и активны (${ms} мс)`
-          : `Пул активен (${shortModel} · K#${lastActiveKeyIndex}, ${ms} мс)`
+          ? `Ключи сохранены (${statusStr}, ${ms} мс)`
+          : `Каскад активен: ${statusStr} (${ms} мс)`
         );
         return true;
       } catch (err) {
@@ -5372,7 +5458,7 @@
 
         syncKeyFieldUI();
 
-        showToast(errMsg.includes("VPN") ? errMsg : `Ошибка API: ${errMsg.slice(0, 55)}`, true);
+        showToast(errMsg.includes("VPN") || errMsg.includes("шлюз") ? errMsg : `Ошибка API: ${errMsg.slice(0, 55)}`, true);
         return false;
       }
     }
@@ -5513,7 +5599,7 @@
     };
 
     async function generateAiPushPool() {
-      showToast("Генерируем новые фразы через Gemini 3...");
+      showToast("Генерируем новые фразы через ИИ...");
       try {
         const prompt = `Придумай 10 коротких, хлестких, ироничных напоминаний записать еду и КБЖУ для парня, который качается и любит дарк-минимализм. Без смайлов, до 85 символов. Верни строго JSON массив строк: ["фраза 1", "фраза 2"]`;
         const data = await callGemini3Flash({
@@ -6051,9 +6137,10 @@
     };
 
     window.generateAiRestPhrases = async function() {
-      const key = getEffectiveApiKey();
-      if (!key) {
-        showToast("Вставьте API-ключ Gemini во вкладке «API Ключ»", true);
+      const allKeys = getAllApiKeys();
+      const groqKey = getEffectiveGroqKey();
+      if (allKeys.length === 0 && !groqKey) {
+        showToast("Вставьте API-ключ во вкладке «API Ключ»", true);
         return;
       }
       const ta = document.getElementById("customRestPromptInput");
@@ -7507,7 +7594,7 @@
           loadingText.textContent = `Штрихкод ${localBarcode.code}: ищем КБЖУ...`;
           if (await fetchProductByBarcode(localBarcode.code, true)) return;
         }
-        loadingText.textContent = "Экспресс-чтение этикетки (Gemini 3)...";
+        loadingText.textContent = "Экспресс-чтение этикетки через ИИ...";
         await analyzeImageWithGemini(base64Data, "image/jpeg");
       } catch (err) {
         showToast("Ошибка обработки кадра", true);
@@ -7551,7 +7638,12 @@
           showToast(`Распознано: ${parsed.name}`);
         }
       } catch (err) {
-        showToast(`Ошибка AI: ${String(err.message || "").slice(0, 50)}`, true);
+        const errMsg = String(err.message || "");
+        if (errMsg.includes("VPN") || errMsg.includes("шлюз")) {
+          showToast(errMsg, true);
+        } else {
+          showToast(`Ошибка распознавания: ${errMsg.slice(0, 50)}`, true);
+        }
       }
     }
 
@@ -11155,7 +11247,12 @@ ${knownPiecesContext}
           showToast("Не удалось определить объект на фото", true);
         }
       } catch (err) {
-        showToast(`Ошибка AI: ${String(err.message || "").slice(0, 50)}`, true);
+        const errMsg = String(err.message || "");
+        if (errMsg.includes("VPN") || errMsg.includes("шлюз")) {
+          showToast(errMsg, true);
+        } else {
+          showToast(`Ошибка распознавания: ${errMsg.slice(0, 50)}`, true);
+        }
       }
     };
 
