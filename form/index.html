@@ -2366,6 +2366,33 @@
     </div>
   </div>
 
+  <!-- МОДАЛКА: ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ДНЯ ТРЕНИРОВКИ -->
+  <div id="confirmDeleteDayModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeConfirmDeleteDayModal()">
+    <div class="sheet-panel text-center max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+      <div class="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/25 flex items-center justify-center mx-auto mb-3 text-red-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+          <path d="M10 11v6M14 11v6"></path>
+          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"></path>
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-white mb-1.5" id="confirmDeleteDayTitle">Удалить тренировочный день?</h3>
+      <p class="text-xs text-zinc-400 mb-5 leading-relaxed">
+        День «<span class="text-white font-semibold" id="confirmDeleteDayName">Спина</span>» и все его упражнения будут удалены из сплита безвозвратно.
+      </p>
+      <div class="grid grid-cols-2 gap-2.5">
+        <button type="button" onclick="closeConfirmDeleteDayModal()" class="py-3 rounded-2xl bg-white/[0.08] hover:bg-white/15 text-zinc-300 font-semibold text-xs border border-white/10 active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="confirmDeleteProgram()" class="py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs border border-red-500/30 active:scale-95 transition shadow-lg shadow-red-950/40">
+          Да, удалить
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- МОДАЛКА 5: РЕДАКТИРОВАНИЕ ПОРЦИИ ЕДЫ -->
   <div id="editModal" class="sheet-backdrop" onclick="if(event.target===this) closeEditModal()">
     <div class="sheet-panel">
@@ -4066,12 +4093,13 @@
     }
 
     // =========================================================================
-    // СВАЙП ВЛЕВО ДЛЯ УДАЛЕНИЯ УПРАЖНЕНИЯ (Telegram-стиль)
+    // СВАЙП ВЛЕВО ДЛЯ УДАЛЕНИЯ УПРАЖНЕНИЯ (Telegram-стиль: плавный snapback)
     // =========================================================================
     function attachExerciseSwipeDelete(container, progId) {
       if (!container) return;
-      const rows = container.querySelectorAll(".py-3\\.5.flex.items-center");
-      rows.forEach((row, rowIdx) => {
+      container.style.overflowX = "hidden";
+      const rows = container.querySelectorAll(".py-3\.5.flex.items-center");
+      rows.forEach((row) => {
         if (row.dataset.swipeDeleteAttached) return;
         row.dataset.swipeDeleteAttached = "true";
 
@@ -4083,89 +4111,150 @@
         if (!m) return;
         const exId = m[2];
 
-        // Обёртка для swipe
+        // Обёртка для свайпа с жесткой изоляцией вертикального скролла
         const wrap = document.createElement("div");
-        wrap.style.cssText = "position:relative;overflow:hidden;";
+        wrap.className = "exercise-swipe-wrap";
+        wrap.style.cssText = "position:relative;overflow:hidden;border-radius:14px;margin-bottom:2px;touch-action:pan-y;";
+
         const deleteBtn = document.createElement("div");
-        deleteBtn.style.cssText = "position:absolute;top:0;right:0;bottom:0;width:84px;display:flex;align-items:center;justify-content:center;background:#991b1b;border-radius:12px;transform:translateX(100%);transition:transform 0.22s ease;pointer-events:none;";
-        deleteBtn.innerHTML = '<svg style="width:22px;height:22px;stroke:white" fill="none" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
+        deleteBtn.className = "exercise-swipe-delete-btn";
+        deleteBtn.style.cssText = "position:absolute;top:0;right:0;bottom:0;width:100%;max-width:140px;display:flex;align-items:center;justify-content:flex-end;padding-right:24px;background:#dc2626;border-radius:14px;pointer-events:none;transform:translate3d(100%,0,0);transition:transform 0.28s cubic-bezier(0.18,0.9,0.28,1);";
+        deleteBtn.innerHTML = '<svg style="width:22px;height:22px;stroke:white;transition:transform 0.18s cubic-bezier(0.2,1,0.3,1)" fill="none" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
 
         row.parentNode.insertBefore(wrap, row);
         wrap.appendChild(deleteBtn);
         wrap.appendChild(row);
-        row.style.cssText = (row.style.cssText || "") + "position:relative;background:inherit;transition:transform 0.22s ease;border-radius:12px;";
+
+        row.style.cssText = (row.style.cssText || "") + "position:relative;background:#0c0c0e;border-radius:14px;touch-action:pan-y;will-change:transform;";
 
         let startX = 0, startY = 0, dx = 0, isSwiping = false, dirDecided = false;
-        let currentOpen = false;
+        let thresholdReached = false;
+        const DELETE_THRESHOLD = -125;
 
         row.addEventListener("touchstart", e => {
+          if (e.touches.length !== 1) return;
           startX = e.touches[0].clientX;
           startY = e.touches[0].clientY;
-          dx = 0; isSwiping = false; dirDecided = false;
+          dx = 0;
+          isSwiping = false;
+          dirDecided = false;
+          thresholdReached = false;
+          row.style.transition = "none";
+          deleteBtn.style.transition = "none";
         }, { passive: true });
 
         row.addEventListener("touchmove", e => {
+          if (e.touches.length !== 1) return;
+          const curX = e.touches[0].clientX;
+          const curY = e.touches[0].clientY;
+          const diffX = curX - startX;
+          const diffY = curY - startY;
+
           if (!dirDecided) {
-            const ax = Math.abs(e.touches[0].clientX - startX);
-            const ay = Math.abs(e.touches[0].clientY - startY);
-            if (ax < 5 && ay < 5) return;
+            const ax = Math.abs(diffX);
+            const ay = Math.abs(diffY);
+            if (ax < 6 && ay < 6) return;
             dirDecided = true;
-            isSwiping = ax > ay * 1.4 && e.touches[0].clientX < startX;
+            // Распознаем только явный горизонтальный жест влево
+            isSwiping = ax > ay * 1.2 && diffX < 0;
             if (!isSwiping) return;
           }
+
           if (!isSwiping) return;
-          dx = Math.min(0, e.touches[0].clientX - startX);
-          if (e.cancelable) e.stopPropagation();
-          const clamped = Math.max(-155, dx);
-          row.style.transform = `translateX(${clamped}px)`;
-          if (clamped < -20) {
-            deleteBtn.style.transform = "translateX(0)";
+
+          // Жестко блокируем нативный свайп экрана и смещение фона
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+
+          dx = diffX;
+          let visualDx = dx;
+          // Плавное упругое сопротивление (rubber-banding) за порогом удаления
+          if (visualDx < DELETE_THRESHOLD) {
+            const extra = visualDx - DELETE_THRESHOLD;
+            visualDx = DELETE_THRESHOLD + extra * 0.35;
+          }
+
+          row.style.transform = `translate3d(${visualDx}px,0,0)`;
+
+          if (visualDx < -15) {
+            deleteBtn.style.transform = "translate3d(0,0,0)";
             deleteBtn.style.pointerEvents = "auto";
           } else {
-            deleteBtn.style.transform = "translateX(100%)";
+            deleteBtn.style.transform = "translate3d(100%,0,0)";
+            deleteBtn.style.pointerEvents = "none";
           }
-          if (clamped <= -155) {
-            deleteBtn.querySelector("svg").style.transform = "scale(1.35)";
+
+          const svg = deleteBtn.querySelector("svg");
+          if (visualDx <= DELETE_THRESHOLD) {
+            if (!thresholdReached) {
+              thresholdReached = true;
+              if (typeof haptic === "function") haptic("selection");
+              else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("selection");
+            }
+            if (svg) svg.style.transform = "scale(1.25) rotate(-6deg)";
+            deleteBtn.style.background = "#b91c1c";
           } else {
-            deleteBtn.querySelector("svg").style.transform = "scale(1)";
+            if (thresholdReached) {
+              thresholdReached = false;
+            }
+            if (svg) svg.style.transform = "scale(1) rotate(0deg)";
+            deleteBtn.style.background = "#dc2626";
           }
         }, { passive: false });
 
-        row.addEventListener("touchend", e => {
+        const finishSwipe = () => {
           if (!isSwiping) return;
-          if (dx <= -155) {
-            if (typeof haptic === "function") haptic("medium"); else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
-            row.style.transform = "translateX(-100%)";
-            wrap.style.maxHeight = wrap.offsetHeight + "px";
-            wrap.style.overflow = "hidden";
+          isSwiping = false;
+
+          const springEase = "transform 0.32s cubic-bezier(0.18, 0.9, 0.28, 1)";
+          row.style.transition = springEase;
+          deleteBtn.style.transition = springEase;
+
+          if (dx <= DELETE_THRESHOLD) {
+            // Достигли дистанции удаления: анимация улетания и схлопывание
+            if (typeof haptic === "function") haptic("medium");
+            else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
+
+            row.style.transform = "translate3d(-100%,0,0)";
+            deleteBtn.style.transform = "translate3d(0,0,0)";
+
             setTimeout(() => {
-              wrap.style.transition = "max-height 0.28s ease, opacity 0.2s";
+              wrap.style.transition = "max-height 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease, margin 0.22s ease";
+              wrap.style.maxHeight = wrap.offsetHeight + "px";
+              wrap.offsetHeight; // force reflow
               wrap.style.maxHeight = "0px";
               wrap.style.opacity = "0";
-              setTimeout(() => { deleteExerciseFromSplitById(progId, exId); }, 280);
-            }, 160);
-          } else if (dx <= -84) {
-            row.style.transform = "translateX(-84px)";
-            currentOpen = true;
-            deleteBtn.style.pointerEvents = "auto";
+              wrap.style.marginBottom = "0px";
+              setTimeout(() => {
+                deleteExerciseFromSplitById(progId, exId);
+              }, 260);
+            }, 140);
           } else {
-            row.style.transform = "translateX(0)";
-            deleteBtn.style.transform = "translateX(100%)";
+            // НЕ дотянули до порога: плавно слайдим обратно на исходное место (Telegram-стиль)
+            row.style.transform = "translate3d(0,0,0)";
+            deleteBtn.style.transform = "translate3d(100%,0,0)";
             deleteBtn.style.pointerEvents = "none";
-            currentOpen = false;
+            const svg = deleteBtn.querySelector("svg");
+            if (svg) svg.style.transform = "scale(1) rotate(0deg)";
           }
-        }, { passive: true });
+        };
+
+        row.addEventListener("touchend", finishSwipe, { passive: true });
+        row.addEventListener("touchcancel", finishSwipe, { passive: true });
 
         deleteBtn.addEventListener("click", e => {
           e.stopPropagation();
-          if (typeof haptic === "function") haptic("medium"); else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
-          row.style.transform = "translateX(-100%)";
+          if (typeof haptic === "function") haptic("medium");
+          else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
+          row.style.transition = "transform 0.24s cubic-bezier(0.18, 0.9, 0.28, 1)";
+          row.style.transform = "translate3d(-100%,0,0)";
           setTimeout(() => {
-            wrap.style.transition = "max-height 0.28s ease, opacity 0.2s";
+            wrap.style.transition = "max-height 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease, margin 0.22s ease";
             wrap.style.maxHeight = "0px";
             wrap.style.opacity = "0";
-            setTimeout(() => { deleteExerciseFromSplitById(progId, exId); }, 280);
-          }, 100);
+            wrap.style.marginBottom = "0px";
+            setTimeout(() => { deleteExerciseFromSplitById(progId, exId); }, 260);
+          }, 120);
         });
       });
     }
@@ -9268,7 +9357,7 @@
             <button type="button" onclick="assignProgramToSelectedWeekday('rest')" class="stack-pill shrink-0">
               <span>Сделать отдыхом</span>
             </button>
-            <button type="button" onclick="deleteProgramCompletely('${activeProg.id}')" class="stack-pill shrink-0" style="color:#f87171; border-color:rgba(248,113,113,0.3)">
+            <button type="button" onclick="requestDeleteProgram('${activeProg.id}')" class="stack-pill shrink-0" style="color:#f87171; border-color:rgba(248,113,113,0.3)">
               <span>Удалить день</span>
             </button>
             <button type="button" onclick="openDayManagerModal()" class="stack-pill shrink-0">
@@ -9361,6 +9450,30 @@
       }
 
       syncNativeWidget();
+    };
+
+    let pendingDeleteProgId = null;
+
+    window.requestDeleteProgram = function(progId) {
+      if (!progId || !state.workout?.programs?.[progId]) return;
+      pendingDeleteProgId = progId;
+      const prog = state.workout.programs[progId];
+      const nameEl = document.getElementById("confirmDeleteDayName");
+      if (nameEl) nameEl.textContent = `${prog.short} · ${prog.title}`;
+      const modal = document.getElementById("confirmDeleteDayModal");
+      if (modal) modal.classList.add("open");
+    };
+
+    window.closeConfirmDeleteDayModal = function() {
+      pendingDeleteProgId = null;
+      document.getElementById("confirmDeleteDayModal")?.classList.remove("open");
+    };
+
+    window.confirmDeleteProgram = function() {
+      if (!pendingDeleteProgId) return;
+      const idToDelete = pendingDeleteProgId;
+      closeConfirmDeleteDayModal();
+      deleteProgramCompletely(idToDelete);
     };
 
     // Полное удаление дня (работает даже для последнего оставшегося дня!)
@@ -9500,7 +9613,7 @@
               <button type="button" onclick="assignProgramToSelectedWeekday('${p.id}'); closeDayManagerModal();" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-semibold text-white">
                 Поставить на ${dayMeta.short || 'день'}
               </button>
-              <button type="button" onclick="deleteProgramCompletely('${p.id}')" class="px-2 py-1 rounded-lg bg-red-500/15 text-red-400 text-[10px] font-semibold">
+              <button type="button" onclick="requestDeleteProgram('${p.id}')" class="px-2 py-1 rounded-lg bg-red-500/15 text-red-400 text-[10px] font-semibold">
                 Удалить
               </button>
             </div>
@@ -9534,8 +9647,8 @@
     window.deleteCurrentWorkoutProgramDay = function() {
       const dow = getSafeDow();
       const targetId = state.workout.weekSchedule?.[dow] || activeProgramId;
-      deleteProgramCompletely(targetId);
       closeDayManagerModal();
+      requestDeleteProgram(targetId);
     };
 
     window.createNewWorkoutProgramDay = function() {
@@ -12001,6 +12114,7 @@ ${knownPiecesContext}
         formulaModal: () => typeof closeFormulaModal === "function" && closeFormulaModal(),
         editModal: () => typeof closeEditModal === "function" && closeEditModal(),
         targetEditorModal: () => typeof closeTargetEditorModal === "function" && closeTargetEditorModal(),
+        confirmDeleteDayModal: () => typeof closeConfirmDeleteDayModal === "function" && closeConfirmDeleteDayModal(),
         dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal(),
         exerciseNotesModal: () => typeof closeExerciseNotesModal === "function" && closeExerciseNotesModal()
       };
@@ -12141,7 +12255,7 @@ ${knownPiecesContext}
         if (e.touches.length !== 1) return;
 
         const target = e.target;
-        if (target.closest("#stackAndWeightStrip, #splitProgramPills, input, textarea, select, .no-swipe")) {
+        if (target.closest("#stackAndWeightStrip, #splitProgramPills, #workoutExercisesContainer, .exercise-swipe-wrap, [data-swipe-delete-attached], input, textarea, select, .no-swipe")) {
           cancelGesture = true;
           return;
         }
