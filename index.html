@@ -973,6 +973,7 @@
         </button>
       </div>
     </div>
+    </div>
 
     <!-- ВКЛАДКА 2: СПЛИТ И ТРЕНИРОВКИ (КАЛЕНДАРЬ + ОБЪЕМ + ПРОГРЕССИЯ) -->
     <div id="viewSplit">
@@ -2868,6 +2869,7 @@
         </button>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- МОДАЛКА: ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ДНЯ ТРЕНИРОВКИ -->
@@ -12017,8 +12019,19 @@
         }
         if (!state.goalCalcMode) state.goalCalcMode = "auto";
         if (!state.dietViewMode) state.dietViewMode = "plan";
-        if (!state.mealPlanTemplate || !Array.isArray(state.mealPlanTemplate.meals)) {
+        if (!state.mealPlanTemplate || !Array.isArray(state.mealPlanTemplate.meals) || state.mealPlanTemplate.meals.length === 0) {
           state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+        } else {
+          // Мягкая миграция структуры слотов
+          state.mealPlanTemplate.meals.forEach((m, idx) => {
+            if (!m.id) m.id = "meal_" + (idx + 1);
+            if (!m.title) m.title = "Прием " + (idx + 1);
+            if (m.hasVariants) {
+              if (!m.variants || typeof m.variants !== "object") m.variants = {};
+            } else {
+              if (!Array.isArray(m.items)) m.items = [];
+            }
+          });
         }
         if (!state.dailyMealPlanProgress || typeof state.dailyMealPlanProgress !== "object") {
           state.dailyMealPlanProgress = {};
@@ -13386,13 +13399,16 @@
     // =========================================================================
     // РЕНДЕР ИНТЕРАКТИВНОГО ПЛАНА ПИТАНИЯ (Obsidian Noir)
     // =========================================================================
+    const pencilSvg = '<svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>';
+    window.pencilSvg = pencilSvg;
+
     function renderCoachMealPlan() {
       const container = document.getElementById("coachMealPlanSection");
       if (!container) return;
 
       const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
       const progress = getTodayProgress();
-      const accent = getActiveThemeObject().cal;
+      const accent = (typeof getActiveThemeObject === "function" && getActiveThemeObject()?.cal) || "#ef4444";
 
       let htmlCards = "";
 
@@ -13458,7 +13474,8 @@
 
         if (meal.hasVariants) {
           const activeVar = progress.variantChoice?.[meal.id] || progress.variantChoice?.breakfast || meal.activeVariant || Object.keys(meal.variants || {})[0] || "A";
-          mealItems = (meal.variants?.[activeVar]?.items || []);
+          const varData = meal.variants?.[activeVar];
+          mealItems = Array.isArray(varData) ? varData : (varData?.items || []);
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
             <div class="flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5">
@@ -14002,12 +14019,6 @@
         }
       }
 
-      if (typeof renderStepsCard === "function") renderStepsCard();
-      if (state.dietViewMode === "plan" && typeof renderCoachMealPlan === "function") renderCoachMealPlan();
-      renderStackAndWeightStrip();
-
-      countEl.textContent = state.todayItems.length > 0 ? `${state.todayItems.length} поз.` : "";
-
       // Процент выполнения суточной нормы БЖУ
       const pTargetPct = Math.round((totalP / tP) * 100);
       const fTargetPct = Math.round((totalF / tF) * 100);
@@ -14019,6 +14030,28 @@
       if (pPctEl) pPctEl.textContent = `Б ${pTargetPct}%`;
       if (fPctEl) fPctEl.textContent = `Ж ${fTargetPct}%`;
       if (cPctEl) cPctEl.textContent = `У ${cTargetPct}%`;
+
+      try {
+        if (typeof renderStackAndWeightStrip === "function") renderStackAndWeightStrip();
+      } catch (err) {
+        console.error("renderStackAndWeightStrip failed:", err);
+      }
+
+      try {
+        if (typeof renderStepsCard === "function") renderStepsCard();
+      } catch (err) {
+        console.error("renderStepsCard failed:", err);
+      }
+
+      try {
+        if (state.dietViewMode === "plan" && typeof renderCoachMealPlan === "function") {
+          renderCoachMealPlan();
+        }
+      } catch (err) {
+        console.error("renderCoachMealPlan failed:", err);
+      }
+
+      if (countEl) countEl.textContent = state.todayItems.length > 0 ? `${state.todayItems.length} поз.` : "";
 
       // Подсчет калорий по приемам пищи (FatSecret Meal Summary)
       let calBreakfast = 0, calLunch = 0, calDinner = 0, calSnack = 0;
