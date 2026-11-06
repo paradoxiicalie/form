@@ -2561,6 +2561,242 @@
     </div>
   </div>
 
+  
+  <!-- МОДАЛКА: БЫСТРЫЙ ВЕС / ШТУКИ ПО ТАПУ НА ПРОДУКТ -->
+  <div id="quickWeightModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeQuickWeightModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
+      <div class="flex items-center justify-between mb-2.5">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Быстрый вес на сегодня</span>
+          <h3 id="quickWeightItemName" class="text-sm font-bold text-white mt-0.5 truncate max-w-[250px]">Продукт</h3>
+        </div>
+        <button type="button" onclick="closeQuickWeightModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <!-- Поштучный счетчик (если товар штучный) -->
+        <div id="quickWeightPieceRow" class="hidden mb-3 pb-3 border-b border-white/[0.06]">
+          <label class="text-[11px] text-zinc-400 block mb-1.5">Количество штук:</label>
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="stepQuickPiece(-1)" class="w-10 h-9 rounded-xl bg-white/[0.06] text-white font-bold mono text-sm active:scale-95 transition">-1</button>
+            <input id="quickWeightPieceInput" type="number" oninput="onQuickPieceChange()" class="dark-field mono text-center text-base font-bold flex-1" style="color: var(--accent-cal)" />
+            <button type="button" onclick="stepQuickPiece(1)" class="w-10 h-9 rounded-xl bg-white/[0.06] text-white font-bold mono text-sm active:scale-95 transition">+1</button>
+          </div>
+        </div>
+
+        <label class="text-[11px] text-zinc-400 block mb-1.5">Вес порции (грамм):</label>
+        <div class="flex items-center gap-1.5 mb-3">
+          <button type="button" onclick="stepQuickWeightVal(-25)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">-25</button>
+          <button type="button" onclick="stepQuickWeightVal(-10)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">-10</button>
+          <input id="quickWeightGramsInput" type="number" oninput="updateQuickWeightPreview()" class="dark-field mono text-center text-lg font-bold flex-1" style="color: var(--accent-cal)" />
+          <button type="button" onclick="stepQuickWeightVal(10)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">+10</button>
+          <button type="button" onclick="stepQuickWeightVal(25)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">+25</button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-1.5 p-2 bg-black/40 rounded-xl text-center mono text-[11px]">
+          <div><div class="text-[9px] text-zinc-500">Ккал</div><div id="quickWeightPrevCal" class="font-bold text-white">0</div></div>
+          <div><div class="text-[9px] text-zinc-500">Б</div><div id="quickWeightPrevP" class="font-bold text-white">0г</div></div>
+          <div><div class="text-[9px] text-zinc-500">Ж</div><div id="quickWeightPrevF" class="font-bold text-white">0г</div></div>
+          <div><div class="text-[9px] text-zinc-500">У</div><div id="quickWeightPrevC" class="font-bold text-white">0г</div></div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeQuickWeightModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="submitQuickWeight()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Применить на сегодня
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ДОБАВЛЕНИЕ ПРОДУКТА В ПРИЕМ ПИЩИ -->
+  <div id="addMealProductModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeAddMealProductModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
+      <div class="flex items-center justify-between mb-2.5">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Добавить продукт</span>
+          <h3 id="addMealProductSlotTitle" class="text-sm font-bold text-white mt-0.5">В прием пищи</h3>
+        </div>
+        <button type="button" onclick="closeAddMealProductModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="space-y-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Поиск в базе РФ:</label>
+          <input
+            id="addMealProductSearchInput"
+            type="text"
+            placeholder="Напр. Рис, Грудка, Творог, Банан..."
+            class="dark-field text-xs text-white"
+            oninput="handleAddMealProductSearch(this.value)"
+          />
+          <div id="addMealProductSearchResults" class="mt-2 space-y-1 max-h-36 overflow-y-auto no-scrollbar"></div>
+        </div>
+
+        <div id="addMealProductSelectedBox" class="hidden pt-2 border-t border-white/[0.06]">
+          <div class="flex items-center justify-between mb-2">
+            <span id="addMealProductSelectedName" class="text-xs font-bold text-white truncate max-w-[70%]">Выбранный</span>
+            <span id="addMealProductSelectedCal100" class="text-[10px] mono text-zinc-400"></span>
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-[11px] text-zinc-400">Вес порции (г):</label>
+            <input id="addMealProductWeightInput" type="number" class="dark-field mono text-center text-sm font-bold w-28" value="100" />
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-white/[0.06]">
+          <label class="flex items-center gap-2 cursor-pointer text-xs text-zinc-300">
+            <input id="addMealProductPermanentCheckbox" type="checkbox" class="rounded accent-emerald-500 w-4 h-4" checked />
+            <span>Сохранить в постоянный шаблон плана</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeAddMealProductModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="submitAddMealProduct()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Добавить в прием
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: СОЗДАНИЕ НОВОГО ПРИЕМА ПИЩИ -->
+  <div id="addMealSlotModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeAddMealSlotModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
+      <div class="flex items-center justify-between mb-2.5">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Конструктор рациона</span>
+          <h3 class="text-sm font-bold text-white mt-0.5">Новый прием пищи</h3>
+        </div>
+        <button type="button" onclick="closeAddMealSlotModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="space-y-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Название приема:</label>
+          <input id="newMealSlotTitleInput" type="text" placeholder="Напр. Полдник, Перекус перед залом" class="dark-field text-xs text-white" />
+        </div>
+
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Категория дневника:</label>
+          <select id="newMealSlotTypeSelect" class="dark-field text-xs text-white">
+            <option value="snack">Перекус / Снек</option>
+            <option value="breakfast">Завтрак</option>
+            <option value="lunch">Обед</option>
+            <option value="dinner">Ужин</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeAddMealSlotModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="submitAddNewMealSlot()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Создать слот
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: РЕДАКТИРОВАНИЕ СЛОТА ПРИЕМА ПИЩИ -->
+  <div id="editMealSlotModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeEditMealSlotModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
+      <div class="flex items-center justify-between mb-2.5">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Параметры слота</span>
+          <h3 id="editMealSlotHeaderTitle" class="text-sm font-bold text-white mt-0.5">Прием пищи</h3>
+        </div>
+        <button type="button" onclick="closeEditMealSlotModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="space-y-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Название приема:</label>
+          <input id="editMealSlotTitleInput" type="text" class="dark-field text-xs text-white" />
+        </div>
+
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Категория дневника:</label>
+          <select id="editMealSlotTypeSelect" class="dark-field text-xs text-white">
+            <option value="breakfast">Завтрак</option>
+            <option value="lunch">Обед</option>
+            <option value="dinner">Ужин</option>
+            <option value="snack">Перекус / Снек</option>
+          </select>
+        </div>
+
+        <div class="pt-2 border-t border-white/[0.06]">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-xs text-zinc-300">Варианты на выбор (А / Б)</span>
+            <input id="editMealSlotHasVariantsToggle" type="checkbox" class="rounded accent-emerald-500 w-4 h-4" />
+          </label>
+        </div>
+
+        <div class="pt-2 border-t border-white/[0.06]">
+          <label class="text-[11px] text-zinc-400 block mb-1">Рецепт приготовления или подсказка:</label>
+          <textarea id="editMealSlotRecipeInput" rows="3" placeholder="Шаги рецепта (напр. обжарить на сковороде 2 мин)..." class="dark-field text-xs text-white resize-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="deleteCurrentMealSlot()" class="py-3 px-3 rounded-2xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 active:scale-95 transition">
+          Удалить
+        </button>
+        <button type="button" onclick="closeEditMealSlotModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="saveCurrentMealSlot()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ДОБАВЛЕНИЕ ДОБАВКИ В ЧЕКЛИСТ ВИТАМИНОВ -->
+  <div id="addCustomVitaminModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeAddCustomVitaminModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
+      <div class="flex items-center justify-between mb-2.5">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Добавка в чеклист</span>
+          <h3 class="text-sm font-bold text-white mt-0.5">Витамины / БАДы</h3>
+        </div>
+        <button type="button" onclick="closeAddCustomVitaminModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="space-y-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Название добавки:</label>
+          <input id="newVitaminNameInput" type="text" placeholder="Напр. Цинк хелат, Магний B6" class="dark-field text-xs text-white" />
+        </div>
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Дозировка / Порция:</label>
+          <input id="newVitaminDoseInput" type="text" placeholder="Напр. 1 капс., 2 таблетки" class="dark-field text-xs text-white" />
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeAddCustomVitaminModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" onclick="submitAddCustomVitamin()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Добавить
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- МОДАЛКА: НАСТРОЙКА БАЗОВОГО ПЛАНА ПИТАНИЯ ТРЕНЕРА -->
   <div id="editMealPlanTemplateModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeMealPlanSettingsModal()">
     <div class="sheet-panel max-w-sm mx-auto">
@@ -2609,9 +2845,21 @@
       </div>
 
       <div class="flex gap-2">
-        <button type="button" onclick="restoreDefaultMealPlanTemplate()" class="py-3 px-3 rounded-2xl bg-white/[0.06] text-zinc-400 text-xs font-semibold active:scale-95 transition">
-          Сброс к базе
-        </button>
+        
+        <div class="w-full space-y-2 mb-3 pt-2 border-t border-white/[0.06]">
+          <div class="text-[11px] font-bold text-white mono uppercase">Готовые пресеты:</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="loadMealPlanPreset('coach_2520')" class="py-2 px-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
+              <span class="font-bold block text-white">Рацион тренера</span>
+              <span class="text-[9.5px] mono text-zinc-400">2520 ккал (5 приемов)</span>
+            </button>
+            <button type="button" onclick="loadMealPlanPreset('empty_basic')" class="py-2 px-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
+              <span class="font-bold block text-white">Свой с нуля</span>
+              <span class="text-[9.5px] mono text-zinc-400">Чистый каркас</span>
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-2 w-full">
         <button type="button" onclick="closeMealPlanSettingsModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
           Отмена
         </button>
@@ -7893,7 +8141,133 @@
     const KEY_STORAGE = "macro_gemini_api_key_v6";
 
     
-    const DEFAULT_MEAL_PLAN_TEMPLATE = {
+    
+    const BUILTIN_MEAL_PLAN_PRESETS = {
+      coach_2520: {
+        id: "coach_2520",
+        name: "Рацион тренера (2520 ккал)",
+        targetMacros: { cal: 2520, p: 166, f: 64, c: 320 },
+        sauceLimitGrams: 60,
+        waterTargetLiters: 4.0,
+        saltTargetGrams: 6.0,
+        meals: [
+          {
+            id: "breakfast",
+            title: "Завтрак",
+            type: "breakfast",
+            hasVariants: true,
+            activeVariant: "B",
+            variants: {
+              A: {
+                title: "Вариант А (сэндвичи)",
+                items: [
+                  { id: "b_a1", name: "Хлеб Harry's сэндвичный", weight: 150, cal100: 260, p100: 8.5, f100: 3.5, c100: 48.0 },
+                  { id: "b_a2", name: "Яйцо куриное С1", weight: 165, cal100: 155, p100: 12.7, f100: 11.5, c100: 0.7, isPiece: true, pieceCount: 3, pieceWeight: 55 },
+                  { id: "b_a3", name: "Яичный белок С1", weight: 100, cal100: 48, p100: 11.0, f100: 0.2, c100: 0.7, isPiece: true, pieceCount: 3, pieceWeight: 33.3 }
+                ]
+              },
+              B: {
+                title: "Вариант Б (хлебцы + паста)",
+                items: [
+                  { id: "b_b1", name: "Хлебцы Dr. Korner карамельные", weight: 90, cal100: 320, p100: 9.0, f100: 2.0, c100: 66.0 },
+                  { id: "b_b2", name: "Арахисовая паста DopDrops", weight: 45, cal100: 590, p100: 24.0, f100: 50.0, c100: 12.0 },
+                  { id: "b_b3", name: "Яичный белок С1", weight: 200, cal100: 48, p100: 11.0, f100: 0.2, c100: 0.7, isPiece: true, pieceCount: 6, pieceWeight: 33.3 }
+                ]
+              }
+            }
+          },
+          {
+            id: "vitamins_morning",
+            title: "Витамины // Утро",
+            type: "checklist",
+            isSupplement: true,
+            items: [
+              { id: "v_q10", name: "Коэнзим Q10 100 мг", dose: "1 капс." },
+              { id: "v_omega_m", name: "Омега-3", dose: "2 капс." },
+              { id: "v_d3", name: "Витамин D3 5000 МЕ", dose: "1 капс." },
+              { id: "v_multi_m", name: "Мультивитамины", dose: "1 капс." },
+              { id: "v_c", name: "Витамин С", dose: "1 капс." }
+            ]
+          },
+          {
+            id: "lunch_1",
+            title: "Обед 1",
+            type: "lunch",
+            items: [
+              { id: "l1_rice", name: "Рис длиннозерный Агро-Альянс (сухой вес)", weight: 100, cal100: 320, p100: 7.0, f100: 1.0, c100: 71.0 },
+              { id: "l1_chicken", name: "Куриная грудка отварная", weight: 70, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 },
+              { id: "l1_sauce", name: "Томатный соус BombBar", weight: 20, cal100: 55, p100: 2.0, f100: 0.5, c100: 10.0, optional: true }
+            ]
+          },
+          {
+            id: "lunch_2",
+            title: "Обед 2",
+            type: "lunch",
+            items: [
+              { id: "l2_rice", name: "Рис длиннозерный Агро-Альянс (сухой вес)", weight: 100, cal100: 320, p100: 7.0, f100: 1.0, c100: 71.0 },
+              { id: "l2_chicken", name: "Куриная грудка отварная", weight: 70, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 }
+            ]
+          },
+          {
+            id: "post_workout",
+            title: "После тренировки",
+            type: "snack",
+            note: "Сначала выпить протеин, прием пищи через 40–60 минут",
+            items: [
+              { id: "pw_whey", name: "Протеин сывороточный Cybermass Whey", weight: 30, cal100: 400, p100: 75.0, f100: 6.0, c100: 10.0 }
+            ]
+          },
+          {
+            id: "dinner_1",
+            title: "Ужин 1 // Домашняя шавуха",
+            type: "dinner",
+            recipe: "1. Лаваш расстелить, смазать соусом BombBar\n2. Выложить отварную грудку и натертый сыр Брест-Литовск\n3. Свернуть в плотный ролл\n4. Обжарить на сухой сковороде по 2 мин с каждой стороны до хруста",
+            items: [
+              { id: "d1_lavash", name: "Лаваш армянский Мэри", weight: 105, cal100: 277, p100: 8.5, f100: 1.0, c100: 58.5 },
+              { id: "d1_cheese", name: "Сыр Брест-Литовск Российский", weight: 55, cal100: 340, p100: 24.5, f100: 26.5, c100: 0.0 },
+              { id: "d1_chicken", name: "Куриная грудка отварная", weight: 30, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 }
+            ]
+          },
+          {
+            id: "dinner_2",
+            title: "Ужин 2 // Перед сном",
+            type: "dinner",
+            items: [
+              { id: "d2_tvorog", name: "Творог 9% Красная цена", weight: 180, cal100: 157, p100: 16.0, f100: 9.0, c100: 3.0 },
+              { id: "d2_banana", name: "Банан средний", weight: 120, cal100: 88, p100: 1.5, f100: 0.3, c100: 21.8, isPiece: true, pieceCount: 1, pieceWeight: 120 },
+              { id: "d2_topping", name: "Топпинг BombBar шоколадный пудинг", weight: 20, cal100: 50, p100: 2.0, f100: 0.5, c100: 9.0, optional: true }
+            ]
+          },
+          {
+            id: "vitamins_evening",
+            title: "Витамины // Вечер",
+            type: "checklist",
+            isSupplement: true,
+            items: [
+              { id: "v_omega_e", name: "Омега-3", dose: "1 капс." },
+              { id: "v_multi_e", name: "Мультивитамины", dose: "1 капс." }
+            ]
+          }
+        ]
+      },
+      empty_basic: {
+        id: "empty_basic",
+        name: "Базовый каркас (Завтрак / Обед / Ужин)",
+        targetMacros: { cal: 2000, p: 140, f: 65, c: 215 },
+        sauceLimitGrams: 50,
+        waterTargetLiters: 2.5,
+        saltTargetGrams: 5.0,
+        meals: [
+          { id: "m_bf", title: "Завтрак", type: "breakfast", items: [] },
+          { id: "m_ln", title: "Обед", type: "lunch", items: [] },
+          { id: "m_dn", title: "Ужин", type: "dinner", items: [] }
+        ]
+      }
+    };
+    window.BUILTIN_MEAL_PLAN_PRESETS = BUILTIN_MEAL_PLAN_PRESETS;
+
+    const DEFAULT_MEAL_PLAN_TEMPLATE = BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+    const OLD_DEFAULT_MEAL_PLAN_TEMPLATE = {
       version: 1,
       targetMacros: { cal: 2520, p: 166, f: 64, c: 320 },
       sauceLimitGrams: 60,
@@ -8194,25 +8568,29 @@
       const wasTaken = !!state.supplementsTakenToday[suppId];
       if (wasTaken) {
         delete state.supplementsTakenToday[suppId];
-        // Если добавка имела КБЖУ и была добавлена в рацион — убираем её запись
-        state.todayItems = (state.todayItems || []).filter(i => i.suppRefId !== suppId);
+        // Синхронизация с планом: убираем запись и снимаем отметку в плане
+        state.todayItems = (state.todayItems || []).filter(i => i.suppRefId !== suppId && !(suppId === "prot" && i.planItemId === "pw_whey"));
         showToast(`Снято: ${supp.name}`);
       } else {
         state.supplementsTakenToday[suppId] = true;
-        if ((Number(supp.cal) || 0) > 0 || (Number(supp.p) || 0) > 0 || (Number(supp.c) || 0) > 0 || (Number(supp.f) || 0) > 0) {
+        // Защита от дублирования протеина с блоком «После тренировки»
+        const alreadyLogged = suppId === "prot" && (state.todayItems || []).some(i => i.planItemId === "pw_whey" || i.suppRefId === "prot");
+        if (!alreadyLogged && ((Number(supp.cal) || 0) > 0 || (Number(supp.p) || 0) > 0 || (Number(supp.c) || 0) > 0 || (Number(supp.f) || 0) > 0)) {
           state.todayItems.push({
             id: "supp_entry_" + suppId + "_" + Date.now(),
             suppRefId: suppId,
+            planItemId: (suppId === "prot") ? "pw_whey" : undefined,
             name: supp.name,
-            weight: 100,
+            weight: (suppId === "prot") ? 30 : 100,
             cal: Math.round(Number(supp.cal) || 0),
             p: round1(Number(supp.p) || 0),
             f: round1(Number(supp.f) || 0),
             c: round1(Number(supp.c) || 0),
-            cal100: Number(supp.cal) || 0,
-            p100: Number(supp.p) || 0,
-            f100: Number(supp.f) || 0,
-            c100: Number(supp.c) || 0,
+            cal100: (suppId === "prot") ? 400 : (Number(supp.cal) || 0),
+            p100: (suppId === "prot") ? 75.0 : (Number(supp.p) || 0),
+            f100: (suppId === "prot") ? 6.0 : (Number(supp.f) || 0),
+            c100: (suppId === "prot") ? 10.0 : (Number(supp.c) || 0),
+            meal: "snack",
             source: "Стек"
           });
           showToast(`✓ ${supp.name} (+${Math.round(supp.cal)} ккал в Сегодня)`);
@@ -12187,6 +12565,10 @@
     // ИНТЕРАКТИВНЫЙ МОДУЛЬ «ПЛАН ПИТАНИЯ (РАЦИОН ТРЕНЕРА)»
     // =========================================================================
     let pendingOverrideCtx = { mealId: null, itemId: null, originalItem: null, selectedItem: null, weight: 100 };
+    let pendingQuickWeightCtx = { mealId: null, itemId: null, item: null, weight: 100, pieces: 1 };
+    let pendingAddProductCtx = { mealId: null, variantKey: null, selectedItem: null };
+    let pendingEditSlotCtx = { mealId: null };
+    let pendingAddVitaminSlotId = null;
 
     function getTodayProgress() {
       const key = getTodayKey();
@@ -12195,14 +12577,46 @@
         state.dailyMealPlanProgress[key] = {
           variantChoice: { breakfast: "B" },
           overrides: {},
+          skippedItems: {},
+          todayAddedItems: {},
           vitamins: {},
           sauceGrams: 0,
           waterLiters: 0.0
         };
       }
-      return state.dailyMealPlanProgress[key];
+      const p = state.dailyMealPlanProgress[key];
+      if (!p.overrides) p.overrides = {};
+      if (!p.skippedItems) p.skippedItems = {};
+      if (!p.todayAddedItems) p.todayAddedItems = {};
+      if (!p.vitamins) p.vitamins = {};
+      return p;
     }
     window.getTodayProgress = getTodayProgress;
+
+    // Реактивное обновление записи в state.todayItems, если позиция плана уже отмечена
+    function syncUpdatedPlanItemInTodayItems(itemId, newWeight, itemData) {
+      if (!Array.isArray(state.todayItems)) return;
+      const loggedIdx = state.todayItems.findIndex(it => it.planItemId === itemId);
+      if (loggedIdx !== -1) {
+        const w = Number(newWeight) || state.todayItems[loggedIdx].weight || 100;
+        const cal100 = Number(itemData.cal100) || 0;
+        const p100 = Number(itemData.p100) || 0;
+        const f100 = Number(itemData.f100) || 0;
+        const c100 = Number(itemData.c100) || 0;
+        state.todayItems[loggedIdx].weight = w;
+        if (itemData.name) state.todayItems[loggedIdx].name = itemData.name;
+        state.todayItems[loggedIdx].cal = Math.round((w * cal100) / 100);
+        state.todayItems[loggedIdx].p = round1((w * p100) / 100);
+        state.todayItems[loggedIdx].f = round1((w * f100) / 100);
+        state.todayItems[loggedIdx].c = round1((w * c100) / 100);
+      }
+    }
+
+    // Удаление записи плана из state.todayItems при пропуске или удалении
+    function removePlanItemFromTodayItems(itemId) {
+      if (!Array.isArray(state.todayItems)) return;
+      state.todayItems = state.todayItems.filter(it => it.planItemId !== itemId);
+    }
 
     function switchDietViewMode(mode) {
       state.dietViewMode = mode;
@@ -12238,6 +12652,16 @@
       if (typeof haptic === "function") haptic("selection");
     }
     window.switchBreakfastVariant = switchBreakfastVariant;
+
+    function switchMealVariant(mealId, variantKey) {
+      const progress = getTodayProgress();
+      if (!progress.variantChoice) progress.variantChoice = {};
+      progress.variantChoice[mealId] = variantKey;
+      saveState();
+      renderCoachMealPlan();
+      if (typeof haptic === "function") haptic("selection");
+    }
+    window.switchMealVariant = switchMealVariant;
 
     function toggleVitaminCheck(vitaminId) {
       const progress = getTodayProgress();
@@ -12302,11 +12726,15 @@
     function getActiveMealItem(meal, itemId, progress) {
       let baseItem = null;
       if (meal.hasVariants) {
-        const vKey = progress.variantChoice?.breakfast || meal.activeVariant || "B";
-        const variant = meal.variants?.[vKey] || meal.variants?.B;
+        const vKey = progress.variantChoice?.[meal.id] || progress.variantChoice?.breakfast || meal.activeVariant || "B";
+        const variant = meal.variants?.[vKey] || Object.values(meal.variants || {})[0];
         baseItem = (variant?.items || []).find(it => it.id === itemId);
       } else {
         baseItem = (meal.items || []).find(it => it.id === itemId);
+      }
+      // Check if added only today
+      if (!baseItem && progress.todayAddedItems?.[meal.id]) {
+        baseItem = progress.todayAddedItems[meal.id].find(it => it.id === itemId);
       }
       if (!baseItem) return null;
       const override = progress.overrides?.[itemId];
@@ -12321,7 +12749,7 @@
     }
 
     function toggleMealPlanItem(mealId, itemId) {
-      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
@@ -12331,6 +12759,9 @@
       const loggedIdx = (state.todayItems || []).findIndex(it => it.planItemId === itemId);
       if (loggedIdx !== -1) {
         state.todayItems.splice(loggedIdx, 1);
+        if (itemId === "pw_whey") {
+          if (state.supplementsTakenToday) delete state.supplementsTakenToday["prot"];
+        }
         if (typeof showToast === "function") showToast("Снято: " + item.name);
       } else {
         const cal = Math.round((item.weight * item.cal100) / 100);
@@ -12345,10 +12776,19 @@
           p,
           f,
           c,
+          cal100: item.cal100,
+          p100: item.p100,
+          f100: item.f100,
+          c100: item.c100,
           meal: meal.type || "snack",
           fromPlan: true,
-          planItemId: itemId
+          planItemId: itemId,
+          suppRefId: (itemId === "pw_whey") ? "prot" : undefined
         });
+        if (itemId === "pw_whey") {
+          if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
+          state.supplementsTakenToday["prot"] = true;
+        }
         if (typeof showToast === "function") showToast("✓ Засчитано: " + item.name);
       }
       saveState();
@@ -12359,25 +12799,31 @@
     window.toggleMealPlanItem = toggleMealPlanItem;
 
     function markWholeMealCompleted(mealId) {
-      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
 
       let items = [];
       if (meal.hasVariants) {
-        const vKey = progress.variantChoice?.breakfast || meal.activeVariant || "B";
+        const vKey = progress.variantChoice?.[meal.id] || progress.variantChoice?.breakfast || meal.activeVariant || "B";
         items = meal.variants?.[vKey]?.items || [];
       } else {
-        items = meal.items || [];
+        items = (meal.items || []).concat(progress.todayAddedItems?.[meal.id] || []);
       }
 
-      const allLogged = items.every(it => isMealItemLogged(it.id));
+      // Filter out skipped items
+      items = items.filter(it => !progress.skippedItems?.[it.id]);
+
+      const allLogged = items.length > 0 && items.every(it => isMealItemLogged(it.id));
       if (allLogged) {
         // Uncheck all
         items.forEach(it => {
           const idx = (state.todayItems || []).findIndex(x => x.planItemId === it.id);
-          if (idx !== -1) state.todayItems.splice(idx, 1);
+          if (idx !== -1) {
+            state.todayItems.splice(idx, 1);
+            if (it.id === "pw_whey" && state.supplementsTakenToday) delete state.supplementsTakenToday["prot"];
+          }
         });
         if (typeof showToast === "function") showToast("Прием пищи снят: " + meal.title);
       } else {
@@ -12397,10 +12843,19 @@
               p,
               f,
               c,
+              cal100: effective.cal100,
+              p100: effective.p100,
+              f100: effective.f100,
+              c100: effective.c100,
               meal: meal.type || "snack",
               fromPlan: true,
-              planItemId: effective.id
+              planItemId: effective.id,
+              suppRefId: (effective.id === "pw_whey") ? "prot" : undefined
             });
+            if (effective.id === "pw_whey") {
+              if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
+              state.supplementsTakenToday["prot"] = true;
+            }
           }
         });
         if (typeof showToast === "function") showToast("✓ Прием засчитан: " + meal.title);
@@ -12412,42 +12867,582 @@
     }
     window.markWholeMealCompleted = markWholeMealCompleted;
 
-    // Рендер интерактивных карточек плана питания тренера
+    // =========================================================================
+    // БЫСТРЫЙ ВЕС / ШТУКИ ПО ТАПУ НА ПРОДУКТ (1 СЕКУНДА)
+    // =========================================================================
+    function openQuickWeightModal(mealId, itemId) {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      const progress = getTodayProgress();
+      const item = getActiveMealItem(meal, itemId, progress);
+      if (!item) return;
+
+      pendingQuickWeightCtx = {
+        mealId,
+        itemId,
+        item,
+        weight: Number(item.weight) || 100,
+        pieces: Number(item.pieceCount) || 1,
+        pieceUnitWeight: (item.weight && item.pieceCount) ? Math.round(item.weight / item.pieceCount) : (item.pieceWeight || 33)
+      };
+
+      document.getElementById("quickWeightItemName").textContent = item.name;
+      document.getElementById("quickWeightGramsInput").value = pendingQuickWeightCtx.weight;
+
+      const pieceRow = document.getElementById("quickWeightPieceRow");
+      if (item.isPiece) {
+        pieceRow.classList.remove("hidden");
+        document.getElementById("quickWeightPieceInput").value = pendingQuickWeightCtx.pieces;
+      } else {
+        pieceRow.classList.add("hidden");
+      }
+
+      updateQuickWeightPreview();
+      document.getElementById("quickWeightModal")?.classList.add("open");
+    }
+    window.openQuickWeightModal = openQuickWeightModal;
+
+    function closeQuickWeightModal() {
+      document.getElementById("quickWeightModal")?.classList.remove("open");
+    }
+    window.closeQuickWeightModal = closeQuickWeightModal;
+
+    function stepQuickWeightVal(delta) {
+      const inp = document.getElementById("quickWeightGramsInput");
+      const cur = Math.max(5, (Number(inp.value) || 100) + delta);
+      inp.value = cur;
+      pendingQuickWeightCtx.weight = cur;
+      if (pendingQuickWeightCtx.item?.isPiece && pendingQuickWeightCtx.pieceUnitWeight > 0) {
+        const pInp = document.getElementById("quickWeightPieceInput");
+        const newP = Math.max(1, Math.round(cur / pendingQuickWeightCtx.pieceUnitWeight));
+        pInp.value = newP;
+        pendingQuickWeightCtx.pieces = newP;
+      }
+      updateQuickWeightPreview();
+    }
+    window.stepQuickWeightVal = stepQuickWeightVal;
+
+    function stepQuickPiece(delta) {
+      const inp = document.getElementById("quickWeightPieceInput");
+      const cur = Math.max(1, (Number(inp.value) || 1) + delta);
+      inp.value = cur;
+      pendingQuickWeightCtx.pieces = cur;
+      const w = cur * pendingQuickWeightCtx.pieceUnitWeight;
+      document.getElementById("quickWeightGramsInput").value = w;
+      pendingQuickWeightCtx.weight = w;
+      updateQuickWeightPreview();
+    }
+    window.stepQuickPiece = stepQuickPiece;
+
+    function onQuickPieceChange() {
+      const inp = document.getElementById("quickWeightPieceInput");
+      const p = Math.max(1, Number(inp.value) || 1);
+      pendingQuickWeightCtx.pieces = p;
+      const w = p * pendingQuickWeightCtx.pieceUnitWeight;
+      document.getElementById("quickWeightGramsInput").value = w;
+      pendingQuickWeightCtx.weight = w;
+      updateQuickWeightPreview();
+    }
+    window.onQuickPieceChange = onQuickPieceChange;
+
+    function updateQuickWeightPreview() {
+      const it = pendingQuickWeightCtx.item;
+      if (!it) return;
+      const inp = document.getElementById("quickWeightGramsInput");
+      const w = Math.max(5, Number(inp.value) || 100);
+      pendingQuickWeightCtx.weight = w;
+
+      const cal = Math.round((w * it.cal100) / 100);
+      const p = round1((w * it.p100) / 100);
+      const f = round1((w * it.f100) / 100);
+      const c = round1((w * it.c100) / 100);
+
+      document.getElementById("quickWeightPrevCal").textContent = cal;
+      document.getElementById("quickWeightPrevP").textContent = p + "г";
+      document.getElementById("quickWeightPrevF").textContent = f + "г";
+      document.getElementById("quickWeightPrevC").textContent = c + "г";
+    }
+    window.updateQuickWeightPreview = updateQuickWeightPreview;
+
+    function submitQuickWeight() {
+      const ctx = pendingQuickWeightCtx;
+      if (!ctx || !ctx.itemId || !ctx.item) return;
+      const progress = getTodayProgress();
+      if (!progress.overrides) progress.overrides = {};
+
+      const newW = ctx.weight;
+      progress.overrides[ctx.itemId] = {
+        name: ctx.item.name,
+        weight: newW,
+        cal100: ctx.item.cal100,
+        p100: ctx.item.p100,
+        f100: ctx.item.f100,
+        c100: ctx.item.c100,
+        isPiece: ctx.item.isPiece,
+        pieceCount: ctx.item.isPiece ? ctx.pieces : undefined
+      };
+
+      // Реактивная синхронизация: обновляем уже съеденную запись в todayItems
+      syncUpdatedPlanItemInTodayItems(ctx.itemId, newW, ctx.item);
+
+      saveState();
+      closeQuickWeightModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast(`✓ Вес обновлен: ${newW}г`);
+    }
+    window.submitQuickWeight = submitQuickWeight;
+
+    // =========================================================================
+    // ПРОПУСК И УДАЛЕНИЕ ПРОДУКТА
+    // =========================================================================
+    function skipMealPlanItemToday(mealId, itemId) {
+      const progress = getTodayProgress();
+      if (!progress.skippedItems) progress.skippedItems = {};
+      progress.skippedItems[itemId] = true;
+
+      // Реактивная синхронизация: если было съедено — убираем из дневника
+      removePlanItemFromTodayItems(itemId);
+      if (itemId === "pw_whey" && state.supplementsTakenToday) delete state.supplementsTakenToday["prot"];
+
+      saveState();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("Позиция пропущена на сегодня");
+    }
+    window.skipMealPlanItemToday = skipMealPlanItemToday;
+
+    function unskipMealPlanItemToday(mealId, itemId) {
+      const progress = getTodayProgress();
+      if (progress.skippedItems && progress.skippedItems[itemId]) {
+        delete progress.skippedItems[itemId];
+      }
+      saveState();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("Позиция возвращена в план");
+    }
+    window.unskipMealPlanItemToday = unskipMealPlanItemToday;
+
+    function deleteProductFromTemplate(mealId, itemId) {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+
+      if (meal.hasVariants) {
+        Object.keys(meal.variants || {}).forEach(vk => {
+          meal.variants[vk].items = (meal.variants[vk].items || []).filter(it => it.id !== itemId);
+        });
+      } else {
+        meal.items = (meal.items || []).filter(it => it.id !== itemId);
+      }
+
+      // Также удаляем из дневника если было отмечено
+      removePlanItemFromTodayItems(itemId);
+
+      saveState();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("Продукт удален из плана");
+    }
+    window.deleteProductFromTemplate = deleteProductFromTemplate;
+
+    // =========================================================================
+    // ДОБАВЛЕНИЕ ПРОДУКТА В ПРИЕМ ПИЩИ (+ Продукт)
+    // =========================================================================
+    function openAddMealProductModal(mealId, variantKey = null) {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+
+      pendingAddProductCtx = {
+        mealId,
+        variantKey,
+        selectedItem: null
+      };
+
+      document.getElementById("addMealProductSlotTitle").textContent = "В «" + meal.title + "»" + (variantKey ? ` (${variantKey})` : "");
+      document.getElementById("addMealProductSearchInput").value = "";
+      document.getElementById("addMealProductSearchResults").innerHTML = "";
+      document.getElementById("addMealProductSelectedBox").classList.add("hidden");
+      document.getElementById("addMealProductWeightInput").value = "100";
+      document.getElementById("addMealProductPermanentCheckbox").checked = true;
+
+      document.getElementById("addMealProductModal")?.classList.add("open");
+    }
+    window.openAddMealProductModal = openAddMealProductModal;
+
+    function closeAddMealProductModal() {
+      document.getElementById("addMealProductModal")?.classList.remove("open");
+    }
+    window.closeAddMealProductModal = closeAddMealProductModal;
+
+    function handleAddMealProductSearch(val) {
+      const resContainer = document.getElementById("addMealProductSearchResults");
+      if (!resContainer) return;
+      const q = (val || "").trim().toLowerCase();
+      if (!q) { resContainer.innerHTML = ""; return; }
+
+      const db = (window.LOCAL_FOOD_DB || []).concat(state.customHistory || []);
+      const matches = [];
+      const seen = new Set();
+
+      for (const item of db) {
+        if (!item || !item.name) continue;
+        const norm = item.name.toLowerCase();
+        if (seen.has(norm)) continue;
+        if (norm.includes(q) || (item.keywords && item.keywords.some(k => k.includes(q)))) {
+          seen.add(norm);
+          matches.push(item);
+          if (matches.length >= 8) break;
+        }
+      }
+
+      if (matches.length === 0) {
+        resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в базе</div>`;
+        return;
+      }
+
+      resContainer.innerHTML = matches.map(m => `
+        <div onclick='selectAddMealProductCandidate(${JSON.stringify({
+          name: m.name,
+          cal100: Math.round(m.cal || 0),
+          p100: round1(m.p || 0),
+          f100: round1(m.f || 0),
+          c100: round1(m.c || 0),
+          weight: m.unitWeight || 100
+        })})' class="p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 cursor-pointer active:scale-95 transition flex items-center justify-between text-xs">
+          <span class="text-white font-medium truncate max-w-[65%]">${m.name}</span>
+          <span class="text-[10px] mono text-zinc-400">${Math.round(m.cal)} ккал / 100г</span>
+        </div>
+      `).join("");
+    }
+    window.handleAddMealProductSearch = handleAddMealProductSearch;
+
+    function selectAddMealProductCandidate(item) {
+      pendingAddProductCtx.selectedItem = item;
+      document.getElementById("addMealProductSelectedName").textContent = item.name;
+      document.getElementById("addMealProductSelectedCal100").textContent = item.cal100 + " ккал/100г";
+      document.getElementById("addMealProductWeightInput").value = item.weight || 100;
+      document.getElementById("addMealProductSearchResults").innerHTML = "";
+      document.getElementById("addMealProductSelectedBox").classList.remove("hidden");
+    }
+    window.selectAddMealProductCandidate = selectAddMealProductCandidate;
+
+    function submitAddMealProduct() {
+      const ctx = pendingAddProductCtx;
+      if (!ctx || !ctx.mealId || !ctx.selectedItem) {
+        showToast("Сначала выберите продукт из поиска", true);
+        return;
+      }
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === ctx.mealId);
+      if (!meal) return;
+
+      const w = Math.max(5, Number(document.getElementById("addMealProductWeightInput").value) || 100);
+      const isPermanent = document.getElementById("addMealProductPermanentCheckbox").checked;
+
+      const newProd = {
+        id: "p_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        name: ctx.selectedItem.name,
+        weight: w,
+        cal100: ctx.selectedItem.cal100,
+        p100: ctx.selectedItem.p100,
+        f100: ctx.selectedItem.f100,
+        c100: ctx.selectedItem.c100
+      };
+
+      if (isPermanent) {
+        if (meal.hasVariants) {
+          const vk = ctx.variantKey || meal.activeVariant || "A";
+          if (!meal.variants[vk]) meal.variants[vk] = { title: "Вариант " + vk, items: [] };
+          meal.variants[vk].items.push(newProd);
+        } else {
+          if (!Array.isArray(meal.items)) meal.items = [];
+          meal.items.push(newProd);
+        }
+      } else {
+        const progress = getTodayProgress();
+        if (!progress.todayAddedItems[ctx.mealId]) progress.todayAddedItems[ctx.mealId] = [];
+        progress.todayAddedItems[ctx.mealId].push(newProd);
+      }
+
+      saveState();
+      closeAddMealProductModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("✓ Продукт добавлен: " + newProd.name);
+    }
+    window.submitAddMealProduct = submitAddMealProduct;
+
+    // =========================================================================
+    // УПРАВЛЕНИЕ СЛОТАМИ ПРИЕМОВ ПИЩИ (CRUD)
+    // =========================================================================
+    function openAddMealSlotModal() {
+      document.getElementById("newMealSlotTitleInput").value = "";
+      document.getElementById("newMealSlotTypeSelect").value = "snack";
+      document.getElementById("addMealSlotModal")?.classList.add("open");
+    }
+    window.openAddMealSlotModal = openAddMealSlotModal;
+
+    function closeAddMealSlotModal() {
+      document.getElementById("addMealSlotModal")?.classList.remove("open");
+    }
+    window.closeAddMealSlotModal = closeAddMealSlotModal;
+
+    function submitAddNewMealSlot() {
+      const title = (document.getElementById("newMealSlotTitleInput").value || "").trim();
+      if (!title) {
+        showToast("Введите название приема пищи", true);
+        return;
+      }
+      const type = document.getElementById("newMealSlotTypeSelect").value || "snack";
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      if (!Array.isArray(template.meals)) template.meals = [];
+
+      const newSlot = {
+        id: "slot_" + Date.now(),
+        title,
+        type,
+        items: []
+      };
+      template.meals.push(newSlot);
+
+      saveState();
+      closeAddMealSlotModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("✓ Добавлен слот: " + title);
+    }
+    window.submitAddNewMealSlot = submitAddNewMealSlot;
+
+    function moveMealSlot(mealId, direction) {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const idx = (template.meals || []).findIndex(m => m.id === mealId);
+      if (idx === -1) return;
+
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= template.meals.length) return;
+
+      const temp = template.meals[idx];
+      template.meals[idx] = template.meals[targetIdx];
+      template.meals[targetIdx] = temp;
+
+      saveState();
+      renderCoachMealPlan();
+      if (typeof haptic === "function") haptic("selection");
+    }
+    window.moveMealSlot = moveMealSlot;
+
+    function openEditMealSlotModal(mealId) {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+
+      pendingEditSlotCtx = { mealId };
+
+      document.getElementById("editMealSlotHeaderTitle").textContent = meal.title;
+      document.getElementById("editMealSlotTitleInput").value = meal.title;
+      document.getElementById("editMealSlotTypeSelect").value = meal.type || "snack";
+      document.getElementById("editMealSlotHasVariantsToggle").checked = !!meal.hasVariants;
+      document.getElementById("editMealSlotRecipeInput").value = meal.recipe || meal.note || "";
+
+      document.getElementById("editMealSlotModal")?.classList.add("open");
+    }
+    window.openEditMealSlotModal = openEditMealSlotModal;
+
+    function closeEditMealSlotModal() {
+      document.getElementById("editMealSlotModal")?.classList.remove("open");
+    }
+    window.closeEditMealSlotModal = closeEditMealSlotModal;
+
+    function saveCurrentMealSlot() {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === pendingEditSlotCtx.mealId);
+      if (!meal) return;
+
+      const newTitle = (document.getElementById("editMealSlotTitleInput").value || "").trim();
+      if (newTitle) meal.title = newTitle;
+      meal.type = document.getElementById("editMealSlotTypeSelect").value || "snack";
+      const recipeText = (document.getElementById("editMealSlotRecipeInput").value || "").trim();
+      if (recipeText) meal.recipe = recipeText;
+      else delete meal.recipe;
+
+      const wantVariants = document.getElementById("editMealSlotHasVariantsToggle").checked;
+      if (wantVariants && !meal.hasVariants) {
+        meal.hasVariants = true;
+        meal.activeVariant = "A";
+        meal.variants = {
+          A: { title: "Вариант А", items: meal.items || [] },
+          B: { title: "Вариант Б", items: [] }
+        };
+        delete meal.items;
+      } else if (!wantVariants && meal.hasVariants) {
+        meal.hasVariants = false;
+        meal.items = meal.variants?.A?.items || meal.variants?.B?.items || [];
+        delete meal.variants;
+        delete meal.activeVariant;
+      }
+
+      saveState();
+      closeEditMealSlotModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("✓ Параметры слота сохранены");
+    }
+    window.saveCurrentMealSlot = saveCurrentMealSlot;
+
+    function deleteCurrentMealSlot() {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const idx = (template.meals || []).findIndex(m => m.id === pendingEditSlotCtx.mealId);
+      if (idx === -1) return;
+
+      const title = template.meals[idx].title;
+      template.meals.splice(idx, 1);
+
+      saveState();
+      closeEditMealSlotModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("Слот «" + title + "» удален");
+    }
+    window.deleteCurrentMealSlot = deleteCurrentMealSlot;
+
+    // =========================================================================
+    // ДОБАВЛЕНИЕ ДОБАВОК В ЧЕКЛИСТ ВИТАМИНОВ
+    // =========================================================================
+    function openAddCustomVitaminModal(mealId) {
+      pendingAddVitaminSlotId = mealId;
+      document.getElementById("newVitaminNameInput").value = "";
+      document.getElementById("newVitaminDoseInput").value = "1 капс.";
+      document.getElementById("addCustomVitaminModal")?.classList.add("open");
+    }
+    window.openAddCustomVitaminModal = openAddCustomVitaminModal;
+
+    function closeAddCustomVitaminModal() {
+      document.getElementById("addCustomVitaminModal")?.classList.remove("open");
+    }
+    window.closeAddCustomVitaminModal = closeAddCustomVitaminModal;
+
+    function submitAddCustomVitamin() {
+      const name = (document.getElementById("newVitaminNameInput").value || "").trim();
+      if (!name) {
+        showToast("Введите название добавки", true);
+        return;
+      }
+      const dose = (document.getElementById("newVitaminDoseInput").value || "1 капс.").trim();
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === pendingAddVitaminSlotId);
+      if (!meal) return;
+      if (!Array.isArray(meal.items)) meal.items = [];
+
+      meal.items.push({
+        id: "vit_" + Date.now(),
+        name,
+        dose
+      });
+
+      saveState();
+      closeAddCustomVitaminModal();
+      renderCoachMealPlan();
+      if (typeof showToast === "function") showToast("✓ Добавка добавлена: " + name);
+    }
+    window.submitAddCustomVitamin = submitAddCustomVitamin;
+
+    function deleteCustomVitamin(mealId, vitId) {
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal || !Array.isArray(meal.items)) return;
+      meal.items = meal.items.filter(v => v.id !== vitId);
+      saveState();
+      renderCoachMealPlan();
+    }
+    window.deleteCustomVitamin = deleteCustomVitamin;
+
+    // =========================================================================
+    // ГОТОВЫЕ ПРЕСЕТЫ РАЦИОНА (ПРЕСЕТ ТРЕНЕРА VS ЧИСТЫЙ С НУЛЯ)
+    // =========================================================================
+    function loadMealPlanPreset(presetKey) {
+      const preset = BUILTIN_MEAL_PLAN_PRESETS[presetKey] || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      state.mealPlanTemplate = JSON.parse(JSON.stringify(preset));
+      if (preset.targetMacros) {
+        state.targets = { ...preset.targetMacros };
+        state.goalCalcMode = "manual";
+      }
+      saveState();
+      closeMealPlanSettingsModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("✓ Загружен: " + preset.name);
+    }
+    window.loadMealPlanPreset = loadMealPlanPreset;
+
+    function restoreDefaultMealPlanTemplate() {
+      loadMealPlanPreset("coach_2520");
+    }
+    window.restoreDefaultMealPlanTemplate = restoreDefaultMealPlanTemplate;
+
+    // =========================================================================
+    // РЕНДЕР ИНТЕРАКТИВНОГО ПЛАНА ПИТАНИЯ (Obsidian Noir)
+    // =========================================================================
     function renderCoachMealPlan() {
       const container = document.getElementById("coachMealPlanSection");
       if (!container) return;
 
-      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
       const progress = getTodayProgress();
       const accent = getActiveThemeObject().cal;
 
       let htmlCards = "";
 
-      (template.meals || []).forEach(meal => {
+      // Верхняя плашка сводки и добавления приема
+      const tgt = template.targetMacros || { cal: 2520, p: 166, f: 64, c: 320 };
+      htmlCards += `
+        <div class="flex items-center justify-between px-1 mb-1">
+          <div class="text-[11px] mono text-zinc-400">
+            План: <span class="text-white font-bold">${tgt.cal} ккал</span> (Б ${tgt.p} · Ж ${tgt.f} · У ${tgt.c})
+          </div>
+          <button type="button" onclick="openAddMealSlotModal()" class="px-2.5 py-1 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] font-semibold text-zinc-200 active:scale-95 transition flex items-center gap-1">
+            <span>+ Прием пищи</span>
+          </button>
+        </div>
+      `;
+
+      (template.meals || []).forEach((meal, mealIdx) => {
+        const canMoveUp = mealIdx > 0;
+        const canMoveDown = mealIdx < template.meals.length - 1;
+
         if (meal.isSupplement && meal.type === "checklist") {
           // Чеклист витаминов
-          const allVChecked = (meal.items || []).every(v => progress.vitamins?.[v.id]);
+          const allVChecked = (meal.items || []).length > 0 && (meal.items || []).every(v => progress.vitamins?.[v.id]);
           htmlCards += `
             <div class="coach-meal-card ${allVChecked ? 'all-done' : ''}">
-              <div class="flex items-center justify-between mb-2.5">
+              <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                   <span class="w-1.5 h-3.5 rounded-full" style="background: ${accent}"></span>
                   <span class="text-xs font-bold text-white tracking-wide uppercase mono">${meal.title}</span>
                 </div>
-                <span class="text-[10px] mono text-zinc-400">${meal.items.length} поз.</span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="openAddCustomVitaminModal('${meal.id}')" class="px-2 py-0.5 rounded-lg bg-white/[0.05] text-[10px] mono text-zinc-300 border border-white/10 active:scale-95 transition">+ Добавка</button>
+                  <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-zinc-400 text-xs active:scale-95 transition" title="Настройки">${pencilSvg}</button>
+                </div>
               </div>
               <div class="grid grid-cols-1 gap-1.5 pt-1 border-t border-white/[0.06]">
-                ${meal.items.map(v => {
+                ${(meal.items || []).map(v => {
                   const isChecked = !!progress.vitamins?.[v.id];
                   return `
-                    <div onclick="toggleVitaminCheck('${v.id}')" class="flex items-center justify-between py-1.5 px-2 rounded-xl bg-white/[0.02] border border-white/[0.04] cursor-pointer active:opacity-75 transition">
-                      <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-between py-1.5 px-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                      <div class="flex items-center gap-2.5 flex-1 cursor-pointer" onclick="toggleVitaminCheck('${v.id}')">
                         <div class="coach-check-btn ${isChecked ? 'checked' : ''}">
                           ${isChecked ? '<svg class="w-3.5 h-3.5 stroke-black stroke-2" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                         </div>
                         <span class="text-xs ${isChecked ? 'line-through text-zinc-500' : 'text-zinc-200'}">${v.name}</span>
                       </div>
-                      <span class="text-[10.5px] mono text-zinc-400">${v.dose}</span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10.5px] mono text-zinc-400">${v.dose}</span>
+                        <button type="button" onclick="deleteCustomVitamin('${meal.id}', '${v.id}')" class="text-zinc-600 hover:text-red-400 text-xs px-1">✕</button>
+                      </div>
                     </div>
                   `;
                 }).join("")}
@@ -12457,30 +13452,31 @@
           return;
         }
 
-        // Обычные приемы пищи с макросами
+        // Прием пищи с продуктами
         let mealItems = [];
         let variantHtml = "";
 
         if (meal.hasVariants) {
-          const activeVar = progress.variantChoice?.breakfast || meal.activeVariant || "B";
+          const activeVar = progress.variantChoice?.[meal.id] || progress.variantChoice?.breakfast || meal.activeVariant || Object.keys(meal.variants || {})[0] || "A";
           mealItems = (meal.variants?.[activeVar]?.items || []);
+          const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
             <div class="flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5">
-              <button type="button" onclick="switchBreakfastVariant('A')" class="flex-1 py-1 text-xs font-semibold rounded-lg transition ${activeVar === 'A' ? 'accent-btn shadow' : 'text-zinc-400 hover:text-white'}">
-                А: Сэндвичи
-              </button>
-              <button type="button" onclick="switchBreakfastVariant('B')" class="flex-1 py-1 text-xs font-semibold rounded-lg transition ${activeVar === 'B' ? 'accent-btn shadow' : 'text-zinc-400 hover:text-white'}">
-                Б: Хлебцы + паста
-              </button>
+              ${variantKeys.map(vk => `
+                <button type="button" onclick="switchMealVariant('${meal.id}', '${vk}')" class="flex-1 py-1 text-xs font-semibold rounded-lg transition ${activeVar === vk ? 'accent-btn shadow' : 'text-zinc-400 hover:text-white'}">
+                  ${meal.variants[vk]?.title || ('Вариант ' + vk)}
+                </button>
+              `).join("")}
             </div>
           `;
         } else {
-          mealItems = meal.items || [];
+          mealItems = (meal.items || []).concat(progress.todayAddedItems?.[meal.id] || []);
         }
 
-        // Подсчет макросов приема
+        // Подсчет макросов приема (без учета пропущенных)
         let mealCal = 0, mealP = 0, mealF = 0, mealC = 0;
         mealItems.forEach(it => {
+          if (progress.skippedItems?.[it.id]) return;
           const effective = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
           mealCal += (effective.weight * effective.cal100) / 100;
           mealP += (effective.weight * effective.p100) / 100;
@@ -12488,7 +13484,8 @@
           mealC += (effective.weight * effective.c100) / 100;
         });
 
-        const allDone = mealItems.length > 0 && mealItems.every(it => isMealItemLogged(it.id));
+        const activeItems = mealItems.filter(it => !progress.skippedItems?.[it.id]);
+        const allDone = activeItems.length > 0 && activeItems.every(it => isMealItemLogged(it.id));
 
         htmlCards += `
           <div class="coach-meal-card ${allDone ? 'all-done' : ''}">
@@ -12497,9 +13494,17 @@
                 <span class="w-1.5 h-3.5 rounded-full" style="background: ${accent}"></span>
                 <span class="text-xs font-bold text-white tracking-wide uppercase mono">${meal.title}</span>
               </div>
-              <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2 py-0.5 rounded-lg ${allDone ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[10.5px] font-semibold active:scale-95 transition flex items-center gap-1">
-                ${allDone ? '<span>✓ Прием съеден</span>' : '<span>Засчитать прием</span>'}
-              </button>
+              <div class="flex items-center gap-1.5">
+                <!-- Кнопки перемещения слота вверх/вниз -->
+                <div class="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg">
+                  <button type="button" onclick="moveMealSlot('${meal.id}', 'up')" ${!canMoveUp ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-30"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95"'}>↑</button>
+                  <button type="button" onclick="moveMealSlot('${meal.id}', 'down')" ${!canMoveDown ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-30"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95"'}>↓</button>
+                </div>
+                <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-zinc-400 text-xs active:scale-95 transition" title="Настройки приема">${pencilSvg}</button>
+                <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2 py-0.5 rounded-lg ${allDone ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[10.5px] font-semibold active:scale-95 transition flex items-center gap-1">
+                  ${allDone ? '<span>✓ Прием съеден</span>' : '<span>Засчитать</span>'}
+                </button>
+              </div>
             </div>
 
             ${variantHtml}
@@ -12507,6 +13512,7 @@
             <!-- Список продуктов в приеме -->
             <div class="divide-y divide-white/[0.05] mb-2">
               ${mealItems.map(it => {
+                const isSkipped = !!progress.skippedItems?.[it.id];
                 const effective = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id], isOverridden: true } : it;
                 const isLogged = isMealItemLogged(it.id);
                 const cal = Math.round((effective.weight * effective.cal100) / 100);
@@ -12514,32 +13520,71 @@
                 const f = round1((effective.weight * effective.f100) / 100);
                 const c = round1((effective.weight * effective.c100) / 100);
 
+                const pieceStr = effective.isPiece ? (effective.pieceCount + ' шт (') : '';
+                const pieceClose = effective.isPiece ? ')' : '';
+
+                if (isSkipped) {
+                  return `
+                    <div class="py-2 flex items-center justify-between gap-2 opacity-40">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-xs line-through text-zinc-500 truncate">${effective.name}</span>
+                        <span class="text-[9.5px] mono text-zinc-600">(пропущен)</span>
+                      </div>
+                      <button type="button" onclick="unskipMealPlanItemToday('${meal.id}', '${it.id}')" class="px-2 py-0.5 rounded-lg bg-white/10 text-zinc-300 text-[10px] mono active:scale-95 transition">Вернуть</button>
+                    </div>
+                  `;
+                }
+
                 return `
                   <div class="py-2 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onclick="toggleMealPlanItem('${meal.id}', '${it.id}')">
-                      <div class="coach-check-btn ${isLogged ? 'checked' : ''}">
+                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div class="coach-check-btn ${isLogged ? 'checked' : ''}" onclick="toggleMealPlanItem('${meal.id}', '${it.id}')">
                         ${isLogged ? '<svg class="w-3.5 h-3.5 stroke-black stroke-2" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                       </div>
-                      <div class="min-w-0">
-                        <div class="flex items-center gap-1.5">
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
                           <span class="text-xs font-medium truncate ${isLogged ? 'text-zinc-400 line-through' : 'text-zinc-100'}">${effective.name}</span>
                           ${effective.isOverridden ? '<span class="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] mono">Замена</span>' : ''}
                           ${effective.optional ? '<span class="text-[9px] text-zinc-500 mono">(опция)</span>' : ''}
                         </div>
-                        <div class="text-[10px] mono text-zinc-500 flex items-center gap-1">
-                          <span class="text-zinc-300 font-semibold">${effective.isPiece ? (effective.pieceCount + ' шт · ') : ''}${effective.weight}г</span>
-                          <span>· ${cal} ккал</span>
-                          <span>· Б ${p} Ж ${f} У ${c}</span>
+                        <!-- Строка мета-информации с защитой от разрыва цифр -->
+                        <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] mono text-zinc-400 mt-0.5">
+                          <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-white/10 text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition" title="Изменить вес на сегодня">
+                            ${pieceStr}${effective.weight}г${pieceClose}
+                          </button>
+                          <span class="text-zinc-600">·</span>
+                          <span class="font-medium text-white whitespace-nowrap">${cal} ккал</span>
+                          <span class="text-zinc-600">·</span>
+                          <span class="whitespace-nowrap text-zinc-400">Б ${p}</span>
+                          <span class="whitespace-nowrap text-zinc-400">Ж ${f}</span>
+                          <span class="whitespace-nowrap text-zinc-400">У ${c}</span>
                         </div>
                       </div>
                     </div>
-                    <button type="button" onclick="openMealPlanOverrideModal('${meal.id}', '${it.id}')" class="coach-swap-btn" title="Заменить сегодня">
-                      <svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
-                      <span>Замена</span>
-                    </button>
+
+                    <!-- Действия с продуктом: Замена, Пропуск, Удаление -->
+                    <div class="flex items-center gap-1 shrink-0">
+                      <button type="button" onclick="openMealPlanOverrideModal('${meal.id}', '${it.id}')" class="coach-swap-btn" title="Заменить сегодня">
+                        <svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                        <span>Замена</span>
+                      </button>
+                      <button type="button" onclick="skipMealPlanItemToday('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-white/[0.03] text-zinc-500 hover:text-zinc-300 flex items-center justify-center text-xs active:scale-95 transition" title="Пропустить сегодня">
+                        ○
+                      </button>
+                      <button type="button" onclick="deleteProductFromTemplate('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-white/[0.03] text-zinc-600 hover:text-red-400 flex items-center justify-center text-xs active:scale-95 transition" title="Удалить из плана">
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 `;
               }).join("")}
+            </div>
+
+            <!-- Кнопка + Продукт в этот прием пищи -->
+            <div class="mb-2">
+              <button type="button" onclick="openAddMealProductModal('${meal.id}', '${meal.hasVariants ? (progress.variantChoice?.[meal.id] || meal.activeVariant || 'A') : null}')" class="w-full py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-dashed border-white/10 text-xs mono text-zinc-400 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
+                <span>+ Продукт</span>
+              </button>
             </div>
 
             <!-- Итог БЖУ приема -->
@@ -12561,7 +13606,7 @@
               </div>
             ` : ''}
 
-            <!-- Специфика блюда: аккордеон рецепта шавухи -->
+            <!-- Специфика блюда: аккордеон рецепта -->
             ${meal.recipe ? `
               <div class="mt-2 pt-2 border-t border-white/[0.06]">
                 <button type="button" onclick="toggleRecipeAccordion('${meal.id}')" class="w-full flex items-center justify-between text-[11px] mono text-zinc-400 hover:text-white py-1 transition">
@@ -12641,9 +13686,11 @@
     }
     window.renderCoachMealPlan = renderCoachMealPlan;
 
-    // МОДАЛКА РАЗОВОЙ ЗАМЕНЫ НА СЕГОДНЯ
+    // =========================================================================
+    // МОДАЛКА РАЗОВОЙ ЗАМЕНЫ НА СЕГОДНЯ («Заменить сегодня»)
+    // =========================================================================
     function openMealPlanOverrideModal(mealId, itemId) {
-      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
@@ -12708,7 +13755,7 @@
       }
 
       if (matches.length === 0) {
-        resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в локальной базе</div>`;
+        resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в базе</div>`;
         return;
       }
 
@@ -12816,20 +13863,8 @@
         c100: sel.c100
       };
 
-      // Если эта позиция уже была отмечена сегодня, обновим ее данные в todayItems
-      const logIdx = (state.todayItems || []).findIndex(it => it.planItemId === itemId);
-      if (logIdx !== -1) {
-        const w = pendingOverrideCtx.weight;
-        state.todayItems[logIdx] = {
-          ...state.todayItems[logIdx],
-          name: sel.name,
-          weight: w,
-          cal: Math.round((w * sel.cal100) / 100),
-          p: round1((w * sel.p100) / 100),
-          f: round1((w * sel.f100) / 100),
-          c: round1((w * sel.c100) / 100)
-        };
-      }
+      // Реактивная синхронизация: обновляем уже съеденную запись в todayItems
+      syncUpdatedPlanItemInTodayItems(itemId, pendingOverrideCtx.weight, sel);
 
       saveState();
       closeMealPlanOverrideModal();
@@ -12849,13 +13884,13 @@
       closeMealPlanOverrideModal();
       renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("Позиция сброшена к плану тренера");
+      if (typeof showToast === "function") showToast("Позиция сброшена к плану");
     }
     window.resetTodayOverride = resetTodayOverride;
 
-    // НАСТРОЙКИ БАЗОВОГО ПЛАНА ТРЕНЕРА
+    // НАСТРОЙКИ БАЗОВОГО ПЛАНА
     function openMealPlanSettingsModal() {
-      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
       const tgt = template.targetMacros || { cal: 2520, p: 166, f: 64, c: 320 };
       document.getElementById("planTgtCalInput").value = tgt.cal;
       document.getElementById("planTgtPInput").value = tgt.p;
@@ -12873,7 +13908,7 @@
     window.closeMealPlanSettingsModal = closeMealPlanSettingsModal;
 
     function saveMealPlanSettings() {
-      if (!state.mealPlanTemplate) state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+      if (!state.mealPlanTemplate) state.mealPlanTemplate = JSON.parse(JSON.stringify(BUILTIN_MEAL_PLAN_PRESETS.coach_2520));
       const cal = Math.max(500, Number(document.getElementById("planTgtCalInput").value) || 2520);
       const p = Math.max(10, Number(document.getElementById("planTgtPInput").value) || 166);
       const f = Math.max(10, Number(document.getElementById("planTgtFInput").value) || 64);
@@ -12885,7 +13920,7 @@
       state.mealPlanTemplate.sauceLimitGrams = sauce;
       state.mealPlanTemplate.waterTargetLiters = water;
 
-      // Также обновляем целевую норму дня КБЖУ под план тренера
+      // Также обновляем целевую норму дня КБЖУ под план
       state.targets = { cal, p, f, c };
       state.goalCalcMode = "manual";
 
@@ -12893,56 +13928,9 @@
       closeMealPlanSettingsModal();
       renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("✓ Нормы плана тренера обновлены!");
+      if (typeof showToast === "function") showToast("✓ Нормы плана обновлены!");
     }
     window.saveMealPlanSettings = saveMealPlanSettings;
-
-    function restoreDefaultMealPlanTemplate() {
-      state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
-      state.targets = { cal: 2520, p: 166, f: 64, c: 320 };
-      state.goalCalcMode = "manual";
-      saveState();
-      closeMealPlanSettingsModal();
-      renderCoachMealPlan();
-      if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("↺ Рацион тренера сброшен к базовому (2520 ккал)");
-    }
-    window.restoreDefaultMealPlanTemplate = restoreDefaultMealPlanTemplate;
-
-    // AI-Фоллбэк для поиска продуктов РФ через Gemini
-    window.fetchAiRussianFoodSearch = async function(query) {
-      if (!query || query.trim().length < 2) return [];
-      const prompt = "Ты — база продуктов супермаркетов РФ (Пятерочка, Магнит, Перекресток, Чижик, ВкусВилл).\n" +
-        "Пользователь ищет: \"" + query.trim() + "\".\n" +
-        "Верни строго валидный JSON-массив из 3-4 самых подходящих продуктов РФ:\n" +
-        "[{\"name\":\"Бренд и продукт\",\"cal100\":320,\"p100\":9.0,\"f100\":2.0,\"c100\":66.0,\"servingWeight\":100}]\n" +
-        "Только JSON!";
-      try {
-        const res = await callGemini3Flash({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
-        });
-        const txt = res?.candidates?.[0]?.content?.parts?.[0]?.text;
-        const items = JSON.parse(cleanJsonString(txt));
-        if (Array.isArray(items)) {
-          return items.map(it => ({
-            name: it.name,
-            cal: Math.round(Number(it.cal100) || 0),
-            p: round1(Number(it.p100) || 0),
-            f: round1(Number(it.f100) || 0),
-            c: round1(Number(it.c100) || 0),
-            unitWeight: Number(it.servingWeight || 100),
-            standardUnitWeight: Number(it.servingWeight || 100),
-            source: "AI РФ",
-            isAi: true
-          }));
-        }
-      } catch (e) {
-        console.warn("fetchAiRussianFoodSearch error", e);
-      }
-      return [];
-    };
-
 
     function renderAll() {
       const listEl = document.getElementById("foodList");
