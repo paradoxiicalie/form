@@ -11,22 +11,22 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>form — ATELIER</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js" defer></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
     :root {
       --bg-main: #070708;
-      --card-bg: #101012;
-      --card-border: rgba(230, 223, 211, 0.09);
-      --accent-cal: #E6DFD3;
-      --accent-cal-text: #070708;
-      --accent-p: #9CA3AF;
-      --accent-f: #8C8275;
-      --accent-c: #C2593F;
-      --accent-glow: rgba(230, 223, 211, 0.45);
+      --card-bg: #121215;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cal: #ef4444;
+      --accent-cal-text: #ffffff;
+      --accent-p: #60a5fa;
+      --accent-f: #93c5fd;
+      --accent-c: #fef08a;
+      --accent-glow: rgba(239, 68, 68, 0.45);
 
       --ui-radius-card: 24px;
       --ui-radius-card-sm: 18px;
@@ -34,6 +34,14 @@
       --ui-radius-btn: 14px;
       --ui-radius-field: 14px;
       --ui-card-border: rgba(255, 255, 255, 0.08);
+    }
+
+    .app-shell {
+      opacity: 0;
+      transition: opacity 0.12s ease-out;
+    }
+    .app-ready .app-shell {
+      opacity: 1;
     }
 
     html[data-ui-corners="brutal"] {
@@ -64,19 +72,19 @@
       height: 100%;
       background-color: var(--bg-main);
       color: #f4f4f0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
       overflow-x: hidden;
       overscroll-behavior-y: none;
       transition: background-color 0.25s ease;
     }
 
-    .mono { font-family: 'JetBrains Mono', monospace; }
+    .mono { font-family: "SF Mono", ui-monospace, Menlo, Monaco, "JetBrains Mono", monospace; }
 
     .app-shell {
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding-top: calc(env(safe-area-inset-top, 20px) + 10px);
+      padding-top: max(74px, calc(env(safe-area-inset-top, 59px) + 15px));
       padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 18px);
       padding-left: 18px;
       padding-right: 18px;
@@ -498,9 +506,6 @@
     #viewSplit { padding-left: 4px; }
 
       /* === CONSOLIDATED CORE STYLES & ADHD MODERN BRUTALIST POLISH === */
-      .app-shell {
-        padding-top: calc(env(safe-area-inset-top, 44px) + 16px) !important;
-      }
       .smart-weight-card {
         background: linear-gradient(180deg, rgba(24, 24, 28, 0.85) 0%, rgba(14, 14, 17, 0.92) 100%);
         border: 1px solid var(--card-border);
@@ -694,11 +699,45 @@
         background: transparent;
       }
   </style>
+  <script>
+    (function() {
+      try {
+        var raw = window.__NATIVE_STATE__;
+        if (!raw) {
+          var k = ['macro_minimal_ios_v9', 'macro_minimal_ios_v8', 'macro_minimal_ios_v7'];
+          for (var i = 0; i < k.length; i++) {
+            var v = localStorage.getItem(k[i]);
+            if (v) { raw = JSON.parse(v); break; }
+          }
+        }
+        if (raw) {
+          var theme = raw.theme || 'obsidian';
+          var root = document.documentElement;
+          if (theme === 'raw') {
+            root.style.setProperty('--accent-cal', '#E6DFD3');
+            root.style.setProperty('--accent-cal-text', '#070708');
+            root.style.setProperty('--accent-glow', 'rgba(230, 223, 211, 0.45)');
+            root.style.setProperty('--card-bg', '#101012');
+            root.style.setProperty('--card-border', 'rgba(230, 223, 211, 0.09)');
+          } else {
+            root.style.setProperty('--accent-cal', '#ef4444');
+            root.style.setProperty('--accent-cal-text', '#ffffff');
+            root.style.setProperty('--accent-p', '#60a5fa');
+            root.style.setProperty('--accent-f', '#93c5fd');
+            root.style.setProperty('--accent-c', '#fef08a');
+            root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.45)');
+            root.style.setProperty('--card-bg', '#121215');
+            root.style.setProperty('--card-border', 'rgba(255, 255, 255, 0.08)');
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
 
   <!-- Защитная плашка под системный статус-бар iOS (Status Bar & Dynamic Island) -->
-  <div id="statusBarGuardOverlay" class="fixed top-0 left-0 right-0 h-[calc(env(safe-area-inset-top,44px)+4px)] bg-[#070709]/90 backdrop-blur-md z-[120] pointer-events-none"></div>
+  <div id="statusBarGuardOverlay" class="fixed top-0 left-0 right-0 h-[max(63px,calc(env(safe-area-inset-top,59px)+4px))] bg-[#070709]/90 backdrop-blur-md z-[120] pointer-events-none"></div>
 
   <!-- Всплывающее компактное уведомление (Тост) внизу над таббаром -->
   <div id="toastBox" class="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+82px)] left-1/2 -translate-x-1/2 z-[250] pointer-events-none opacity-0 transition-all duration-200 transform translate-y-3 w-[90%] max-w-[360px]">
@@ -712,11 +751,11 @@
   <div class="app-shell">
     <!-- Настраиваемая эстетичная строка статуса сверху -->
     <div onclick="openSettings('style')" class="flex items-center justify-between text-[10px] mono tracking-widest uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition">
-      <span id="atelierBrandLabel" class="truncate max-w-[55%]">FORM // RAW MONOLITH</span>
-      <span id="atelierNumbersLabel" class="truncate max-w-[44%] text-right">[ ARCHIVE · 01 · CONCRETE ]</span>
+      <span id="atelierBrandLabel" class="truncate max-w-[55%]">FORM // OBSIDIAN NOIR</span>
+      <span id="atelierNumbersLabel" class="truncate max-w-[44%] text-right">[ STUDIO · 02 · SILK ]</span>
     </div>
 
-    <!-- Верхняя шапка с переключателем [ РАЦИОН // СПЛИТ ] -->
+    <!-- Верхняя шапка с переключателем [ РАЦИОН // ТРЕНИ ] -->
     <div class="flex items-center justify-between mb-3.5">
       <button type="button" id="btnOpenSettings" onclick="openSettings()" class="circle-btn" aria-label="Настройки">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -740,7 +779,7 @@
           onclick="switchMainView('split')"
           class="px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition"
         >
-          СПЛИТ
+          ТРЕНИ
         </button>
       </div>
 
@@ -768,11 +807,11 @@
         <div class="flex items-baseline justify-between mb-2">
           <div class="flex items-baseline gap-1.5 cursor-pointer active:opacity-80 transition" onclick="openSettings('goals')" title="Настроить суточную норму">
             <span id="calEaten" class="text-3xl font-extrabold tracking-tight mono text-white">0</span>
-            <span class="text-xs text-zinc-500 mono">/ <span id="calTarget">2000</span> ккал</span>
+            <span class="text-xs text-zinc-500 mono">/ <span id="calTarget">—</span> ккал</span>
           </div>
           <button type="button" onclick="openSettings('goals')" class="flex items-center gap-1.5 active:opacity-70 shrink-0">
             <span id="statusDot" class="w-2 h-2 rounded-full" style="background: var(--accent-cal)"></span>
-            <span id="calPercentBadge" class="text-xs font-semibold mono" style="color: var(--accent-cal)">2000 в запасе</span>
+            <span id="calPercentBadge" class="text-xs font-semibold mono" style="color: var(--accent-cal)">— ккал</span>
           </button>
         </div>
 
@@ -827,6 +866,9 @@
           </button>
         </div>
       </div>
+
+      <!-- Плашка: Умный Вес и Метаболизм -->
+      <div id="smartMetabolismBanner" class="smart-weight-card" onclick="openMetabolismModal()"></div>
 
       <!-- Лента: [ Утренний Вес / TDEE ] + [ Стек добавок в один тап ] -->
       <div id="stackAndWeightStrip" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar"></div>
@@ -12335,12 +12377,15 @@
         state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "motion" };
       }
       const newSteps = Math.max(0, Number(steps) || 0);
+      if (state.dailySteps.count === newSteps && state.dailySteps.date === getTodayKey()) {
+        return;
+      }
       state.dailySteps.count = newSteps;
       state.dailySteps.date = getTodayKey();
       state.dailySteps.source = "motion";
       state.dailySteps.lastSyncedAt = Date.now();
       saveState();
-      renderAll();
+      renderStepsCard();
       syncNativeWidget();
       if (isSilent !== true) {
         showToast(`✓ Шаги обновлены: ${newSteps.toLocaleString("ru-RU")}`);
@@ -15925,7 +15970,6 @@
         checkWorkoutWeekRollover();
         if (state.activeRest) tickRestTimer();
         checkNativeStepsOnStartup(true);
-        renderAll();
       }
     });
 
@@ -19436,6 +19480,9 @@ ${knownPiecesContext}
     initHorizontalViewSwipe();
     initSettingsTabsSwipe();
     switchMainView("diet", true);
+    requestAnimationFrame(() => {
+      document.documentElement.classList.add("app-ready");
+    });
 
     try {
       const modalObserver = new MutationObserver(() => {

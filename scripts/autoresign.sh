@@ -197,8 +197,49 @@ run_autoresign() {
     # Всегда синхронизируем свежий index.html в бандл
     cp -f "$PROJECT_DIR/index.html" "$app_path/index.html"
 
-    # Если профиль виджета истек, удаляем PlugIns из бандла, чтобы devicectl не блокировал установку основного приложения
-    rm -rf "$app_path/PlugIns"
+    # Управление виджетом: если профиль виджета активен — подписываем и оставляем его, иначе временно отключаем PlugIns, чтобы devicectl не блокировал приложение
+    local cert_id="Apple Development: paradoxicalie@gmail.com (2X34LYF2JH)"
+    local widget_appex="$app_path/PlugIns/FormWidgetExtension.appex"
+    if [[ -d "$widget_appex" ]]; then
+        local widget_prov="$widget_appex/embedded.mobileprovision"
+        local is_widget_valid=0
+        if [[ -f "$widget_prov" ]]; then
+            local exp_status
+            exp_status=$(security cms -D -i "$widget_prov" 2>/dev/null | python3 -c "
+import sys, plistlib, datetime
+data = sys.stdin.buffer.read()
+if data:
+    pl = plistlib.loads(data)
+    exp = pl.get('ExpirationDate')
+    if exp and exp > datetime.datetime.now(datetime.timezone.utc):
+        print('valid')
+" 2>/dev/null || true)
+            if [[ "$exp_status" == "valid" ]]; then
+                is_widget_valid=1
+            fi
+        fi
+
+        if [[ $is_widget_valid -eq 1 ]]; then
+            log_msg "📱 Профиль FormWidgetExtension активен. Подписываем виджет..."
+            local widget_ent="/tmp/form_widget_entitlements_extracted.plist"
+            security cms -D -i "$widget_prov" 2>/dev/null | python3 -c "
+import sys, plistlib
+data = sys.stdin.buffer.read()
+if data:
+    plist = plistlib.loads(data)
+    ents = plist.get('Entitlements', {})
+    with open('$widget_ent', 'wb') as f:
+        plistlib.dump(ents, f)
+" 2>/dev/null || true
+            if [[ -f "$widget_ent" ]]; then
+                find "$widget_appex" -type f -name "*.dylib" -exec codesign --force --sign "$cert_id" {} + 2>/dev/null || true
+                codesign --force --sign "$cert_id" --entitlements "$widget_ent" "$widget_appex" >/dev/null 2>&1 || true
+            fi
+        else
+            log_msg "⚠️ Профиль FormWidgetExtension истек или отсутствует. Чтобы виджет заработал на экране iPhone, войдите в Apple ID в Xcode (Настройки -> Accounts)."
+            rm -rf "$app_path/PlugIns"
+        fi
+    fi
 
     # Гарантируем наличие активного provisioning profile
     if [[ ! -f "$app_path/embedded.mobileprovision" ]]; then
@@ -223,7 +264,6 @@ if data:
 " 2>/dev/null || true
 
         if [[ -f "$ent_file" ]]; then
-            local cert_id="Apple Development: paradoxicalie@gmail.com (2X34LYF2JH)"
             find "$app_path" -type f -name "*.dylib" -exec codesign --force --sign "$cert_id" {} + 2>/dev/null || true
             find "$app_path/Frameworks" -type d -name "*.framework" -exec codesign --force --sign "$cert_id" {} + 2>/dev/null || true
             codesign --force --sign "$cert_id" --entitlements "$ent_file" "$app_path" >/dev/null 2>&1 || true

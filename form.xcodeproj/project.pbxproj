@@ -180,9 +180,13 @@
 				TargetAttributes = {
 					E46E0A4D307FE7860051A287 = {
 						CreatedOnToolsVersion = 26.6;
+						DevelopmentTeam = MA26BUYLCR;
+						ProvisioningStyle = Automatic;
 					};
 					E4AA0354307FD38F00556BBE = {
 						CreatedOnToolsVersion = 26.6;
+						DevelopmentTeam = MA26BUYLCR;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
