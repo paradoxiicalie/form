@@ -196,12 +196,51 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
 }
 
 class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
+    private var activeTasks = Set<ObjectIdentifier>()
+    private let tasksLock = NSLock()
+    
+    private func registerTask(_ task: WKURLSchemeTask) {
+        tasksLock.lock()
+        activeTasks.insert(ObjectIdentifier(task))
+        tasksLock.unlock()
+    }
+    
+    private func unregisterTask(_ task: WKURLSchemeTask) {
+        tasksLock.lock()
+        activeTasks.remove(ObjectIdentifier(task))
+        tasksLock.unlock()
+    }
+    
+    private func isTaskActive(_ task: WKURLSchemeTask) -> Bool {
+        tasksLock.lock()
+        defer { tasksLock.unlock() }
+        return activeTasks.contains(ObjectIdentifier(task))
+    }
+
     static var notesMediaDirectory: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("NotesMedia", isDirectory: true)
         if !FileManager.default.fileExists(atPath: docs.path) {
             try? FileManager.default.createDirectory(at: docs, withIntermediateDirectories: true)
         }
         return docs
+    }
+    
+    static var diskBackupURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("form_state_backup.json")
+    }
+    
+    static func saveDiskBackup(jsonString: String) {
+        guard !jsonString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let data = jsonString.data(using: .utf8) else { return }
+        try? data.write(to: diskBackupURL, options: .atomic)
+    }
+    
+    static func loadDiskBackup() -> String? {
+        guard FileManager.default.fileExists(atPath: diskBackupURL.path),
+              let data = try? Data(contentsOf: diskBackupURL),
+              let str = String(data: data, encoding: .utf8),
+              !str.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return str
     }
     
     static func deleteMediaFile(urlStringOrName: String) {
@@ -216,9 +255,26 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         try? FileManager.default.removeItem(at: fileURL)
     }
 
+    static func cleanupOrphanedMediaFiles(activeFileNames: Set<String>) {
+        let dir = notesMediaDirectory
+        guard let files = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return }
+        for file in files {
+            guard !file.hasPrefix(".") else { continue }
+            if !activeFileNames.contains(file) && !activeFileNames.contains("form-media://" + file) {
+                let fileURL = dir.appendingPathComponent(file)
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
+    }
+
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        registerTask(urlSchemeTask)
+        
         guard let url = urlSchemeTask.request.url else {
-            urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 400, userInfo: nil))
+            if isTaskActive(urlSchemeTask) {
+                urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 400, userInfo: nil))
+            }
+            unregisterTask(urlSchemeTask)
             return
         }
         
@@ -229,11 +285,14 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         guard FileManager.default.fileExists(atPath: fileURL.path),
               let attr = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
               let fileSize = attr[.size] as? UInt64, fileSize > 0 else {
-            let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Access-Control-Allow-Origin": "*"])
-            if let resp = resp {
-                urlSchemeTask.didReceive(resp)
+            if isTaskActive(urlSchemeTask) {
+                let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Access-Control-Allow-Origin": "*"])
+                if let resp = resp {
+                    urlSchemeTask.didReceive(resp)
+                }
+                urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 404, userInfo: [NSLocalizedDescriptionKey: "File not found"]))
             }
-            urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 404, userInfo: [NSLocalizedDescriptionKey: "File not found"]))
+            unregisterTask(urlSchemeTask)
             return
         }
         
@@ -252,7 +311,10 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         let totalSize = Int(fileSize)
         
         guard let fileHandle = try? FileHandle(forReadingFrom: fileURL) else {
-            urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 500, userInfo: nil))
+            if isTaskActive(urlSchemeTask) {
+                urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 500, userInfo: nil))
+            }
+            unregisterTask(urlSchemeTask)
             return
         }
         defer { try? fileHandle.close() }
@@ -286,10 +348,16 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
                 "Accept-Ranges": "bytes",
                 "Access-Control-Allow-Origin": "*"
             ]
-            if let response = HTTPURLResponse(url: url, statusCode: 206, httpVersion: "HTTP/1.1", headerFields: headers) {
+            if isTaskActive(urlSchemeTask),
+               let response = HTTPURLResponse(url: url, statusCode: 206, httpVersion: "HTTP/1.1", headerFields: headers) {
                 urlSchemeTask.didReceive(response)
-                urlSchemeTask.didReceive(subData)
-                urlSchemeTask.didFinish()
+                if isTaskActive(urlSchemeTask) {
+                    urlSchemeTask.didReceive(subData)
+                }
+                if isTaskActive(urlSchemeTask) {
+                    urlSchemeTask.didFinish()
+                }
+                unregisterTask(urlSchemeTask)
                 return
             }
         }
@@ -301,14 +369,22 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
             "Accept-Ranges": "bytes",
             "Access-Control-Allow-Origin": "*"
         ]
-        if let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) {
+        if isTaskActive(urlSchemeTask),
+           let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) {
             urlSchemeTask.didReceive(response)
-            urlSchemeTask.didReceive(data)
-            urlSchemeTask.didFinish()
+            if isTaskActive(urlSchemeTask) {
+                urlSchemeTask.didReceive(data)
+            }
+            if isTaskActive(urlSchemeTask) {
+                urlSchemeTask.didFinish()
+            }
         }
+        unregisterTask(urlSchemeTask)
     }
     
-    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
+        unregisterTask(urlSchemeTask)
+    }
 }
 
 struct WebView: UIViewRepresentable {
@@ -325,7 +401,10 @@ struct WebView: UIViewRepresentable {
         
         let sharedDefaults = UserDefaults(suiteName: "group.com.macro.shared")
         let savedKey = sharedDefaults?.string(forKey: "nativeApiKey") ?? ""
-        let savedState = sharedDefaults?.string(forKey: "nativeStateJson") ?? sharedDefaults?.string(forKey: "formNativeBackupJSON") ?? ""
+        var savedState = sharedDefaults?.string(forKey: "nativeStateJson") ?? sharedDefaults?.string(forKey: "formNativeBackupJSON") ?? ""
+        if savedState.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            savedState = FormMediaSchemeHandler.loadDiskBackup() ?? ""
+        }
         
         let escapedKey = savedKey
             .replacingOccurrences(of: "\\", with: "\\\\")
@@ -560,8 +639,58 @@ struct WebView: UIViewRepresentable {
                 return
             }
             
+            if action == "backupStateToDisk" {
+                let jsonString = (dict["json"] as? String) ?? (dict["data"] as? String) ?? (dict["stateJson"] as? String) ?? ""
+                if !jsonString.isEmpty {
+                    FormMediaSchemeHandler.saveDiskBackup(jsonString: jsonString)
+                    if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+                        d.set(jsonString, forKey: "formNativeBackupJSON")
+                        d.set(jsonString, forKey: "nativeStateJson")
+                        d.synchronize()
+                    }
+                }
+                return
+            }
+            if action == "cleanupOrphanedMedia" {
+                if let activeList = dict["activeMediaFiles"] as? [String] {
+                    let cleanSet = Set(activeList.map { name -> String in
+                        var s = name
+                        if s.hasPrefix("form-media://") {
+                            s = String(s.dropFirst("form-media://".count))
+                        }
+                        return s.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                    })
+                    FormMediaSchemeHandler.cleanupOrphanedMediaFiles(activeFileNames: cleanSet)
+                }
+                return
+            }
+            if action == "haptic" {
+                let style = dict["style"] as? String ?? "light"
+                DispatchQueue.main.async {
+                    switch style {
+                    case "light":
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    case "medium":
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    case "heavy":
+                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                    case "selection":
+                        UISelectionFeedbackGenerator().selectionChanged()
+                    case "success":
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    case "warning":
+                        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                    case "error":
+                        UINotificationFeedbackGenerator().notificationOccurred(.error)
+                    default:
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                }
+                return
+            }
             if action == "syncFullBackup" {
                 if let jsonString = dict["data"] as? String, !jsonString.isEmpty {
+                    FormMediaSchemeHandler.saveDiskBackup(jsonString: jsonString)
                     if let d = UserDefaults(suiteName: "group.com.macro.shared") {
                         d.set(jsonString, forKey: "formNativeBackupJSON")
                         d.synchronize()

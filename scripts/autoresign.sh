@@ -165,6 +165,12 @@ run_autoresign() {
 
     log_msg "🔄 Запуск автообновления form для $dev_name [$dev_id]..."
 
+    # Синхронизация web-ядра index.html -> form/index.html перед компиляцией
+    if ! cmp -s "$PROJECT_DIR/index.html" "$PROJECT_DIR/form/index.html"; then
+        log_msg "Синхронизация web-ядра: index.html -> form/index.html"
+        cp -f "$PROJECT_DIR/index.html" "$PROJECT_DIR/form/index.html"
+    fi
+
     # 3. Собираем проект с обновлением профилей (-allowProvisioningUpdates)
     local build_log="/tmp/form_xcodebuild.log"
     local build_ok=1
@@ -193,6 +199,15 @@ run_autoresign() {
 
     # Если профиль виджета истек, удаляем PlugIns из бандла, чтобы devicectl не блокировал установку основного приложения
     rm -rf "$app_path/PlugIns"
+
+    # Гарантируем наличие активного provisioning profile
+    if [[ ! -f "$app_path/embedded.mobileprovision" ]]; then
+        local user_prov
+        user_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | head -n 1)
+        if [[ -n "$user_prov" && -f "$user_prov" ]]; then
+            cp -f "$user_prov" "$app_path/embedded.mobileprovision"
+        fi
+    fi
 
     # Извлекаем полные entitlements из активного профиля form.app и переподписываем
     if [[ -f "$app_path/embedded.mobileprovision" ]]; then

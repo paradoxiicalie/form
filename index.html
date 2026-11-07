@@ -870,11 +870,14 @@
         </button>
       </div>
 
-      <!-- СЕКЦИЯ 1: ИНТЕРАКТИВНЫЙ ПЛАН ТРЕНЕРА (Obsidian Noir) -->
-      <div id="coachMealPlanSection" class="space-y-3.5 mb-6"></div>
+      <!-- ПОДТРЕК РАЦИОНА: [ ПЛАН ТРЕНЕРА ] <-> [ ДНЕВНИК ] (1:1 Telegram Swipe) -->
+      <div id="dietSubViewport" class="w-full overflow-hidden">
+        <div id="dietSubTrack" class="flex w-[200%] will-change-transform" style="transform: translate3d(0%, 0, 0); backface-visibility: hidden;">
+          <!-- СЕКЦИЯ 1: ИНТЕРАКТИВНЫЙ ПЛАН ТРЕНЕРА (Obsidian Noir) -->
+          <div id="coachMealPlanSection" class="w-1/2 shrink-0 space-y-3.5 mb-6"></div>
 
-      <!-- СЕКЦИЯ 2: СВОБОДНЫЙ ДНЕВНИК (FatSecret Style) -->
-      <div id="coachDietDiarySection" class="hidden">
+          <!-- СЕКЦИЯ 2: СВОБОДНЫЙ ДНЕВНИК (FatSecret Style) -->
+          <div id="coachDietDiarySection" class="w-1/2 shrink-0">
       <!-- Заголовок Сегодня -->
       <div class="flex items-baseline justify-between mb-2 px-0.5">
         <div class="flex items-baseline gap-2.5">
@@ -972,6 +975,8 @@
           </svg>
         </button>
       </div>
+    </div>
+    </div>
     </div>
     </div>
 
@@ -8241,11 +8246,18 @@
     let editingItemId = null;
     let pendingScannedProduct = null;
 
+    let savedDietScrollY = 0;
+    let savedSplitScrollY = 0;
+
     // =========================================================================
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
     function switchMainView(view, immediate = false) {
+      if (typeof forceStopScannerCamera === "function") forceStopScannerCamera();
       const prevView = currentMainView;
+      if (prevView === "diet") savedDietScrollY = window.scrollY || 0;
+      else if (prevView === "split") savedSplitScrollY = window.scrollY || 0;
+
       currentMainView = view;
       const vDiet = document.getElementById("viewDiet");
       const vSplit = document.getElementById("viewSplit");
@@ -8260,7 +8272,7 @@
       if (vSplit) { vSplit.style.height = "auto"; vSplit.style.overflow = "visible"; vSplit.style.opacity = "1"; }
 
       if (track) {
-        track.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+        track.style.transition = immediate ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
         track.style.transform = (view === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
       }
 
@@ -8272,7 +8284,7 @@
         if (vSplit) vSplit.style.pointerEvents = "auto";
 
         if (prevView !== "split") {
-          window.scrollTo({ top: 0, behavior: "instant" });
+          window.scrollTo({ top: savedSplitScrollY, behavior: "instant" });
         }
 
         const collapseDiet = () => {
@@ -8284,7 +8296,7 @@
           }
         };
         if (immediate) collapseDiet();
-        else setTimeout(collapseDiet, 300);
+        else setTimeout(collapseDiet, 290);
       } else {
         if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
         if (tabSplit) tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
@@ -8293,7 +8305,7 @@
         if (vDiet) vDiet.style.pointerEvents = "auto";
 
         if (prevView !== "diet") {
-          window.scrollTo({ top: 0, behavior: "instant" });
+          window.scrollTo({ top: savedDietScrollY, behavior: "instant" });
         }
 
         const collapseSplit = () => {
@@ -8305,7 +8317,7 @@
           }
         };
         if (immediate) collapseSplit();
-        else setTimeout(collapseSplit, 300);
+        else setTimeout(collapseSplit, 290);
       }
     }
     window.switchMainView = switchMainView;
@@ -11944,44 +11956,48 @@
       } catch (e) {}
 
       // Проверка на веб-окружение (GitHub Pages / браузер вне нативного iOS WKWebView)
-      const isNativeEnv = !!(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge);
+      const isNativeEnv = !!(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
       if (!isNativeEnv) {
-        // Очистка устаревших тестовых данных в веб-версии (на GitHub Pages)
-        const hasLegacyCoachPlan = state.mealPlanTemplate?.meals?.some(m => 
-          (m.items || []).some(i => i.id === "b_b1" || i.id === "d1_lavash" || i.id === "d2_tvorog" || i.id === "b_a1") ||
-          (m.variants && Object.values(m.variants).some(v => (v.items || []).some(i => i.id === "b_b1" || i.id === "b_a1")))
-        ) || (state.mealPlanTemplate?.targetMacros?.cal === 2520);
+        // Одноразовая очистка устаревших тестовых данных в веб-версии (на GitHub Pages)
+        const isPurged = localStorage.getItem("form_web_purged_v2") === "1";
+        if (!isPurged) {
+          const hasLegacyCoachPlan = state.mealPlanTemplate?.meals?.some(m => 
+            (m.items || []).some(i => i.id === "b_b1" || i.id === "d1_lavash" || i.id === "d2_tvorog" || i.id === "b_a1") ||
+            (m.variants && Object.values(m.variants).some(v => (v.items || []).some(i => i.id === "b_b1" || i.id === "b_a1")))
+          ) || (state.mealPlanTemplate?.targetMacros?.cal === 2520);
 
-        if (hasLegacyCoachPlan) {
-          state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
-        }
+          if (hasLegacyCoachPlan) {
+            state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+          }
 
-        const hasLegacyWorkout = state.workout?.programs?.d1?.exercises?.some(ex => ex.id === "ex_bench" || ex.lastWeight === 80);
-        if (hasLegacyWorkout) {
-          state.workout = {
-            lastMondayKey: getMondayKey(),
-            weekSchedule: { 1: "d1", 2: "rest", 3: "d2", 4: "rest", 5: "d3", 6: "rest", 0: "rest" },
-            programs: JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS)),
-            weeklySetsByMuscle: { chest: 0, back: 0, legs: 0, arms: 0, core: 0 },
-            logs: [],
-            exerciseNotes: {}
-          };
-        }
+          const hasLegacyWorkout = state.workout?.programs?.d1?.exercises?.some(ex => ex.id === "ex_bench" || ex.lastWeight === 80);
+          if (hasLegacyWorkout) {
+            state.workout = {
+              lastMondayKey: getMondayKey(),
+              weekSchedule: { 1: "d1", 2: "rest", 3: "d2", 4: "rest", 5: "d3", 6: "rest", 0: "rest" },
+              programs: JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS)),
+              weeklySetsByMuscle: { chest: 0, back: 0, legs: 0, arms: 0, core: 0 },
+              logs: [],
+              exerciseNotes: {}
+            };
+          }
 
-        const hasLegacyBody = (state.body?.weight === 70) || (state.targets?.cal === 2979) || (state.weightLogs?.some(l => l.weight === 70));
-        if (hasLegacyBody) {
-          state.body = { sex: "male", weight: null, height: null, age: null, activity: 1.55, goalMode: 1.12 };
-          state.targets = { cal: 2000, p: 140, f: 65, c: 215 };
-          state.weightLogs = [];
-        }
+          const hasLegacyBody = (state.body?.weight === 70) || (state.targets?.cal === 2979) || (state.weightLogs?.some(l => l.weight === 70));
+          if (hasLegacyBody) {
+            state.body = { sex: "male", weight: null, height: null, age: null, activity: 1.55, goalMode: 1.12 };
+            state.targets = { cal: 2000, p: 140, f: 65, c: 215 };
+            state.weightLogs = [];
+          }
 
-        if (hasLegacyCoachPlan || hasLegacyWorkout || hasLegacyBody) {
-          state.todayItems = [];
-          try {
-            localStorage.removeItem("macro_minimal_ios_v8");
-            localStorage.removeItem("macro_minimal_ios_v7");
-          } catch (e) {}
-          saveState();
+          if (hasLegacyCoachPlan || hasLegacyWorkout || hasLegacyBody) {
+            state.todayItems = [];
+            try {
+              localStorage.removeItem("macro_minimal_ios_v8");
+              localStorage.removeItem("macro_minimal_ios_v7");
+            } catch (e) {}
+          }
+          localStorage.setItem("form_web_purged_v2", "1");
+          saveState(true);
         }
       }
 
@@ -11998,6 +12014,9 @@
       updateUiGlowToggleUI(state.uiStyleSettings?.glow !== false);
       checkDayRollover();
       checkWorkoutWeekRollover();
+      if (isNativeEnv && typeof scheduleMediaGarbageCollection === "function") {
+        scheduleMediaGarbageCollection();
+      }
     }
 
     function checkDayRollover() {
@@ -12020,9 +12039,16 @@
       }
     }
 
-    function saveState() {
+    let _saveStateTimeout = null;
+
+    function flushSaveState() {
+      if (_saveStateTimeout) {
+        clearTimeout(_saveStateTimeout);
+        _saveStateTimeout = null;
+      }
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const jsonStr = JSON.stringify(state);
+        localStorage.setItem(STORAGE_KEY, jsonStr);
         if (Array.isArray(state.backupApiKeys)) {
           localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(state.backupApiKeys));
         }
@@ -12031,12 +12057,72 @@
         } else {
           localStorage.removeItem("form_gemini_proxy");
         }
-        // Задача 5: Нативный бэкап всей базы в UserDefaults через Swift-мост
-        const bridge = window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge;
-        bridge?.postMessage({ action: "syncFullBackup", data: JSON.stringify(state) });
+        // Нативный бэкап всей базы в Documents и UserDefaults через Swift-мост
+        const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
+        bridge?.postMessage({ action: "backupStateToDisk", json: jsonStr, data: jsonStr });
       } catch (e) {}
       syncNativeWidget();
     }
+    window.flushSaveState = flushSaveState;
+
+    function saveState(immediate = false) {
+      if (immediate) {
+        flushSaveState();
+        return;
+      }
+      if (_saveStateTimeout) clearTimeout(_saveStateTimeout);
+      _saveStateTimeout = setTimeout(flushSaveState, 130);
+    }
+    window.saveState = saveState;
+
+    function haptic(style = "light") {
+      try {
+        const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
+        if (bridge) {
+          bridge.postMessage({ action: "haptic", style: style });
+          return;
+        }
+        if (navigator.vibrate) {
+          navigator.vibrate(style === "heavy" ? 25 : (style === "medium" ? 15 : 8));
+        }
+      } catch (e) {}
+    }
+    window.haptic = haptic;
+
+    function scheduleMediaGarbageCollection() {
+      setTimeout(() => {
+        try {
+          if (!state || !state.workout || typeof state.workout.exerciseNotes !== "object" || !state.workout.exerciseNotes) {
+            return;
+          }
+          const activeMediaFiles = [];
+          Object.values(state.workout.exerciseNotes).forEach(note => {
+            if (!note) return;
+            if (Array.isArray(note.media)) {
+              note.media.forEach(m => {
+                if (m && m.url) activeMediaFiles.push(m.url);
+              });
+            }
+            if (note.mediaUrl) activeMediaFiles.push(note.mediaUrl);
+            if (note.videoUrl) activeMediaFiles.push(note.videoUrl);
+            if (note.audioUrl) activeMediaFiles.push(note.audioUrl);
+          });
+          const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
+          bridge?.postMessage({ action: "cleanupOrphanedMedia", activeMediaFiles: activeMediaFiles });
+        } catch (e) {}
+      }, 5000);
+    }
+    window.scheduleMediaGarbageCollection = scheduleMediaGarbageCollection;
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        flushSaveState();
+        if (typeof forceStopScannerCamera === "function") forceStopScannerCamera();
+      }
+    });
+    window.addEventListener("pagehide", () => {
+      flushSaveState();
+    });
 
     // Отправляем в Swift как КБЖУ и цвета, так и статус сегодняшней тренировки, расписание недели, вес и стек!
     function syncNativeWidget() {
@@ -12478,7 +12564,9 @@
       state.todayItems = state.todayItems.filter(it => it.planItemId !== itemId);
     }
 
-    function switchDietViewMode(mode) {
+    let _dietSubCollapseTimeout = null;
+
+    function switchDietViewMode(mode, immediate = false) {
       state.dietViewMode = mode;
       saveState();
 
@@ -12486,19 +12574,83 @@
       const btnDiary = document.getElementById("dietModeDiaryBtn");
       const secPlan = document.getElementById("coachMealPlanSection");
       const secDiary = document.getElementById("coachDietDiarySection");
+      const subTrack = document.getElementById("dietSubTrack");
+
+      if (btnPlan && btnDiary) {
+        if (mode === "plan") {
+          btnPlan.className = "px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn";
+          btnDiary.className = "px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition";
+        } else {
+          btnPlan.className = "px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition";
+          btnDiary.className = "px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn";
+        }
+      }
+
+      if (_dietSubCollapseTimeout) {
+        clearTimeout(_dietSubCollapseTimeout);
+        _dietSubCollapseTimeout = null;
+      }
+
+      if (secPlan) {
+        secPlan.classList.remove("hidden");
+        secPlan.style.height = "auto";
+        secPlan.style.overflow = "visible";
+        secPlan.style.opacity = "1";
+        secPlan.style.pointerEvents = "auto";
+      }
+      if (secDiary) {
+        secDiary.classList.remove("hidden");
+        secDiary.style.height = "auto";
+        secDiary.style.overflow = "visible";
+        secDiary.style.opacity = "1";
+        secDiary.style.pointerEvents = "auto";
+      }
+
+      if (subTrack) {
+        subTrack.style.transition = immediate ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+        subTrack.style.transform = (mode === "plan") ? "translate3d(0%, 0, 0)" : "translate3d(-50%, 0, 0)";
+      }
 
       if (mode === "plan") {
-        if (btnPlan) { btnPlan.className = "px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn"; }
-        if (btnDiary) { btnDiary.className = "px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition"; }
-        if (secPlan) secPlan.classList.remove("hidden");
-        if (secDiary) secDiary.classList.add("hidden");
         renderCoachMealPlan();
-      } else {
-        if (btnPlan) { btnPlan.className = "px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition"; }
-        if (btnDiary) { btnDiary.className = "px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn"; }
-        if (secPlan) secPlan.classList.add("hidden");
-        if (secDiary) secDiary.classList.remove("hidden");
       }
+
+      const collapseInactive = () => {
+        if (state.dietViewMode === "plan") {
+          if (secDiary) {
+            secDiary.style.height = "0px";
+            secDiary.style.overflow = "hidden";
+            secDiary.style.opacity = "0";
+            secDiary.style.pointerEvents = "none";
+          }
+          if (secPlan) {
+            secPlan.style.height = "auto";
+            secPlan.style.overflow = "visible";
+            secPlan.style.opacity = "1";
+            secPlan.style.pointerEvents = "auto";
+          }
+        } else {
+          if (secPlan) {
+            secPlan.style.height = "0px";
+            secPlan.style.overflow = "hidden";
+            secPlan.style.opacity = "0";
+            secPlan.style.pointerEvents = "none";
+          }
+          if (secDiary) {
+            secDiary.style.height = "auto";
+            secDiary.style.overflow = "visible";
+            secDiary.style.opacity = "1";
+            secDiary.style.pointerEvents = "auto";
+          }
+        }
+      };
+
+      if (immediate) {
+        collapseInactive();
+      } else {
+        _dietSubCollapseTimeout = setTimeout(collapseInactive, 290);
+      }
+
       if (typeof renderAll === "function") renderAll();
     }
     window.switchDietViewMode = switchDietViewMode;
@@ -13838,10 +13990,11 @@
       document.getElementById("planSauceLimitInput").value = template.sauceLimitGrams || 50;
       document.getElementById("planWaterTargetInput").value = template.waterTargetLiters || 2.5;
 
+      const isNativeEnv = !!(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
       const savedCoach = localStorage.getItem("form_coach_plan_backup");
       const coachBtnCont = document.getElementById("savedCoachPresetContainer");
       if (coachBtnCont) {
-        if (savedCoach) coachBtnCont.classList.remove("hidden");
+        if (isNativeEnv && savedCoach) coachBtnCont.classList.remove("hidden");
         else coachBtnCont.classList.add("hidden");
       }
 
@@ -14677,15 +14830,34 @@
       }
     }
 
-    function stopCamera() {
+    function forceStopScannerCamera() {
+      if (typeof Quagga !== "undefined" && typeof Quagga.stop === "function") {
+        try { Quagga.stop(); } catch (e) {}
+      }
+      const video = document.getElementById("cameraStream");
+      if (video) {
+        try { video.pause(); } catch (e) {}
+        if (video.srcObject) {
+          try {
+            const stream = video.srcObject;
+            if (stream && stream.getTracks) stream.getTracks().forEach(t => t.stop());
+          } catch (e) {}
+          video.srcObject = null;
+        }
+        video.classList.add("hidden");
+      }
       if (videoStream) {
-        videoStream.getTracks().forEach(t => t.stop());
+        try { videoStream.getTracks().forEach(t => t.stop()); } catch (e) {}
         videoStream = null;
       }
-      document.getElementById("cameraStream")?.classList.add("hidden");
       const btnText = document.getElementById("liveCamBtnText");
       if (btnText) btnText.textContent = "Живая камера";
       document.getElementById("stopCamBtn")?.classList.add("hidden");
+    }
+    window.forceStopScannerCamera = forceStopScannerCamera;
+
+    function stopCamera() {
+      forceStopScannerCamera();
     }
 
     function compressImageFile(file, maxSide = 800, quality = 0.78) {
@@ -15766,6 +15938,9 @@
 
     loadState();
     renderAll();
+    if (typeof switchDietViewMode === "function") {
+      switchDietViewMode(state.dietViewMode || "plan", true);
+    }
     renderBackupKeysUI();
     syncKeyFieldUI();
   </script>
@@ -18897,7 +19072,7 @@ ${knownPiecesContext}
     }
 
     // =========================================================================
-    // 2. ПЛАВНЫЕ СВАЙПЫ МЕЖДУ «РАЦИОН» И «СПЛИТ» (TIKTOK / REELS СТИЛЬ 1:1)
+    // 2. ПЛАВНЫЕ СВАЙПЫ МЕЖДУ «РАЦИОН» И «СПЛИТ» (1:1 TELEGRAM SWIPE + DIRECTION LOCK)
     // =========================================================================
     function initHorizontalViewSwipe() {
       const viewport = document.getElementById("viewsViewport");
@@ -18907,13 +19082,16 @@ ${knownPiecesContext}
       let startX = 0;
       let startY = 0;
       let currentX = 0;
+      let currentY = 0;
       let startTime = 0;
       let isSwiping = false;
+      let isScrollingVertically = false;
       let directionDecided = false;
       let cancelGesture = false;
       let startingMainView = "diet";
       let startingDietMode = "plan";
       let startTarget = null;
+      let rafId = null;
 
       viewport.addEventListener("touchstart", (e) => {
         if (document.querySelector(".sheet-backdrop.open")) return;
@@ -18928,25 +19106,34 @@ ${knownPiecesContext}
         cancelGesture = false;
         directionDecided = false;
         isSwiping = false;
+        isScrollingVertically = false;
         startingMainView = currentMainView;
         startingDietMode = (state && state.dietViewMode) ? state.dietViewMode : "plan";
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         currentX = startX;
+        currentY = startY;
         startTime = Date.now();
       }, { passive: true });
 
       viewport.addEventListener("touchmove", (e) => {
-        if (cancelGesture || e.touches.length !== 1 || document.querySelector(".sheet-backdrop.open")) return;
+        if (cancelGesture || isScrollingVertically || e.touches.length !== 1 || document.querySelector(".sheet-backdrop.open")) return;
         currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
+        currentY = e.touches[0].clientY;
         const dx = currentX - startX;
         const dy = currentY - startY;
 
         if (!directionDecided) {
-          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+          const absDx = Math.abs(dx);
+          const absDy = Math.abs(dy);
+          if (absDx >= 8 || absDy >= 8) {
             directionDecided = true;
-            if (Math.abs(dx) > Math.abs(dy) * 1.2) {
+            if (absDy >= absDx) {
+              isScrollingVertically = true;
+              isSwiping = false;
+              cancelGesture = true;
+              return;
+            } else if (absDx > absDy * 1.2) {
               if (startingMainView === "split" && dx < 0 && startTarget && startTarget.closest("#workoutExercisesContainer, .exercise-swipe-wrap, [data-swipe-delete-attached]")) {
                 isSwiping = false;
                 cancelGesture = true;
@@ -18965,92 +19152,147 @@ ${knownPiecesContext}
 
         if (isSwiping) {
           if (e.cancelable) e.preventDefault();
-          const vDietEl = document.getElementById("viewDiet");
-          const vSplitEl = document.getElementById("viewSplit");
-          if (vDietEl) { vDietEl.style.height = "auto"; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; }
-          if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; }
-          track.style.transition = "none";
-          const width = viewport.offsetWidth || window.innerWidth;
 
-          if (startingMainView === "split") {
-            // Экран ТРЕНИ (Stop 3): свайп вправо возвращает в ДНЕВНИК (Stop 2).
-            // Свайп влево — не двигаем трек (правее экранов нет)
-            if (dx <= 0) {
-              track.style.transform = "translate3d(-50%, 0, 0)";
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(() => {
+            const vDietEl = document.getElementById("viewDiet");
+            const vSplitEl = document.getElementById("viewSplit");
+            const secPlan = document.getElementById("coachMealPlanSection");
+            const secDiary = document.getElementById("coachDietDiarySection");
+            const dietSubTrack = document.getElementById("dietSubTrack");
+
+            if (vDietEl) { vDietEl.style.height = "auto"; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; vDietEl.style.pointerEvents = "auto"; }
+            if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; vSplitEl.style.pointerEvents = "auto"; }
+            if (secPlan) { secPlan.style.height = "auto"; secPlan.style.overflow = "visible"; secPlan.style.opacity = "1"; secPlan.style.pointerEvents = "auto"; }
+            if (secDiary) { secDiary.style.height = "auto"; secDiary.style.overflow = "visible"; secDiary.style.opacity = "1"; secDiary.style.pointerEvents = "auto"; }
+
+            track.style.transition = "none";
+            if (dietSubTrack) dietSubTrack.style.transition = "none";
+            const width = viewport.offsetWidth || window.innerWidth || 390;
+
+            if (startingMainView === "split") {
+              // Вкладка ТРЕНИ
+              if (dietSubTrack) dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
+              if (dx > 0) {
+                // Свайп вправо возвращает в ДНЕВНИК
+                let deltaPercent = (dx / width) * 50;
+                let targetTranslate = Math.min(0, -50 + deltaPercent);
+                track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+              } else {
+                // Резиновое сопротивление на правом краю
+                let deltaPercent = (dx * 0.22 / width) * 50;
+                let targetTranslate = -50 + deltaPercent;
+                track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+              }
+            } else if (startingMainView === "diet" && startingDietMode === "diary") {
+              // Вкладка РАЦИОН -> ДНЕВНИК
+              if (dx < 0) {
+                // Свайп влево двигает главный трек к ТРЕНИ
+                if (dietSubTrack) dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
+                let deltaPercent = (dx / width) * 50;
+                let targetTranslate = Math.max(-50, deltaPercent);
+                track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+              } else {
+                // Свайп вправо двигает dietSubTrack обратно к ПЛАНУ ТРЕНЕРА
+                track.style.transform = "translate3d(0%, 0, 0)";
+                if (dietSubTrack) {
+                  let deltaPercent = (dx / width) * 50;
+                  let targetTranslate = Math.min(0, -50 + deltaPercent);
+                  dietSubTrack.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+                }
+              }
             } else {
-              let deltaPercent = (dx / width) * 50;
-              let targetTranslate = Math.min(0, -50 + deltaPercent);
-              track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
-            }
-          } else if (startingMainView === "diet" && startingDietMode === "diary") {
-            // Экран РАЦИОН -> ДНЕВНИК (Stop 2):
-            // Свайп влево (dx < 0) — переход в ТРЕНИ (Stop 3): трек едет к -50%
-            // Свайп вправо (dx > 0) — переход в ПЛАН ТРЕНЕРА (Stop 1): остаемся внутри РАЦИОН (трек на 0%, без сдвига вправо)
-            if (dx < 0) {
-              let deltaPercent = (dx / width) * 50;
-              let targetTranslate = Math.max(-50, deltaPercent);
-              track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
-            } else {
+              // Вкладка РАЦИОН -> ПЛАН ТРЕНЕРА
               track.style.transform = "translate3d(0%, 0, 0)";
+              if (dietSubTrack) {
+                if (dx < 0) {
+                  // Свайп влево двигает dietSubTrack к ДНЕВНИКУ
+                  let deltaPercent = (dx / width) * 50;
+                  let targetTranslate = Math.max(-50, deltaPercent);
+                  dietSubTrack.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+                } else {
+                  // Резиновое сопротивление на крайнем левом краю
+                  let deltaPercent = (dx * 0.22 / width) * 50;
+                  let targetTranslate = Math.min(6, deltaPercent);
+                  dietSubTrack.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+                }
+              }
             }
-          } else {
-            // Экран РАЦИОН -> ПЛАН ТРЕНЕРА (Stop 1):
-            // Свайп влево (dx < 0) — переход в ДНЕВНИК (Stop 2): остаемся внутри РАЦИОН (трек на 0%, не уезжает в ТРЕНИ)
-            // Свайп вправо (dx > 0) — левый край (легкое сопротивление)
-            if (dx > 0) {
-              let deltaPercent = (dx * 0.12 / width) * 50;
-              let targetTranslate = Math.min(5, deltaPercent);
-              track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
-            } else {
-              track.style.transform = "translate3d(0%, 0, 0)";
-            }
-          }
+          });
         }
       }, { passive: false });
 
       const endHandler = () => {
-        if (cancelGesture || !isSwiping) return;
+        if (rafId) cancelAnimationFrame(rafId);
+        if (cancelGesture || !isSwiping) {
+          isSwiping = false;
+          cancelGesture = false;
+          isScrollingVertically = false;
+          return;
+        }
         isSwiping = false;
         cancelGesture = false;
+        isScrollingVertically = false;
 
         const dx = currentX - startX;
-        const dt = Date.now() - startTime;
-        const vx = dx / (dt || 1);
-        const width = viewport.offsetWidth || window.innerWidth;
-        const distanceThreshold = width * 0.18;
-        const isFlickLeft = dx < -25 && vx < -0.28;
-        const isFlickRight = dx > 25 && vx > 0.28;
+        const dt = Math.max(1, Date.now() - startTime);
+        const vx = Math.abs(dx) / dt;
+        const width = viewport.offsetWidth || window.innerWidth || 390;
+        const distanceThreshold = width * 0.28;
+        const isFlick = Math.abs(dx) > 25 && vx > 0.35;
+        const isSwipeLeft = (dx < -distanceThreshold) || (dx < -25 && isFlick);
+        const isSwipeRight = (dx > distanceThreshold) || (dx > 25 && isFlick);
+
+        const springBezier = "280ms cubic-bezier(0.22, 1, 0.36, 1)";
+        const dietSubTrack = document.getElementById("dietSubTrack");
 
         if (startingMainView === "split") {
-          // Из ТРЕНИ: свайп вправо -> ДНЕВНИК
-          if (dx > distanceThreshold || isFlickRight) {
+          // Из ТРЕНИ
+          if (isSwipeRight) {
             switchMainView("diet");
             switchDietViewMode("diary");
-            if (typeof haptic === "function") haptic("selection");
+            if (typeof haptic === "function") haptic("light");
           } else {
+            track.style.transition = `transform ${springBezier}`;
+            track.style.transform = "translate3d(-50%, 0, 0)";
             switchMainView("split");
           }
         } else if (startingMainView === "diet" && startingDietMode === "diary") {
-          // Из ДНЕВНИКА: свайп влево -> ТРЕНИ, свайп вправо -> ПЛАН ТРЕНЕРА
-          if (dx < -distanceThreshold || isFlickLeft) {
+          // Из ДНЕВНИКА
+          if (isSwipeLeft) {
+            // Переход в ТРЕНИ
             switchMainView("split");
-            if (typeof haptic === "function") haptic("selection");
-          } else if (dx > distanceThreshold || isFlickRight) {
+            if (typeof haptic === "function") haptic("light");
+          } else if (isSwipeRight) {
+            // Возврат в ПЛАН ТРЕНЕРА
             switchDietViewMode("plan");
-            if (typeof haptic === "function") haptic("selection");
-            track.style.transition = "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)";
-            track.style.transform = "translate3d(0%, 0, 0)";
+            if (typeof haptic === "function") haptic("light");
           } else {
-            switchMainView("diet");
+            // Отскок на место в ДНЕВНИК
+            track.style.transition = `transform ${springBezier}`;
+            track.style.transform = "translate3d(0%, 0, 0)";
+            if (dietSubTrack) {
+              dietSubTrack.style.transition = `transform ${springBezier}`;
+              dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
+            }
+            switchDietViewMode("diary");
           }
         } else {
-          // Из ПЛАНА ТРЕНЕРА: свайп влево -> ДНЕВНИК
-          if (dx < -distanceThreshold || isFlickLeft) {
+          // Из ПЛАНА ТРЕНЕРА
+          if (isSwipeLeft) {
+            // Переход в ДНЕВНИК
             switchDietViewMode("diary");
-            if (typeof haptic === "function") haptic("selection");
+            if (typeof haptic === "function") haptic("light");
+          } else {
+            // Отскок на место в ПЛАН ТРЕНЕРА
+            track.style.transition = `transform ${springBezier}`;
+            track.style.transform = "translate3d(0%, 0, 0)";
+            if (dietSubTrack) {
+              dietSubTrack.style.transition = `transform ${springBezier}`;
+              dietSubTrack.style.transform = "translate3d(0%, 0, 0)";
+            }
+            switchDietViewMode("plan");
           }
-          track.style.transition = "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)";
-          track.style.transform = "translate3d(0%, 0, 0)";
         }
       };
 
