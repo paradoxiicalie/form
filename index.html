@@ -2748,6 +2748,14 @@
           <label class="text-[11px] text-zinc-400 block mb-1">Рецепт приготовления или подсказка:</label>
           <textarea id="editMealSlotRecipeInput" rows="3" placeholder="Шаги рецепта (напр. обжарить на сковороде 2 мин)..." class="dark-field text-xs text-white resize-none"></textarea>
         </div>
+
+        <div class="pt-2.5 border-t border-white/[0.06]">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[11px] font-bold text-white uppercase mono tracking-wide">Продукты в шаблоне:</span>
+            <span class="text-[10px] text-zinc-500 mono">(удаление ✕)</span>
+          </div>
+          <div id="editMealSlotProductsList" class="space-y-1.5 max-h-44 overflow-y-auto pr-0.5 no-scrollbar"></div>
+        </div>
       </div>
 
       <div class="flex gap-2">
@@ -2845,31 +2853,31 @@
         </div>
       </div>
 
-      <div class="flex gap-2">
-        
-        <div class="w-full space-y-2 mb-3 pt-2 border-t border-white/[0.06]">
-          <div class="text-[11px] font-bold text-white mono uppercase">Готовые пресеты:</div>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="loadMealPlanPreset('coach_2520')" class="py-2 px-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
-              <span class="font-bold block text-white">Рацион тренера</span>
-              <span class="text-[9.5px] mono text-zinc-400">2520 ккал (5 приемов)</span>
-            </button>
-            <button type="button" onclick="loadMealPlanPreset('empty_basic')" class="py-2 px-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
-              <span class="font-bold block text-white">Свой с нуля</span>
-              <span class="text-[9.5px] mono text-zinc-400">Чистый каркас</span>
-            </button>
-          </div>
+      <!-- ГОТОВЫЕ ПРЕСЕТЫ -->
+      <div class="w-full space-y-2 mb-3 pt-2 border-t border-white/[0.06]">
+        <div class="text-[11px] font-bold text-white mono uppercase">Готовые пресеты:</div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" onclick="loadMealPlanPreset('coach_2520')" class="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
+            <span class="font-bold block text-white">Рацион тренера</span>
+            <span class="text-[9.5px] mono text-zinc-400">2520 ккал (5 приемов)</span>
+          </button>
+          <button type="button" onclick="loadMealPlanPreset('empty_basic')" class="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
+            <span class="font-bold block text-white">Свой с нуля</span>
+            <span class="text-[9.5px] mono text-zinc-400">Чистый каркас</span>
+          </button>
         </div>
-        <div class="flex gap-2 w-full">
-        <button type="button" onclick="closeMealPlanSettingsModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
+      </div>
+
+      <!-- ФУТЕР КНОПОК -->
+      <div class="grid grid-cols-2 gap-3 mt-4 w-full">
+        <button type="button" onclick="closeMealPlanSettingsModal()" class="h-12 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition flex items-center justify-center">
           Отмена
         </button>
-        <button type="button" onclick="saveMealPlanSettings()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+        <button type="button" onclick="saveMealPlanSettings()" class="h-12 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition flex items-center justify-center">
           Сохранить
         </button>
       </div>
     </div>
-  </div>
   </div>
 
   <!-- МОДАЛКА: ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ДНЯ ТРЕНИРОВКИ -->
@@ -8223,7 +8231,7 @@
             id: "dinner_1",
             title: "Ужин 1 // Домашняя шавуха",
             type: "dinner",
-            recipe: "1. Лаваш расстелить, смазать соусом BombBar\n2. Выложить отварную грудку и натертый сыр Брест-Литовск\n3. Свернуть в плотный ролл\n4. Обжарить на сухой сковороде по 2 мин с каждой стороны до хруста",
+            recipe: "1. Взвесить 105 г лаваша, смазать основой из томатного соуса BombBar.\n2. Выложить 30 г отварной куриной грудки, сверху мелко накрошить 55 г сыра.\n3. Добавить свежие овощи по вкусу (помидоры, огурцы, белый лук, зелень).\n4. Завернуть в ролл и разогреть в микроволновке, пока сыр полностью не расплавится.",
             items: [
               { id: "d1_lavash", name: "Лаваш армянский Мэри", weight: 105, cal100: 277, p100: 8.5, f100: 1.0, c100: 58.5 },
               { id: "d1_cheese", name: "Сыр Брест-Литовск Российский", weight: 55, cal100: 340, p100: 24.5, f100: 26.5, c100: 0.0 },
@@ -8346,7 +8354,7 @@
           id: "dinner_1",
           title: "Ужин 1 // Домашняя шавуха",
           type: "dinner",
-          recipe: "1. Лаваш расстелить, смазать соусом BombBar\n2. Выложить отварную грудку и натертый сыр Брест-Литовск\n3. Свернуть в плотный ролл\n4. Обжарить на сухой антипригарной сковороде по 2 мин с каждой стороны до хруста",
+          recipe: "1. Взвесить 105 г лаваша, смазать основой из томатного соуса BombBar.\n2. Выложить 30 г отварной куриной грудки, сверху мелко накрошить 55 г сыра.\n3. Добавить свежие овощи по вкусу (помидоры, огурцы, белый лук, зелень).\n4. Завернуть в ролл и разогреть в микроволновке, пока сыр полностью не расплавится.",
           items: [
             { id: "d1_lavash", name: "Лаваш армянский Мэри", weight: 105, cal100: 277, p100: 8.5, f100: 1.0, c100: 58.5 },
             { id: "d1_cheese", name: "Сыр Брест-Литовск Российский", weight: 55, cal100: 340, p100: 24.5, f100: 26.5, c100: 0.0 },
@@ -12026,6 +12034,9 @@
           state.mealPlanTemplate.meals.forEach((m, idx) => {
             if (!m.id) m.id = "meal_" + (idx + 1);
             if (!m.title) m.title = "Прием " + (idx + 1);
+            if (m.id === "dinner_1" && m.recipe && (m.recipe.includes("сковород") || m.recipe.includes("антипригарн"))) {
+              m.recipe = "1. Взвесить 105 г лаваша, смазать основой из томатного соуса BombBar.\n2. Выложить 30 г отварной куриной грудки, сверху мелко накрошить 55 г сыра.\n3. Добавить свежие овощи по вкусу (помидоры, огурцы, белый лук, зелень).\n4. Завернуть в ролл и разогреть в микроволновке, пока сыр полностью не расплавится.";
+            }
             if (m.hasVariants) {
               if (!m.variants || typeof m.variants !== "object") m.variants = {};
             } else {
@@ -13261,9 +13272,66 @@
       document.getElementById("editMealSlotHasVariantsToggle").checked = !!meal.hasVariants;
       document.getElementById("editMealSlotRecipeInput").value = meal.recipe || meal.note || "";
 
+      renderEditMealSlotProductsList(mealId);
+
       document.getElementById("editMealSlotModal")?.classList.add("open");
     }
     window.openEditMealSlotModal = openEditMealSlotModal;
+
+    function renderEditMealSlotProductsList(mealId) {
+      const listEl = document.getElementById("editMealSlotProductsList");
+      if (!listEl) return;
+      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) {
+        listEl.innerHTML = '<div class="text-zinc-500 text-xs py-2 text-center">Прием пищи не найден</div>';
+        return;
+      }
+
+      let allItems = [];
+      if (meal.hasVariants) {
+        Object.keys(meal.variants || {}).forEach(vk => {
+          const v = meal.variants[vk];
+          const vItems = Array.isArray(v) ? v : (v?.items || []);
+          vItems.forEach(it => {
+            allItems.push({ ...it, variantKey: vk, variantTitle: v?.title || ('Вариант ' + vk) });
+          });
+        });
+      } else {
+        (meal.items || []).forEach(it => {
+          allItems.push({ ...it, variantKey: null });
+        });
+      }
+
+      if (allItems.length === 0) {
+        listEl.innerHTML = '<div class="text-zinc-500 text-xs py-2 text-center">В этом приеме пока нет продуктов</div>';
+        return;
+      }
+
+      listEl.innerHTML = allItems.map(it => `
+        <div class="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+          <div class="min-w-0 flex-1 mr-2">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs text-zinc-200 font-medium truncate">${it.name}</span>
+              ${it.variantTitle ? `<span class="px-1 py-0.2 rounded bg-white/[0.06] text-zinc-400 text-[9px] mono">${it.variantTitle}</span>` : ''}
+            </div>
+            <div class="text-[10px] mono text-zinc-500 mt-0.5">
+              ${it.weight}г · ${Math.round((it.weight * (it.cal100 || 0)) / 100)} ккал (Б ${round1((it.weight * (it.p100 || 0)) / 100)} · Ж ${round1((it.weight * (it.f100 || 0)) / 100)} · У ${round1((it.weight * (it.c100 || 0)) / 100)})
+            </div>
+          </div>
+          <button type="button" onclick="deleteProductFromSlotModal('${meal.id}', '${it.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition shrink-0" title="Удалить из плана">
+            ✕
+          </button>
+        </div>
+      `).join("");
+    }
+    window.renderEditMealSlotProductsList = renderEditMealSlotProductsList;
+
+    function deleteProductFromSlotModal(mealId, itemId) {
+      deleteProductFromTemplate(mealId, itemId);
+      renderEditMealSlotProductsList(mealId);
+    }
+    window.deleteProductFromSlotModal = deleteProductFromSlotModal;
 
     function closeEditMealSlotModal() {
       document.getElementById("editMealSlotModal")?.classList.remove("open");
@@ -13415,12 +13483,12 @@
       // Верхняя плашка сводки и добавления приема
       const tgt = template.targetMacros || { cal: 2520, p: 166, f: 64, c: 320 };
       htmlCards += `
-        <div class="flex items-center justify-between px-1 mb-1">
-          <div class="text-[11px] mono text-zinc-400">
+        <div class="flex items-center justify-between px-1 mb-1 gap-2">
+          <div class="text-[10.5px] mono text-zinc-400 truncate whitespace-nowrap">
             План: <span class="text-white font-bold">${tgt.cal} ккал</span> (Б ${tgt.p} · Ж ${tgt.f} · У ${tgt.c})
           </div>
-          <button type="button" onclick="openAddMealSlotModal()" class="px-2.5 py-1 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] font-semibold text-zinc-200 active:scale-95 transition flex items-center gap-1">
-            <span>+ Прием пищи</span>
+          <button type="button" onclick="openAddMealSlotModal()" class="px-2 py-0.5 rounded-lg bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[10.5px] font-semibold text-zinc-200 active:scale-95 transition flex items-center gap-1 whitespace-nowrap shrink-0">
+            <span>+ Прием</span>
           </button>
         </div>
       `;
@@ -13559,27 +13627,31 @@
                         ${isLogged ? '<svg class="w-3.5 h-3.5 stroke-black stroke-2" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                       </div>
                       <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 flex-wrap">
+                        <div class="flex items-center gap-1.5 min-w-0">
                           <span class="text-xs font-medium truncate ${isLogged ? 'text-zinc-400 line-through' : 'text-zinc-100'}">${effective.name}</span>
-                          ${effective.isOverridden ? '<span class="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] mono">Замена</span>' : ''}
-                          ${effective.optional ? '<span class="text-[9px] text-zinc-500 mono">(опция)</span>' : ''}
+                          ${effective.isOverridden ? '<span class="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] mono shrink-0">Замена</span>' : ''}
+                          ${effective.optional ? '<span class="px-1 py-0.2 rounded bg-white/[0.06] text-zinc-400 text-[9px] mono shrink-0">опция</span>' : ''}
                         </div>
                         <!-- Строка мета-информации с защитой от разрыва цифр -->
-                        <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] mono text-zinc-400 mt-0.5">
-                          <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-white/10 text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition" title="Изменить вес на сегодня">
-                            ${pieceStr}${effective.weight}г${pieceClose}
-                          </button>
-                          <span class="text-zinc-600">·</span>
-                          <span class="font-medium text-white whitespace-nowrap">${cal} ккал</span>
-                          <span class="text-zinc-600">·</span>
-                          <span class="whitespace-nowrap text-zinc-400">Б ${p}</span>
-                          <span class="whitespace-nowrap text-zinc-400">Ж ${f}</span>
-                          <span class="whitespace-nowrap text-zinc-400">У ${c}</span>
+                        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10.5px] mono text-zinc-400 mt-0.5">
+                          <span class="inline-flex items-center gap-1.5 shrink-0">
+                            <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-white/10 text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition" title="Изменить вес на сегодня">
+                              ${pieceStr}${effective.weight}г${pieceClose}
+                            </button>
+                            <span class="font-medium text-white whitespace-nowrap">${cal} ккал</span>
+                          </span>
+                          <span class="inline-flex items-center gap-1.5 text-zinc-400 shrink-0">
+                            <span class="whitespace-nowrap">Б ${p}</span>
+                            <span class="text-zinc-600">·</span>
+                            <span class="whitespace-nowrap">Ж ${f}</span>
+                            <span class="text-zinc-600">·</span>
+                            <span class="whitespace-nowrap">У ${c}</span>
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <!-- Действия с продуктом: Замена, Пропуск, Удаление -->
+                    <!-- Действия с продуктом: Замена и Пропуск на сегодня -->
                     <div class="flex items-center gap-1 shrink-0">
                       <button type="button" onclick="openMealPlanOverrideModal('${meal.id}', '${it.id}')" class="coach-swap-btn" title="Заменить сегодня">
                         <svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
@@ -13587,9 +13659,6 @@
                       </button>
                       <button type="button" onclick="skipMealPlanItemToday('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-white/[0.03] text-zinc-500 hover:text-zinc-300 flex items-center justify-center text-xs active:scale-95 transition" title="Пропустить сегодня">
                         ○
-                      </button>
-                      <button type="button" onclick="deleteProductFromTemplate('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-white/[0.03] text-zinc-600 hover:text-red-400 flex items-center justify-center text-xs active:scale-95 transition" title="Удалить из плана">
-                        ✕
                       </button>
                     </div>
                   </div>
@@ -18981,13 +19050,15 @@ ${knownPiecesContext}
       let isSwiping = false;
       let directionDecided = false;
       let cancelGesture = false;
+      let startingMainView = "diet";
+      let startingDietMode = "plan";
 
       viewport.addEventListener("touchstart", (e) => {
         if (document.querySelector(".sheet-backdrop.open")) return;
         if (e.touches.length !== 1) return;
 
         const target = e.target;
-        if (target.closest("#stackAndWeightStrip, #splitProgramPills, #workoutExercisesContainer, .exercise-swipe-wrap, [data-swipe-delete-attached], input, textarea, select, .no-swipe, [data-no-swipe], #mealFilterBar, .overflow-x-auto, .no-scrollbar, .meal-tabs-scroll, .quick-chips-scroll, #coachMealPlanSection, .coach-meal-card, .recipe-box")) {
+        if (target.closest("#stackAndWeightStrip, #splitProgramPills, #workoutExercisesContainer, .exercise-swipe-wrap, [data-swipe-delete-attached], input, textarea, select, .no-swipe, [data-no-swipe], #mealFilterBar, .overflow-x-auto, .no-scrollbar, .meal-tabs-scroll, .quick-chips-scroll")) {
           cancelGesture = true;
           return;
         }
@@ -18995,6 +19066,8 @@ ${knownPiecesContext}
         cancelGesture = false;
         directionDecided = false;
         isSwiping = false;
+        startingMainView = currentMainView;
+        startingDietMode = (state && state.dietViewMode) ? state.dietViewMode : "plan";
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         currentX = startX;
@@ -19031,18 +19104,38 @@ ${knownPiecesContext}
           if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; }
           track.style.transition = "none";
           const width = viewport.offsetWidth || window.innerWidth;
-          let basePercent = (currentMainView === "split") ? -50 : 0;
-          let deltaPercent = (dx / width) * 50;
 
-          if (currentMainView === "diet" && dx > 0) {
-            deltaPercent = (dx * 0.18 / width) * 50;
-          } else if (currentMainView === "split" && dx < 0) {
-            deltaPercent = (dx * 0.18 / width) * 50;
+          if (startingMainView === "split") {
+            // Экран ТРЕНИ (Stop 3): свайп вправо возвращает в ДНЕВНИК (Stop 2), свайп влево — отскок
+            let deltaPercent = (dx / width) * 50;
+            if (dx < 0) {
+              deltaPercent = (dx * 0.15 / width) * 50;
+            }
+            let targetTranslate = Math.min(0, Math.max(-58, -50 + deltaPercent));
+            track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+          } else if (startingMainView === "diet" && startingDietMode === "diary") {
+            // Экран РАЦИОН -> ДНЕВНИК (Stop 2):
+            // Свайп влево (dx < 0) — переход в ТРЕНИ (Stop 3): трек едет к -50%
+            // Свайп вправо (dx > 0) — переход в ПЛАН ТРЕНЕРА (Stop 1): остаемся внутри РАЦИОН (трек на 0%, без сдвига вправо)
+            if (dx < 0) {
+              let deltaPercent = (dx / width) * 50;
+              let targetTranslate = Math.max(-50, deltaPercent);
+              track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+            } else {
+              track.style.transform = "translate3d(0%, 0, 0)";
+            }
+          } else {
+            // Экран РАЦИОН -> ПЛАН ТРЕНЕРА (Stop 1):
+            // Свайп влево (dx < 0) — переход в ДНЕВНИК (Stop 2): остаемся внутри РАЦИОН (трек на 0%, не уезжает в ТРЕНИ)
+            // Свайп вправо (dx > 0) — левый край (легкое сопротивление)
+            if (dx > 0) {
+              let deltaPercent = (dx * 0.12 / width) * 50;
+              let targetTranslate = Math.min(5, deltaPercent);
+              track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+            } else {
+              track.style.transform = "translate3d(0%, 0, 0)";
+            }
           }
-
-          let targetTranslate = basePercent + deltaPercent;
-          targetTranslate = Math.max(-62, Math.min(12, targetTranslate));
-          track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
         }
       }, { passive: false });
 
@@ -19056,19 +19149,39 @@ ${knownPiecesContext}
         const vx = dx / (dt || 1);
         const width = viewport.offsetWidth || window.innerWidth;
         const distanceThreshold = width * 0.18;
+        const isFlickLeft = dx < -25 && vx < -0.28;
+        const isFlickRight = dx > 25 && vx > 0.28;
 
-        if (currentMainView === "diet") {
-          if (dx < -distanceThreshold || (dx < -25 && vx < -0.30)) {
+        if (startingMainView === "split") {
+          // Из ТРЕНИ: свайп вправо -> ДНЕВНИК
+          if (dx > distanceThreshold || isFlickRight) {
+            switchMainView("diet");
+            switchDietViewMode("diary");
+            if (typeof haptic === "function") haptic("selection");
+          } else {
             switchMainView("split");
+          }
+        } else if (startingMainView === "diet" && startingDietMode === "diary") {
+          // Из ДНЕВНИКА: свайп влево -> ТРЕНИ, свайп вправо -> ПЛАН ТРЕНЕРА
+          if (dx < -distanceThreshold || isFlickLeft) {
+            switchMainView("split");
+            if (typeof haptic === "function") haptic("selection");
+          } else if (dx > distanceThreshold || isFlickRight) {
+            switchDietViewMode("plan");
+            if (typeof haptic === "function") haptic("selection");
+            track.style.transition = "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)";
+            track.style.transform = "translate3d(0%, 0, 0)";
           } else {
             switchMainView("diet");
           }
         } else {
-          if (dx > distanceThreshold || (dx > 25 && vx > 0.30)) {
-            switchMainView("diet");
-          } else {
-            switchMainView("split");
+          // Из ПЛАНА ТРЕНЕРА: свайп влево -> ДНЕВНИК
+          if (dx < -distanceThreshold || isFlickLeft) {
+            switchDietViewMode("diary");
+            if (typeof haptic === "function") haptic("selection");
           }
+          track.style.transition = "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)";
+          track.style.transform = "translate3d(0%, 0, 0)";
         }
       };
 
