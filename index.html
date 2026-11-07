@@ -11841,8 +11841,9 @@
           state.dailyMealPlanProgress = {};
         }
         // Защита и восстановление: если калораж был сбит спамом до неадекватных <= 1500 ккал на наборе массы
-        if (state.targets && Number(state.targets.cal) <= 1500) {
-          const latestW = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
+        const hasExistingWeight = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight));
+        if (hasExistingWeight && state.targets && Number(state.targets.cal) <= 1500) {
+          const latestW = hasExistingWeight;
           const h = (state.body && Number(state.body.height)) || 175;
           const a = (state.body && Number(state.body.age)) || 20;
           const act = (state.body && Number(state.body.activity)) || 1.55;
@@ -11941,6 +11942,48 @@
           state.activeRest = null;
         }
       } catch (e) {}
+
+      // Проверка на веб-окружение (GitHub Pages / браузер вне нативного iOS WKWebView)
+      const isNativeEnv = !!(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge);
+      if (!isNativeEnv) {
+        // Очистка устаревших тестовых данных в веб-версии (на GitHub Pages)
+        const hasLegacyCoachPlan = state.mealPlanTemplate?.meals?.some(m => 
+          (m.items || []).some(i => i.id === "b_b1" || i.id === "d1_lavash" || i.id === "d2_tvorog" || i.id === "b_a1") ||
+          (m.variants && Object.values(m.variants).some(v => (v.items || []).some(i => i.id === "b_b1" || i.id === "b_a1")))
+        ) || (state.mealPlanTemplate?.targetMacros?.cal === 2520);
+
+        if (hasLegacyCoachPlan) {
+          state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+        }
+
+        const hasLegacyWorkout = state.workout?.programs?.d1?.exercises?.some(ex => ex.id === "ex_bench" || ex.lastWeight === 80);
+        if (hasLegacyWorkout) {
+          state.workout = {
+            lastMondayKey: getMondayKey(),
+            weekSchedule: { 1: "d1", 2: "rest", 3: "d2", 4: "rest", 5: "d3", 6: "rest", 0: "rest" },
+            programs: JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS)),
+            weeklySetsByMuscle: { chest: 0, back: 0, legs: 0, arms: 0, core: 0 },
+            logs: [],
+            exerciseNotes: {}
+          };
+        }
+
+        const hasLegacyBody = (state.body?.weight === 70) || (state.targets?.cal === 2979) || (state.weightLogs?.some(l => l.weight === 70));
+        if (hasLegacyBody) {
+          state.body = { sex: "male", weight: null, height: null, age: null, activity: 1.55, goalMode: 1.12 };
+          state.targets = { cal: 2000, p: 140, f: 65, c: 215 };
+          state.weightLogs = [];
+        }
+
+        if (hasLegacyCoachPlan || hasLegacyWorkout || hasLegacyBody) {
+          state.todayItems = [];
+          try {
+            localStorage.removeItem("macro_minimal_ios_v8");
+            localStorage.removeItem("macro_minimal_ios_v7");
+          } catch (e) {}
+          saveState();
+        }
+      }
 
       // Определяем сегодняшний день сплита
       selectedWeekdayKey = new Date().getDay();
@@ -13287,7 +13330,7 @@
       let htmlCards = "";
 
       // Верхняя плашка сводки и добавления приема
-      const tgt = template.targetMacros || { cal: 2520, p: 166, f: 64, c: 320 };
+      const tgt = template.targetMacros || { cal: 2000, p: 140, f: 65, c: 215 };
       htmlCards += `
         <div class="flex items-center justify-between px-1 mb-1 gap-2">
           <div class="text-[10.5px] mono text-zinc-400 truncate whitespace-nowrap">
