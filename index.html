@@ -2857,13 +2857,22 @@
       <div class="w-full space-y-2 mb-3 pt-2 border-t border-white/[0.06]">
         <div class="text-[11px] font-bold text-white mono uppercase">Готовые пресеты:</div>
         <div class="grid grid-cols-2 gap-2.5">
-          <button type="button" onclick="loadMealPlanPreset('coach_2520')" class="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
-            <span class="font-bold block text-white">Рацион тренера</span>
-            <span class="text-[9.5px] mono text-zinc-400">2520 ккал (5 приемов)</span>
-          </button>
           <button type="button" onclick="loadMealPlanPreset('empty_basic')" class="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
-            <span class="font-bold block text-white">Свой с нуля</span>
+            <span class="font-bold block text-white">Базовый (3 приема)</span>
             <span class="text-[9.5px] mono text-zinc-400">Чистый каркас</span>
+          </button>
+          <button type="button" onclick="loadMealPlanPreset('four_meals')" class="py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[11px] text-zinc-200 active:scale-95 transition text-left">
+            <span class="font-bold block text-white">4 приема (с перекусом)</span>
+            <span class="text-[9.5px] mono text-zinc-400">Чистый каркас</span>
+          </button>
+        </div>
+        <div id="savedCoachPresetContainer" class="hidden pt-1">
+          <button type="button" onclick="loadMealPlanPreset('saved_coach')" class="w-full py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-[11px] text-zinc-200 active:scale-95 transition text-left flex items-center justify-between">
+            <div>
+              <span class="font-bold block text-white">Рацион тренера</span>
+              <span class="text-[9.5px] mono text-zinc-400">Восстановить личный план из бэкапа</span>
+            </div>
+            <span class="text-xs text-red-400 mono">→</span>
           </button>
         </div>
       </div>
@@ -3157,51 +3166,25 @@
       { id: "supp_whey", name: "Прот 30г", cal: 120, p: 24, f: 1.5, c: 2 }
     ];
 
-    // Дефолтный 4-дневный сплит
+    // Дефолтный каркас сплита без персональных данных
     const DEFAULT_SPLIT_PROGRAMS = {
       d1: {
         id: "d1",
         short: "День 1",
-        title: "День 1 · Жим и Грудь",
-        exercises: [
-          { id: "ex_bench", name: "Жим штанги лежа", muscle: "chest", targetSets: 4, lastWeight: 80, lastReps: 8, setsToday: [] },
-          { id: "ex_incline", name: "Жим гантелей на наклонной", muscle: "chest", targetSets: 3, lastWeight: 32, lastReps: 10, setsToday: [] },
-          { id: "ex_dips", name: "Отжимания на брусьях / Бабочка", muscle: "chest", targetSets: 3, lastWeight: 20, lastReps: 12, setsToday: [] },
-          { id: "ex_triceps", name: "Разгибания на трицепс в блоке", muscle: "arms", targetSets: 4, lastWeight: 35, lastReps: 12, setsToday: [] }
-        ]
+        title: "День 1 · Силовая",
+        exercises: []
       },
       d2: {
         id: "d2",
         short: "День 2",
-        title: "День 2 · Тяга и Спина",
-        exercises: [
-          { id: "ex_lat", name: "Тяга верхнего блока к груди", muscle: "back", targetSets: 4, lastWeight: 70, lastReps: 10, setsToday: [] },
-          { id: "ex_row", name: "Тяга штанги / гантели в наклоне", muscle: "back", targetSets: 4, lastWeight: 75, lastReps: 9, setsToday: [] },
-          { id: "ex_pullover", name: "Пуловер в кроссовере", muscle: "back", targetSets: 3, lastWeight: 30, lastReps: 12, setsToday: [] },
-          { id: "ex_biceps", name: "Подъем штанги на бицепс", muscle: "arms", targetSets: 4, lastWeight: 35, lastReps: 10, setsToday: [] }
-        ]
+        title: "День 2 · Силовая",
+        exercises: []
       },
       d3: {
         id: "d3",
         short: "День 3",
-        title: "День 3 · Ноги и База",
-        exercises: [
-          { id: "ex_legpress", name: "Жим ногами в тренажере", muscle: "legs", targetSets: 4, lastWeight: 180, lastReps: 10, setsToday: [] },
-          { id: "ex_rdl", name: "Румынская тяга на бицепс бедра", muscle: "legs", targetSets: 4, lastWeight: 90, lastReps: 10, setsToday: [] },
-          { id: "ex_ext", name: "Разгибания ног сидя", muscle: "legs", targetSets: 3, lastWeight: 65, lastReps: 12, setsToday: [] },
-          { id: "ex_calves", name: "Подъем на носки (икры)", muscle: "legs", targetSets: 3, lastWeight: 80, lastReps: 15, setsToday: [] }
-        ]
-      },
-      d4: {
-        id: "d4",
-        short: "День 4",
-        title: "День 4 · Плечи и Руки",
-        exercises: [
-          { id: "ex_ohp", name: "Жим гантелей сидя (Плечи)", muscle: "arms", targetSets: 4, lastWeight: 26, lastReps: 10, setsToday: [] },
-          { id: "ex_latraise", name: "Махи гантелями в стороны", muscle: "arms", targetSets: 4, lastWeight: 12, lastReps: 14, setsToday: [] },
-          { id: "ex_incline_chest2", name: "Жим в Хаммере (Верх груди)", muscle: "chest", targetSets: 3, lastWeight: 70, lastReps: 10, setsToday: [] },
-          { id: "ex_hammer", name: "Молотки с гантелями", muscle: "arms", targetSets: 3, lastWeight: 18, lastReps: 12, setsToday: [] }
-        ]
+        title: "День 3 · Силовая",
+        exercises: []
       }
     };
 
@@ -8153,116 +8136,9 @@
     
     
     const BUILTIN_MEAL_PLAN_PRESETS = {
-      coach_2520: {
-        id: "coach_2520",
-        name: "Рацион тренера (2520 ккал)",
-        targetMacros: { cal: 2520, p: 166, f: 64, c: 320 },
-        sauceLimitGrams: 60,
-        waterTargetLiters: 4.0,
-        saltTargetGrams: 6.0,
-        meals: [
-          {
-            id: "breakfast",
-            title: "Завтрак",
-            type: "breakfast",
-            hasVariants: true,
-            activeVariant: "B",
-            variants: {
-              A: {
-                title: "Вариант А (сэндвичи)",
-                items: [
-                  { id: "b_a1", name: "Хлеб Harry's сэндвичный", weight: 150, cal100: 260, p100: 8.5, f100: 3.5, c100: 48.0 },
-                  { id: "b_a2", name: "Яйцо куриное С1", weight: 165, cal100: 155, p100: 12.7, f100: 11.5, c100: 0.7, isPiece: true, pieceCount: 3, pieceWeight: 55 },
-                  { id: "b_a3", name: "Яичный белок С1", weight: 100, cal100: 48, p100: 11.0, f100: 0.2, c100: 0.7, isPiece: true, pieceCount: 3, pieceWeight: 33.3 }
-                ]
-              },
-              B: {
-                title: "Вариант Б (хлебцы + паста)",
-                items: [
-                  { id: "b_b1", name: "Хлебцы Dr. Korner карамельные", weight: 90, cal100: 320, p100: 9.0, f100: 2.0, c100: 66.0 },
-                  { id: "b_b2", name: "Арахисовая паста DopDrops", weight: 45, cal100: 590, p100: 24.0, f100: 50.0, c100: 12.0 },
-                  { id: "b_b3", name: "Яичный белок С1", weight: 200, cal100: 48, p100: 11.0, f100: 0.2, c100: 0.7, isPiece: true, pieceCount: 6, pieceWeight: 33.3 }
-                ]
-              }
-            }
-          },
-          {
-            id: "vitamins_morning",
-            title: "Витамины // Утро",
-            type: "checklist",
-            isSupplement: true,
-            items: [
-              { id: "v_q10", name: "Коэнзим Q10 100 мг", dose: "1 капс." },
-              { id: "v_omega_m", name: "Омега-3", dose: "2 капс." },
-              { id: "v_d3", name: "Витамин D3 5000 МЕ", dose: "1 капс." },
-              { id: "v_multi_m", name: "Мультивитамины", dose: "1 капс." },
-              { id: "v_c", name: "Витамин С", dose: "1 капс." }
-            ]
-          },
-          {
-            id: "lunch_1",
-            title: "Обед 1",
-            type: "lunch",
-            items: [
-              { id: "l1_rice", name: "Рис длиннозерный Агро-Альянс (сухой вес)", weight: 100, cal100: 320, p100: 7.0, f100: 1.0, c100: 71.0 },
-              { id: "l1_chicken", name: "Куриная грудка отварная", weight: 70, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 },
-              { id: "l1_sauce", name: "Томатный соус BombBar", weight: 20, cal100: 55, p100: 2.0, f100: 0.5, c100: 10.0, optional: true }
-            ]
-          },
-          {
-            id: "lunch_2",
-            title: "Обед 2",
-            type: "lunch",
-            items: [
-              { id: "l2_rice", name: "Рис длиннозерный Агро-Альянс (сухой вес)", weight: 100, cal100: 320, p100: 7.0, f100: 1.0, c100: 71.0 },
-              { id: "l2_chicken", name: "Куриная грудка отварная", weight: 70, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 }
-            ]
-          },
-          {
-            id: "post_workout",
-            title: "После тренировки",
-            type: "snack",
-            note: "Сначала выпить протеин, прием пищи через 40–60 минут",
-            items: [
-              { id: "pw_whey", name: "Протеин сывороточный Cybermass Whey", weight: 30, cal100: 400, p100: 75.0, f100: 6.0, c100: 10.0 }
-            ]
-          },
-          {
-            id: "dinner_1",
-            title: "Ужин 1 // Домашняя шавуха",
-            type: "dinner",
-            recipe: "1. Взвесить 105 г лаваша, смазать основой из томатного соуса BombBar.\n2. Выложить 30 г отварной куриной грудки, сверху мелко накрошить 55 г сыра.\n3. Добавить свежие овощи по вкусу (помидоры, огурцы, белый лук, зелень).\n4. Завернуть в ролл и разогреть в микроволновке, пока сыр полностью не расплавится.",
-            items: [
-              { id: "d1_lavash", name: "Лаваш армянский Мэри", weight: 105, cal100: 277, p100: 8.5, f100: 1.0, c100: 58.5 },
-              { id: "d1_cheese", name: "Сыр Брест-Литовск Российский", weight: 55, cal100: 340, p100: 24.5, f100: 26.5, c100: 0.0 },
-              { id: "d1_chicken", name: "Куриная грудка отварная", weight: 30, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 }
-            ]
-          },
-          {
-            id: "dinner_2",
-            title: "Ужин 2 // Перед сном",
-            type: "dinner",
-            items: [
-              { id: "d2_tvorog", name: "Творог 9% Красная цена", weight: 180, cal100: 157, p100: 16.0, f100: 9.0, c100: 3.0 },
-              { id: "d2_banana", name: "Банан средний", weight: 120, cal100: 88, p100: 1.5, f100: 0.3, c100: 21.8, isPiece: true, pieceCount: 1, pieceWeight: 120 },
-              { id: "d2_topping", name: "Топпинг BombBar шоколадный пудинг", weight: 20, cal100: 50, p100: 2.0, f100: 0.5, c100: 9.0, optional: true }
-            ]
-          },
-          {
-            id: "vitamins_evening",
-            title: "Витамины // Вечер",
-            type: "checklist",
-            isSupplement: true,
-            items: [
-              { id: "v_omega_e", name: "Омега-3", dose: "1 капс." },
-              { id: "v_multi_e", name: "Мультивитамины", dose: "1 капс." }
-            ]
-          }
-        ]
-      },
       empty_basic: {
         id: "empty_basic",
-        name: "Базовый каркас (Завтрак / Обед / Ужин)",
+        name: "Базовый план (3 приема)",
         targetMacros: { cal: 2000, p: 140, f: 65, c: 215 },
         sauceLimitGrams: 50,
         waterTargetLiters: 2.5,
@@ -8272,117 +8148,25 @@
           { id: "m_ln", title: "Обед", type: "lunch", items: [] },
           { id: "m_dn", title: "Ужин", type: "dinner", items: [] }
         ]
+      },
+      four_meals: {
+        id: "four_meals",
+        name: "С перекусом (4 приема)",
+        targetMacros: { cal: 2200, p: 150, f: 70, c: 240 },
+        sauceLimitGrams: 50,
+        waterTargetLiters: 3.0,
+        saltTargetGrams: 5.0,
+        meals: [
+          { id: "m_bf", title: "Завтрак", type: "breakfast", items: [] },
+          { id: "m_ln", title: "Обед", type: "lunch", items: [] },
+          { id: "m_sn", title: "Перекус", type: "snack", items: [] },
+          { id: "m_dn", title: "Ужин", type: "dinner", items: [] }
+        ]
       }
     };
     window.BUILTIN_MEAL_PLAN_PRESETS = BUILTIN_MEAL_PLAN_PRESETS;
 
-    const DEFAULT_MEAL_PLAN_TEMPLATE = BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
-    const OLD_DEFAULT_MEAL_PLAN_TEMPLATE = {
-      version: 1,
-      targetMacros: { cal: 2520, p: 166, f: 64, c: 320 },
-      sauceLimitGrams: 60,
-      waterTargetLiters: 4.0,
-      saltTargetGrams: 6.0,
-      meals: [
-        {
-          id: "breakfast",
-          title: "Завтрак",
-          type: "breakfast",
-          hasVariants: true,
-          activeVariant: "B",
-          variants: {
-            A: {
-              title: "Вариант А (сэндвичи)",
-              items: [
-                { id: "b_a1", name: "Хлеб Harry's сэндвичный", weight: 150, cal100: 260, p100: 8.5, f100: 3.5, c100: 48.0 },
-                { id: "b_a2", name: "Яйцо куриное С1", weight: 165, cal100: 155, p100: 12.7, f100: 11.5, c100: 0.7, isPiece: true, pieceCount: 3, pieceWeight: 55 },
-                { id: "b_a3", name: "Яичный белок С1", weight: 100, cal100: 48, p100: 11.0, f100: 0.2, c100: 0.7, isPiece: true, pieceCount: 3, pieceWeight: 33.3 }
-              ]
-            },
-            B: {
-              title: "Вариант Б (хлебцы + паста)",
-              items: [
-                { id: "b_b1", name: "Хлебцы Dr. Korner карамельные", weight: 90, cal100: 320, p100: 9.0, f100: 2.0, c100: 66.0 },
-                { id: "b_b2", name: "Арахисовая паста DopDrops", weight: 45, cal100: 590, p100: 24.0, f100: 50.0, c100: 12.0 },
-                { id: "b_b3", name: "Яичный белок С1", weight: 200, cal100: 48, p100: 11.0, f100: 0.2, c100: 0.7, isPiece: true, pieceCount: 6, pieceWeight: 33.3 }
-              ]
-            }
-          }
-        },
-        {
-          id: "vitamins_morning",
-          title: "Витамины // Утро",
-          type: "checklist",
-          isSupplement: true,
-          items: [
-            { id: "v_q10", name: "Коэнзим Q10 100 мг", dose: "1 капс." },
-            { id: "v_omega_m", name: "Омега-3", dose: "2 капс." },
-            { id: "v_d3", name: "Витамин D3 5000 МЕ", dose: "1 капс." },
-            { id: "v_multi_m", name: "Мультивитамины", dose: "1 капс." },
-            { id: "v_c", name: "Витамин С", dose: "1 капс." }
-          ]
-        },
-        {
-          id: "lunch_1",
-          title: "Обед 1",
-          type: "lunch",
-          items: [
-            { id: "l1_rice", name: "Рис длиннозерный Агро-Альянс (сухой вес)", weight: 100, cal100: 320, p100: 7.0, f100: 1.0, c100: 71.0 },
-            { id: "l1_chicken", name: "Куриная грудка отварная", weight: 70, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 },
-            { id: "l1_sauce", name: "Томатный соус BombBar", weight: 20, cal100: 55, p100: 2.0, f100: 0.5, c100: 10.0, optional: true }
-          ]
-        },
-        {
-          id: "lunch_2",
-          title: "Обед 2",
-          type: "lunch",
-          items: [
-            { id: "l2_rice", name: "Рис длиннозерный Агро-Альянс (сухой вес)", weight: 100, cal100: 320, p100: 7.0, f100: 1.0, c100: 71.0 },
-            { id: "l2_chicken", name: "Куриная грудка отварная", weight: 70, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 }
-          ]
-        },
-        {
-          id: "post_workout",
-          title: "После тренировки",
-          type: "snack",
-          note: "Сначала выпить протеин, прием пищи через 40–60 минут",
-          items: [
-            { id: "pw_whey", name: "Протеин сывороточный Cybermass Whey", weight: 30, cal100: 400, p100: 75.0, f100: 6.0, c100: 10.0 }
-          ]
-        },
-        {
-          id: "dinner_1",
-          title: "Ужин 1 // Домашняя шавуха",
-          type: "dinner",
-          recipe: "1. Взвесить 105 г лаваша, смазать основой из томатного соуса BombBar.\n2. Выложить 30 г отварной куриной грудки, сверху мелко накрошить 55 г сыра.\n3. Добавить свежие овощи по вкусу (помидоры, огурцы, белый лук, зелень).\n4. Завернуть в ролл и разогреть в микроволновке, пока сыр полностью не расплавится.",
-          items: [
-            { id: "d1_lavash", name: "Лаваш армянский Мэри", weight: 105, cal100: 277, p100: 8.5, f100: 1.0, c100: 58.5 },
-            { id: "d1_cheese", name: "Сыр Брест-Литовск Российский", weight: 55, cal100: 340, p100: 24.5, f100: 26.5, c100: 0.0 },
-            { id: "d1_chicken", name: "Куриная грудка отварная", weight: 30, cal100: 135, p100: 30.0, f100: 1.5, c100: 0.0 }
-          ]
-        },
-        {
-          id: "dinner_2",
-          title: "Ужин 2 // Перед сном",
-          type: "dinner",
-          items: [
-            { id: "d2_tvorog", name: "Творог 9% Красная цена", weight: 180, cal100: 157, p100: 16.0, f100: 9.0, c100: 3.0 },
-            { id: "d2_banana", name: "Банан средний", weight: 120, cal100: 88, p100: 1.5, f100: 0.3, c100: 21.8, isPiece: true, pieceCount: 1, pieceWeight: 120 },
-            { id: "d2_topping", name: "Топпинг BombBar шоколадный пудинг", weight: 20, cal100: 50, p100: 2.0, f100: 0.5, c100: 9.0, optional: true }
-          ]
-        },
-        {
-          id: "vitamins_evening",
-          title: "Витамины // Вечер",
-          type: "checklist",
-          isSupplement: true,
-          items: [
-            { id: "v_omega_e", name: "Омега-3", dose: "1 капс." },
-            { id: "v_multi_e", name: "Мультивитамины", dose: "1 капс." }
-          ]
-        }
-      ]
-    };
+    const DEFAULT_MEAL_PLAN_TEMPLATE = BUILTIN_MEAL_PLAN_PRESETS.empty_basic;
     window.DEFAULT_MEAL_PLAN_TEMPLATE = DEFAULT_MEAL_PLAN_TEMPLATE;
 
     let state = {
@@ -12044,6 +11828,15 @@
             }
           });
         }
+        // Автобэкап личного рациона тренера в localStorage для возможности повторного выбора
+        if (state.mealPlanTemplate && Array.isArray(state.mealPlanTemplate.meals) && state.mealPlanTemplate.meals.length > 0) {
+          const hasPersonalItems = state.mealPlanTemplate.meals.some(m => (m.items && m.items.length > 0) || (m.variants && Object.keys(m.variants).length > 0));
+          if (hasPersonalItems) {
+            try {
+              localStorage.setItem("form_coach_plan_backup", JSON.stringify(state.mealPlanTemplate));
+            } catch (e) {}
+          }
+        }
         if (!state.dailyMealPlanProgress || typeof state.dailyMealPlanProgress !== "object") {
           state.dailyMealPlanProgress = {};
         }
@@ -12773,7 +12566,7 @@
     }
 
     function toggleMealPlanItem(mealId, itemId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
@@ -12823,7 +12616,7 @@
     window.toggleMealPlanItem = toggleMealPlanItem;
 
     function markWholeMealCompleted(mealId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
@@ -12895,7 +12688,7 @@
     // БЫСТРЫЙ ВЕС / ШТУКИ ПО ТАПУ НА ПРОДУКТ (1 СЕКУНДА)
     // =========================================================================
     function openQuickWeightModal(mealId, itemId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
@@ -13050,7 +12843,7 @@
     window.unskipMealPlanItemToday = unskipMealPlanItemToday;
 
     function deleteProductFromTemplate(mealId, itemId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
 
@@ -13076,7 +12869,7 @@
     // ДОБАВЛЕНИЕ ПРОДУКТА В ПРИЕМ ПИЩИ (+ Продукт)
     // =========================================================================
     function openAddMealProductModal(mealId, variantKey = null) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
 
@@ -13160,7 +12953,7 @@
         showToast("Сначала выберите продукт из поиска", true);
         return;
       }
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === ctx.mealId);
       if (!meal) return;
 
@@ -13222,7 +13015,7 @@
         return;
       }
       const type = document.getElementById("newMealSlotTypeSelect").value || "snack";
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       if (!Array.isArray(template.meals)) template.meals = [];
 
       const newSlot = {
@@ -13242,7 +13035,7 @@
     window.submitAddNewMealSlot = submitAddNewMealSlot;
 
     function moveMealSlot(mealId, direction) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const idx = (template.meals || []).findIndex(m => m.id === mealId);
       if (idx === -1) return;
 
@@ -13260,7 +13053,7 @@
     window.moveMealSlot = moveMealSlot;
 
     function openEditMealSlotModal(mealId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
 
@@ -13281,7 +13074,7 @@
     function renderEditMealSlotProductsList(mealId) {
       const listEl = document.getElementById("editMealSlotProductsList");
       if (!listEl) return;
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) {
         listEl.innerHTML = '<div class="text-zinc-500 text-xs py-2 text-center">Прием пищи не найден</div>';
@@ -13339,7 +13132,7 @@
     window.closeEditMealSlotModal = closeEditMealSlotModal;
 
     function saveCurrentMealSlot() {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === pendingEditSlotCtx.mealId);
       if (!meal) return;
 
@@ -13375,7 +13168,7 @@
     window.saveCurrentMealSlot = saveCurrentMealSlot;
 
     function deleteCurrentMealSlot() {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const idx = (template.meals || []).findIndex(m => m.id === pendingEditSlotCtx.mealId);
       if (idx === -1) return;
 
@@ -13413,7 +13206,7 @@
         return;
       }
       const dose = (document.getElementById("newVitaminDoseInput").value || "1 капс.").trim();
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === pendingAddVitaminSlotId);
       if (!meal) return;
       if (!Array.isArray(meal.items)) meal.items = [];
@@ -13432,7 +13225,7 @@
     window.submitAddCustomVitamin = submitAddCustomVitamin;
 
     function deleteCustomVitamin(mealId, vitId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal || !Array.isArray(meal.items)) return;
       meal.items = meal.items.filter(v => v.id !== vitId);
@@ -13445,7 +13238,20 @@
     // ГОТОВЫЕ ПРЕСЕТЫ РАЦИОНА (ПРЕСЕТ ТРЕНЕРА VS ЧИСТЫЙ С НУЛЯ)
     // =========================================================================
     function loadMealPlanPreset(presetKey) {
-      const preset = BUILTIN_MEAL_PLAN_PRESETS[presetKey] || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      let preset = null;
+      if (presetKey === "saved_coach" || presetKey === "coach_2520") {
+        const saved = localStorage.getItem("form_coach_plan_backup");
+        if (saved) {
+          try { preset = JSON.parse(saved); } catch (e) {}
+        }
+        if (!preset) {
+          if (typeof showToast === "function") showToast("Личный пресет не найден в бэкапе");
+          return;
+        }
+      } else {
+        preset = BUILTIN_MEAL_PLAN_PRESETS[presetKey] || BUILTIN_MEAL_PLAN_PRESETS.empty_basic;
+      }
+      if (!preset) return;
       state.mealPlanTemplate = JSON.parse(JSON.stringify(preset));
       if (preset.targetMacros) {
         state.targets = { ...preset.targetMacros };
@@ -13455,12 +13261,12 @@
       closeMealPlanSettingsModal();
       renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("✓ Загружен: " + preset.name);
+      if (typeof showToast === "function") showToast("✓ Загружен: " + (preset.name || preset.title || "План питания"));
     }
     window.loadMealPlanPreset = loadMealPlanPreset;
 
     function restoreDefaultMealPlanTemplate() {
-      loadMealPlanPreset("coach_2520");
+      loadMealPlanPreset("empty_basic");
     }
     window.restoreDefaultMealPlanTemplate = restoreDefaultMealPlanTemplate;
 
@@ -13474,7 +13280,7 @@
       const container = document.getElementById("coachMealPlanSection");
       if (!container) return;
 
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const progress = getTodayProgress();
       const accent = (typeof getActiveThemeObject === "function" && getActiveThemeObject()?.cal) || "#ef4444";
 
@@ -13596,7 +13402,11 @@
 
             <!-- Список продуктов в приеме -->
             <div class="divide-y divide-white/[0.05] mb-2">
-              ${mealItems.map(it => {
+              ${mealItems.length === 0 ? `
+                <div class="py-2.5 text-center text-xs text-zinc-500 mono">
+                  Продукты еще не добавлены
+                </div>
+              ` : mealItems.map(it => {
                 const isSkipped = !!progress.skippedItems?.[it.id];
                 const effective = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id], isOverridden: true } : it;
                 const isLogged = isMealItemLogged(it.id);
@@ -13776,7 +13586,7 @@
     // МОДАЛКА РАЗОВОЙ ЗАМЕНЫ НА СЕГОДНЯ («Заменить сегодня»)
     // =========================================================================
     function openMealPlanOverrideModal(mealId, itemId) {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
@@ -13976,14 +13786,22 @@
 
     // НАСТРОЙКИ БАЗОВОГО ПЛАНА
     function openMealPlanSettingsModal() {
-      const template = state.mealPlanTemplate || BUILTIN_MEAL_PLAN_PRESETS.coach_2520;
-      const tgt = template.targetMacros || { cal: 2520, p: 166, f: 64, c: 320 };
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const tgt = template.targetMacros || { cal: 2000, p: 140, f: 65, c: 215 };
       document.getElementById("planTgtCalInput").value = tgt.cal;
       document.getElementById("planTgtPInput").value = tgt.p;
       document.getElementById("planTgtFInput").value = tgt.f;
       document.getElementById("planTgtCInput").value = tgt.c;
-      document.getElementById("planSauceLimitInput").value = template.sauceLimitGrams || 60;
-      document.getElementById("planWaterTargetInput").value = template.waterTargetLiters || 4.0;
+      document.getElementById("planSauceLimitInput").value = template.sauceLimitGrams || 50;
+      document.getElementById("planWaterTargetInput").value = template.waterTargetLiters || 2.5;
+
+      const savedCoach = localStorage.getItem("form_coach_plan_backup");
+      const coachBtnCont = document.getElementById("savedCoachPresetContainer");
+      if (coachBtnCont) {
+        if (savedCoach) coachBtnCont.classList.remove("hidden");
+        else coachBtnCont.classList.add("hidden");
+      }
+
       document.getElementById("editMealPlanTemplateModal")?.classList.add("open");
     }
     window.openMealPlanSettingsModal = openMealPlanSettingsModal;
@@ -13994,13 +13812,13 @@
     window.closeMealPlanSettingsModal = closeMealPlanSettingsModal;
 
     function saveMealPlanSettings() {
-      if (!state.mealPlanTemplate) state.mealPlanTemplate = JSON.parse(JSON.stringify(BUILTIN_MEAL_PLAN_PRESETS.coach_2520));
-      const cal = Math.max(500, Number(document.getElementById("planTgtCalInput").value) || 2520);
-      const p = Math.max(10, Number(document.getElementById("planTgtPInput").value) || 166);
-      const f = Math.max(10, Number(document.getElementById("planTgtFInput").value) || 64);
-      const c = Math.max(10, Number(document.getElementById("planTgtCInput").value) || 320);
-      const sauce = Math.max(0, Number(document.getElementById("planSauceLimitInput").value) || 60);
-      const water = Math.max(0.5, Number(document.getElementById("planWaterTargetInput").value) || 4.0);
+      if (!state.mealPlanTemplate) state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+      const cal = Math.max(500, Number(document.getElementById("planTgtCalInput").value) || 2000);
+      const p = Math.max(10, Number(document.getElementById("planTgtPInput").value) || 140);
+      const f = Math.max(10, Number(document.getElementById("planTgtFInput").value) || 65);
+      const c = Math.max(10, Number(document.getElementById("planTgtCInput").value) || 215);
+      const sauce = Math.max(0, Number(document.getElementById("planSauceLimitInput").value) || 50);
+      const water = Math.max(0.5, Number(document.getElementById("planWaterTargetInput").value) || 2.5);
 
       state.mealPlanTemplate.targetMacros = { cal, p, f, c };
       state.mealPlanTemplate.sauceLimitGrams = sauce;
@@ -19052,13 +18870,14 @@ ${knownPiecesContext}
       let cancelGesture = false;
       let startingMainView = "diet";
       let startingDietMode = "plan";
+      let startTarget = null;
 
       viewport.addEventListener("touchstart", (e) => {
         if (document.querySelector(".sheet-backdrop.open")) return;
         if (e.touches.length !== 1) return;
 
-        const target = e.target;
-        if (target.closest("#stackAndWeightStrip, #splitProgramPills, #workoutExercisesContainer, .exercise-swipe-wrap, [data-swipe-delete-attached], input, textarea, select, .no-swipe, [data-no-swipe], #mealFilterBar, .overflow-x-auto, .no-scrollbar, .meal-tabs-scroll, .quick-chips-scroll")) {
+        startTarget = e.target;
+        if (startTarget.closest("#stackAndWeightStrip, #splitProgramPills, input, textarea, select, .no-swipe, [data-no-swipe], #mealFilterBar, .overflow-x-auto, .no-scrollbar, .meal-tabs-scroll, .quick-chips-scroll")) {
           cancelGesture = true;
           return;
         }
@@ -19085,6 +18904,11 @@ ${knownPiecesContext}
           if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
             directionDecided = true;
             if (Math.abs(dx) > Math.abs(dy) * 1.2) {
+              if (startingMainView === "split" && dx < 0 && startTarget && startTarget.closest("#workoutExercisesContainer, .exercise-swipe-wrap, [data-swipe-delete-attached]")) {
+                isSwiping = false;
+                cancelGesture = true;
+                return;
+              }
               isSwiping = true;
             } else {
               isSwiping = false;
@@ -19106,13 +18930,15 @@ ${knownPiecesContext}
           const width = viewport.offsetWidth || window.innerWidth;
 
           if (startingMainView === "split") {
-            // Экран ТРЕНИ (Stop 3): свайп вправо возвращает в ДНЕВНИК (Stop 2), свайп влево — отскок
-            let deltaPercent = (dx / width) * 50;
-            if (dx < 0) {
-              deltaPercent = (dx * 0.15 / width) * 50;
+            // Экран ТРЕНИ (Stop 3): свайп вправо возвращает в ДНЕВНИК (Stop 2).
+            // Свайп влево — не двигаем трек (правее экранов нет)
+            if (dx <= 0) {
+              track.style.transform = "translate3d(-50%, 0, 0)";
+            } else {
+              let deltaPercent = (dx / width) * 50;
+              let targetTranslate = Math.min(0, -50 + deltaPercent);
+              track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
             }
-            let targetTranslate = Math.min(0, Math.max(-58, -50 + deltaPercent));
-            track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
           } else if (startingMainView === "diet" && startingDietMode === "diary") {
             // Экран РАЦИОН -> ДНЕВНИК (Stop 2):
             // Свайп влево (dx < 0) — переход в ТРЕНИ (Stop 3): трек едет к -50%
