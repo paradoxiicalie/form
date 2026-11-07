@@ -223,7 +223,10 @@ if data:
 " 2>/dev/null || true
 
         if [[ -f "$ent_file" ]]; then
-            codesign --force --sign "Apple Development: paradoxicalie@gmail.com (2X34LYF2JH)" --entitlements "$ent_file" "$app_path" >/dev/null 2>&1 || true
+            local cert_id="Apple Development: paradoxicalie@gmail.com (2X34LYF2JH)"
+            find "$app_path" -type f -name "*.dylib" -exec codesign --force --sign "$cert_id" {} + 2>/dev/null || true
+            find "$app_path/Frameworks" -type d -name "*.framework" -exec codesign --force --sign "$cert_id" {} + 2>/dev/null || true
+            codesign --force --sign "$cert_id" --entitlements "$ent_file" "$app_path" >/dev/null 2>&1 || true
         fi
     fi
 
