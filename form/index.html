@@ -1544,15 +1544,13 @@
           </div>
         </div>
 
+        <!-- Альтернативные варианты от ИИ -->
+        <div id="scannedAlternativesBox" class="hidden mb-2.5 flex flex-wrap gap-1.5"></div>
+
         <button type="button" onclick="confirmScannedProduct()" class="w-full py-2.5 rounded-xl accent-btn text-xs">
           + Добавить в Сегодня
         </button>
       </div>
-
-      <button type="button" onclick="startNativeBarcodeScan()" class="w-full py-3 mb-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition">
-        <svg class="w-4 h-4" style="color: var(--accent-cal)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2"/></svg>
-        <span>Нативный сканер штрихкодов iOS</span>
-      </button>
 
       <div class="grid grid-cols-2 gap-2.5 mb-2">
         <div class="ios-file-trigger py-3 px-4 rounded-2xl accent-btn text-xs flex items-center justify-center gap-2">
@@ -2785,10 +2783,17 @@
         </div>
 
         <div class="pt-2 border-t border-white/[0.06]">
-          <label class="flex items-center justify-between cursor-pointer">
-            <span class="text-xs text-zinc-300">Варианты на выбор (А / Б)</span>
-            <input id="editMealSlotHasVariantsToggle" type="checkbox" class="rounded accent-emerald-500 w-4 h-4" />
-          </label>
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs text-zinc-200 font-medium block">Варианты приема (А / Б / В...)</span>
+              <span class="text-[10px] text-zinc-500">Несколько сменных меню на выбор</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input id="editMealSlotHasVariantsToggle" type="checkbox" onchange="toggleMealSlotVariantsUI()" class="sr-only peer" />
+              <div class="w-10 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-cal)] peer-checked:after:bg-white"></div>
+            </label>
+          </div>
+          <div id="editMealSlotVariantsManager" class="hidden mt-2.5 space-y-2 pt-2 border-t border-white/[0.04]"></div>
         </div>
 
         <div class="pt-2 border-t border-white/[0.06]">
@@ -3263,8 +3268,33 @@
 
     window.stripEmojis = stripEmojis;
 
-    const RU_STOP_WORDS = new Set(["с", "со", "в", "во", "и", "на", "по", "из", "изо", "под", "ко", "к", "от", "до", "для", "без", "о", "об", "при", "гр", "г", "кг", "мл", "л", "шт", "g", "kg", "ml"]);
+    const RU_STOP_WORDS = new Set(["с", "со", "в", "во", "и", "на", "по", "из", "изо", "под", "ко", "к", "от", "до", "для", "без", "о", "об", "при", "у", "гр", "г", "кг", "мл", "л", "шт", "g", "kg", "ml"]);
     window.RU_STOP_WORDS = RU_STOP_WORDS;
+
+    function extractJsonFromAiResponse(raw) {
+      if (!raw || typeof raw !== "string") return null;
+      let str = raw.trim();
+      str = str.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      try {
+        return JSON.parse(str);
+      } catch (e) {}
+      const firstBrace = str.indexOf('{');
+      const lastBrace = str.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        try {
+          return JSON.parse(str.slice(firstBrace, lastBrace + 1));
+        } catch (e) {}
+      }
+      const firstBracket = str.indexOf('[');
+      const lastBracket = str.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket > firstBracket) {
+        try {
+          return JSON.parse(str.slice(firstBracket, lastBracket + 1));
+        } catch (e) {}
+      }
+      return null;
+    }
+    window.extractJsonFromAiResponse = extractJsonFromAiResponse;
 
     function stemRu(word) {
       if (!word || typeof word !== "string") return "";
@@ -7661,6 +7691,25 @@
     ]
   },
   {
+    "name": "Хлеб для тостов Первый хлебокомбинат",
+    "cal": 270,
+    "p": 8.0,
+    "f": 2.5,
+    "c": 52.0,
+    "unitWeight": 35,
+    "standardUnitWeight": 35,
+    "packageNetWeight": 500,
+    "keywords": [
+      "хлеб",
+      "тостов",
+      "тостовый",
+      "первый",
+      "хлебокомбинат",
+      "сэндвич",
+      "тост"
+    ]
+  },
+  {
     "name": "Хлебцы вафельные ржаные Красная цена (Пятёрочка)",
     "cal": 340,
     "p": 11,
@@ -9972,10 +10021,10 @@
     }
 
     const GEMINI_MODELS_CASCADE = [
-      "gemini-3-flash-preview",
       "gemini-2.5-flash",
+      "gemini-2.0-flash",
       "gemini-2.5-flash-lite",
-      "gemini-2.0-flash"
+      "gemini-3-flash-preview"
     ];
     let lastActiveGeminiModel = GEMINI_MODELS_CASCADE[0];
     let lastActiveKeyIndex = 1;
@@ -13082,15 +13131,29 @@
     }
     window.unskipMealPlanItemToday = unskipMealPlanItemToday;
 
-    function deleteProductFromTemplate(mealId, itemId) {
+    function deleteProductFromTemplate(mealId, itemId, variantKey = null) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
 
       if (meal.hasVariants) {
-        Object.keys(meal.variants || {}).forEach(vk => {
-          meal.variants[vk].items = (meal.variants[vk].items || []).filter(it => it.id !== itemId);
-        });
+        if (variantKey && meal.variants?.[variantKey]) {
+          const v = meal.variants[variantKey];
+          if (Array.isArray(v)) {
+            meal.variants[variantKey] = v.filter(it => it.id !== itemId);
+          } else if (v && Array.isArray(v.items)) {
+            v.items = v.items.filter(it => it.id !== itemId);
+          }
+        } else {
+          Object.keys(meal.variants || {}).forEach(vk => {
+            const v = meal.variants[vk];
+            if (Array.isArray(v)) {
+              meal.variants[vk] = v.filter(it => it.id !== itemId);
+            } else if (v && Array.isArray(v.items)) {
+              v.items = v.items.filter(it => it.id !== itemId);
+            }
+          });
+        }
       } else {
         meal.items = (meal.items || []).filter(it => it.id !== itemId);
       }
@@ -13138,47 +13201,54 @@
     function handleAddMealProductSearch(val) {
       const resContainer = document.getElementById("addMealProductSearchResults");
       if (!resContainer) return;
-      const q = (val || "").trim().toLowerCase();
+      const q = (val || "").trim();
       if (!q) { resContainer.innerHTML = ""; return; }
 
-      const db = (window.LOCAL_FOOD_DB || []).concat(state.customHistory || []);
-      const matches = [];
-      const seen = new Set();
-
-      for (const item of db) {
-        if (!item || !item.name) continue;
-        const norm = item.name.toLowerCase();
-        if (seen.has(norm)) continue;
-        if (norm.includes(q) || (item.keywords && item.keywords.some(k => k.includes(q)))) {
-          seen.add(norm);
-          matches.push(item);
-          if (matches.length >= 8) break;
-        }
-      }
+      const norm = normalizeSearchText(q);
+      const tokens = norm.split(" ").filter(t => t.length >= 2 && !RU_STOP_WORDS.has(t));
+      const db = getCombinedDatabase();
+      const scored = [];
+      db.forEach(item => {
+        const score = matchItemQuery(item, tokens.length > 0 ? tokens : [norm], q);
+        if (score > 0) scored.push({ item, score });
+      });
+      scored.sort((a, b) => b.score - a.score);
+      const matches = scored.slice(0, 10).map(s => s.item);
 
       if (matches.length === 0) {
         resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в базе</div>`;
         return;
       }
 
-      resContainer.innerHTML = matches.map(m => `
-        <div onclick='selectAddMealProductCandidate(${JSON.stringify({
-          name: m.name,
-          cal100: Math.round(m.cal || 0),
-          p100: round1(m.p || 0),
-          f100: round1(m.f || 0),
-          c100: round1(m.c || 0),
-          weight: m.unitWeight || 100
-        })})' class="p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 cursor-pointer active:scale-95 transition flex items-center justify-between text-xs">
-          <span class="text-white font-medium truncate max-w-[65%]">${m.name}</span>
-          <span class="text-[10px] mono text-zinc-400">${Math.round(m.cal)} ккал / 100г</span>
+      window._currentAddMealMatches = matches;
+      resContainer.innerHTML = matches.map((m, idx) => `
+        <div onclick='selectAddMealProductCandidateIndex(${idx})' class="p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 cursor-pointer active:scale-95 transition flex items-center justify-between text-xs">
+          <span class="text-white font-medium truncate max-w-[65%]">${escapeHtml(m.name)}</span>
+          <span class="text-[10px] mono text-zinc-400">${Math.round(m.cal || m.cal100 || 0)} ккал / 100г</span>
         </div>
       `).join("");
     }
     window.handleAddMealProductSearch = handleAddMealProductSearch;
 
+    function selectAddMealProductCandidateIndex(idx) {
+      const m = window._currentAddMealMatches?.[idx];
+      if (!m) return;
+      const item = {
+        name: m.name,
+        cal100: Math.round(m.cal || m.cal100 || 0),
+        p100: round1(m.p || m.p100 || 0),
+        f100: round1(m.f || m.f100 || 0),
+        c100: round1(m.c || m.c100 || 0),
+        weight: m.unitWeight || m.standardUnitWeight || 100
+      };
+      selectAddMealProductCandidate(item);
+    }
+    window.selectAddMealProductCandidateIndex = selectAddMealProductCandidateIndex;
+
     function selectAddMealProductCandidate(item) {
       pendingAddProductCtx.selectedItem = item;
+      if (typeof recordFoodItemUsage === "function") recordFoodItemUsage(item.name, item);
+
       document.getElementById("addMealProductSelectedName").textContent = item.name;
       document.getElementById("addMealProductSelectedCal100").textContent = item.cal100 + " ккал/100г";
       document.getElementById("addMealProductWeightInput").value = item.weight || 100;
@@ -13292,24 +13362,182 @@
     }
     window.moveMealSlot = moveMealSlot;
 
+    const RU_VAR_NAMES = { A: "А", B: "Б", C: "В", D: "Г", E: "Д", F: "Е", G: "Ж", H: "З", I: "И", J: "К" };
+    window.RU_VAR_NAMES = RU_VAR_NAMES;
+
     function openEditMealSlotModal(mealId) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
 
-      pendingEditSlotCtx = { mealId };
+      const firstVar = meal.hasVariants ? (meal.activeVariant || Object.keys(meal.variants || {})[0] || "A") : null;
+      pendingEditSlotCtx = { mealId, activeModalVariant: firstVar };
 
       document.getElementById("editMealSlotHeaderTitle").textContent = meal.title;
       document.getElementById("editMealSlotTitleInput").value = meal.title;
       document.getElementById("editMealSlotTypeSelect").value = meal.type || "snack";
-      document.getElementById("editMealSlotHasVariantsToggle").checked = !!meal.hasVariants;
-      document.getElementById("editMealSlotRecipeInput").value = meal.recipe || meal.note || "";
+      const toggle = document.getElementById("editMealSlotHasVariantsToggle");
+      if (toggle) toggle.checked = !!meal.hasVariants;
+      const recipeInput = document.getElementById("editMealSlotRecipeInput");
+      if (recipeInput) recipeInput.value = meal.recipe || meal.note || "";
 
+      renderEditMealSlotVariantsManager(mealId);
       renderEditMealSlotProductsList(mealId);
 
       document.getElementById("editMealSlotModal")?.classList.add("open");
     }
     window.openEditMealSlotModal = openEditMealSlotModal;
+
+    function renderEditMealSlotVariantsManager(mealId) {
+      const mgr = document.getElementById("editMealSlotVariantsManager");
+      if (!mgr) return;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal || !meal.hasVariants) {
+        mgr.classList.add("hidden");
+        mgr.innerHTML = "";
+        return;
+      }
+      mgr.classList.remove("hidden");
+      const vKeys = Object.keys(meal.variants || {});
+      mgr.innerHTML = `
+        <div class="text-[10px] mono text-zinc-400 uppercase tracking-wide mb-1">Список вариантов:</div>
+        <div class="space-y-1.5">
+          ${vKeys.map(vk => {
+            const v = meal.variants[vk];
+            const title = (v && typeof v === 'object' && v.title) ? v.title : ('Вариант ' + (RU_VAR_NAMES[vk] || vk));
+            return `
+              <div class="flex items-center gap-1.5 bg-black/40 border border-white/[0.06] rounded-xl px-2.5 py-1.5">
+                <span class="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center text-[10px] mono font-bold text-white shrink-0">
+                  ${RU_VAR_NAMES[vk] || vk}
+                </span>
+                <input
+                  type="text"
+                  value="${escapeHtml(title)}"
+                  onchange="renameMealVariantInModal('${mealId}', '${vk}', this.value)"
+                  class="bg-transparent text-xs text-white flex-1 outline-none font-medium"
+                  placeholder="Название варианта"
+                />
+                ${vKeys.length > 1 ? `
+                  <button type="button" onclick="deleteMealVariantInModal('${mealId}', '${vk}')" class="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs flex items-center justify-center shrink-0 active:scale-95 transition" title="Удалить вариант">
+                    ✕
+                  </button>
+                ` : ''}
+              </div>
+            `;
+          }).join("")}
+        </div>
+        <button type="button" onclick="addNewVariantToMealSlot('${mealId}')" class="w-full mt-2 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-xs mono text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 active:scale-95 transition">
+          + Добавить вариант
+        </button>
+      `;
+    }
+    window.renderEditMealSlotVariantsManager = renderEditMealSlotVariantsManager;
+
+    function toggleMealSlotVariantsUI() {
+      const isChecked = document.getElementById("editMealSlotHasVariantsToggle")?.checked;
+      const mealId = pendingEditSlotCtx?.mealId;
+      if (!mealId) return;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+
+      if (isChecked) {
+        if (!meal.hasVariants) {
+          meal.hasVariants = true;
+          meal.variants = {
+            A: { title: "Вариант А", items: meal.items || [] },
+            B: { title: "Вариант Б", items: [] }
+          };
+          delete meal.items;
+          meal.activeVariant = "A";
+          if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = "A";
+        }
+      } else {
+        if (meal.hasVariants) {
+          meal.hasVariants = false;
+          const firstItems = meal.variants?.A?.items || meal.variants?.[Object.keys(meal.variants || {})[0]]?.items || [];
+          meal.items = firstItems;
+          delete meal.variants;
+          delete meal.activeVariant;
+          if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = null;
+        }
+      }
+      saveState();
+      renderEditMealSlotVariantsManager(mealId);
+      renderEditMealSlotProductsList(mealId);
+      renderCoachMealPlan();
+    }
+    window.toggleMealSlotVariantsUI = toggleMealSlotVariantsUI;
+
+    function switchModalVariantTab(mealId, vk) {
+      if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = vk;
+      renderEditMealSlotProductsList(mealId);
+    }
+    window.switchModalVariantTab = switchModalVariantTab;
+
+    function renameMealVariantInModal(mealId, vk, newTitle) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal || !meal.variants || !meal.variants[vk]) return;
+      meal.variants[vk].title = (newTitle || "").trim() || `Вариант ${RU_VAR_NAMES[vk] || vk}`;
+      saveState();
+      renderCoachMealPlan();
+    }
+    window.renameMealVariantInModal = renameMealVariantInModal;
+
+    function deleteMealVariantInModal(mealId, vk) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal || !meal.variants || !meal.variants[vk]) return;
+      const keys = Object.keys(meal.variants);
+      if (keys.length <= 1) {
+        showToast("Нельзя удалить единственный вариант", true);
+        return;
+      }
+      delete meal.variants[vk];
+      const remaining = Object.keys(meal.variants);
+      meal.activeVariant = remaining[0];
+      if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = remaining[0];
+      saveState();
+      renderEditMealSlotVariantsManager(mealId);
+      renderEditMealSlotProductsList(mealId);
+      renderCoachMealPlan();
+    }
+    window.deleteMealVariantInModal = deleteMealVariantInModal;
+
+    function addNewVariantToMealSlot(mealId) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      if (!meal.hasVariants) {
+        meal.hasVariants = true;
+        meal.variants = {
+          A: { title: "Вариант А", items: meal.items || [] }
+        };
+        delete meal.items;
+      }
+      const existingKeys = Object.keys(meal.variants || {});
+      const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+      let nextKey = alphabet.find(k => !existingKeys.includes(k));
+      if (!nextKey) nextKey = "V" + (existingKeys.length + 1);
+
+      const ruChar = RU_VAR_NAMES[nextKey] || nextKey;
+      meal.variants[nextKey] = {
+        title: `Вариант ${ruChar}`,
+        items: []
+      };
+      meal.activeVariant = nextKey;
+      saveState();
+      renderCoachMealPlan();
+      if (pendingEditSlotCtx && pendingEditSlotCtx.mealId === mealId) {
+        pendingEditSlotCtx.activeModalVariant = nextKey;
+        renderEditMealSlotVariantsManager(mealId);
+        renderEditMealSlotProductsList(mealId);
+      }
+      showToast(`Добавлен Вариант ${ruChar}`);
+    }
+    window.addNewVariantToMealSlot = addNewVariantToMealSlot;
 
     function renderEditMealSlotProductsList(mealId) {
       const listEl = document.getElementById("editMealSlotProductsList");
@@ -13321,38 +13549,50 @@
         return;
       }
 
-      let allItems = [];
+      let tabsHtml = "";
+      let activeItems = [];
+      let currentVariantKey = null;
+
       if (meal.hasVariants) {
-        Object.keys(meal.variants || {}).forEach(vk => {
-          const v = meal.variants[vk];
-          const vItems = Array.isArray(v) ? v : (v?.items || []);
-          vItems.forEach(it => {
-            allItems.push({ ...it, variantKey: vk, variantTitle: v?.title || ('Вариант ' + vk) });
-          });
-        });
+        const vKeys = Object.keys(meal.variants || {});
+        currentVariantKey = (pendingEditSlotCtx && pendingEditSlotCtx.activeModalVariant) || meal.activeVariant || vKeys[0] || "A";
+        if (!vKeys.includes(currentVariantKey)) currentVariantKey = vKeys[0] || "A";
+        if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = currentVariantKey;
+
+        tabsHtml = `
+          <div class="no-swipe flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar">
+            ${vKeys.map(vk => {
+              const v = meal.variants[vk];
+              const title = (v && typeof v === 'object' && v.title) ? v.title : ('Вариант ' + (RU_VAR_NAMES[vk] || vk));
+              return `
+                <button type="button" onclick="switchModalVariantTab('${mealId}', '${vk}')" class="shrink-0 px-2.5 py-1 text-xs mono rounded-lg transition ${currentVariantKey === vk ? 'accent-btn font-semibold text-white' : 'bg-white/[0.04] text-zinc-400'}">
+                  ${escapeHtml(title)}
+                </button>
+              `;
+            }).join("")}
+          </div>
+        `;
+
+        const vData = meal.variants[currentVariantKey];
+        activeItems = Array.isArray(vData) ? vData : (vData?.items || []);
       } else {
-        (meal.items || []).forEach(it => {
-          allItems.push({ ...it, variantKey: null });
-        });
+        activeItems = meal.items || [];
       }
 
-      if (allItems.length === 0) {
-        listEl.innerHTML = '<div class="text-zinc-500 text-xs py-2 text-center">В этом приеме пока нет продуктов</div>';
+      if (activeItems.length === 0) {
+        listEl.innerHTML = tabsHtml + '<div class="text-zinc-500 text-xs py-2 text-center">В этом варианте пока нет продуктов</div>';
         return;
       }
 
-      listEl.innerHTML = allItems.map(it => `
+      listEl.innerHTML = tabsHtml + activeItems.map(it => `
         <div class="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
           <div class="min-w-0 flex-1 mr-2">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-xs text-zinc-200 font-medium truncate">${it.name}</span>
-              ${it.variantTitle ? `<span class="px-1 py-0.2 rounded bg-white/[0.06] text-zinc-400 text-[9px] mono">${it.variantTitle}</span>` : ''}
-            </div>
+            <div class="text-xs text-zinc-200 font-medium truncate">${it.name}</div>
             <div class="text-[10px] mono text-zinc-500 mt-0.5">
               ${it.weight}г · ${Math.round((it.weight * (it.cal100 || 0)) / 100)} ккал (Б ${round1((it.weight * (it.p100 || 0)) / 100)} · Ж ${round1((it.weight * (it.f100 || 0)) / 100)} · У ${round1((it.weight * (it.c100 || 0)) / 100)})
             </div>
           </div>
-          <button type="button" onclick="deleteProductFromSlotModal('${meal.id}', '${it.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition shrink-0" title="Удалить из плана">
+          <button type="button" onclick="deleteProductFromSlotModal('${meal.id}', '${it.id}', '${currentVariantKey || ''}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition shrink-0" title="Удалить из плана">
             ✕
           </button>
         </div>
@@ -13360,8 +13600,8 @@
     }
     window.renderEditMealSlotProductsList = renderEditMealSlotProductsList;
 
-    function deleteProductFromSlotModal(mealId, itemId) {
-      deleteProductFromTemplate(mealId, itemId);
+    function deleteProductFromSlotModal(mealId, itemId, variantKey = null) {
+      deleteProductFromTemplate(mealId, itemId, variantKey);
       renderEditMealSlotProductsList(mealId);
     }
     window.deleteProductFromSlotModal = deleteProductFromSlotModal;
@@ -13382,22 +13622,6 @@
       const recipeText = (document.getElementById("editMealSlotRecipeInput").value || "").trim();
       if (recipeText) meal.recipe = recipeText;
       else delete meal.recipe;
-
-      const wantVariants = document.getElementById("editMealSlotHasVariantsToggle").checked;
-      if (wantVariants && !meal.hasVariants) {
-        meal.hasVariants = true;
-        meal.activeVariant = "A";
-        meal.variants = {
-          A: { title: "Вариант А", items: meal.items || [] },
-          B: { title: "Вариант Б", items: [] }
-        };
-        delete meal.items;
-      } else if (!wantVariants && meal.hasVariants) {
-        meal.hasVariants = false;
-        meal.items = meal.variants?.A?.items || meal.variants?.B?.items || [];
-        delete meal.variants;
-        delete meal.activeVariant;
-      }
 
       saveState();
       closeEditMealSlotModal();
@@ -13592,12 +13816,15 @@
           mealItems = Array.isArray(varData) ? varData : (varData?.items || []);
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
-            <div class="flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5">
+            <div class="no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar">
               ${variantKeys.map(vk => `
-                <button type="button" onclick="switchMealVariant('${meal.id}', '${vk}')" class="flex-1 py-1 text-xs font-semibold rounded-lg transition ${activeVar === vk ? 'accent-btn shadow' : 'text-zinc-400 hover:text-white'}">
-                  ${meal.variants[vk]?.title || ('Вариант ' + vk)}
+                <button type="button" onclick="switchMealVariant('${meal.id}', '${vk}')" class="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg transition ${activeVar === vk ? 'accent-btn shadow text-white' : 'text-zinc-400 hover:text-white'}">
+                  ${meal.variants[vk]?.title || ('Вариант ' + (RU_VAR_NAMES[vk] || vk))}
                 </button>
               `).join("")}
+              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="shrink-0 px-2 py-1 text-xs mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
+                + Вариант
+              </button>
             </div>
           `;
         } else {
@@ -13724,9 +13951,9 @@
             </div>
 
             <!-- Итог БЖУ приема -->
-            <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10.5px] mono text-zinc-400">
-              <span class="text-zinc-500">Итого прием:</span>
-              <div class="flex items-center gap-2">
+            <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] mono text-zinc-400 whitespace-nowrap overflow-x-auto no-scrollbar gap-2">
+              <span class="text-zinc-500 shrink-0 whitespace-nowrap">Итого прием:</span>
+              <div class="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
                 <span class="text-white font-bold">${Math.round(mealCal)} ккал</span>
                 <span>· Б ${round1(mealP)}г</span>
                 <span>· Ж ${round1(mealF)}г</span>
@@ -13872,48 +14099,55 @@
     function handleOverrideSearchInput(val) {
       const resContainer = document.getElementById("overrideSearchResults");
       if (!resContainer) return;
-      const q = (val || "").trim().toLowerCase();
+      const q = (val || "").trim();
       if (!q) { resContainer.innerHTML = ""; return; }
 
-      const db = (window.LOCAL_FOOD_DB || []).concat(state.customHistory || []);
-      const matches = [];
-      const seen = new Set();
-
-      for (const item of db) {
-        if (!item || !item.name) continue;
-        const norm = item.name.toLowerCase();
-        if (seen.has(norm)) continue;
-        if (norm.includes(q) || (item.keywords && item.keywords.some(k => k.includes(q)))) {
-          seen.add(norm);
-          matches.push(item);
-          if (matches.length >= 8) break;
-        }
-      }
+      const norm = normalizeSearchText(q);
+      const tokens = norm.split(" ").filter(t => t.length >= 2 && !RU_STOP_WORDS.has(t));
+      const db = getCombinedDatabase();
+      const scored = [];
+      db.forEach(item => {
+        const score = matchItemQuery(item, tokens.length > 0 ? tokens : [norm], q);
+        if (score > 0) scored.push({ item, score });
+      });
+      scored.sort((a, b) => b.score - a.score);
+      const matches = scored.slice(0, 10).map(s => s.item);
 
       if (matches.length === 0) {
         resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в базе</div>`;
         return;
       }
 
-      resContainer.innerHTML = matches.map(m => `
-        <div onclick='selectOverrideCandidate(${JSON.stringify({
-          name: m.name,
-          cal100: Math.round(m.cal || 0),
-          p100: round1(m.p || 0),
-          f100: round1(m.f || 0),
-          c100: round1(m.c || 0),
-          weight: m.unitWeight || 100
-        })})' class="p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 cursor-pointer active:scale-95 transition flex items-center justify-between text-xs">
-          <span class="text-white font-medium truncate max-w-[65%]">${m.name}</span>
-          <span class="text-[10px] mono text-zinc-400">${Math.round(m.cal)} ккал / 100г</span>
+      window._currentOverrideMatches = matches;
+      resContainer.innerHTML = matches.map((m, idx) => `
+        <div onclick='selectOverrideCandidateIndex(${idx})' class="p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 cursor-pointer active:scale-95 transition flex items-center justify-between text-xs">
+          <span class="text-white font-medium truncate max-w-[65%]">${escapeHtml(m.name)}</span>
+          <span class="text-[10px] mono text-zinc-400">${Math.round(m.cal || m.cal100 || 0)} ккал / 100г</span>
         </div>
       `).join("");
     }
     window.handleOverrideSearchInput = handleOverrideSearchInput;
 
+    function selectOverrideCandidateIndex(idx) {
+      const m = window._currentOverrideMatches?.[idx];
+      if (!m) return;
+      const item = {
+        name: m.name,
+        cal100: Math.round(m.cal || m.cal100 || 0),
+        p100: round1(m.p || m.p100 || 0),
+        f100: round1(m.f || m.f100 || 0),
+        c100: round1(m.c || m.c100 || 0),
+        weight: m.unitWeight || m.standardUnitWeight || 100
+      };
+      selectOverrideCandidate(item);
+    }
+    window.selectOverrideCandidateIndex = selectOverrideCandidateIndex;
+
     function selectOverrideCandidate(item) {
       pendingOverrideCtx.selectedItem = item;
       pendingOverrideCtx.weight = item.weight || 100;
+
+      if (typeof recordFoodItemUsage === "function") recordFoodItemUsage(item.name, item);
 
       document.getElementById("overrideSelectedName").textContent = item.name;
       document.getElementById("overrideSelectedCal100").textContent = item.cal100 + " ккал/100г";
@@ -14359,12 +14593,12 @@
 
       const normRaw = normalizeSearchText(rawQuery);
       if (!normRaw) return 0;
-      if (normName === normRaw) return 2000 + (item.useCount || 0);
-      if (normName.startsWith(normRaw)) return 1500 + (item.useCount || 0);
-      if (normName.includes(normRaw)) return 1200 + (item.useCount || 0);
-      if (fullHaystack.includes(normRaw)) return 1000 + (item.useCount || 0);
+      if (normName === normRaw) return 3000 + (item.useCount ? item.useCount * 20 : 0);
+      if (normName.startsWith(normRaw)) return 2000 + (item.useCount ? item.useCount * 15 : 0);
+      if (normName.includes(normRaw)) return 1500 + (item.useCount ? item.useCount * 10 : 0);
+      if (fullHaystack.includes(normRaw)) return 1200 + (item.useCount ? item.useCount * 10 : 0);
 
-      const sigTokens = queryTokens.filter(t => t.length > 2 && !RU_STOP_WORDS.has(t) && !/^\d+$/.test(t));
+      const sigTokens = queryTokens.filter(t => t.length >= 2 && !RU_STOP_WORDS.has(t) && !/^\d+$/.test(t));
       if (sigTokens.length === 0) {
         return queryTokens.some(t => fullHaystack.includes(t)) ? 100 : 0;
       }
@@ -14379,21 +14613,19 @@
         if (fullHaystack.includes(tok)) {
           matchedExactTokens++;
           matchedStems++;
-        } else if (fullHaystack.includes(stm) || (stm.length >= 4 && fullHaystack.split(" ").some(w => w.startsWith(stm) || stemRu(w).startsWith(stm)))) {
+        } else if (fullHaystack.includes(stm) || (stm.length >= 3 && fullHaystack.split(" ").some(w => w.startsWith(stm) || stemRu(w).startsWith(stm)))) {
           matchedStems++;
         }
       }
 
-      if (matchedStems === sigTokens.length) {
-        return 1000 + matchedExactTokens * 50 + (item.isRecent ? 150 : 0) + (item.useCount || 0);
+      // Если многословный запрос (например, "макароны с мясом"), ОБЯЗАТЕЛЬНО требуем совпадения всех значащих основ
+      if (sigTokens.length > 1) {
+        if (matchedStems < sigTokens.length) return 0;
+        return 1500 + matchedExactTokens * 50 + (item.useCount ? item.useCount * 20 : 0) + (item.isRecent ? 100 : 0);
       }
-      if (matchedStems > 0 && sigTokens.length > 1) {
-        const anyInName = sigTokens.some((tok, idx) => {
-          const stm = stems[idx] || tok;
-          return normName.includes(tok) || normName.includes(stm) || (stm.length >= 4 && normName.split(" ").some(w => w.startsWith(stm)));
-        });
-        if (!anyInName) return 0;
-        return 200 + Math.round((matchedStems / sigTokens.length) * 300) + (item.isRecent ? 50 : 0);
+
+      if (matchedStems === 1) {
+        return 1000 + matchedExactTokens * 50 + (item.useCount ? item.useCount * 20 : 0) + (item.isRecent ? 100 : 0);
       }
       return 0;
     }
@@ -14402,13 +14634,101 @@
       const map = new Map();
       (state.customHistory || []).forEach(item => {
         const key = normalizeSearchText(item.name);
-        if (key) map.set(key, { ...item, isRecent: true });
+        if (key) map.set(key, { ...item, isRecent: (item.useCount > 0) });
       });
       LOCAL_DB.forEach(item => {
         const key = normalizeSearchText(item.name);
-        if (key && !map.has(key)) map.set(key, item);
+        if (key && !map.has(key)) map.set(key, { ...item, isRecent: false, useCount: 0 });
       });
       return Array.from(map.values());
+    }
+
+    async function fetchAiRussianFoodSearch(rawQuery) {
+      const query = stripEmojis(rawQuery || "").trim();
+      if (!query) return [];
+
+      const prompt = `Ты база данных продуктов и готовых блюд (в стиле FatSecret для рынка РФ).
+Пользователь ищет продукт или блюдо: "${query}".
+
+Сформируй 8-12 реалистичных, качественных вариантов для российского пользователя:
+- Если это блюдо (например "макароны с мясом", "плов", "борщ"):
+  Предложи разные варианты приготовления (с говядиной, с курицей, по-домашнему, постный, из ВкусВилл, ресторанный).
+- Если это продукт/выпечка/бакалея (например "хлеб для тостов", "творог", "шоколад"):
+  Предложи популярные бренды в РФ (Первый хлебокомбинат, Harry's, Хлебный Дом, Простоквашино, Домик в деревне, ВкусВилл, Коломенское, Makfa и т.д.).
+- Строго рассчитай КБЖУ НА 100 ГРАММ ("cal", "p", "f", "c").
+- Укажи реалистичный стандартный вес разовой порции/куска/штуки в "unitWeight" (в граммах).
+
+Верни СТРОГО JSON-массив без какого-либо дополнительного текста или пояснений:
+[
+  {
+    "name": "Точное наименование на русском",
+    "cal": 250,
+    "p": 12.0,
+    "f": 8.5,
+    "c": 31.0,
+    "unitWeight": 250
+  }
+]`;
+
+      try {
+        const data = await callGemini3Flash({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const list = extractJsonFromAiResponse(raw);
+        if (Array.isArray(list)) {
+          return list.map(item => ({
+            name: stripEmojis(item.name || "").trim(),
+            cal: Math.round(Number(item.cal) || 0),
+            p: round1(Number(item.p) || 0),
+            f: round1(Number(item.f) || 0),
+            c: round1(Number(item.c) || 0),
+            unitWeight: Math.round(Number(item.unitWeight) || 100),
+            source: "ИИ",
+            useCount: 0,
+            lastUsedAt: 0
+          })).filter(item => item.name && item.cal > 0);
+        }
+      } catch (err) {
+        console.warn("fetchAiRussianFoodSearch error:", err);
+      }
+      return [];
+    }
+    window.fetchAiRussianFoodSearch = fetchAiRussianFoodSearch;
+
+    function renderLiveSuggestList(list, matches, explicitWeight, pieceCount) {
+      const itemsToRender = matches.slice(0, 15);
+      list.innerHTML = itemsToRender.map((item, idx) => {
+        const unitW = item.standardUnitWeight || item.pieceWeight || item.defaultWeight || 100;
+        const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : (item.defaultWeight || 100));
+        const ratio = w / 100;
+        const cal = Math.round((item.cal || item.cal100 || 0) * ratio);
+        const p = round1((item.p || item.p100 || 0) * ratio);
+        const f = round1((item.f || item.f100 || 0) * ratio);
+        const c = round1((item.c || item.c100 || 0) * ratio);
+        const badge = (item.useCount > 0)
+          ? '<span class="text-[9px] mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded shrink-0">съедено</span>'
+          : (item.source ? `<span class="text-[9px] mono text-zinc-500 shrink-0">${escapeHtml(item.source)}</span>` : '');
+
+        return `
+          <button type="button" onclick="selectSuggestedItem(${idx}, ${w})" class="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition border-b border-white/[0.03]">
+            <div class="min-w-0 pr-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-sm font-medium text-white truncate">${escapeHtml(item.name)}</span>
+                ${badge}
+              </div>
+              <div class="text-[11px] mono text-zinc-500 mt-0.5">
+                ${w}г · <span style="color:var(--accent-p)">Б ${p}</span> · <span style="color:var(--accent-f)">Ж ${f}</span> · <span style="color:var(--accent-c)">У ${c}</span>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-sm font-bold mono" style="color:var(--accent-cal)">+${cal}</span>
+              <span class="text-[10px] text-zinc-500 block mono">ккал</span>
+            </div>
+          </button>
+        `;
+      }).join("");
     }
 
     function handleInputSuggest(val) {
@@ -14417,71 +14737,49 @@
       const list = document.getElementById("liveSuggestList");
 
       if (!val || !val.trim()) {
-        submitBtn.classList.add("hidden");
-        submitBtn.classList.remove("flex");
-        box.classList.add("hidden");
+        if (submitBtn) { submitBtn.classList.add("hidden"); submitBtn.classList.remove("flex"); }
+        if (box) box.classList.add("hidden");
         return;
       }
-      submitBtn.classList.remove("hidden");
-      submitBtn.classList.add("flex");
+      if (submitBtn) { submitBtn.classList.remove("hidden"); submitBtn.classList.add("flex"); }
 
       const { query, explicitWeight, pieceCount } = parseQueryAndWeight(val);
-      if (query.length < 1) { box.classList.add("hidden"); return; }
+      if (query.length < 1) { if (box) box.classList.add("hidden"); return; }
 
       const normQuery = normalizeSearchText(query);
-      const tokens = normQuery.split(" ").filter(Boolean);
-      if (tokens.length === 0) { box.classList.add("hidden"); return; }
+      const tokens = normQuery.split(" ").filter(t => t.length >= 2 && !RU_STOP_WORDS.has(t));
+      if (tokens.length === 0 && normQuery.length < 2) { if (box) box.classList.add("hidden"); return; }
 
       const allDb = getCombinedDatabase();
       const scored = [];
       allDb.forEach(item => {
-        const score = matchItemQuery(item, tokens, query);
-        if (score > 0) {
-          scored.push({ item, score });
-        }
+        const score = matchItemQuery(item, tokens.length > 0 ? tokens : [normQuery], query);
+        if (score > 0) scored.push({ item, score });
       });
       scored.sort((a, b) => b.score - a.score);
-      const matches = scored.slice(0, 6).map(s => s.item);
+      const matches = scored.slice(0, 10).map(s => s.item);
 
       if (matches.length === 0) {
         box.classList.remove("hidden");
         list.innerHTML = `
-          <button type="button" onclick="searchOpenFoodFactsAndShow('${escapeHtml(query).replace(/'/g, "\\'")}')" class="w-full py-2.5 px-3 text-center text-xs mono text-zinc-300 hover:text-white hover:bg-white/[0.04] transition flex items-center justify-center gap-2">
+          <button type="button" onclick="handleTextSubmit()" class="w-full py-2.5 px-3 text-center text-xs mono text-zinc-300 hover:text-white hover:bg-white/[0.04] transition flex items-center justify-center gap-2">
             <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <span>Поиск «${escapeHtml(query)}» в OpenFoodFacts</span>
+            <span>Глубокий онлайн-поиск «${escapeHtml(query)}» (ИИ + OFF) →</span>
           </button>
         `;
         return;
       }
 
       box.classList.remove("hidden");
-      const matchesHtml = matches.map((item, idx) => {
-        const unitW = item.standardUnitWeight || item.pieceWeight || item.defaultWeight || 100;
-        const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : (item.defaultWeight || 100));
-        const ratio = w / 100;
-        return `
-          <button type="button" onclick="selectSuggestedItem(${idx}, ${w})" class="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition">
-            <div class="min-w-0 pr-2">
-              <div class="text-sm font-medium text-white truncate">${escapeHtml(item.name)}</div>
-              <div class="text-[11px] mono text-zinc-500">
-                ${w}г · <span style="color:var(--accent-p)">Б ${round1(item.p * ratio)}</span> · <span style="color:var(--accent-f)">Ж ${round1(item.f * ratio)}</span> · <span style="color:var(--accent-c)">У ${round1(item.c * ratio)}</span>
-              </div>
-            </div>
-            <div class="text-right shrink-0">
-              <span class="text-sm font-bold mono" style="color:var(--accent-cal)">+${Math.round(item.cal * ratio)}</span>
-              <span class="text-[10px] text-zinc-500 block mono">ккал</span>
-            </div>
-          </button>
-        `;
-      }).join("");
-
-      list.innerHTML = matchesHtml + `
-        <button type="button" onclick="searchOpenFoodFactsAndShow('${escapeHtml(query).replace(/'/g, "\\'")}')" class="w-full py-2 px-3 border-t border-white/[0.06] text-center text-[10.5px] mono text-zinc-400 hover:text-white hover:bg-white/[0.04] transition flex items-center justify-center gap-1.5">
-          <svg class="w-3 h-3 text-zinc-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <span>Поиск в базе OpenFoodFacts</span>
-        </button>
-      `;
       window._currentMatches = matches;
+      renderLiveSuggestList(list, matches, explicitWeight, pieceCount);
+
+      list.insertAdjacentHTML("beforeend", `
+        <button type="button" onclick="handleTextSubmit()" class="w-full py-2 px-3 border-t border-white/[0.06] text-center text-[10.5px] mono text-zinc-400 hover:text-white hover:bg-white/[0.04] transition flex items-center justify-center gap-1.5">
+          <svg class="w-3 h-3 text-zinc-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <span>Глубокий онлайн-поиск (ИИ + OFF) →</span>
+        </button>
+      `);
     }
 
     window.searchOpenFoodFactsAndShow = async function(query) {
@@ -14493,152 +14791,126 @@
       if (!box || !list) return;
 
       if (!results || results.length === 0) {
-        // Fallback на локальную базу с нечетким поиском
-        const { query: qClean } = parseQueryAndWeight(query);
-        const norm = normalizeSearchText(qClean);
-        const tokens = norm.split(" ").filter(Boolean);
-        const localMatches = getCombinedDatabase()
-          .map(item => ({ item, score: matchItemQuery(item, tokens, qClean) }))
-          .filter(s => s.score > 0)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 5)
-          .map(s => s.item);
-
-        if (localMatches.length > 0) {
-          window._currentMatches = localMatches;
-          box.classList.remove("hidden");
-          list.innerHTML = `
-            <div class="px-3 py-1.5 text-[10px] mono text-zinc-500 uppercase tracking-wider border-b border-white/[0.06]">
-              В OpenFoodFacts не найдено. Найдено в локальной базе:
-            </div>
-          ` + localMatches.map((item, idx) => {
-            const w = item.standardUnitWeight || item.defaultWeight || 100;
-            const ratio = w / 100;
-            return `
-              <button type="button" onclick="selectSuggestedItem(${idx}, ${w})" class="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition">
-                <div class="min-w-0 pr-2">
-                  <div class="text-sm font-medium text-white truncate">${escapeHtml(item.name)}</div>
-                  <div class="text-[11px] mono text-zinc-500">
-                    ${w}г · <span style="color:var(--accent-p)">Б ${round1(item.p * ratio)}</span> · <span style="color:var(--accent-f)">Ж ${round1(item.f * ratio)}</span> · <span style="color:var(--accent-c)">У ${round1(item.c * ratio)}</span>
-                  </div>
-                </div>
-                <div class="text-right shrink-0">
-                  <span class="text-sm font-bold mono" style="color:var(--accent-cal)">+${Math.round(item.cal * ratio)}</span>
-                  <span class="text-[10px] text-zinc-500 block mono">ккал</span>
-                </div>
-              </button>
-            `;
-          }).join("");
-          return;
-        }
-
         showToast("Ничего не найдено в OpenFoodFacts", true);
         return;
       }
 
       window._currentMatches = results;
       box.classList.remove("hidden");
-      list.innerHTML = results.map((item, idx) => {
-        const w = item.defaultWeight || 100;
-        const ratio = w / 100;
-        return `
-          <button type="button" onclick="selectSuggestedItem(${idx}, ${w})" class="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition">
-            <div class="min-w-0 pr-2">
-              <div class="text-sm font-medium text-white truncate">${escapeHtml(item.name)}</div>
-              <div class="text-[11px] mono text-zinc-500">
-                ${w}г · <span style="color:var(--accent-p)">Б ${round1(item.p * ratio)}</span> · <span style="color:var(--accent-f)">Ж ${round1(item.f * ratio)}</span> · <span style="color:var(--accent-c)">У ${round1(item.c * ratio)}</span> · <span class="text-zinc-600">OFF</span>
-              </div>
-            </div>
-            <div class="text-right shrink-0">
-              <span class="text-sm font-bold mono" style="color:var(--accent-cal)">+${Math.round(item.cal * ratio)}</span>
-              <span class="text-[10px] text-zinc-500 block mono">ккал</span>
-            </div>
-          </button>
-        `;
-      }).join("");
+      renderLiveSuggestList(list, results, null, null);
     };
 
     function selectSuggestedItem(idx, weight) {
       const item = (window._currentMatches || [])[idx];
       if (!item) return;
+      const w = weight || item.unitWeight || item.defaultWeight || 100;
       addFoodEntryFrom100g({
-        name: item.name, cal100: item.cal, p100: item.p, f100: item.f, c100: item.c,
-        weight: weight || item.defaultWeight || 100, source: "",
+        name: item.name,
+        cal100: item.cal || item.cal100 || 0,
+        p100: item.p || item.p100 || 0,
+        f100: item.f || item.f100 || 0,
+        c100: item.c || item.c100 || 0,
+        weight: w,
+        source: item.source || "",
         standardUnitWeight: item.standardUnitWeight || item.pieceWeight,
-        isPiece: Boolean(item.isPiece || item.standardUnitWeight)
+        isPiece: Boolean(item.isPiece || item.standardUnitWeight),
+        packageNetWeight: item.packageNetWeight
       });
       const input = document.getElementById("foodInput");
-      input.value = "";
+      if (input) input.value = "";
       handleInputSuggest("");
-      input.blur();
+      if (input) input.blur();
     }
 
     async function handleTextSubmit(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
       const input = document.getElementById("foodInput");
-      const raw = stripEmojis(input.value).trim();
+      const raw = stripEmojis(input ? input.value : "").trim();
       if (!raw) return;
-      document.getElementById("liveSuggestBox").classList.add("hidden");
 
       const { query, explicitWeight, pieceCount } = parseQueryAndWeight(raw);
+      const box = document.getElementById("liveSuggestBox");
+      const list = document.getElementById("liveSuggestList");
+      if (!box || !list) return;
 
-      // 1. Быстрый локальный парсер (0мс, офлайн, multi-item)
-      const localParsed = parseFoodLocally(raw, explicitWeight);
-      if (localParsed && Array.isArray(localParsed.matched) && localParsed.matched.length > 0) {
-        localParsed.matched.forEach(item => addFoodEntryFrom100g(item));
-        input.value = "";
-        handleInputSuggest("");
-        showToast(localParsed.matched.length === 1 
-          ? `Добавлено: ${localParsed.matched[0].name}` 
-          : `Добавлено ${localParsed.matched.length} прод.: ${localParsed.matched.map(m => m.name).join(", ")}`);
-        return;
+      box.classList.remove("hidden");
+      list.innerHTML = `
+        <div class="p-3 text-center text-xs mono text-zinc-400 flex items-center justify-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-[var(--accent-cal)] animate-ping"></span>
+          <span>Поиск «${escapeHtml(query)}» в базе и онлайн...</span>
+        </div>
+      `;
+
+      // 1. Быстрый локальный парсер (0мс, офлайн)
+      const normQuery = normalizeSearchText(query);
+      const tokens = normQuery.split(" ").filter(t => t.length >= 2 && !RU_STOP_WORDS.has(t));
+      const allDb = getCombinedDatabase();
+      const scored = [];
+      allDb.forEach(item => {
+        const score = matchItemQuery(item, tokens.length > 0 ? tokens : [normQuery], query);
+        if (score > 0) scored.push({ item, score });
+      });
+      scored.sort((a, b) => b.score - a.score);
+      const localMatches = scored.map(s => s.item);
+
+      // 2. Параллельный запрос к AI и OpenFoodFacts
+      let onlineMatches = [];
+      try {
+        const [aiRes, offRes] = await Promise.allSettled([
+          fetchAiRussianFoodSearch(query),
+          searchOpenFoodFacts(query)
+        ]);
+
+        if (aiRes.status === "fulfilled" && Array.isArray(aiRes.value) && aiRes.value.length > 0) {
+          if (!Array.isArray(state.customHistory)) state.customHistory = [];
+          aiRes.value.forEach(r => {
+            const rNorm = normalizeSearchText(r.name);
+            if (!state.customHistory.some(h => normalizeSearchText(h.name) === rNorm)) {
+              state.customHistory.push({ ...r, useCount: 0, lastUsedAt: 0 });
+            }
+          });
+          saveState();
+          onlineMatches.push(...aiRes.value);
+        }
+
+        if (offRes.status === "fulfilled" && Array.isArray(offRes.value) && offRes.value.length > 0) {
+          onlineMatches.push(...offRes.value);
+        }
+      } catch (err) {
+        console.warn("Online search err:", err);
       }
 
-      // 2. Поиск точного совпадения в Combined Database
-      const normQuery = normalizeSearchText(query);
-      const exactOrClose = getCombinedDatabase().find(i => {
-        const norm = normalizeSearchText(i.name);
-        return norm === normQuery || (normQuery.length >= 4 && norm.includes(normQuery));
+      // 3. Формируем единый упорядоченный список
+      const combined = [];
+      const seen = new Set();
+
+      // Сначала реально употреблявшиеся (useCount > 0)
+      localMatches.filter(i => (i.useCount || 0) > 0).forEach(i => {
+        const k = normalizeSearchText(i.name);
+        if (!seen.has(k)) { seen.add(k); combined.push(i); }
+      });
+      // Затем результаты из онлайн (ИИ + OFF)
+      onlineMatches.forEach(i => {
+        const k = normalizeSearchText(i.name);
+        if (!seen.has(k)) { seen.add(k); combined.push(i); }
+      });
+      // Затем остальные локальные совпадения
+      localMatches.filter(i => !(i.useCount > 0)).forEach(i => {
+        const k = normalizeSearchText(i.name);
+        if (!seen.has(k)) { seen.add(k); combined.push(i); }
       });
 
-      if (exactOrClose) {
-        const unitW = exactOrClose.standardUnitWeight || exactOrClose.pieceWeight || exactOrClose.defaultWeight || 100;
-        const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : (exactOrClose.defaultWeight || 100));
-        addFoodEntryFrom100g({
-          name: stripEmojis(pieceCount ? `${exactOrClose.name} (${pieceCount} шт)` : exactOrClose.name),
-          cal100: exactOrClose.cal, p100: exactOrClose.p, f100: exactOrClose.f, c100: exactOrClose.c,
-          weight: w, source: "",
-          standardUnitWeight: unitW,
-          isPiece: Boolean(exactOrClose.isPiece || pieceCount)
-        });
-        input.value = "";
-        handleInputSuggest("");
+      if (combined.length === 0) {
+        list.innerHTML = `
+          <div class="p-3 text-center text-xs text-zinc-500 mono">
+            Ничего не найдено по запросу «${escapeHtml(query)}»
+          </div>
+        `;
         return;
       }
 
-      // 3. Открытая интернет-база OpenFoodFacts (без Gemini / без VPN)
-      try {
-        const offResults = await searchOpenFoodFacts(query);
-        if (offResults && offResults.length > 0) {
-          const best = offResults[0];
-          const w = explicitWeight || (pieceCount ? Math.round(pieceCount * (best.standardUnitWeight || 100)) : (best.defaultWeight || 100));
-          addFoodEntryFrom100g({
-            name: stripEmojis(best.name),
-            cal100: best.cal, p100: best.p, f100: best.f, c100: best.c,
-            weight: w,
-            source: "OpenFoodFacts"
-          });
-          input.value = "";
-          handleInputSuggest("");
-          showToast(`Добавлено из OpenFoodFacts: ${best.name}`);
-          return;
-        }
-      } catch (offErr) {}
-
-      // 4. Если базы не помогли — обращение к AI каскаду (Gemini / Groq / OpenRouter)
-      await analyzeTextWithAI(raw, explicitWeight);
-      input.value = "";
-      handleInputSuggest("");
+      window._currentMatches = combined;
+      renderLiveSuggestList(list, combined, explicitWeight, pieceCount);
     }
 
     async function analyzeTextWithAI(textQuery, explicitWeight) {
@@ -14713,6 +14985,9 @@
 
     function openScanner(mode = "auto") {
       document.getElementById("scannedResultCard")?.classList.add("hidden");
+      document.getElementById("scannedAlternativesBox")?.classList.add("hidden");
+      const barcodeInput = document.getElementById("barcodeInput");
+      if (barcodeInput) barcodeInput.value = "";
       window.pendingScannedProduct = null;
       document.getElementById("scannerModal")?.classList.add("open");
       setScannerMode(mode);
@@ -14982,6 +15257,9 @@
       stopCamera();
       clearScannerOverlay();
       document.getElementById("scannedResultCard")?.classList.add("hidden");
+      document.getElementById("scannedAlternativesBox")?.classList.add("hidden");
+      const barcodeInput = document.getElementById("barcodeInput");
+      if (barcodeInput) barcodeInput.value = "";
       const preview = document.getElementById("photoPreview");
       const placeholder = document.getElementById("cameraPlaceholder");
       try {
@@ -16584,11 +16862,11 @@
               <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
               ${badge}
             </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-zinc-400 mono">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs text-zinc-400 mono truncate min-w-0">
                 Вес еще не внесен
               </div>
-              <span class="text-[11px] font-semibold mono underline" style="color:var(--accent-cal)">Ввести вес →</span>
+              <span class="text-[11px] font-semibold mono underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
             </div>
           `;
         } else {
@@ -16597,13 +16875,13 @@
               <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
               ${badge}
             </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-zinc-300 mono">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs text-zinc-300 mono truncate min-w-0">
                 Вес: <strong class="text-white text-sm">${latestW} кг</strong>
                 <span class="text-zinc-500 mx-1">·</span>
-                <span>За 14д: <b class="text-white">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</b></span>
+                <span class="whitespace-nowrap">За 14д: <b class="text-white">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</b></span>
               </div>
-              <span class="text-[11px] font-semibold mono underline" style="color:var(--accent-cal)">Ввести вес →</span>
+              <span class="text-[11px] font-semibold mono underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
             </div>
           `;
         }
@@ -16786,7 +17064,98 @@
       }
     };
 
-    // 4. Синхронизируем виджет
+    // 4. Мягкая миграция: добавление Варианта В в Завтрак (пресет coach_2520 и текущий стейт)
+    function migrateBreakfastVariantC() {
+      try {
+        const template = state.mealPlanTemplate;
+        if (template && Array.isArray(template.meals)) {
+          const bf = template.meals.find(m => m.id === "m_bf" || m.type === "breakfast" || (m.title && m.title.toLowerCase().includes("завтрак")));
+          if (bf && bf.hasVariants && bf.variants) {
+            if (!bf.variants.C) {
+              bf.variants.C = {
+                title: "Вариант В (тостовый хлеб)",
+                items: [
+                  {
+                    id: "it_toast_c1",
+                    name: "Хлеб для тостов Первый хлебокомбинат",
+                    weight: 140,
+                    cal100: 270,
+                    p100: 8.0,
+                    f100: 2.5,
+                    c100: 52.0
+                  },
+                  {
+                    id: "it_egg_c2",
+                    name: "Яйцо куриное С1",
+                    weight: 165,
+                    cal100: 155,
+                    p100: 12.7,
+                    f100: 11.5,
+                    c100: 0.7
+                  },
+                  {
+                    id: "it_eggwhite_c3",
+                    name: "Яичный белок С1",
+                    weight: 100,
+                    cal100: 48,
+                    p100: 11.0,
+                    f100: 0.2,
+                    c100: 0.7
+                  }
+                ]
+              };
+              saveState();
+            }
+          }
+        }
+
+        const rawBackup = localStorage.getItem("form_coach_plan_backup");
+        if (rawBackup) {
+          const bObj = JSON.parse(rawBackup);
+          if (bObj && Array.isArray(bObj.meals)) {
+            const bBf = bObj.meals.find(m => m.id === "m_bf" || m.type === "breakfast" || (m.title && m.title.toLowerCase().includes("завтрак")));
+            if (bBf && bBf.hasVariants && bBf.variants && !bBf.variants.C) {
+              bBf.variants.C = {
+                title: "Вариант В (тостовый хлеб)",
+                items: [
+                  {
+                    id: "it_toast_c1",
+                    name: "Хлеб для тостов Первый хлебокомбинат",
+                    weight: 140,
+                    cal100: 270,
+                    p100: 8.0,
+                    f100: 2.5,
+                    c100: 52.0
+                  },
+                  {
+                    id: "it_egg_c2",
+                    name: "Яйцо куриное С1",
+                    weight: 165,
+                    cal100: 155,
+                    p100: 12.7,
+                    f100: 11.5,
+                    c100: 0.7
+                  },
+                  {
+                    id: "it_eggwhite_c3",
+                    name: "Яичный белок С1",
+                    weight: 100,
+                    cal100: 48,
+                    p100: 11.0,
+                    f100: 0.2,
+                    c100: 0.7
+                  }
+                ]
+              };
+              localStorage.setItem("form_coach_plan_backup", JSON.stringify(bObj));
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    migrateBreakfastVariantC();
+
+    // 5. Синхронизируем виджет
     if (typeof syncNativeWidget === "function") syncNativeWidget();
   })();
   </script>
@@ -18382,7 +18751,7 @@
 
     function getKnownPieceItemsPromptContext() {
       const items = (state.customHistory || [])
-        .filter(i => (i.isPiece || (i.standardUnitWeight && i.standardUnitWeight > 0)))
+        .filter(i => (i.useCount > 0) && (i.isPiece || (i.standardUnitWeight && i.standardUnitWeight > 0)))
         .slice(0, 25);
       if (items.length === 0) return "";
       const lines = items.map(i => `- "${i.name}": эталонный вес 1 шт = ${i.standardUnitWeight || 5} г`);
@@ -18543,11 +18912,55 @@
         }
       }
 
+      // Альтернативные варианты распознавания
+      const altBox = document.getElementById("scannedAlternativesBox");
+      if (altBox) {
+        if (Array.isArray(product.alternatives) && product.alternatives.length > 0) {
+          altBox.classList.remove("hidden");
+          altBox.innerHTML = `
+            <div class="w-full text-[10px] mono text-zinc-500 mb-0.5">ДРУГИЕ ВАРИАНТЫ:</div>
+            ${product.alternatives.map((alt, idx) => `
+              <button type="button" onclick="selectScannedAlternative(${idx})" class="px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-300 bg-white/[0.04] hover:bg-white/10 active:scale-95 transition truncate max-w-full">
+                ${escapeHtml(stripEmojis(alt.name || ""))} (${Math.round(alt.weight || 100)}г)
+              </button>
+            `).join("")}
+          `;
+          window._currentScannedAlternatives = product.alternatives;
+        } else {
+          altBox.classList.add("hidden");
+          altBox.innerHTML = "";
+          window._currentScannedAlternatives = [];
+        }
+      }
+
       document.getElementById("scannedResSource").textContent = cleanSource;
       document.getElementById("scannedResName").textContent = pendingScannedProduct.name;
       document.getElementById("scannedResWeightInput").value = startWeight;
       recalcScannedCard();
       document.getElementById("scannedResultCard")?.classList.remove("hidden");
+    };
+
+    window.selectScannedAlternative = function(idx) {
+      const alts = window._currentScannedAlternatives || [];
+      const alt = alts[idx];
+      if (!alt || !pendingScannedProduct) return;
+
+      const prevMain = {
+        name: pendingScannedProduct.baseName || pendingScannedProduct.name,
+        cal100: pendingScannedProduct.cal100,
+        p100: pendingScannedProduct.p100,
+        f100: pendingScannedProduct.f100,
+        c100: pendingScannedProduct.c100,
+        weight: pendingScannedProduct.weight
+      };
+      const remaining = alts.filter((_, i) => i !== idx);
+      remaining.push(prevMain);
+
+      showScannedCard({
+        ...alt,
+        alternatives: remaining,
+        source: "ИИ вариант"
+      });
     };
 
     window.confirmScannedProduct = function() {
@@ -18642,11 +19055,28 @@
         let imgElement = optionalImgEl || await new Promise((res, rej) => {
           const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
         });
-        const base64Data = dataUrl.split(",")[1];
+        let base64Data = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+        base64Data = base64Data.trim().replace(/\s+/g, "");
 
-        if (scannerMode === "barcode") {
-          loadingText.textContent = "Ищем штрихкод на упаковке...";
-          const localBarcode = await detectBarcodeMultiPass(dataUrl, imgElement);
+        // Режим 'dish' (Блюдо / Порция): мгновенный вызов Vision без Quagga и без задержки 1.2с
+        if (scannerMode === "dish") {
+          loadingText.textContent = "Определяем блюдо и вес порции через ИИ...";
+          await analyzeImageWithGemini(base64Data, "image/jpeg");
+          return;
+        }
+
+        // Режим 'barcode' или 'auto'
+        if (scannerMode === "barcode" || scannerMode === "auto") {
+          loadingText.textContent = scannerMode === "barcode"
+            ? "Ищем штрихкод на упаковке..."
+            : "Сканируем штрихкод (таймаут 1.2с)...";
+
+          const barcodePromise = detectBarcodeMultiPass(dataUrl, imgElement);
+          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 1200));
+          const localBarcode = (scannerMode === "barcode")
+            ? await barcodePromise
+            : await Promise.race([barcodePromise, timeoutPromise]);
+
           if (localBarcode && localBarcode.code) {
             if (localBarcode.normBox && localBarcode.normBox.isReal) {
               drawHighlightedRegion(localBarcode.normBox, `ШТРИХКОД // ${localBarcode.code}`, true);
@@ -18654,18 +19084,18 @@
               setScannerBadgeText(`ШТРИХКОД // ${localBarcode.code}`);
               clearScannerOverlay();
             }
-            document.getElementById("barcodeInput").value = localBarcode.code;
+            const bInput = document.getElementById("barcodeInput");
+            if (bInput) bInput.value = localBarcode.code;
             loadingText.textContent = `Штрихкод ${localBarcode.code}: загружаем КБЖУ...`;
             const found = await fetchProductByBarcode(localBarcode.code, true);
             if (found) return;
-            // Бесшовный фоллбэк: если штрихкод не найден в базе — читаем состав и БЖУ этикетки через ИИ
             loadingText.textContent = "Штрихкод не в базе: читаем этикетку через ИИ...";
           }
         }
 
         loadingText.textContent = scannerMode === "barcode"
           ? "Считываем состав и массу с упаковки..."
-          : "Определяем продукт и вес порции...";
+          : "Определяем продукт и вес порции через ИИ...";
         await analyzeImageWithGemini(base64Data, "image/jpeg");
       } catch (err) {
         showToast("Ошибка обработки снимка", true);
@@ -18676,46 +19106,57 @@
     };
 
     window.analyzeImageWithGemini = async function(base64Data, mimeType) {
+      let cleanBase64 = String(base64Data || "").trim();
+      if (cleanBase64.includes(",")) cleanBase64 = cleanBase64.split(",")[1];
+      cleanBase64 = cleanBase64.replace(/\s+/g, "");
+
       const knownPiecesContext = getKnownPieceItemsPromptContext();
-      const prompt = `Ты высокоточный сканер продуктов питания, упаковок, напитков и блюд.
-Внимательно прочитай текст на этикетке и проанализируй фото:
+      const prompt = `Ты высокоточный сканер продуктов питания, упаковок, напитков и готовых блюд.
+Внимательно определи содержимое фото:
 
-1) НАИМЕНОВАНИЕ И БРЕНД: Укажи точное название продукта (например: "Пудинг молочный High Protein шоколадный", "Крекер Французский Яшкино").
-
-2) МАССА НЕТТО УПАКОВКИ ("package_net_weight"):
-   - Внимательно ищи на упаковке текст "Масса нетто", "Объем", "Вес", "Net Wt", "g", "мл" (например: 200г, 150г, 330мл, 450г).
-   - Если нашел, запиши это число в "package_net_weight" (например 200). Иначе укажи 0.
-
-3) ПОШТУЧНЫЙ УЧЕТ ("is_piece", "piece_weight", "piece_count"):
-   - Если в кадре поштучные предметы (крекеры, печенье, конфеты, сырки, яйца):
-     Посчитай число штук в "piece_count", укажи вес 1 шт в "piece_weight" (в граммах) и поставь "is_piece": true.
+1) ТИП ОБЪЕКТА:
+   - Если это ГОТОВОЕ БЛЮДО НА ТАРЕЛКЕ / В МИСКЕ (например: яичница, творог со сметаной, паста, гречка с мясом):
+     Оцени реальный вес готовой порции (обычно 200–450г), рассчитай точное КБЖУ строго НА 100Г готового блюда.
+   - Если это УПАКОВКА В РУКЕ / БАНКА:
+     Определи бренд и продукт, найди массу нетто ("package_net_weight") и таблицу КБЖУ на 100г.
+   - Если это ПОШТУЧНЫЙ ПРОДУКТ (хлебцы, крекеры, печенье, яйца):
+     Укажи "is_piece": true, посчитай число штук "piece_count" и вес 1 шт "piece_weight" в граммах.
 ${knownPiecesContext}
-4) КБЖУ НА 100 ГРАММ (СТРОГО НА 100Г, с таблицы пищевой ценности или оцени по составу):
+2) КБЖУ НА 100 ГРАММ (СТРОГО НА 100Г):
    - "cal100", "p100", "f100", "c100".
 
-5) ВЕС В КАДРЕ ("weight"):
-   - Если это целая упаковка/банка, укажи полную массу нетто упаковки в "weight".
-   - Если это порция блюда/кружка — оцени реальный вес порции.
-   - Если поштучно — вес = piece_count * piece_weight.
+3) МАССА И ПОРЦИЯ:
+   - "weight": реальный вес порции/упаковки в граммах.
+   - "package_net_weight": масса нетто упаковки в граммах (или 0 если тарелка/блюдо).
 
-6) КОНТУР ОБЪЕКТА ("object_box") И ШТРИХКОД ("barcode"):
+4) АЛЬТЕРНАТИВНЫЕ ВАРИАНТЫ ("alternatives"):
+   - Предложи 2-3 наиболее вероятных альтернативных варианта блюда или марки продукта:
+     [
+       { "name": "...", "weight": ..., "cal100": ..., "p100": ..., "f100": ..., "c100": ... }
+     ]
+
+5) КООРДИНАТЫ И ШТРИХКОД:
    - "object_box": [ymin, xmin, ymax, xmax] (0..1000).
-   - "barcode": цифры штрихкода если видны, иначе "".
-   - "barcode_box": точные координаты прямоугольника штрихкода [ymin, xmin, ymax, xmax] (0..1000) если штрихкод виден, иначе [0, 0, 0, 0].
+   - "barcode": строка с цифрами штрихкода если виден, иначе "".
+   - "barcode_box": [ymin, xmin, ymax, xmax] (0..1000) если виден.
 
-Верни строго JSON:
+Верни СТРОГО валидный JSON:
 {
-  "name": "Название",
+  "name": "Название блюда или продукта",
   "weight": число_граммов,
   "package_net_weight": число_граммов_или_0,
   "is_piece": true_или_false,
-  "piece_count": число_штук_или_1,
-  "piece_weight": вес_1_штуки_или_0,
+  "piece_count": число_штук,
+  "piece_weight": вес_1_штуки,
   "cal100": ккал_на_100г,
   "p100": белки_на_100г,
   "f100": жиры_на_100г,
   "c100": углеводы_на_100г,
-  "source": "Упаковка" или "Порция" или "Блюдо" или "Кружка",
+  "source": "Порция" или "Упаковка" или "Блюдо",
+  "alternatives": [
+    { "name": "Вариант 2", "weight": 250, "cal100": 140, "p100": 10, "f100": 4, "c100": 16 },
+    { "name": "Вариант 3", "weight": 250, "cal100": 120, "p100": 8, "f100": 3, "c100": 15 }
+  ],
   "barcode": "",
   "object_box": [ymin, xmin, ymax, xmax],
   "barcode_box": [ymin, xmin, ymax, xmax]
@@ -18726,13 +19167,14 @@ ${knownPiecesContext}
           contents: [{
             parts: [
               { text: prompt },
-              { inlineData: { mimeType: mimeType || "image/jpeg", data: base64Data } }
+              { inlineData: { mimeType: mimeType || "image/jpeg", data: cleanBase64 } }
             ]
           }],
           generationConfig: { responseMimeType: "application/json" }
         });
 
-        const parsed = JSON.parse(cleanJsonString(data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}"));
+        const rawAiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const parsed = extractJsonFromAiResponse(rawAiText);
         if (parsed?.name) parsed.name = stripEmojis(parsed.name);
         const cleanCode = parsed?.barcode ? String(parsed.barcode).replace(/\D/g, "") : "";
 
@@ -18771,7 +19213,8 @@ ${knownPiecesContext}
             setScannerBadgeText(`ШТРИХКОД // ${cleanCode}`);
             clearScannerOverlay();
           }
-          document.getElementById("barcodeInput").value = cleanCode;
+          const bInput = document.getElementById("barcodeInput");
+          if (bInput) bInput.value = cleanCode;
           if (await fetchProductByBarcode(cleanCode, true)) return;
         }
 
@@ -18819,7 +19262,8 @@ ${knownPiecesContext}
             isPiece,
             pieceWeight: unitW,
             pieceCount: estCount,
-            source: srcLabel
+            source: srcLabel,
+            alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives : []
           });
           showToast(`Определено: ${parsed.name} (${estW}г)`);
         } else {
