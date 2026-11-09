@@ -202,6 +202,20 @@ run_autoresign() {
     local widget_appex="$app_path/PlugIns/FormWidgetExtension.appex"
     if [[ -d "$widget_appex" ]]; then
         local widget_prov="$widget_appex/embedded.mobileprovision"
+        # Если в собранном .appex отсутствует embedded.mobileprovision, ищем свежий в профилях Xcode
+        if [[ ! -f "$widget_prov" ]]; then
+            local user_widget_prov
+            user_widget_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | while read -r p; do
+                if security cms -D -i "$p" 2>/dev/null | grep -q "com.form.app.form.FormWidget"; then
+                    echo "$p"
+                    break
+                fi
+            done)
+            if [[ -n "$user_widget_prov" && -f "$user_widget_prov" ]]; then
+                cp -f "$user_widget_prov" "$widget_prov"
+            fi
+        fi
+
         local is_widget_valid=0
         if [[ -f "$widget_prov" ]]; then
             local exp_status
@@ -211,8 +225,11 @@ data = sys.stdin.buffer.read()
 if data:
     pl = plistlib.loads(data)
     exp = pl.get('ExpirationDate')
-    if exp and exp > datetime.datetime.now(datetime.timezone.utc):
-        print('valid')
+    if exp:
+        exp_ts = exp.timestamp() if hasattr(exp, 'timestamp') else 0
+        now_ts = datetime.datetime.now().timestamp()
+        if exp_ts > now_ts:
+            print('valid')
 " 2>/dev/null || true)
             if [[ "$exp_status" == "valid" ]]; then
                 is_widget_valid=1

@@ -707,27 +707,28 @@
           var k = ['macro_minimal_ios_v9', 'macro_minimal_ios_v8', 'macro_minimal_ios_v7'];
           for (var i = 0; i < k.length; i++) {
             var v = localStorage.getItem(k[i]);
-            if (v) { raw = JSON.parse(v); break; }
+            if (v) {
+              try { raw = JSON.parse(v); break; } catch(err) {}
+            }
           }
         }
-        if (raw) {
-          var theme = raw.theme || 'obsidian';
+        if (raw && typeof raw === "object") {
+          var themeId = raw.themeId || raw.theme || 'noir';
           var root = document.documentElement;
-          if (theme === 'raw') {
+          if (themeId === 'monolith') {
+            root.style.setProperty('--bg-main', '#070708');
             root.style.setProperty('--accent-cal', '#E6DFD3');
             root.style.setProperty('--accent-cal-text', '#070708');
-            root.style.setProperty('--accent-glow', 'rgba(230, 223, 211, 0.45)');
-            root.style.setProperty('--card-bg', '#101012');
-            root.style.setProperty('--card-border', 'rgba(230, 223, 211, 0.09)');
+            root.style.setProperty('--accent-p', '#9CA3AF');
+            root.style.setProperty('--accent-f', '#8C8275');
+            root.style.setProperty('--accent-c', '#C2593F');
           } else {
-            root.style.setProperty('--accent-cal', '#ef4444');
-            root.style.setProperty('--accent-cal-text', '#ffffff');
-            root.style.setProperty('--accent-p', '#60a5fa');
-            root.style.setProperty('--accent-f', '#93c5fd');
-            root.style.setProperty('--accent-c', '#fef08a');
-            root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.45)');
-            root.style.setProperty('--card-bg', '#121215');
-            root.style.setProperty('--card-border', 'rgba(255, 255, 255, 0.08)');
+            root.style.setProperty('--bg-main', '#050506');
+            root.style.setProperty('--accent-cal', '#D62828');
+            root.style.setProperty('--accent-cal-text', '#FFFFFF');
+            root.style.setProperty('--accent-p', '#E4E4E7');
+            root.style.setProperty('--accent-f', '#64748B');
+            root.style.setProperty('--accent-c', '#C8BFA8');
           }
         }
       } catch(e) {}
@@ -8327,6 +8328,24 @@
       customHistory: []
     };
 
+    try {
+      if (window.__NATIVE_STATE__ && typeof window.__NATIVE_STATE__ === "object") {
+        state = Object.assign({}, state, window.__NATIVE_STATE__);
+      } else {
+        const _k = ["macro_minimal_ios_v9", "macro_minimal_ios_v8", "macro_minimal_ios_v7"];
+        for (let _i = 0; _i < _k.length; _i++) {
+          const _raw = localStorage.getItem(_k[_i]);
+          if (_raw) {
+            const _p = JSON.parse(_raw);
+            if (_p && typeof _p === "object") {
+              state = Object.assign({}, state, _p);
+              break;
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
     let currentMainView = "diet"; // 'diet' | 'split'
     let selectedWeekdayKey = new Date().getDay();
     let activeProgramId = "d1";
@@ -8344,6 +8363,7 @@
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
     function switchMainView(view, immediate = false) {
+      if (currentMainView === view && !immediate) return;
       if (typeof forceStopScannerCamera === "function") forceStopScannerCamera();
       const prevView = currentMainView;
       if (prevView === "diet") savedDietScrollY = window.scrollY || 0;
@@ -13365,6 +13385,30 @@
     const RU_VAR_NAMES = { A: "А", B: "Б", C: "В", D: "Г", E: "Д", F: "Е", G: "Ж", H: "З", I: "И", J: "К" };
     window.RU_VAR_NAMES = RU_VAR_NAMES;
 
+    function formatVariantTabTitle(title, vk) {
+      const fallbackKey = (typeof RU_VAR_NAMES !== "undefined" && RU_VAR_NAMES[vk]) || vk || "А";
+      if (!title) return `${fallbackKey}: Вариант`;
+      const m = title.match(/Вариант\s+([A-ZА-Я0-9]+)\s*\(([^)]+)\)/i);
+      if (m) {
+        const letter = m[1].toUpperCase();
+        const desc = m[2].trim();
+        return `${letter}: ${desc.charAt(0).toUpperCase() + desc.slice(1)}`;
+      }
+      const m2 = title.match(/Вариант\s+([A-ZА-Я0-9]+)[:\s-]+(.*)/i);
+      if (m2 && m2[2].trim()) {
+        const letter = m2[1].toUpperCase();
+        const desc = m2[2].trim();
+        return `${letter}: ${desc.charAt(0).toUpperCase() + desc.slice(1)}`;
+      }
+      const m3 = title.match(/\(([^)]+)\)/);
+      if (m3) {
+        const desc = m3[1].trim();
+        return `${fallbackKey}: ${desc.charAt(0).toUpperCase() + desc.slice(1)}`;
+      }
+      return title;
+    }
+    window.formatVariantTabTitle = formatVariantTabTitle;
+
     function openEditMealSlotModal(mealId) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
@@ -13565,8 +13609,8 @@
               const v = meal.variants[vk];
               const title = (v && typeof v === 'object' && v.title) ? v.title : ('Вариант ' + (RU_VAR_NAMES[vk] || vk));
               return `
-                <button type="button" onclick="switchModalVariantTab('${mealId}', '${vk}')" class="shrink-0 px-2.5 py-1 text-xs mono rounded-lg transition ${currentVariantKey === vk ? 'accent-btn font-semibold text-white' : 'bg-white/[0.04] text-zinc-400'}">
-                  ${escapeHtml(title)}
+                <button type="button" onclick="switchModalVariantTab('${mealId}', '${vk}')" class="shrink-0 px-2.5 py-1 text-[11px] mono rounded-lg transition ${currentVariantKey === vk ? 'accent-btn font-semibold text-white' : 'bg-white/[0.04] text-zinc-400'}">
+                  ${escapeHtml(formatVariantTabTitle(title, vk))}
                 </button>
               `;
             }).join("")}
@@ -13818,11 +13862,11 @@
           variantHtml = `
             <div class="no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar">
               ${variantKeys.map(vk => `
-                <button type="button" onclick="switchMealVariant('${meal.id}', '${vk}')" class="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg transition ${activeVar === vk ? 'accent-btn shadow text-white' : 'text-zinc-400 hover:text-white'}">
-                  ${meal.variants[vk]?.title || ('Вариант ' + (RU_VAR_NAMES[vk] || vk))}
+                <button type="button" onclick="switchMealVariant('${meal.id}', '${vk}')" class="shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition ${activeVar === vk ? 'accent-btn shadow text-white' : 'text-zinc-400 hover:text-white'}">
+                  ${formatVariantTabTitle(meal.variants[vk]?.title, vk)}
                 </button>
               `).join("")}
-              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="shrink-0 px-2 py-1 text-xs mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
+              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="shrink-0 px-2 py-1 text-[11px] mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
                 + Вариант
               </button>
             </div>
@@ -13951,9 +13995,9 @@
             </div>
 
             <!-- Итог БЖУ приема -->
-            <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] mono text-zinc-400 whitespace-nowrap overflow-x-auto no-scrollbar gap-2">
-              <span class="text-zinc-500 shrink-0 whitespace-nowrap">Итого прием:</span>
-              <div class="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+            <div class="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10.5px] mono text-zinc-400 whitespace-nowrap overflow-x-auto no-scrollbar gap-1">
+              <span class="text-zinc-500 shrink-0 whitespace-nowrap">Итого:</span>
+              <div class="flex items-center gap-1 shrink-0 whitespace-nowrap">
                 <span class="text-white font-bold">${Math.round(mealCal)} ккал</span>
                 <span>· Б ${round1(mealP)}г</span>
                 <span>· Ж ${round1(mealF)}г</span>
@@ -16875,13 +16919,13 @@
               <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
               ${badge}
             </div>
-            <div class="flex items-center justify-between gap-2">
-              <div class="text-xs text-zinc-300 mono truncate min-w-0">
-                Вес: <strong class="text-white text-sm">${latestW} кг</strong>
-                <span class="text-zinc-500 mx-1">·</span>
+            <div class="flex items-center justify-between gap-1.5 min-w-0">
+              <div class="text-xs text-zinc-300 mono whitespace-nowrap shrink-0 flex items-center gap-1">
+                <span>Вес: <strong class="text-white text-sm">${latestW} кг</strong></span>
+                <span class="text-zinc-500">·</span>
                 <span class="whitespace-nowrap">За 14д: <b class="text-white">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</b></span>
               </div>
-              <span class="text-[11px] font-semibold mono underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
+              <span class="text-[10.5px] font-semibold mono underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
             </div>
           `;
         }
@@ -17067,6 +17111,25 @@
     // 4. Мягкая миграция: добавление Варианта В в Завтрак (пресет coach_2520 и текущий стейт)
     function migrateBreakfastVariantC() {
       try {
+        const patchEggItems = (items) => {
+          if (!Array.isArray(items)) return;
+          items.forEach(it => {
+            if (it.id === "it_egg_c2" || (it.name && it.name.includes("Яйцо куриное"))) {
+              it.isPiece = true;
+              it.pieceCount = 3;
+              it.pieceWeight = 55;
+              it.standardUnitWeight = 55;
+              it.weight = 165;
+            } else if (it.id === "it_eggwhite_c3" || (it.name && it.name.includes("Яичный белок"))) {
+              it.isPiece = true;
+              it.pieceCount = 3;
+              it.pieceWeight = 33.3;
+              it.standardUnitWeight = 33.3;
+              it.weight = 100;
+            }
+          });
+        };
+
         const template = state.mealPlanTemplate;
         if (template && Array.isArray(template.meals)) {
           const bf = template.meals.find(m => m.id === "m_bf" || m.type === "breakfast" || (m.title && m.title.toLowerCase().includes("завтрак")));
@@ -17088,6 +17151,10 @@
                     id: "it_egg_c2",
                     name: "Яйцо куриное С1",
                     weight: 165,
+                    isPiece: true,
+                    pieceCount: 3,
+                    pieceWeight: 55,
+                    standardUnitWeight: 55,
                     cal100: 155,
                     p100: 12.7,
                     f100: 11.5,
@@ -17097,6 +17164,10 @@
                     id: "it_eggwhite_c3",
                     name: "Яичный белок С1",
                     weight: 100,
+                    isPiece: true,
+                    pieceCount: 3,
+                    pieceWeight: 33.3,
+                    standardUnitWeight: 33.3,
                     cal100: 48,
                     p100: 11.0,
                     f100: 0.2,
@@ -17104,6 +17175,9 @@
                   }
                 ]
               };
+              saveState();
+            } else if (bf.variants.C.items) {
+              patchEggItems(bf.variants.C.items);
               saveState();
             }
           }
@@ -17114,39 +17188,51 @@
           const bObj = JSON.parse(rawBackup);
           if (bObj && Array.isArray(bObj.meals)) {
             const bBf = bObj.meals.find(m => m.id === "m_bf" || m.type === "breakfast" || (m.title && m.title.toLowerCase().includes("завтрак")));
-            if (bBf && bBf.hasVariants && bBf.variants && !bBf.variants.C) {
-              bBf.variants.C = {
-                title: "Вариант В (тостовый хлеб)",
-                items: [
-                  {
-                    id: "it_toast_c1",
-                    name: "Хлеб для тостов Первый хлебокомбинат",
-                    weight: 140,
-                    cal100: 270,
-                    p100: 8.0,
-                    f100: 2.5,
-                    c100: 52.0
-                  },
-                  {
-                    id: "it_egg_c2",
-                    name: "Яйцо куриное С1",
-                    weight: 165,
-                    cal100: 155,
-                    p100: 12.7,
-                    f100: 11.5,
-                    c100: 0.7
-                  },
-                  {
-                    id: "it_eggwhite_c3",
-                    name: "Яичный белок С1",
-                    weight: 100,
-                    cal100: 48,
-                    p100: 11.0,
-                    f100: 0.2,
-                    c100: 0.7
-                  }
-                ]
-              };
+            if (bBf && bBf.hasVariants && bBf.variants) {
+              if (!bBf.variants.C) {
+                bBf.variants.C = {
+                  title: "Вариант В (тостовый хлеб)",
+                  items: [
+                    {
+                      id: "it_toast_c1",
+                      name: "Хлеб для тостов Первый хлебокомбинат",
+                      weight: 140,
+                      cal100: 270,
+                      p100: 8.0,
+                      f100: 2.5,
+                      c100: 52.0
+                    },
+                    {
+                      id: "it_egg_c2",
+                      name: "Яйцо куриное С1",
+                      weight: 165,
+                      isPiece: true,
+                      pieceCount: 3,
+                      pieceWeight: 55,
+                      standardUnitWeight: 55,
+                      cal100: 155,
+                      p100: 12.7,
+                      f100: 11.5,
+                      c100: 0.7
+                    },
+                    {
+                      id: "it_eggwhite_c3",
+                      name: "Яичный белок С1",
+                      weight: 100,
+                      isPiece: true,
+                      pieceCount: 3,
+                      pieceWeight: 33.3,
+                      standardUnitWeight: 33.3,
+                      cal100: 48,
+                      p100: 11.0,
+                      f100: 0.2,
+                      c100: 0.7
+                    }
+                  ]
+                };
+              } else if (bBf.variants.C.items) {
+                patchEggItems(bBf.variants.C.items);
+              }
               localStorage.setItem("form_coach_plan_backup", JSON.stringify(bObj));
             }
           }

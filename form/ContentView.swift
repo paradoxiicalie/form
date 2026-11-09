@@ -411,7 +411,16 @@ struct WebView: UIViewRepresentable {
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\n", with: "")
         
-        let stateLiteral = savedState.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "null" : savedState
+        let trimmedState = savedState.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stateLiteral: String
+        if !trimmedState.isEmpty,
+           let data = trimmedState.data(using: .utf8),
+           (try? JSONSerialization.jsonObject(with: data)) != nil {
+            stateLiteral = trimmedState
+        } else {
+            stateLiteral = "null"
+        }
+
         let preloadJS = """
         window.__NATIVE_API_KEY__ = "\(escapedKey)";
         window.__NATIVE_STATE__ = \(stateLiteral);
@@ -529,28 +538,26 @@ struct WebView: UIViewRepresentable {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 self.syncStepsSilently(webView: webView)
             }
-            // Задача 5: восстанавливаем базу из нативного бэкапа, если localStorage пуст
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if let d = UserDefaults(suiteName: "group.com.macro.shared"),
-                   let json = d.string(forKey: "formNativeBackupJSON"), !json.isEmpty {
-                    let escaped = json
-                        .replacingOccurrences(of: "\\", with: "\\\\")
-                        .replacingOccurrences(of: "`", with: "\\`")
-                    webView.evaluateJavaScript("""
-                        (function(){
-                            var KEYS = ['macro_minimal_ios_v9','macro_minimal_ios_v8','macro_minimal_ios_v7'];
-                            var hasData = KEYS.some(function(k){ var v = localStorage.getItem(k); return v && v.length > 50; });
-                            if (!hasData) {
-                                try {
-                                    var json = `\(escaped)`;
-                                    localStorage.setItem(KEYS[0], json);
-                                    if (typeof loadState === 'function') { loadState(); }
-                                    if (typeof renderAll === 'function') { renderAll(); }
-                                } catch(e) {}
-                            }
-                        })();
-                    """, completionHandler: nil)
-                }
+            // Восстанавливаем базу из нативного бэкапа без задержек, если localStorage пуст
+            if let d = UserDefaults(suiteName: "group.com.macro.shared"),
+               let json = d.string(forKey: "formNativeBackupJSON") ?? FormMediaSchemeHandler.loadDiskBackup(), !json.isEmpty {
+                let escaped = json
+                    .replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: "`", with: "\\`")
+                webView.evaluateJavaScript("""
+                    (function(){
+                        var KEYS = ['macro_minimal_ios_v9','macro_minimal_ios_v8','macro_minimal_ios_v7'];
+                        var hasData = KEYS.some(function(k){ var v = localStorage.getItem(k); return v && v.length > 50; });
+                        if (!hasData) {
+                            try {
+                                var json = `\(escaped)`;
+                                localStorage.setItem(KEYS[0], json);
+                                if (typeof loadState === 'function') { loadState(); }
+                                if (typeof renderAll === 'function') { renderAll(); }
+                            } catch(e) {}
+                        }
+                    })();
+                """, completionHandler: nil)
             }
         }
         
@@ -700,7 +707,11 @@ struct WebView: UIViewRepresentable {
             }
             guard let d = UserDefaults(suiteName: "group.com.macro.shared") else { return }
             if let apiKey = dict["apiKey"] as? String { d.set(apiKey, forKey: "nativeApiKey") }
-            if let stateJson = dict["stateJson"] as? String, !stateJson.isEmpty { d.set(stateJson, forKey: "nativeStateJson") }
+            if let stateJson = dict["stateJson"] as? String, !stateJson.isEmpty {
+                d.set(stateJson, forKey: "nativeStateJson")
+                d.set(stateJson, forKey: "formNativeBackupJSON")
+                d.synchronize()
+            }
             if let calHex = dict["calHex"] as? String { d.set(calHex, forKey: "calHex") }
             if let pHex = dict["pHex"] as? String { d.set(pHex, forKey: "pHex") }
             if let cHex = dict["cHex"] as? String { d.set(cHex, forKey: "cHex") }
