@@ -2632,14 +2632,18 @@
           </div>
         </div>
 
-        <label class="text-[11px] text-zinc-400 block mb-1.5">Вес порции (грамм):</label>
-        <div class="flex items-center gap-1.5 mb-3">
-          <button type="button" onclick="stepQuickWeightVal(-25)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">-25</button>
-          <button type="button" onclick="stepQuickWeightVal(-10)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">-10</button>
-          <input id="quickWeightGramsInput" type="number" oninput="updateQuickWeightPreview()" class="dark-field mono text-center text-lg font-bold flex-1" style="color: var(--accent-cal)" />
-          <button type="button" onclick="stepQuickWeightVal(10)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">+10</button>
-          <button type="button" onclick="stepQuickWeightVal(25)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-xs active:scale-95 transition">+25</button>
+        <label class="text-[11px] text-zinc-400 block mb-1.5">Вес порции (грамм с весов):</label>
+        <div class="flex items-center gap-1.5 mb-2.5">
+          <button type="button" onclick="stepQuickWeightVal(-10)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">-10</button>
+          <button type="button" onclick="stepQuickWeightVal(-5)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">-5</button>
+          <input id="quickWeightGramsInput" type="number" inputmode="decimal" step="1" oninput="onQuickGramsInputChange()" class="dark-field mono text-center text-lg font-bold flex-1 min-w-0" style="color: var(--accent-cal)" />
+          <button type="button" onclick="stepQuickWeightVal(5)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">+5</button>
+          <button type="button" onclick="stepQuickWeightVal(10)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">+10</button>
         </div>
+
+        <button type="button" id="btnResetQuickWeight" onclick="resetQuickWeightToStandard()" class="w-full py-2 mb-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 text-xs mono active:scale-95 transition flex items-center justify-center gap-1">
+          <span>Сбросить к норме плана</span>
+        </button>
 
         <div class="grid grid-cols-4 gap-1.5 p-2 bg-black/40 rounded-xl text-center mono text-[11px]">
           <div><div class="text-[9px] text-zinc-500">Ккал</div><div id="quickWeightPrevCal" class="font-bold text-white">0</div></div>
@@ -13004,20 +13008,50 @@
       const item = getActiveMealItem(meal, itemId, progress);
       if (!item) return;
 
+      let rawTemplateItem = null;
+      if (meal.hasVariants && meal.variants) {
+        for (const v of Object.values(meal.variants)) {
+          const found = (v.items || []).find(i => i.id === itemId);
+          if (found) { rawTemplateItem = found; break; }
+        }
+      } else if (meal.items) {
+        rawTemplateItem = meal.items.find(i => i.id === itemId);
+      }
+      const stdItem = rawTemplateItem || item;
+      const standardWeight = Math.round(Number(stdItem.weight) || 100);
+      const standardPieces = Math.max(1, Math.round(Number(stdItem.pieceCount) || 1));
+      const pieceUnitWeight = (stdItem.isPiece && stdItem.pieceWeight)
+        ? stdItem.pieceWeight
+        : (stdItem.isPiece && standardPieces > 0 ? (standardWeight / standardPieces) : 33.3);
+
+      const curOverride = progress.overrides?.[itemId];
+      const curWeight = curOverride ? (Number(curOverride.weight) || standardWeight) : (Number(item.weight) || standardWeight);
+      const curPieces = (curOverride && curOverride.pieceCount) ? Number(curOverride.pieceCount) : (Number(item.pieceCount) || standardPieces);
+      const isCustomGrams = Boolean(curOverride?.customGramsToday || (stdItem.isPiece && Math.abs(curWeight - Math.round(curPieces * pieceUnitWeight)) >= 1));
+
       pendingQuickWeightCtx = {
         mealId,
         itemId,
-        item,
-        weight: Number(item.weight) || 100,
-        pieces: Number(item.pieceCount) || 1,
-        pieceUnitWeight: (item.weight && item.pieceCount) ? Math.round(item.weight / item.pieceCount) : (item.pieceWeight || 33)
+        item: stdItem,
+        standardWeight,
+        standardPieces,
+        pieceUnitWeight,
+        weight: curWeight,
+        pieces: curPieces,
+        isCustomGrams
       };
 
-      document.getElementById("quickWeightItemName").textContent = item.name;
+      document.getElementById("quickWeightItemName").textContent = stdItem.name || item.name;
       document.getElementById("quickWeightGramsInput").value = pendingQuickWeightCtx.weight;
 
+      const btnReset = document.getElementById("btnResetQuickWeight");
+      if (btnReset) {
+        const normStr = stdItem.isPiece ? `${standardPieces} шт, ${standardWeight}г` : `${standardWeight}г`;
+        btnReset.innerHTML = `<span>Сбросить к норме плана (${normStr})</span>`;
+      }
+
       const pieceRow = document.getElementById("quickWeightPieceRow");
-      if (item.isPiece) {
+      if (stdItem.isPiece) {
         pieceRow.classList.remove("hidden");
         document.getElementById("quickWeightPieceInput").value = pendingQuickWeightCtx.pieces;
       } else {
@@ -13036,27 +13070,36 @@
 
     function stepQuickWeightVal(delta) {
       const inp = document.getElementById("quickWeightGramsInput");
-      const cur = Math.max(5, (Number(inp.value) || 100) + delta);
+      const cur = Math.max(1, Math.round((Number(inp.value) || 100) + Number(delta)));
       inp.value = cur;
       pendingQuickWeightCtx.weight = cur;
-      if (pendingQuickWeightCtx.item?.isPiece && pendingQuickWeightCtx.pieceUnitWeight > 0) {
-        const pInp = document.getElementById("quickWeightPieceInput");
-        const newP = Math.max(1, Math.round(cur / pendingQuickWeightCtx.pieceUnitWeight));
-        pInp.value = newP;
-        pendingQuickWeightCtx.pieces = newP;
+      if (pendingQuickWeightCtx.item?.isPiece) {
+        pendingQuickWeightCtx.isCustomGrams = true;
       }
       updateQuickWeightPreview();
     }
     window.stepQuickWeightVal = stepQuickWeightVal;
 
+    function onQuickGramsInputChange() {
+      const inp = document.getElementById("quickWeightGramsInput");
+      const cur = Math.max(1, Math.round(Number(inp.value) || 0));
+      pendingQuickWeightCtx.weight = cur;
+      if (pendingQuickWeightCtx.item?.isPiece) {
+        pendingQuickWeightCtx.isCustomGrams = true;
+      }
+      updateQuickWeightPreview();
+    }
+    window.onQuickGramsInputChange = onQuickGramsInputChange;
+
     function stepQuickPiece(delta) {
       const inp = document.getElementById("quickWeightPieceInput");
-      const cur = Math.max(1, (Number(inp.value) || 1) + delta);
+      const cur = Math.max(1, (Number(inp.value) || 1) + Number(delta));
       inp.value = cur;
       pendingQuickWeightCtx.pieces = cur;
-      const w = cur * pendingQuickWeightCtx.pieceUnitWeight;
+      const w = Math.round(cur * pendingQuickWeightCtx.pieceUnitWeight);
       document.getElementById("quickWeightGramsInput").value = w;
       pendingQuickWeightCtx.weight = w;
+      pendingQuickWeightCtx.isCustomGrams = false;
       updateQuickWeightPreview();
     }
     window.stepQuickPiece = stepQuickPiece;
@@ -13065,24 +13108,42 @@
       const inp = document.getElementById("quickWeightPieceInput");
       const p = Math.max(1, Number(inp.value) || 1);
       pendingQuickWeightCtx.pieces = p;
-      const w = p * pendingQuickWeightCtx.pieceUnitWeight;
+      const w = Math.round(p * pendingQuickWeightCtx.pieceUnitWeight);
       document.getElementById("quickWeightGramsInput").value = w;
       pendingQuickWeightCtx.weight = w;
+      pendingQuickWeightCtx.isCustomGrams = false;
       updateQuickWeightPreview();
     }
     window.onQuickPieceChange = onQuickPieceChange;
+
+    function resetQuickWeightToStandard() {
+      const ctx = pendingQuickWeightCtx;
+      if (!ctx || !ctx.itemId) return;
+      const progress = getTodayProgress();
+      if (progress.overrides && progress.overrides[ctx.itemId]) {
+        delete progress.overrides[ctx.itemId];
+      }
+      syncUpdatedPlanItemInTodayItems(ctx.itemId, ctx.standardWeight, ctx.item);
+      saveState();
+      closeQuickWeightModal();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast(`Сброшено к норме: ${ctx.standardWeight}г`);
+      if (typeof haptic === "function") haptic("light");
+    }
+    window.resetQuickWeightToStandard = resetQuickWeightToStandard;
 
     function updateQuickWeightPreview() {
       const it = pendingQuickWeightCtx.item;
       if (!it) return;
       const inp = document.getElementById("quickWeightGramsInput");
-      const w = Math.max(5, Number(inp.value) || 100);
+      const w = Math.max(1, Math.round(Number(inp.value) || 100));
       pendingQuickWeightCtx.weight = w;
 
-      const cal = Math.round((w * it.cal100) / 100);
-      const p = round1((w * it.p100) / 100);
-      const f = round1((w * it.f100) / 100);
-      const c = round1((w * it.c100) / 100);
+      const cal = Math.round((w * (it.cal100 || 0)) / 100);
+      const p = round1((w * (it.p100 || 0)) / 100);
+      const f = round1((w * (it.f100 || 0)) / 100);
+      const c = round1((w * (it.c100 || 0)) / 100);
 
       document.getElementById("quickWeightPrevCal").textContent = cal;
       document.getElementById("quickWeightPrevP").textContent = p + "г";
@@ -13097,7 +13158,9 @@
       const progress = getTodayProgress();
       if (!progress.overrides) progress.overrides = {};
 
-      const newW = ctx.weight;
+      const newW = Math.max(1, Math.round(ctx.weight));
+      const isCustom = ctx.item.isPiece ? (ctx.isCustomGrams || Math.abs(newW - Math.round(ctx.pieces * ctx.pieceUnitWeight)) >= 1) : false;
+
       progress.overrides[ctx.itemId] = {
         name: ctx.item.name,
         weight: newW,
@@ -13106,7 +13169,9 @@
         f100: ctx.item.f100,
         c100: ctx.item.c100,
         isPiece: ctx.item.isPiece,
-        pieceCount: ctx.item.isPiece ? ctx.pieces : undefined
+        pieceCount: ctx.item.isPiece ? ctx.pieces : undefined,
+        customGramsToday: isCustom ? newW : undefined,
+        standardWeight: ctx.standardWeight
       };
 
       // Реактивная синхронизация: обновляем уже съеденную запись в todayItems
@@ -13116,7 +13181,8 @@
       closeQuickWeightModal();
       renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast(`✓ Вес обновлен: ${newW}г`);
+      if (typeof showToast === "function") showToast(`Вес обновлен: ${newW}г`);
+      if (typeof haptic === "function") haptic("light");
     }
     window.submitQuickWeight = submitQuickWeight;
 
@@ -13628,19 +13694,22 @@
         return;
       }
 
-      listEl.innerHTML = tabsHtml + activeItems.map(it => `
+      listEl.innerHTML = tabsHtml + activeItems.map(it => {
+        const pieceDisplay = (it.isPiece && it.pieceCount) ? `${it.pieceCount} шт (${it.weight}г)` : `${it.weight}г`;
+        return `
         <div class="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
           <div class="min-w-0 flex-1 mr-2">
             <div class="text-xs text-zinc-200 font-medium truncate">${it.name}</div>
             <div class="text-[10px] mono text-zinc-500 mt-0.5">
-              ${it.weight}г · ${Math.round((it.weight * (it.cal100 || 0)) / 100)} ккал (Б ${round1((it.weight * (it.p100 || 0)) / 100)} · Ж ${round1((it.weight * (it.f100 || 0)) / 100)} · У ${round1((it.weight * (it.c100 || 0)) / 100)})
+              ${pieceDisplay} · ${Math.round((it.weight * (it.cal100 || 0)) / 100)} ккал (Б ${round1((it.weight * (it.p100 || 0)) / 100)} · Ж ${round1((it.weight * (it.f100 || 0)) / 100)} · У ${round1((it.weight * (it.c100 || 0)) / 100)})
             </div>
           </div>
           <button type="button" onclick="deleteProductFromSlotModal('${meal.id}', '${it.id}', '${currentVariantKey || ''}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition shrink-0" title="Удалить из плана">
             ✕
           </button>
         </div>
-      `).join("");
+      `;
+      }).join("");
     }
     window.renderEditMealSlotProductsList = renderEditMealSlotProductsList;
 
@@ -13779,6 +13848,274 @@
     window.restoreDefaultMealPlanTemplate = restoreDefaultMealPlanTemplate;
 
     // =========================================================================
+    // УМНЫЙ КОМПЕНСАТОР БЖУ И БАЛАНС ПЛАНА (Meal Delta & Auto-Fix)
+    // =========================================================================
+    function applyMealCompensator(mealId, donorId, deltaGrams) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      const progress = getTodayProgress();
+      const item = getActiveMealItem(meal, donorId, progress);
+      if (!item) return;
+
+      const curW = Number(progress.overrides?.[donorId]?.weight || item.weight) || 100;
+      const newW = Math.max(5, Math.round(curW + Number(deltaGrams)));
+
+      if (!progress.overrides) progress.overrides = {};
+      progress.overrides[donorId] = {
+        ...(progress.overrides[donorId] || item),
+        name: item.name,
+        weight: newW,
+        cal100: item.cal100,
+        p100: item.p100,
+        f100: item.f100,
+        c100: item.c100,
+        isPiece: item.isPiece,
+        pieceCount: item.isPiece ? (progress.overrides[donorId]?.pieceCount || item.pieceCount) : undefined,
+        customGramsToday: item.isPiece ? newW : undefined
+      };
+
+      // Синхронизация с уже съеденной записью в todayItems
+      syncUpdatedPlanItemInTodayItems(donorId, newW, item);
+
+      saveState();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") {
+        showToast(`Скомпенсировано: ${item.name} (${newW}г)`);
+      }
+      if (typeof haptic === "function") haptic("medium");
+    }
+    window.applyMealCompensator = applyMealCompensator;
+
+    function renderMealCompensator(meal, progress, mealItems, rawMealItems) {
+      if (!meal || !Array.isArray(mealItems) || mealItems.length === 0) return "";
+
+      let targetCal = 0, targetP = 0, targetF = 0, targetC = 0;
+      (rawMealItems || []).forEach(it => {
+        const w = Number(it.weight) || 0;
+        targetCal += (w * (it.cal100 || 0)) / 100;
+        targetP += (w * (it.p100 || 0)) / 100;
+        targetF += (w * (it.f100 || 0)) / 100;
+        targetC += (w * (it.c100 || 0)) / 100;
+      });
+
+      let actualCal = 0, actualP = 0, actualF = 0, actualC = 0;
+      mealItems.forEach(it => {
+        if (progress.skippedItems?.[it.id]) return;
+        const eff = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
+        const w = Number(eff.weight) || 0;
+        actualCal += (w * (eff.cal100 || 0)) / 100;
+        actualP += (w * (eff.p100 || 0)) / 100;
+        actualF += (w * (eff.f100 || 0)) / 100;
+        actualC += (w * (eff.c100 || 0)) / 100;
+      });
+
+      const deltaCal = Math.round(actualCal - targetCal);
+      const deltaP = round1(actualP - targetP);
+      const deltaF = round1(actualF - targetF);
+      const deltaC = round1(actualC - targetC);
+
+      const hasSignificantDelta = Math.abs(deltaP) >= 1.5 || Math.abs(deltaC) >= 2.0 || Math.abs(deltaF) >= 1.5 || Math.abs(deltaCal) >= 25;
+      if (!hasSignificantDelta) return "";
+
+      const activeCandidates = mealItems.filter(it => !progress.skippedItems?.[it.id]);
+      if (activeCandidates.length === 0) return "";
+
+      let recText = "";
+      let btnHtml = "";
+
+      if (deltaP <= -1.5) {
+        // Дефицит белка: ищем донор с p100 >= 8
+        const pDonors = activeCandidates.filter(it => Number(it.p100) >= 8).sort((a, b) => (b.p100 || 0) - (a.p100 || 0));
+        const donor = pDonors[0] || activeCandidates.filter(it => Number(it.p100) > 0).sort((a, b) => (b.p100 || 0) - (a.p100 || 0))[0];
+        if (donor && Number(donor.p100) > 0) {
+          const neededGrams = Math.max(5, Math.round(Math.abs(deltaP) / (donor.p100 / 100)));
+          recText = `Чтобы закрыть белок: добавь +${neededGrams}г ${donor.name}`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
+        }
+      } else if (deltaC <= -2.0) {
+        // Дефицит углеводов: ищем донор с c100 >= 15
+        const cDonors = activeCandidates.filter(it => Number(it.c100) >= 15).sort((a, b) => (b.c100 || 0) - (a.c100 || 0));
+        const donor = cDonors[0] || activeCandidates.filter(it => Number(it.c100) > 0).sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+        if (donor && Number(donor.c100) > 0) {
+          const neededGrams = Math.max(5, Math.round(Math.abs(deltaC) / (donor.c100 / 100)));
+          recText = `Чтобы закрыть угли: добавь +${neededGrams}г ${donor.name}`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
+        }
+      } else if (deltaF <= -1.5) {
+        // Дефицит жиров: ищем донор с f100 >= 10
+        const fDonors = activeCandidates.filter(it => Number(it.f100) >= 10).sort((a, b) => (b.f100 || 0) - (a.f100 || 0));
+        const donor = fDonors[0] || activeCandidates.filter(it => Number(it.f100) > 0).sort((a, b) => (b.f100 || 0) - (a.f100 || 0))[0];
+        if (donor && Number(donor.f100) > 0) {
+          const neededGrams = Math.max(5, Math.round(Math.abs(deltaF) / (donor.f100 / 100)));
+          recText = `Чтобы закрыть жиры: добавь +${neededGrams}г ${donor.name}`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
+        }
+      } else if (deltaP >= 2.0) {
+        // Перебор белка
+        const donor = activeCandidates.filter(it => Number(it.p100) > 0).sort((a, b) => (b.p100 || 0) - (a.p100 || 0))[0];
+        if (donor && Number(donor.p100) > 0) {
+          const reduceGrams = Math.max(5, Math.round(deltaP / (donor.p100 / 100)));
+          recText = `Снизить белок: убавь -${reduceGrams}г ${donor.name}`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ -${reduceGrams}г ]</button>`;
+        }
+      } else if (deltaC >= 3.0) {
+        // Перебор углеводов
+        const donor = activeCandidates.filter(it => Number(it.c100) > 0).sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+        if (donor && Number(donor.c100) > 0) {
+          const reduceGrams = Math.max(5, Math.round(deltaC / (donor.c100 / 100)));
+          recText = `Снизить угли: убавь -${reduceGrams}г ${donor.name}`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ -${reduceGrams}г ]</button>`;
+        }
+      }
+
+      const isDeficit = deltaCal < 0 || deltaP < -1.0 || deltaC < -1.5 || deltaF < -1.0;
+      const statusTitle = isDeficit ? "Недобор в приеме:" : "Отклонение в приеме:";
+
+      return `
+        <div class="p-2 rounded-xl bg-white/[0.03] border border-white/[0.07] mb-2.5 text-[10.5px] mono flex flex-col gap-1">
+          <div class="flex items-center justify-between flex-wrap gap-1">
+            <span class="text-zinc-400 font-semibold">${statusTitle}</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="${deltaCal < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">${deltaCal > 0 ? '+' : ''}${deltaCal} ккал</span>
+              <span>·</span>
+              <span class="${deltaP < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Б ${deltaP > 0 ? '+' : ''}${deltaP}г</span>
+              <span>·</span>
+              <span class="${deltaF < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Ж ${deltaF > 0 ? '+' : ''}${deltaF}г</span>
+              <span>·</span>
+              <span class="${deltaC < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">У ${deltaC > 0 ? '+' : ''}${deltaC}г</span>
+            </div>
+          </div>
+          ${recText ? `
+            <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/[0.04]">
+              <span class="text-zinc-300 truncate">${recText}</span>
+              ${btnHtml}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+    window.renderMealCompensator = renderMealCompensator;
+
+    function renderDailyPlanDeltaBanner(template, progress) {
+      if (!template || !Array.isArray(template.meals)) return "";
+
+      let targetDailyCal = 0, targetDailyP = 0, targetDailyF = 0, targetDailyC = 0;
+      let actualDailyCal = 0, actualDailyP = 0, actualDailyF = 0, actualDailyC = 0;
+
+      const uncompletedMeals = [];
+
+      template.meals.forEach(meal => {
+        if (meal.isSupplement) return;
+        let activeVar = null;
+        let rawItems = [];
+        if (meal.hasVariants && meal.variants) {
+          activeVar = progress.variantChoice?.[meal.id] || progress.variantChoice?.breakfast || meal.activeVariant || Object.keys(meal.variants)[0] || "A";
+          rawItems = Array.isArray(meal.variants[activeVar]) ? meal.variants[activeVar] : (meal.variants[activeVar]?.items || []);
+        } else {
+          rawItems = meal.items || [];
+        }
+
+        const mealItems = (rawItems || []).concat(progress.todayAddedItems?.[meal.id] || []);
+
+        (rawItems || []).forEach(it => {
+          const w = Number(it.weight) || 0;
+          targetDailyCal += (w * (it.cal100 || 0)) / 100;
+          targetDailyP += (w * (it.p100 || 0)) / 100;
+          targetDailyF += (w * (it.f100 || 0)) / 100;
+          targetDailyC += (w * (it.c100 || 0)) / 100;
+        });
+
+        let mealDoneCount = 0;
+        let activeCount = 0;
+        mealItems.forEach(it => {
+          if (progress.skippedItems?.[it.id]) return;
+          activeCount++;
+          if (isMealItemLogged(it.id)) mealDoneCount++;
+          const eff = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
+          const w = Number(eff.weight) || 0;
+          actualDailyCal += (w * (eff.cal100 || 0)) / 100;
+          actualDailyP += (w * (eff.p100 || 0)) / 100;
+          actualDailyF += (w * (eff.f100 || 0)) / 100;
+          actualDailyC += (w * (eff.c100 || 0)) / 100;
+        });
+
+        if (activeCount === 0 || mealDoneCount < activeCount) {
+          uncompletedMeals.push({ meal, mealItems });
+        }
+      });
+
+      const dailyDeltaCal = Math.round(actualDailyCal - targetDailyCal);
+      const dailyDeltaP = round1(actualDailyP - targetDailyP);
+      const dailyDeltaF = round1(actualDailyF - targetDailyF);
+      const dailyDeltaC = round1(actualDailyC - targetDailyC);
+
+      const hasDailyDelta = Math.abs(dailyDeltaP) >= 2.5 || Math.abs(dailyDeltaC) >= 4.0 || Math.abs(dailyDeltaF) >= 2.5 || Math.abs(dailyDeltaCal) >= 40;
+      if (!hasDailyDelta) return "";
+
+      let dailyRecText = "";
+      let dailyActionBtn = "";
+
+      const destMealObj = uncompletedMeals[0] || (template.meals.length > 0 ? { meal: template.meals[template.meals.length - 1], mealItems: template.meals[template.meals.length - 1].items || [] } : null);
+
+      if (destMealObj) {
+        const destMeal = destMealObj.meal;
+        const candidates = (destMealObj.mealItems || []).filter(it => !progress.skippedItems?.[it.id]);
+
+        if (dailyDeltaP <= -2.5) {
+          const pDonors = candidates.filter(it => Number(it.p100) >= 8).sort((a, b) => (b.p100 || 0) - (a.p100 || 0));
+          const donor = pDonors[0] || candidates.filter(it => Number(it.p100) > 0).sort((a, b) => (b.p100 || 0) - (a.p100 || 0))[0];
+          if (donor && Number(donor.p100) > 0) {
+            const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
+            dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
+          }
+        } else if (dailyDeltaC <= -4.0) {
+          const cDonors = candidates.filter(it => Number(it.c100) >= 15).sort((a, b) => (b.c100 || 0) - (a.c100 || 0));
+          const donor = cDonors[0] || candidates.filter(it => Number(it.c100) > 0).sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+          if (donor && Number(donor.c100) > 0) {
+            const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
+            dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
+          }
+        } else if (dailyDeltaF <= -2.5) {
+          const fDonors = candidates.filter(it => Number(it.f100) >= 10).sort((a, b) => (b.f100 || 0) - (a.f100 || 0));
+          const donor = fDonors[0] || candidates.filter(it => Number(it.f100) > 0).sort((a, b) => (b.f100 || 0) - (a.f100 || 0))[0];
+          if (donor && Number(donor.f100) > 0) {
+            const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
+            dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
+          }
+        }
+      }
+
+      return `
+        <div class="mb-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex flex-col gap-1">
+          <div class="flex items-center justify-between flex-wrap gap-1">
+            <span class="text-zinc-400 font-semibold">Отклонение плана сегодня:</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="${dailyDeltaCal < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
+              <span>·</span>
+              <span class="${dailyDeltaP < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}г</span>
+              <span>·</span>
+              <span class="${dailyDeltaF < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}г</span>
+              <span>·</span>
+              <span class="${dailyDeltaC < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}г</span>
+            </div>
+          </div>
+          ${dailyRecText ? `
+            <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/[0.04]">
+              <span class="text-zinc-300 truncate">${dailyRecText}</span>
+              ${dailyActionBtn}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+    window.renderDailyPlanDeltaBanner = renderDailyPlanDeltaBanner;
+
+    // =========================================================================
     // РЕНДЕР ИНТЕРАКТИВНОГО ПЛАНА ПИТАНИЯ (Obsidian Noir)
     // =========================================================================
     const pencilSvg = '<svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>';
@@ -13806,6 +14143,8 @@
           </button>
         </div>
       `;
+
+      htmlCards += renderDailyPlanDeltaBanner(template, progress);
 
       (template.meals || []).forEach((meal, mealIdx) => {
         const canMoveUp = mealIdx > 0;
@@ -13851,13 +14190,15 @@
         }
 
         // Прием пищи с продуктами
+        let rawMealItems = [];
         let mealItems = [];
         let variantHtml = "";
 
         if (meal.hasVariants) {
           const activeVar = progress.variantChoice?.[meal.id] || progress.variantChoice?.breakfast || meal.activeVariant || Object.keys(meal.variants || {})[0] || "A";
           const varData = meal.variants?.[activeVar];
-          mealItems = Array.isArray(varData) ? varData : (varData?.items || []);
+          rawMealItems = Array.isArray(varData) ? varData : (varData?.items || []);
+          mealItems = rawMealItems.slice();
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
             <div class="no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar">
@@ -13872,6 +14213,7 @@
             </div>
           `;
         } else {
+          rawMealItems = (meal.items || []).slice();
           mealItems = (meal.items || []).concat(progress.todayAddedItems?.[meal.id] || []);
         }
 
@@ -13910,6 +14252,7 @@
             </div>
 
             ${variantHtml}
+            ${renderMealCompensator(meal, progress, mealItems, rawMealItems)}
 
             <!-- Список продуктов в приеме -->
             <div class="divide-y divide-white/[0.05] mb-2">
@@ -13926,8 +14269,23 @@
                 const f = round1((effective.weight * effective.f100) / 100);
                 const c = round1((effective.weight * effective.c100) / 100);
 
-                const pieceStr = effective.isPiece ? (effective.pieceCount + ' шт (') : '';
-                const pieceClose = effective.isPiece ? ')' : '';
+                const stdW = Math.round(Number(it.weight) || 100);
+                let weightChipText = "";
+                if (effective.isPiece && effective.pieceCount) {
+                  const stdPieceUnit = (it.pieceWeight || (stdW / effective.pieceCount)) || 33.3;
+                  const stdPieceTotalW = Math.round(effective.pieceCount * stdPieceUnit);
+                  if (effective.customGramsToday && Math.abs(effective.weight - stdPieceTotalW) >= 1) {
+                    weightChipText = `${effective.pieceCount} шт (${effective.weight}г из ${stdPieceTotalW}г)`;
+                  } else {
+                    weightChipText = `${effective.pieceCount} шт (${effective.weight}г)`;
+                  }
+                } else {
+                  if (effective.weight !== stdW) {
+                    weightChipText = `${effective.weight}г (из ${stdW}г)`;
+                  } else {
+                    weightChipText = `${effective.weight}г`;
+                  }
+                }
 
                 if (isSkipped) {
                   return `
@@ -13956,8 +14314,8 @@
                         <!-- Строка мета-информации с защитой от разрыва цифр -->
                         <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10.5px] mono text-zinc-400 mt-0.5">
                           <span class="inline-flex items-center gap-1.5 shrink-0">
-                            <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-white/10 text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition" title="Изменить вес на сегодня">
-                              ${pieceStr}${effective.weight}г${pieceClose}
+                            <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="bg-white/[0.06] hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-md text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition flex items-center gap-1 cursor-pointer" title="Быстрый вес с кухонных весов">
+                              <span>${weightChipText}</span>
                             </button>
                             <span class="font-medium text-white whitespace-nowrap">${cal} ккал</span>
                           </span>
@@ -17116,16 +17474,21 @@
           items.forEach(it => {
             if (it.id === "it_egg_c2" || (it.name && it.name.includes("Яйцо куриное"))) {
               it.isPiece = true;
-              it.pieceCount = 3;
               it.pieceWeight = 55;
               it.standardUnitWeight = 55;
-              it.weight = 165;
+              if (!it.pieceCount) it.pieceCount = 3;
+              if (!it.weight) it.weight = 165;
             } else if (it.id === "it_eggwhite_c3" || (it.name && it.name.includes("Яичный белок"))) {
               it.isPiece = true;
-              it.pieceCount = 3;
               it.pieceWeight = 33.3;
               it.standardUnitWeight = 33.3;
-              it.weight = 100;
+              if (Number(it.weight) >= 180 || Number(it.pieceCount) === 6) {
+                it.pieceCount = 6;
+                it.weight = 200;
+              } else {
+                it.pieceCount = 3;
+                it.weight = 100;
+              }
             }
           });
         };
@@ -17175,11 +17538,11 @@
                   }
                 ]
               };
-              saveState();
-            } else if (bf.variants.C.items) {
-              patchEggItems(bf.variants.C.items);
-              saveState();
             }
+            Object.values(bf.variants).forEach(v => {
+              if (v && Array.isArray(v.items)) patchEggItems(v.items);
+            });
+            saveState();
           }
         }
 
@@ -17230,9 +17593,10 @@
                     }
                   ]
                 };
-              } else if (bBf.variants.C.items) {
-                patchEggItems(bBf.variants.C.items);
               }
+              Object.values(bBf.variants).forEach(v => {
+                if (v && Array.isArray(v.items)) patchEggItems(v.items);
+              });
               localStorage.setItem("form_coach_plan_backup", JSON.stringify(bObj));
             }
           }
