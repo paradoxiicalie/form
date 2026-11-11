@@ -658,9 +658,9 @@
         cursor: pointer;
       }
       .coach-check-btn.checked {
-        background: #22c55e;
-        border-color: #22c55e;
-        color: #000;
+        background: var(--accent-cal);
+        border-color: var(--accent-cal);
+        color: #ffffff;
       }
       .coach-swap-btn {
         padding: 4px 7px;
@@ -2581,40 +2581,48 @@
               title="Онлайн-поиск (ИИ + OFF)"
             >→</button>
           </div>
-          <div id="overrideSearchResults" class="mt-2 space-y-1 max-h-40 overflow-y-auto no-scrollbar"></div>
+          <div id="overrideSearchResults" class="mt-2 space-y-1.5 max-h-56 overflow-y-auto no-scrollbar pb-2"></div>
           <button type="button" onclick="openCreateCustomFoodModal('override')" class="mt-2 w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-[11px] mono text-zinc-300 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
             <span>+ Создать свой продукт</span>
           </button>
         </div>
 
-        <div id="overrideSelectedCard" class="hidden pt-2 border-t border-white/[0.06]">
-          <div class="flex items-center justify-between mb-1.5">
-            <span id="overrideSelectedName" class="text-xs font-bold text-white truncate max-w-[70%]">Выбранный продукт</span>
-            <span id="overrideSelectedCal100" class="text-[10px] mono text-zinc-400"></span>
+        <div id="overrideSelectedCard" class="hidden border border-red-500/40 bg-red-950/15 rounded-xl p-3 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[9.5px] uppercase tracking-wider mono text-red-400 font-bold">ВЫБРАННЫЙ ПРОДУКТ</span>
+            <button type="button" onclick="clearModalProductSelection('override')" class="text-[10.5px] mono text-zinc-300 hover:text-white px-2 py-0.5 rounded-lg bg-white/[0.06] border border-white/10 active:scale-95 transition">✕ Изменить выбор</button>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span id="overrideSelectedBrand" class="hidden text-[9.5px] mono text-zinc-200 bg-white/[0.08] border border-white/10 px-1.5 py-0.5 rounded shrink-0"></span>
+              <span id="overrideSelectedName" class="text-xs font-bold text-white leading-snug">Выбранный продукт</span>
+            </div>
+            <div id="overrideSelectedCal100" class="text-[10px] mono text-zinc-400 mt-0.5"></div>
           </div>
 
-          <label class="text-[11px] text-zinc-400 block mb-1">Вес порции (г):</label>
-          <div class="flex items-center gap-2 mb-2.5">
-            <button type="button" onclick="stepOverrideWeight(-10)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-sm active:scale-95 transition">-10</button>
-            <input id="overrideWeightInput" type="number" oninput="updateOverridePreview()" class="dark-field mono text-center text-base font-bold" style="color: var(--accent-cal)" />
-            <button type="button" onclick="stepOverrideWeight(10)" class="w-10 h-10 rounded-xl bg-white/[0.06] text-white font-bold mono text-sm active:scale-95 transition">+10</button>
+          <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Вес порции (г):</label>
+            <div class="flex items-center gap-1 mb-2">
+              <button type="button" onclick="stepOverrideWeight(-50)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-zinc-200 font-bold mono text-[11px] active:scale-95 transition shrink-0">-50</button>
+              <button type="button" onclick="stepOverrideWeight(-10)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-white font-bold mono text-[11px] active:scale-95 transition shrink-0">-10</button>
+              <input id="overrideWeightInput" type="number" oninput="updateOverridePreview()" class="dark-field mono text-center text-sm font-bold flex-1 min-w-0" style="color: var(--accent-cal)" />
+              <button type="button" onclick="stepOverrideWeight(10)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-white font-bold mono text-[11px] active:scale-95 transition shrink-0">+10</button>
+              <button type="button" onclick="stepOverrideWeight(50)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-zinc-200 font-bold mono text-[11px] active:scale-95 transition shrink-0">+50</button>
+            </div>
           </div>
 
           <!-- Кнопки автоподбора веса -->
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <button type="button" onclick="autoFitOverrideWeight('carbs')" class="py-2 px-2 rounded-xl bg-white/[0.06] border border-white/10 text-[10.5px] mono text-zinc-300 hover:text-white active:scale-95 transition text-center">
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="autoFitOverrideWeight('carbs')" class="py-1.5 px-2 rounded-xl bg-white/[0.06] border border-white/10 text-[10.5px] mono text-zinc-300 hover:text-white active:scale-95 transition text-center">
               = Углеводы плана
             </button>
-            <button type="button" onclick="autoFitOverrideWeight('cal')" class="py-2 px-2 rounded-xl bg-white/[0.06] border border-white/10 text-[10.5px] mono text-zinc-300 hover:text-white active:scale-95 transition text-center">
+            <button type="button" onclick="autoFitOverrideWeight('cal')" class="py-1.5 px-2 rounded-xl bg-white/[0.06] border border-white/10 text-[10.5px] mono text-zinc-300 hover:text-white active:scale-95 transition text-center">
               = Ккал плана
             </button>
           </div>
 
-          <div id="overridePreviewMacros" class="grid grid-cols-4 gap-1.5 p-2 bg-black/40 rounded-xl text-center mono text-[11px]">
-            <div><div class="text-[9px] text-zinc-500">Ккал</div><div id="overridePrevCal" class="font-bold text-white">0</div></div>
-            <div><div class="text-[9px] text-zinc-500">Б</div><div id="overridePrevP" class="font-bold text-white">0г</div></div>
-            <div><div class="text-[9px] text-zinc-500">Ж</div><div id="overridePrevF" class="font-bold text-white">0г</div></div>
-            <div><div class="text-[9px] text-zinc-500">У</div><div id="overridePrevC" class="font-bold text-white">0г</div></div>
+          <div id="overrideLiveSummaryBar" class="p-2 rounded-xl bg-black/45 border border-white/[0.08] text-[11px] mono text-zinc-200 text-center">
+            Итого на <span id="overrideSumW" class="font-bold text-white">100</span>г: <span id="overridePrevCal" class="font-bold text-white">0</span> ккал · <span style="color:var(--accent-p)">Б <span id="overridePrevP">0</span>г</span> · <span style="color:var(--accent-f)">Ж <span id="overridePrevF">0</span>г</span> · <span style="color:var(--accent-c)">У <span id="overridePrevC">0</span>г</span>
           </div>
         </div>
 
@@ -2740,20 +2748,38 @@
               title="Онлайн-поиск (ИИ + OFF)"
             >→</button>
           </div>
-          <div id="addMealProductSearchResults" class="mt-2 space-y-1 max-h-40 overflow-y-auto no-scrollbar"></div>
+          <div id="addMealProductSearchResults" class="mt-2 space-y-1.5 max-h-56 overflow-y-auto no-scrollbar pb-2"></div>
           <button type="button" onclick="openCreateCustomFoodModal('addMeal')" class="mt-2 w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-[11px] mono text-zinc-300 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
             <span>+ Создать свой продукт</span>
           </button>
         </div>
 
-        <div id="addMealProductSelectedBox" class="hidden pt-2 border-t border-white/[0.06]">
-          <div class="flex items-center justify-between mb-2">
-            <span id="addMealProductSelectedName" class="text-xs font-bold text-white truncate max-w-[70%]">Выбранный</span>
-            <span id="addMealProductSelectedCal100" class="text-[10px] mono text-zinc-400"></span>
+        <div id="addMealProductSelectedBox" class="hidden border border-red-500/40 bg-red-950/15 rounded-xl p-3 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[9.5px] uppercase tracking-wider mono text-red-400 font-bold">ВЫБРАННЫЙ ПРОДУКТ</span>
+            <button type="button" onclick="clearModalProductSelection('addMeal')" class="text-[10.5px] mono text-zinc-300 hover:text-white px-2 py-0.5 rounded-lg bg-white/[0.06] border border-white/10 active:scale-95 transition">✕ Изменить выбор</button>
           </div>
-          <div class="flex items-center gap-2 mb-2">
-            <label class="text-[11px] text-zinc-400">Вес порции (г):</label>
-            <input id="addMealProductWeightInput" type="number" class="dark-field mono text-center text-sm font-bold w-28" value="100" />
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span id="addMealProductSelectedBrand" class="hidden text-[9.5px] mono text-zinc-200 bg-white/[0.08] border border-white/10 px-1.5 py-0.5 rounded shrink-0"></span>
+              <span id="addMealProductSelectedName" class="text-xs font-bold text-white leading-snug">Выбранный</span>
+            </div>
+            <div id="addMealProductSelectedCal100" class="text-[10px] mono text-zinc-400 mt-0.5"></div>
+          </div>
+
+          <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Вес порции (г):</label>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="stepAddMealWeight(-50)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-zinc-200 font-bold mono text-[11px] active:scale-95 transition shrink-0">-50</button>
+              <button type="button" onclick="stepAddMealWeight(-10)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-white font-bold mono text-[11px] active:scale-95 transition shrink-0">-10</button>
+              <input id="addMealProductWeightInput" type="number" oninput="updateAddMealSelectedPreview()" class="dark-field mono text-center text-sm font-bold flex-1 min-w-0" style="color: var(--accent-cal)" value="100" />
+              <button type="button" onclick="stepAddMealWeight(10)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-white font-bold mono text-[11px] active:scale-95 transition shrink-0">+10</button>
+              <button type="button" onclick="stepAddMealWeight(50)" class="px-2 h-9 rounded-lg bg-white/[0.06] text-zinc-200 font-bold mono text-[11px] active:scale-95 transition shrink-0">+50</button>
+            </div>
+          </div>
+
+          <div id="addMealSelectedLiveSummary" class="p-2 rounded-xl bg-black/45 border border-white/[0.08] text-[11px] mono text-zinc-200 text-center">
+            Итого на <span id="addMealSumW" class="font-bold text-white">100</span>г: <span id="addMealPrevCal" class="font-bold text-white">0</span> ккал · <span style="color:var(--accent-p)">Б <span id="addMealPrevP">0</span>г</span> · <span style="color:var(--accent-f)">Ж <span id="addMealPrevF">0</span>г</span> · <span style="color:var(--accent-c)">У <span id="addMealPrevC">0</span>г</span>
           </div>
         </div>
 
@@ -2761,7 +2787,7 @@
           <label class="flex items-center justify-between gap-3 cursor-pointer">
             <span class="text-xs text-zinc-300 leading-snug">Сохранить в постоянный шаблон плана</span>
             <span class="relative inline-flex items-center cursor-pointer shrink-0">
-              <input id="addMealProductPermanentCheckbox" type="checkbox" class="sr-only peer" checked />
+              <input id="addMealProductPermanentCheckbox" type="checkbox" class="sr-only peer" />
               <div class="w-10 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-cal)] peer-checked:after:bg-white"></div>
             </span>
           </label>
@@ -2874,6 +2900,9 @@
           <div id="editMealSlotProductsList" class="space-y-1.5 max-h-48 overflow-y-auto pr-0.5 no-scrollbar"></div>
           <button type="button" onclick="openAddProductFromSlotTemplateModal()" class="mt-2 w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-[11px] mono text-zinc-300 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
             <span>+ Добавить продукт в шаблон</span>
+          </button>
+          <button type="button" onclick="lockCurrentSlotTargetQuota()" class="mt-1.5 w-full py-1.5 px-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] text-[10.5px] mono text-zinc-400 hover:text-zinc-200 active:scale-95 transition text-center">
+            Зафиксировать текущий состав как новую квоту приема
           </button>
         </div>
       </div>
@@ -11619,7 +11648,7 @@
       
       const fetchOFFEndpoint = async (baseUrl) => {
         try {
-          const url = `${baseUrl}?search_terms=${q}&search_simple=1&action=process&json=1&page_size=6&fields=product_name,product_name_ru,brands,nutriments,quantity`;
+          const url = `${baseUrl}?search_terms=${q}&search_simple=1&action=process&json=1&page_size=6&fields=product_name,product_name_ru,brands,nutriments,quantity,serving_size`;
           const res = await fetch(url, { headers: { "Accept": "application/json" } });
           if (!res.ok) return null;
           const data = await res.json().catch(() => null);
@@ -11627,6 +11656,20 @@
         } catch (e) {
           return null;
         }
+      };
+
+      const parseOFFWeightGrams = (rawStr) => {
+        if (!rawStr || typeof rawStr !== "string") return null;
+        const m = rawStr.match(/(\d+(?:[.,]\d+)?)\s*(кг|kg|мл|ml|г|g|л|l)(?=$|[^a-zA-Zа-яА-ЯёЁ])/i);
+        if (!m) return null;
+        let val = Number(String(m[1]).replace(",", "."));
+        if (!Number.isFinite(val) || val <= 0) return null;
+        const unit = m[2].toLowerCase();
+        if (unit === "кг" || unit === "kg" || unit === "л" || unit === "l") {
+          val = val * 1000;
+        }
+        const rounded = Math.round(val);
+        return (rounded >= 5 && rounded <= 5000) ? rounded : null;
       };
 
       try {
@@ -11641,6 +11684,8 @@
           const name = (p.product_name_ru || p.product_name || query).trim();
           const brand = (p.brands || "").split(",")[0].trim();
           const cal = Math.round(Number(nut["energy-kcal_100g"] || (Number(nut["energy_100g"] || 0) / 4.184)) || 0);
+          const pkgW = parseOFFWeightGrams(p.quantity) || parseOFFWeightGrams(p.serving_size);
+          const defW = pkgW || 100;
           return {
             name,
             brand,
@@ -11648,9 +11693,10 @@
             p: round1(Number(nut.proteins_100g || 0)),
             f: round1(Number(nut.fat_100g || 0)),
             c: round1(Number(nut.carbohydrates_100g || 0)),
-            unitWeight: 100,
-            defaultWeight: 100,
-            standardUnitWeight: 100,
+            unitWeight: defW,
+            defaultWeight: defW,
+            standardUnitWeight: defW,
+            packageNetWeight: pkgW || undefined,
             source: "OpenFoodFacts"
           };
         }).filter(item => item.cal > 0 || item.p > 0);
@@ -11658,6 +11704,25 @@
         return [];
       }
     };
+
+    function resolveDefaultPortionWeight(m) {
+      if (!m || typeof m !== "object") return 100;
+      const pkg = Number(m.packageNetWeight);
+      if (Number.isFinite(pkg) && pkg > 0) return Math.round(pkg);
+      const candidates = [m.unitWeight, m.defaultWeight, m.standardUnitWeight, m.weight];
+      for (const raw of candidates) {
+        const val = Number(raw);
+        if (Number.isFinite(val) && val > 0 && Math.round(val) !== 100) {
+          return Math.round(val);
+        }
+      }
+      for (const raw of candidates) {
+        const val = Number(raw);
+        if (Number.isFinite(val) && val > 0) return Math.round(val);
+      }
+      return 100;
+    }
+    window.resolveDefaultPortionWeight = resolveDefaultPortionWeight;
 
     // =========================================================================
     // НАТИВНЫЙ СКАНЕР ШТРИХКОДОВ (AVCaptureSession iOS)
@@ -12857,6 +12922,88 @@
       }
     };
 
+    const BASE_COACH_2520_SLOT_QUOTAS = {
+      breakfast:    { cal: 648, p: 38.2, f: 21.5, c: 66.3 },
+      lunch_1:      { cal: 414, p: 23.7, f: 3.3,  c: 79.0 },
+      lunch_2:      { cal: 414, p: 23.7, f: 3.3,  c: 79.0 },
+      post_workout: { cal: 120, p: 22.0, f: 1.2,  c: 4.5 },
+      dinner_1:     { cal: 518, p: 28.5, f: 18.1, c: 60.0 },
+      dinner_2:     { cal: 387, p: 30.1, f: 16.6, c: 32.4 }
+    };
+    window.BASE_COACH_2520_SLOT_QUOTAS = BASE_COACH_2520_SLOT_QUOTAS;
+
+    function computeItemsMacros(items) {
+      let cal = 0, p = 0, f = 0, c = 0;
+      (items || []).forEach(it => {
+        const w = Number(it?.weight) || 0;
+        cal += (w * (Number(it?.cal100) || 0)) / 100;
+        p += (w * (Number(it?.p100) || 0)) / 100;
+        f += (w * (Number(it?.f100) || 0)) / 100;
+        c += (w * (Number(it?.c100) || 0)) / 100;
+      });
+      return {
+        cal: Math.round(cal),
+        p: round1(p),
+        f: round1(f),
+        c: round1(c)
+      };
+    }
+    window.computeItemsMacros = computeItemsMacros;
+
+    function ensureMealSlotTargetMacros(template) {
+      if (!template || !Array.isArray(template.meals)) return;
+      const coachPresetMeals = window.BUILTIN_MEAL_PLAN_PRESETS?.coach_2520?.meals;
+
+      template.meals.forEach(meal => {
+        if (!meal || meal.isSupplement) return;
+        if (meal.slotTargetMacros && typeof meal.slotTargetMacros === "object" && Number(meal.slotTargetMacros.cal) > 0) {
+          return;
+        }
+
+        // 1. Эталонная квота из чистого пресета coach_2520 (если загружен) или базовых квот FatSecret 2520
+        if (Array.isArray(coachPresetMeals)) {
+          const refMeal = coachPresetMeals.find(m => m.id === meal.id);
+          if (refMeal) {
+            let refItems = [];
+            if (refMeal.hasVariants && refMeal.variants) {
+              const vk = refMeal.activeVariant || Object.keys(refMeal.variants)[0] || "A";
+              const vData = refMeal.variants[vk];
+              refItems = Array.isArray(vData) ? vData : (vData?.items || []);
+            } else {
+              refItems = refMeal.items || [];
+            }
+            const q = computeItemsMacros(refItems);
+            if (q.cal > 0) {
+              meal.slotTargetMacros = q;
+              return;
+            }
+          }
+        }
+
+        if (Object.prototype.hasOwnProperty.call(BASE_COACH_2520_SLOT_QUOTAS, meal.id)) {
+          meal.slotTargetMacros = { ...BASE_COACH_2520_SLOT_QUOTAS[meal.id] };
+          return;
+        }
+
+        // 2. Пользовательские / не-базовые слоты: инициализируем только при наличии базовых продуктов
+        let rawItems = [];
+        if (meal.hasVariants && meal.variants) {
+          const vk = meal.activeVariant || Object.keys(meal.variants)[0] || "A";
+          const vData = meal.variants[vk];
+          rawItems = Array.isArray(vData) ? vData : (vData?.items || []);
+        } else {
+          rawItems = meal.items || [];
+        }
+        if (Array.isArray(rawItems) && rawItems.length > 0) {
+          const q = computeItemsMacros(rawItems);
+          if (q.cal > 0) {
+            meal.slotTargetMacros = q;
+          }
+        }
+      });
+    }
+    window.ensureMealSlotTargetMacros = ensureMealSlotTargetMacros;
+
     function loadState() {
       try {
         if (window.__NATIVE_STATE__ && typeof window.__NATIVE_STATE__ === "object") {
@@ -12889,6 +13036,7 @@
             }
           });
         }
+        ensureMealSlotTargetMacros(state.mealPlanTemplate);
         // Автобэкап личного рациона тренера в localStorage для возможности повторного выбора
         if (state.mealPlanTemplate && Array.isArray(state.mealPlanTemplate.meals) && state.mealPlanTemplate.meals.length > 0) {
           const hasPersonalItems = state.mealPlanTemplate.meals.some(m => (m.items && m.items.length > 0) || (m.variants && Object.keys(m.variants).length > 0));
@@ -14183,18 +14331,30 @@
       const newW = Math.max(1, Math.round(ctx.weight));
       const isCustom = ctx.item.isPiece ? (ctx.isCustomGrams || Math.abs(newW - Math.round(ctx.pieces * ctx.pieceUnitWeight)) >= 1) : false;
 
-      progress.overrides[ctx.itemId] = {
-        name: ctx.item.name,
-        weight: newW,
-        cal100: ctx.item.cal100,
-        p100: ctx.item.p100,
-        f100: ctx.item.f100,
-        c100: ctx.item.c100,
-        isPiece: ctx.item.isPiece,
-        pieceCount: ctx.item.isPiece ? ctx.pieces : undefined,
-        customGramsToday: isCustom ? newW : undefined,
-        standardWeight: ctx.standardWeight
-      };
+      const addedList = progress.todayAddedItems?.[ctx.mealId];
+      const addedTarget = Array.isArray(addedList) ? addedList.find(a => a.id === ctx.itemId) : null;
+      if (addedTarget) {
+        addedTarget.weight = newW;
+        if (addedTarget.isPiece && ctx.pieces) {
+          addedTarget.pieceCount = ctx.pieces;
+        }
+        if (progress.overrides && progress.overrides[ctx.itemId]) {
+          delete progress.overrides[ctx.itemId];
+        }
+      } else {
+        progress.overrides[ctx.itemId] = {
+          name: ctx.item.name,
+          weight: newW,
+          cal100: ctx.item.cal100,
+          p100: ctx.item.p100,
+          f100: ctx.item.f100,
+          c100: ctx.item.c100,
+          isPiece: ctx.item.isPiece,
+          pieceCount: ctx.item.isPiece ? ctx.pieces : undefined,
+          customGramsToday: isCustom ? newW : undefined,
+          standardWeight: ctx.standardWeight
+        };
+      }
 
       // Реактивная синхронизация: обновляем уже съеденную запись в todayItems
       syncUpdatedPlanItemInTodayItems(ctx.itemId, newW, ctx.item);
@@ -14317,11 +14477,38 @@
       document.getElementById("addMealProductSearchResults").innerHTML = "";
       document.getElementById("addMealProductSelectedBox").classList.add("hidden");
       document.getElementById("addMealProductWeightInput").value = "100";
-      document.getElementById("addMealProductPermanentCheckbox").checked = true;
+      document.getElementById("addMealProductPermanentCheckbox").checked = Boolean(options?.permanentDefault);
 
       document.getElementById("addMealProductModal")?.classList.add("open");
     }
     window.openAddMealProductModal = openAddMealProductModal;
+
+    function clearModalProductSelection(modalType) {
+      if (window._modalSearchTimers && window._modalSearchTimers[modalType]) {
+        clearTimeout(window._modalSearchTimers[modalType]);
+        window._modalSearchTimers[modalType] = null;
+      }
+      if (modalType === "override") {
+        if (pendingOverrideCtx) pendingOverrideCtx.selectedItem = null;
+        document.getElementById("overrideSelectedCard")?.classList.add("hidden");
+        document.getElementById("overrideSearchResults").innerHTML = "";
+        const inp = document.getElementById("overrideSearchInput");
+        if (inp) {
+          inp.value = "";
+          if (typeof inp.focus === "function") inp.focus();
+        }
+      } else {
+        if (pendingAddProductCtx) pendingAddProductCtx.selectedItem = null;
+        document.getElementById("addMealProductSelectedBox")?.classList.add("hidden");
+        document.getElementById("addMealProductSearchResults").innerHTML = "";
+        const inp = document.getElementById("addMealProductSearchInput");
+        if (inp) {
+          inp.value = "";
+          if (typeof inp.focus === "function") inp.focus();
+        }
+      }
+    }
+    window.clearModalProductSelection = clearModalProductSelection;
 
     function closeAddMealProductModal() {
       document.getElementById("addMealProductModal")?.classList.remove("open");
@@ -14498,7 +14685,7 @@
 
     function openScannerForPlanModal(modalType) {
       window._scannerTargetCtx = { modal: modalType };
-      openScanner("auto");
+      openScanner("auto", true);
     }
     window.openScannerForPlanModal = openScannerForPlanModal;
 
@@ -14510,6 +14697,7 @@
     function selectAddMealProductCandidateIndex(idx) {
       const m = window._currentAddMealMatches?.[idx];
       if (!m) return;
+      const defaultW = resolveDefaultPortionWeight(m);
       const item = {
         name: m.name,
         brand: getFoodBrand(m),
@@ -14517,7 +14705,8 @@
         p100: Number(m.p ?? m.p100 ?? 0),
         f100: Number(m.f ?? m.f100 ?? 0),
         c100: Number(m.c ?? m.c100 ?? 0),
-        weight: Math.round(Number(m.unitWeight || m.defaultWeight || m.standardUnitWeight || 100)),
+        weight: defaultW,
+        packageNetWeight: m.packageNetWeight || (defaultW !== 100 ? defaultW : undefined),
         isPiece: Boolean(m.isPiece),
         pieceWeight: m.unitWeight || m.standardUnitWeight || undefined
       };
@@ -14525,14 +14714,64 @@
     }
     window.selectAddMealProductCandidateIndex = selectAddMealProductCandidateIndex;
 
+    function updateAddMealSelectedPreview() {
+      const sel = pendingAddProductCtx?.selectedItem;
+      if (!sel) return;
+      const inp = document.getElementById("addMealProductWeightInput");
+      const w = Math.max(1, Math.round(Number(inp?.value) || Number(sel.weight) || 100));
+
+      const sumWEl = document.getElementById("addMealSumW");
+      if (sumWEl) sumWEl.textContent = w;
+      const calEl = document.getElementById("addMealPrevCal");
+      if (calEl) calEl.textContent = Math.round((w * (Number(sel.cal100) || 0)) / 100);
+      const pEl = document.getElementById("addMealPrevP");
+      if (pEl) pEl.textContent = round1((w * (Number(sel.p100) || 0)) / 100);
+      const fEl = document.getElementById("addMealPrevF");
+      if (fEl) fEl.textContent = round1((w * (Number(sel.f100) || 0)) / 100);
+      const cEl = document.getElementById("addMealPrevC");
+      if (cEl) cEl.textContent = round1((w * (Number(sel.c100) || 0)) / 100);
+    }
+    window.updateAddMealSelectedPreview = updateAddMealSelectedPreview;
+
+    function stepAddMealWeight(delta) {
+      const inp = document.getElementById("addMealProductWeightInput");
+      const cur = Math.max(5, Math.round((Number(inp?.value) || 100) + Number(delta)));
+      if (inp) inp.value = cur;
+      updateAddMealSelectedPreview();
+    }
+    window.stepAddMealWeight = stepAddMealWeight;
+
     function selectAddMealProductCandidate(item) {
+      if (window._modalSearchTimers?.addMeal) {
+        clearTimeout(window._modalSearchTimers.addMeal);
+        window._modalSearchTimers.addMeal = null;
+      }
       pendingAddProductCtx.selectedItem = item;
       if (typeof recordFoodItemUsage === "function") recordFoodItemUsage(item.name, item);
 
-      document.getElementById("addMealProductSelectedName").textContent = item.name;
+      const parts = typeof formatFoodDisplayParts === "function"
+        ? formatFoodDisplayParts(item)
+        : { brand: item.brand || "", displayTitle: item.name || "" };
+
+      const searchInp = document.getElementById("addMealProductSearchInput");
+      if (searchInp) searchInp.value = item.name || "";
+
+      const brandEl = document.getElementById("addMealProductSelectedBrand");
+      if (brandEl) {
+        if (parts.brand) {
+          brandEl.textContent = parts.brand;
+          brandEl.classList.remove("hidden");
+        } else {
+          brandEl.textContent = "";
+          brandEl.classList.add("hidden");
+        }
+      }
+
+      document.getElementById("addMealProductSelectedName").textContent = parts.displayTitle || item.name;
       document.getElementById("addMealProductSelectedCal100").textContent = Math.round(item.cal100 || 0) + " ккал/100г";
       document.getElementById("addMealProductWeightInput").value = item.weight || 100;
       document.getElementById("addMealProductSearchResults").innerHTML = "";
+      updateAddMealSelectedPreview();
       document.getElementById("addMealProductSelectedBox").classList.remove("hidden");
     }
     window.selectAddMealProductCandidate = selectAddMealProductCandidate;
@@ -14564,6 +14803,7 @@
       }
 
       if (isPermanent) {
+        const hadQuota = Boolean(meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0);
         if (meal.hasVariants) {
           const vk = (variantKey && variantKey !== "null") ? variantKey : (meal.activeVariant || "A");
           if (!meal.variants[vk]) meal.variants[vk] = { title: "Вариант " + vk, items: [] };
@@ -14576,7 +14816,9 @@
           if (!Array.isArray(meal.items)) meal.items = [];
           meal.items.push(newProd);
         }
+        if (!hadQuota) ensureMealSlotTargetMacros(template);
       } else {
+        newProd.isAddedToday = true;
         const progress = getTodayProgress();
         if (!progress.todayAddedItems[mealId]) progress.todayAddedItems[mealId] = [];
         progress.todayAddedItems[mealId].push(newProd);
@@ -15020,9 +15262,36 @@
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const vk = meal.hasVariants ? (pendingEditSlotCtx.activeModalVariant || meal.activeVariant || "A") : null;
-      openAddMealProductModal(mealId, vk, { skipAutoLog: true });
+      openAddMealProductModal(mealId, vk, { skipAutoLog: true, permanentDefault: true });
     }
     window.openAddProductFromSlotTemplateModal = openAddProductFromSlotTemplateModal;
+
+    function lockCurrentSlotTargetQuota() {
+      const mealId = pendingEditSlotCtx?.mealId;
+      if (!mealId) return;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal || meal.isSupplement) return;
+
+      let activeItems = [];
+      if (meal.hasVariants) {
+        const vk = pendingEditSlotCtx.activeModalVariant || meal.activeVariant || Object.keys(meal.variants || {})[0] || "A";
+        const vData = meal.variants?.[vk];
+        activeItems = Array.isArray(vData) ? vData : (vData?.items || []);
+      } else {
+        activeItems = meal.items || [];
+      }
+
+      const q = computeItemsMacros(activeItems);
+      meal.slotTargetMacros = q;
+      saveState();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") {
+        showToast(`Квота приема зафиксирована: ${q.cal} ккал (Б ${q.p} / Ж ${q.f} / У ${q.c})`);
+      }
+    }
+    window.lockCurrentSlotTargetQuota = lockCurrentSlotTargetQuota;
 
     function replaceTemplateProductInSlot(mealId, itemId, variantKey) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
@@ -15154,6 +15423,7 @@
       }
       if (!preset) return;
       state.mealPlanTemplate = JSON.parse(JSON.stringify(preset));
+      ensureMealSlotTargetMacros(state.mealPlanTemplate);
       if (preset.targetMacros) {
         state.targets = { ...preset.targetMacros };
         state.goalCalcMode = "manual";
@@ -15196,7 +15466,8 @@
         c100: item.c100,
         isPiece: item.isPiece,
         pieceCount: item.isPiece ? (progress.overrides[donorId]?.pieceCount || item.pieceCount) : undefined,
-        customGramsToday: item.isPiece ? newW : undefined
+        customGramsToday: item.isPiece ? newW : undefined,
+        isCompensated: true
       };
 
       // Синхронизация с уже съеденной записью в todayItems
@@ -15344,13 +15615,23 @@
 
     function buildMealDeltaBannerData(meal, progress, mealItems, rawMealItems) {
       let targetCal = 0, targetP = 0, targetF = 0, targetC = 0;
-      (rawMealItems || []).forEach(it => {
-        const w = Number(it.weight) || 0;
-        targetCal += (w * (it.cal100 || 0)) / 100;
-        targetP += (w * (it.p100 || 0)) / 100;
-        targetF += (w * (it.f100 || 0)) / 100;
-        targetC += (w * (it.c100 || 0)) / 100;
-      });
+      if (meal.slotTargetMacros && typeof meal.slotTargetMacros === "object" && Number(meal.slotTargetMacros.cal) > 0) {
+        targetCal = Number(meal.slotTargetMacros.cal) || 0;
+        targetP = Number(meal.slotTargetMacros.p) || 0;
+        targetF = Number(meal.slotTargetMacros.f) || 0;
+        targetC = Number(meal.slotTargetMacros.c) || 0;
+      } else {
+        if (!Array.isArray(rawMealItems) || rawMealItems.length === 0) {
+          return null;
+        }
+        rawMealItems.forEach(it => {
+          const w = Number(it.weight) || 0;
+          targetCal += (w * (it.cal100 || 0)) / 100;
+          targetP += (w * (it.p100 || 0)) / 100;
+          targetF += (w * (it.f100 || 0)) / 100;
+          targetC += (w * (it.c100 || 0)) / 100;
+        });
+      }
 
       let actualCal = 0, actualP = 0, actualF = 0, actualC = 0;
       mealItems.forEach(it => {
@@ -15500,12 +15781,23 @@
 
     function renderDailyPlanDeltaBanner(template, progress) {
       if (!template || !Array.isArray(template.meals)) return "";
+      ensureMealSlotTargetMacros(template);
 
-      let targetDailyCal = 0, targetDailyP = 0, targetDailyF = 0, targetDailyC = 0;
+      const nonSuppMeals = (template.meals || []).filter(m => !m.isSupplement);
+      if (nonSuppMeals.length === 0) return "";
+
+      const goal = (template.targetMacros && Number(template.targetMacros.cal) > 0)
+        ? template.targetMacros
+        : (state.targets || { cal: 2000, p: 140, f: 65, c: 215 });
+
+      const goalCal = Math.max(100, Number(goal.cal) || 2000);
+      const goalP = Math.max(10, Number(goal.p) || 140);
+      const goalF = Math.max(10, Number(goal.f) || 65);
+      const goalC = Math.max(10, Number(goal.c) || 215);
+
       let actualDailyCal = 0, actualDailyP = 0, actualDailyF = 0, actualDailyC = 0;
-
-      const uncompletedMeals = [];
-      let mealsWithDeltaCount = 0;
+      let totalActiveItemsCount = 0;
+      const mealSnapshots = [];
 
       const isWholeEggItem = it => {
         const lower = String(it?.name || "").toLowerCase();
@@ -15525,69 +15817,96 @@
         return fallback[0] || null;
       };
 
-      template.meals.forEach(meal => {
-        if (meal.isSupplement) return;
+      nonSuppMeals.forEach(meal => {
         const rawItems = getMealRawVariantItems(meal, progress);
         const mealItems = (rawItems || []).slice().concat(progress.todayAddedItems?.[meal.id] || []);
 
-        if (mealItems.length > 0 && buildMealDeltaBannerData(meal, progress, mealItems, rawItems)) {
-          mealsWithDeltaCount++;
-        }
-
-        (rawItems || []).forEach(it => {
-          const w = Number(it.weight) || 0;
-          targetDailyCal += (w * (it.cal100 || 0)) / 100;
-          targetDailyP += (w * (it.p100 || 0)) / 100;
-          targetDailyF += (w * (it.f100 || 0)) / 100;
-          targetDailyC += (w * (it.c100 || 0)) / 100;
-        });
-
+        let mCal = 0, mP = 0, mF = 0, mC = 0;
         let mealDoneCount = 0;
         let activeCount = 0;
+
         mealItems.forEach(it => {
           if (progress.skippedItems?.[it.id]) return;
           activeCount++;
+          totalActiveItemsCount++;
           if (isMealItemLogged(it.id)) mealDoneCount++;
           const eff = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
           const w = Number(eff.weight) || 0;
-          actualDailyCal += (w * (eff.cal100 || 0)) / 100;
-          actualDailyP += (w * (eff.p100 || 0)) / 100;
-          actualDailyF += (w * (eff.f100 || 0)) / 100;
-          actualDailyC += (w * (eff.c100 || 0)) / 100;
+          mCal += (w * (eff.cal100 || 0)) / 100;
+          mP += (w * (eff.p100 || 0)) / 100;
+          mF += (w * (eff.f100 || 0)) / 100;
+          mC += (w * (eff.c100 || 0)) / 100;
         });
 
-        if (activeCount === 0 || mealDoneCount < activeCount) {
-          uncompletedMeals.push({ meal, mealItems });
-        }
+        actualDailyCal += mCal;
+        actualDailyP += mP;
+        actualDailyF += mF;
+        actualDailyC += mC;
+
+        const slotRef = (meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0)
+          ? meal.slotTargetMacros
+          : computeItemsMacros(rawItems || []);
+
+        mealSnapshots.push({
+          meal,
+          mealItems,
+          isCompleted: activeCount > 0 && mealDoneCount >= activeCount,
+          slotDeltaP: mP - (Number(slotRef.p) || 0),
+          slotDeltaF: mF - (Number(slotRef.f) || 0),
+          slotDeltaC: mC - (Number(slotRef.c) || 0)
+        });
       });
 
-      // Устраняем дублирование: если отклонение пока только в 1 приеме пищи, работает локальный баннер внутри приема
-      if (mealsWithDeltaCount < 2) return "";
+      const dailyDeltaCal = Math.round(actualDailyCal - goalCal);
+      const dailyDeltaP = round1(actualDailyP - goalP);
+      const dailyDeltaF = round1(actualDailyF - goalF);
+      const dailyDeltaC = round1(actualDailyC - goalC);
 
-      const dailyDeltaCal = Math.round(actualDailyCal - targetDailyCal);
-      const dailyDeltaP = round1(actualDailyP - targetDailyP);
-      const dailyDeltaF = round1(actualDailyF - targetDailyF);
-      const dailyDeltaC = round1(actualDailyC - targetDailyC);
+      const hasDailyDeficit = (dailyDeltaP <= -2.0) || (dailyDeltaF <= -1.5) || (dailyDeltaC <= -3.0);
+      const hasDailyOverflow = (dailyDeltaF >= 1.5) || (dailyDeltaC >= 3.0);
 
-      const hasDailyDeficit = (dailyDeltaP <= -2.5) || (dailyDeltaF <= -2.0) || (dailyDeltaC <= -3.5);
-      const hasDailyOverflow = (dailyDeltaF >= 2.0) || (dailyDeltaC >= 3.5);
-      if (!hasDailyDeficit && !hasDailyOverflow) return "";
+      if (!hasDailyDeficit && !hasDailyOverflow) {
+        return `
+          <div class="mb-2 px-2.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex items-center justify-between gap-2">
+            <span class="text-zinc-300 font-semibold">Баланс рациона сходится с целью дня (${Math.round(goalP)} / ${Math.round(goalF)} / ${Math.round(goalC)})</span>
+            <span class="text-zinc-400 shrink-0">${Math.round(actualDailyCal)} ккал</span>
+          </div>
+        `;
+      }
+
+      const pickTargetMealSnapshot = (deficitKey) => {
+        const pool = mealSnapshots.filter(s => !s.isCompleted);
+        const candidatesPool = pool.length > 0 ? pool : mealSnapshots;
+        if (candidatesPool.length === 0) return null;
+
+        if (deficitKey) {
+          const sorted = candidatesPool.slice().sort((a, b) => a[deficitKey] - b[deficitKey]);
+          if (sorted[0] && sorted[0][deficitKey] <= -1.0) {
+            return sorted[0];
+          }
+        }
+        return pool[0] || mealSnapshots[mealSnapshots.length - 1];
+      };
 
       let dailyRecText = "";
       let dailyActionBtn = "";
 
-      const nonSuppMeals = (template.meals || []).filter(m => !m.isSupplement);
-      const lastNonSupp = nonSuppMeals.length > 0 ? nonSuppMeals[nonSuppMeals.length - 1] : null;
-      const destMealObj = uncompletedMeals[0] || (lastNonSupp ? { meal: lastNonSupp, mealItems: getMealRawVariantItems(lastNonSupp, progress).slice().concat(progress.todayAddedItems?.[lastNonSupp.id] || []) } : null);
+      if (totalActiveItemsCount === 0) {
+        dailyRecText = "Добавьте продукты в приемы пищи под целевую норму дня";
+      } else if (hasDailyOverflow) {
+        const overMacroKey = (dailyDeltaF >= 1.5 && dailyDeltaF >= dailyDeltaC) ? "slotDeltaF" : "slotDeltaC";
+        const overflowPool = mealSnapshots.filter(s => !s.isCompleted);
+        const candidatesPool = overflowPool.length > 0 ? overflowPool : mealSnapshots;
+        const sortedOver = candidatesPool.slice().sort((a, b) => b[overMacroKey] - a[overMacroKey]);
+        const destMealObj = sortedOver[0] || mealSnapshots[mealSnapshots.length - 1];
 
-      if (destMealObj) {
-        const destMeal = destMealObj.meal;
-        const candidates = (destMealObj.mealItems || [])
-          .filter(it => !progress.skippedItems?.[it.id])
-          .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
+        if (destMealObj) {
+          const destMeal = destMealObj.meal;
+          const candidates = (destMealObj.mealItems || [])
+            .filter(it => !progress.skippedItems?.[it.id])
+            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
 
-        if (dailyDeltaC >= 3.5 || dailyDeltaF >= 2.0) {
-          if (dailyDeltaF >= 2.0 && dailyDeltaF >= dailyDeltaC) {
+          if (dailyDeltaF >= 1.5 && dailyDeltaF >= dailyDeltaC) {
             const donor = pickGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.f100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaF / (donor.f100 / 100))));
@@ -15602,30 +15921,51 @@
               dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2 py-0.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10px] active:scale-95 transition shrink-0">[ -${red}г ]</button>`;
             }
           }
-        } else if (dailyDeltaF <= -2.0) {
+        }
+      } else if (dailyDeltaF <= -1.5) {
+        const destMealObj = pickTargetMealSnapshot("slotDeltaF");
+        if (destMealObj) {
+          const destMeal = destMealObj.meal;
+          const candidates = (destMealObj.mealItems || [])
+            .filter(it => !progress.skippedItems?.[it.id])
+            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
           const donor = pickGramDonor(candidates, "f100", 10);
           if (donor && Number(donor.f100) >= 10) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
-            dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
+            dailyRecText = `Восполнить жиры: +${needed}г ${donor.name}`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
           } else {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / 0.45));
-            dailyRecText = `Нехватка жиров: +${needed}г DopDrops Арахисовая паста в ${destMeal.title}`;
-            dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г пасты ]</button>`;
+            dailyRecText = `Восполнить жиры: +${needed}г DopDrops Арахисовая паста`;
+            dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
           }
-        } else if (dailyDeltaP <= -2.5) {
+        }
+      } else if (dailyDeltaP <= -2.0) {
+        const destMealObj = pickTargetMealSnapshot("slotDeltaP");
+        if (destMealObj) {
+          const destMeal = destMealObj.meal;
+          const candidates = (destMealObj.mealItems || [])
+            .filter(it => !progress.skippedItems?.[it.id])
+            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
           const donor = pickGramDonor(candidates, "p100", 8);
           if (donor && Number(donor.p100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
-            dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
+            dailyRecText = `Восполнить белок: +${needed}г ${donor.name}`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
           }
-        } else if (dailyDeltaC <= -3.5) {
+        }
+      } else if (dailyDeltaC <= -3.0) {
+        const destMealObj = pickTargetMealSnapshot("slotDeltaC");
+        if (destMealObj) {
+          const destMeal = destMealObj.meal;
+          const candidates = (destMealObj.mealItems || [])
+            .filter(it => !progress.skippedItems?.[it.id])
+            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
           const donor = pickGramDonor(candidates, "c100", 15);
           if (donor && Number(donor.c100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
-            dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
+            dailyRecText = `Восполнить угли: +${needed}г ${donor.name}`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
           }
         }
       }
@@ -15633,8 +15973,8 @@
       const dBoxCls = hasDailyOverflow
         ? "mb-2 p-2 rounded-xl bg-red-500/[0.08] border border-red-500/20 text-[10.5px] mono flex flex-col gap-1"
         : "mb-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex flex-col gap-1";
-      const dTitleCls = hasDailyOverflow ? "text-red-400 font-bold" : "text-zinc-400 font-semibold";
-      const dTitleTxt = hasDailyOverflow ? "Перебор плана сегодня:" : "Отклонение плана сегодня:";
+      const dTitleCls = hasDailyOverflow ? "text-red-400 font-bold" : "text-zinc-300 font-semibold";
+      const dTitleTxt = hasDailyOverflow ? "Перебор в рационе относительно нормы дня:" : "В рационе не хватает до нормы дня:";
 
       return `
         <div class="${dBoxCls}">
@@ -15643,11 +15983,11 @@
             <div class="flex items-center gap-1.5 shrink-0">
               <span class="${hasDailyOverflow && dailyDeltaCal > 0 ? 'text-red-300 font-bold' : (dailyDeltaCal < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
               <span>·</span>
-              <span class="${dailyDeltaP < -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}г</span>
+              <span class="${dailyDeltaP <= -2.0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}г</span>
               <span>·</span>
-              <span class="${dailyDeltaF >= 2.0 ? 'text-red-400 font-bold' : (dailyDeltaF < -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}г</span>
+              <span class="${dailyDeltaF >= 1.5 ? 'text-red-400 font-bold' : (dailyDeltaF <= -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}г</span>
               <span>·</span>
-              <span class="${dailyDeltaC >= 3.5 ? 'text-red-400 font-bold' : (dailyDeltaC < -2.5 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}г</span>
+              <span class="${dailyDeltaC >= 3.0 ? 'text-red-400 font-bold' : (dailyDeltaC <= -3.0 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}г</span>
             </div>
           </div>
           ${dailyRecText ? `
@@ -15672,6 +16012,7 @@
       if (!container) return;
 
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      ensureMealSlotTargetMacros(template);
       const progress = getTodayProgress();
       const accent = (typeof getActiveThemeObject === "function" && getActiveThemeObject()?.cal) || "#ef4444";
 
@@ -15718,7 +16059,7 @@
                     <div class="flex items-center justify-between py-1.5 px-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
                       <div class="flex items-center gap-2.5 flex-1 cursor-pointer" onclick="toggleVitaminCheck('${v.id}')">
                         <div class="coach-check-btn ${isChecked ? 'checked' : ''}">
-                          ${isChecked ? '<svg class="w-3.5 h-3.5 stroke-black stroke-2" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                          ${isChecked ? '<svg class="w-3.5 h-3.5 stroke-white stroke-[2.5]" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                         </div>
                         <span class="text-xs ${isChecked ? 'line-through text-zinc-500' : 'text-zinc-200'}">${v.name}</span>
                       </div>
@@ -15816,17 +16157,22 @@
                 const c = round1((effective.weight * effective.c100) / 100);
 
                 const stdW = Math.round(Number(it.weight) || 100);
+                const isAddedTodayItem = Boolean(
+                  it.isAddedToday ||
+                  (progress.todayAddedItems?.[meal.id] || []).some(a => a.id === it.id)
+                );
+                const showWeightDelta = (effective.weight !== stdW) && (!isAddedTodayItem || Boolean(effective.isCompensated));
                 let weightChipText = "";
                 if (effective.isPiece && effective.pieceCount) {
                   const stdPieceUnit = (it.pieceWeight || (stdW / effective.pieceCount)) || 33.3;
                   const stdPieceTotalW = Math.round(effective.pieceCount * stdPieceUnit);
-                  if (effective.customGramsToday && Math.abs(effective.weight - stdPieceTotalW) >= 1) {
+                  if (effective.customGramsToday && Math.abs(effective.weight - stdPieceTotalW) >= 1 && (!isAddedTodayItem || Boolean(effective.isCompensated))) {
                     weightChipText = `${effective.pieceCount} шт (${effective.weight}г из ${stdPieceTotalW}г)`;
                   } else {
                     weightChipText = `${effective.pieceCount} шт (${effective.weight}г)`;
                   }
                 } else {
-                  if (effective.weight !== stdW) {
+                  if (showWeightDelta) {
                     weightChipText = `${effective.weight}г (из ${stdW}г)`;
                   } else {
                     weightChipText = `${effective.weight}г`;
@@ -15849,7 +16195,7 @@
                   <div class="py-2 flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2.5 min-w-0 flex-1">
                       <div class="coach-check-btn ${isLogged ? 'checked' : ''}" onclick="toggleMealPlanItem('${meal.id}', '${it.id}')">
-                        ${isLogged ? '<svg class="w-3.5 h-3.5 stroke-black stroke-2" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                        ${isLogged ? '<svg class="w-3.5 h-3.5 stroke-white stroke-[2.5]" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1.5 min-w-0">
@@ -16068,6 +16414,7 @@
     function selectOverrideCandidateIndex(idx) {
       const m = window._currentOverrideMatches?.[idx];
       if (!m) return;
+      const defaultW = resolveDefaultPortionWeight(m);
       const item = {
         name: m.name,
         brand: getFoodBrand(m),
@@ -16075,7 +16422,8 @@
         p100: Number(m.p ?? m.p100 ?? 0),
         f100: Number(m.f ?? m.f100 ?? 0),
         c100: Number(m.c ?? m.c100 ?? 0),
-        weight: Math.round(Number(m.unitWeight || m.defaultWeight || m.standardUnitWeight || 100)),
+        weight: defaultW,
+        packageNetWeight: m.packageNetWeight || (defaultW !== 100 ? defaultW : undefined),
         isPiece: Boolean(m.isPiece),
         pieceWeight: m.unitWeight || m.standardUnitWeight || undefined
       };
@@ -16084,12 +16432,34 @@
     window.selectOverrideCandidateIndex = selectOverrideCandidateIndex;
 
     function selectOverrideCandidate(item) {
+      if (window._modalSearchTimers?.override) {
+        clearTimeout(window._modalSearchTimers.override);
+        window._modalSearchTimers.override = null;
+      }
       pendingOverrideCtx.selectedItem = item;
       pendingOverrideCtx.weight = item.weight || 100;
 
       if (typeof recordFoodItemUsage === "function") recordFoodItemUsage(item.name, item);
 
-      document.getElementById("overrideSelectedName").textContent = item.name;
+      const parts = typeof formatFoodDisplayParts === "function"
+        ? formatFoodDisplayParts(item)
+        : { brand: item.brand || "", displayTitle: item.name || "" };
+
+      const searchInp = document.getElementById("overrideSearchInput");
+      if (searchInp) searchInp.value = item.name || "";
+
+      const brandEl = document.getElementById("overrideSelectedBrand");
+      if (brandEl) {
+        if (parts.brand) {
+          brandEl.textContent = parts.brand;
+          brandEl.classList.remove("hidden");
+        } else {
+          brandEl.textContent = "";
+          brandEl.classList.add("hidden");
+        }
+      }
+
+      document.getElementById("overrideSelectedName").textContent = parts.displayTitle || item.name;
       document.getElementById("overrideSelectedCal100").textContent = Math.round(item.cal100 || 0) + " ккал/100г";
       document.getElementById("overrideWeightInput").value = pendingOverrideCtx.weight;
       document.getElementById("overrideSearchResults").innerHTML = "";
@@ -16101,7 +16471,7 @@
 
     function stepOverrideWeight(delta) {
       const inp = document.getElementById("overrideWeightInput");
-      const cur = Math.max(5, (Number(inp.value) || 100) + delta);
+      const cur = Math.max(5, Math.round((Number(inp.value) || 100) + Number(delta)));
       inp.value = cur;
       pendingOverrideCtx.weight = cur;
       updateOverridePreview();
@@ -16112,7 +16482,7 @@
       const sel = pendingOverrideCtx.selectedItem;
       if (!sel) return;
       const inp = document.getElementById("overrideWeightInput");
-      const w = Math.max(5, Number(inp.value) || 100);
+      const w = Math.max(1, Math.round(Number(inp.value) || Number(sel.weight) || 100));
       pendingOverrideCtx.weight = w;
 
       const cal = Math.round((w * sel.cal100) / 100);
@@ -16120,10 +16490,12 @@
       const f = round1((w * sel.f100) / 100);
       const c = round1((w * sel.c100) / 100);
 
+      const sumWEl = document.getElementById("overrideSumW");
+      if (sumWEl) sumWEl.textContent = w;
       document.getElementById("overridePrevCal").textContent = cal;
-      document.getElementById("overridePrevP").textContent = p + "г";
-      document.getElementById("overridePrevF").textContent = f + "г";
-      document.getElementById("overridePrevC").textContent = c + "г";
+      document.getElementById("overridePrevP").textContent = p;
+      document.getElementById("overridePrevF").textContent = f;
+      document.getElementById("overridePrevC").textContent = c;
     }
     window.updateOverridePreview = updateOverridePreview;
 
@@ -18326,6 +18698,15 @@
       state.targets.p = pVal > 0 ? pVal : (state.targets.p || 140);
       state.targets.f = fVal > 0 ? fVal : (state.targets.f || 65);
       state.targets.c = carbVal > 0 ? carbVal : (state.targets.c || 215);
+
+      if (state.mealPlanTemplate && typeof state.mealPlanTemplate === "object") {
+        state.mealPlanTemplate.targetMacros = {
+          cal: state.targets.cal,
+          p: state.targets.p,
+          f: state.targets.f,
+          c: state.targets.c
+        };
+      }
 
       state.goalCalcMode = state.goalCalcMode || "auto";
 
