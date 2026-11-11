@@ -884,7 +884,7 @@
         <button type="button" onclick="openSettings('goals')" class="text-[10.5px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white font-mono active:scale-95 transition">Настроить →</button>
       </div>
 
-      <!-- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА: [ ПЛАН ТРЕНЕРА ] [ ДНЕВНИК ] -->
+      <!-- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА: [ МОЙ РАЦИОН ] [ ДНЕВНИК ] -->
       <div class="flex items-center justify-between mb-3 px-0.5">
         <div class="flex items-center bg-white/[0.04] border border-white/[0.08] p-1 rounded-xl">
           <button
@@ -893,7 +893,7 @@
             onclick="switchDietViewMode('plan')"
             class="px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn"
           >
-            ПЛАН ТРЕНЕРА
+            МОЙ РАЦИОН
           </button>
           <button
             type="button"
@@ -1456,7 +1456,7 @@
   </div>
 
   <!-- МОДАЛКА 2: AI СКАНЕР И ШТРИХКОД -->
-  <div id="scannerModal" class="sheet-backdrop" onclick="if(event.target===this) closeScanner()">
+  <div id="scannerModal" class="sheet-backdrop z-[65]" onclick="if(event.target===this) closeScanner()">
     <div class="sheet-panel">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
 
@@ -1743,21 +1743,21 @@
 
         <!-- Блок 2: Дневные целевые макронутриенты -->
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-white font-semibold uppercase tracking-wider">Дневная норма КБЖУ</span>
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-xs text-white font-semibold uppercase tracking-wider whitespace-nowrap">Дневная норма КБЖУ</span>
               <button
                 type="button"
                 id="btnFormulaHelp"
                 onclick="openFormulaModal()"
-                class="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold flex items-center justify-center active:scale-90 transition"
+                class="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold flex items-center justify-center active:scale-90 transition shrink-0 leading-none"
               >?</button>
             </div>
             <button
               type="button"
               id="btnFillFromAuto"
               onclick="fillGoalsFromAutoCalc()"
-              class="hidden text-[10.5px] mono px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition border border-white/10"
+              class="hidden text-[11px] mono px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition border border-white/10 whitespace-nowrap shrink-0 leading-none"
             >Рассчитать по телу</button>
           </div>
 
@@ -1821,10 +1821,6 @@
           <div class="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between">
             <span class="text-zinc-400 text-xs">Списание из наетого:</span>
             <span id="settingsStepBurnTargetDelta" class="mono font-bold text-orange-400 whitespace-nowrap text-xs">−0 ккал</span>
-          </div>
-
-          <div class="text-[10.5px] text-zinc-500 font-mono leading-tight px-0.5">
-            Расход от шагов вычитается из наеденного. Суточная норма зафиксирована.
           </div>
         </div>
 
@@ -2539,19 +2535,19 @@
 
   
   <!-- МОДАЛКА: РАЗОВАЯ ЗАМЕНА ПРОДУКТА В ПЛАНЕ («ЗАМЕНИТЬ СЕГОДНЯ») -->
-  <div id="mealPlanOverrideModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeMealPlanOverrideModal()">
+  <div id="mealPlanOverrideModal" class="sheet-backdrop z-[55]" onclick="if(event.target===this) closeMealPlanOverrideModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
       <div class="flex items-center justify-between mb-3">
         <div>
-          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Разовая замена на сегодня</span>
+          <span id="overrideModalSubtitle" class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Разовая замена на сегодня</span>
           <h3 id="overrideItemTitle" class="text-base font-bold text-white mt-0.5">Замена продукта</h3>
         </div>
         <button type="button" onclick="closeMealPlanOverrideModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
 
       <div class="bg-zinc-900/70 border border-white/[0.06] rounded-2xl p-3.5 mb-3.5">
-        <div class="text-[11px] text-zinc-400 mb-1">Позиция по плану тренера:</div>
+        <div class="text-[11px] text-zinc-400 mb-1">Позиция по плану:</div>
         <div id="overrideOriginalInfo" class="text-xs mono font-bold text-white mb-1.5"></div>
         <div id="overrideOriginalMacros" class="text-[11px] mono text-zinc-400"></div>
       </div>
@@ -2559,13 +2555,32 @@
       <div class="bg-zinc-900/70 border border-white/[0.06] rounded-2xl p-3.5 mb-3.5 space-y-3">
         <div>
           <label class="text-[11px] text-zinc-400 block mb-1">Поиск альтернативы:</label>
-          <input
-            id="overrideSearchInput"
-            type="text"
-            placeholder="Напр. Макароны Barilla, Гречка, Грудка..."
-            class="dark-field text-xs"
-            oninput="handleOverrideSearchInput(this.value)"
-          />
+          <div class="flex items-center gap-1.5">
+            <input
+              id="overrideSearchInput"
+              type="text"
+              placeholder="Напр. Макароны Barilla, Гречка, Чебаркульский..."
+              class="dark-field text-xs flex-1 min-w-0"
+              oninput="handleOverrideSearchInput(this.value)"
+            />
+            <button
+              type="button"
+              onclick="openScannerForPlanModal('override')"
+              class="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center shrink-0 active:scale-95 transition"
+              title="Сканер / Штрихкод"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onclick="triggerModalOnlineSearch('override')"
+              class="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-zinc-200 font-bold mono text-sm flex items-center justify-center shrink-0 active:scale-95 transition"
+              title="Онлайн-поиск (ИИ + OFF)"
+            >→</button>
+          </div>
           <div id="overrideSearchResults" class="mt-2 space-y-1 max-h-40 overflow-y-auto no-scrollbar"></div>
           <button type="button" onclick="openCreateCustomFoodModal('override')" class="mt-2 w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-[11px] mono text-zinc-300 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
             <span>+ Создать свой продукт</span>
@@ -2602,6 +2617,16 @@
             <div><div class="text-[9px] text-zinc-500">У</div><div id="overridePrevC" class="font-bold text-white">0г</div></div>
           </div>
         </div>
+
+        <div class="pt-2 border-t border-white/[0.06]">
+          <label class="flex items-center justify-between gap-3 cursor-pointer">
+            <span class="text-xs text-zinc-300 leading-snug">Сохранить замену в постоянный шаблон плана</span>
+            <span class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input id="overridePermanentToggle" type="checkbox" onchange="updateOverrideSubmitLabel()" class="sr-only peer" />
+              <div class="w-10 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-cal)] peer-checked:after:bg-white"></div>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div class="flex gap-2">
@@ -2611,7 +2636,7 @@
         <button type="button" onclick="closeMealPlanOverrideModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">
           Отмена
         </button>
-        <button type="button" onclick="applyTodayOverride()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+        <button type="button" id="overrideSubmitBtn" onclick="applyTodayOverride()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
           Заменить сегодня
         </button>
       </div>
@@ -2675,7 +2700,7 @@
   </div>
 
   <!-- МОДАЛКА: ДОБАВЛЕНИЕ ПРОДУКТА В ПРИЕМ ПИЩИ -->
-  <div id="addMealProductModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeAddMealProductModal()">
+  <div id="addMealProductModal" class="sheet-backdrop z-[55]" onclick="if(event.target===this) closeAddMealProductModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-2.5">
@@ -2689,13 +2714,32 @@
       <div class="space-y-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
         <div>
           <label class="text-[11px] text-zinc-400 block mb-1">Поиск в базе РФ:</label>
-          <input
-            id="addMealProductSearchInput"
-            type="text"
-            placeholder="Напр. Рис, Грудка, Творог, Банан..."
-            class="dark-field text-xs text-white"
-            oninput="handleAddMealProductSearch(this.value)"
-          />
+          <div class="flex items-center gap-1.5">
+            <input
+              id="addMealProductSearchInput"
+              type="text"
+              placeholder="Напр. Рис, Грудка, Творог Чебаркульское..."
+              class="dark-field text-xs text-white flex-1 min-w-0"
+              oninput="handleAddMealProductSearch(this.value)"
+            />
+            <button
+              type="button"
+              onclick="openScannerForPlanModal('addMeal')"
+              class="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center shrink-0 active:scale-95 transition"
+              title="Сканер / Штрихкод"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onclick="triggerModalOnlineSearch('addMeal')"
+              class="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-zinc-200 font-bold mono text-sm flex items-center justify-center shrink-0 active:scale-95 transition"
+              title="Онлайн-поиск (ИИ + OFF)"
+            >→</button>
+          </div>
           <div id="addMealProductSearchResults" class="mt-2 space-y-1 max-h-40 overflow-y-auto no-scrollbar"></div>
           <button type="button" onclick="openCreateCustomFoodModal('addMeal')" class="mt-2 w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-[11px] mono text-zinc-300 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
             <span>+ Создать свой продукт</span>
@@ -2714,9 +2758,12 @@
         </div>
 
         <div class="pt-2 border-t border-white/[0.06]">
-          <label class="flex items-center gap-2 cursor-pointer text-xs text-zinc-300">
-            <input id="addMealProductPermanentCheckbox" type="checkbox" class="rounded accent-emerald-500 w-4 h-4" checked />
-            <span>Сохранить в постоянный шаблон плана</span>
+          <label class="flex items-center justify-between gap-3 cursor-pointer">
+            <span class="text-xs text-zinc-300 leading-snug">Сохранить в постоянный шаблон плана</span>
+            <span class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input id="addMealProductPermanentCheckbox" type="checkbox" class="sr-only peer" checked />
+              <div class="w-10 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-cal)] peer-checked:after:bg-white"></div>
+            </span>
           </label>
         </div>
       </div>
@@ -2822,9 +2869,12 @@
         <div class="pt-2.5 border-t border-white/[0.06]">
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[11px] font-bold text-white uppercase mono tracking-wide">Продукты в шаблоне:</span>
-            <span class="text-[10px] text-zinc-500 mono">(удаление ✕)</span>
+            <span class="text-[10px] text-zinc-500 mono">(вес / замена / ✕)</span>
           </div>
-          <div id="editMealSlotProductsList" class="space-y-1.5 max-h-44 overflow-y-auto pr-0.5 no-scrollbar"></div>
+          <div id="editMealSlotProductsList" class="space-y-1.5 max-h-48 overflow-y-auto pr-0.5 no-scrollbar"></div>
+          <button type="button" onclick="openAddProductFromSlotTemplateModal()" class="mt-2 w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-[11px] mono text-zinc-300 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
+            <span>+ Добавить продукт в шаблон</span>
+          </button>
         </div>
       </div>
 
@@ -2883,7 +2933,7 @@
       <div class="flex items-center justify-between mb-3">
         <div>
           <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Параметры плана</span>
-          <h3 class="text-base font-bold text-white mt-0.5">Суточный рацион тренера</h3>
+          <h3 class="text-base font-bold text-white mt-0.5">Параметры рациона</h3>
         </div>
         <button type="button" onclick="closeMealPlanSettingsModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
@@ -2939,8 +2989,8 @@
         <div id="savedCoachPresetContainer" class="hidden pt-1">
           <button type="button" onclick="loadMealPlanPreset('saved_coach')" class="w-full py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-[11px] text-zinc-200 active:scale-95 transition text-left flex items-center justify-between">
             <div>
-              <span class="font-bold block text-white">Рацион тренера</span>
-              <span class="text-[9.5px] mono text-zinc-400">Восстановить личный план из бэкапа</span>
+              <span class="font-bold block text-white">Базовый рацион 2520 ккал</span>
+              <span class="text-[9.5px] mono text-zinc-400">Восстановить сохраненный план из бэкапа</span>
             </div>
             <span class="text-xs text-red-400 mono">→</span>
           </button>
@@ -3049,7 +3099,7 @@
   </div>
 
   <!-- МОДАЛКА: СОЗДАТЬ СВОЙ ПРОДУКТ -->
-  <div id="createCustomFoodModal" class="sheet-backdrop z-[60]" onclick="if(event.target===this) closeCreateCustomFoodModal()">
+  <div id="createCustomFoodModal" class="sheet-backdrop z-[65]" onclick="if(event.target===this) closeCreateCustomFoodModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-3">
@@ -8555,11 +8605,293 @@
     "c": 3,
     "unitWeight": 180,
     "keywords": ["маркет перекресток", "перекресток", "творог"]
+  },
+  {
+    "name": "Чебаркульское молоко Творог 0% обезжиренный",
+    "brand": "Чебаркульское молоко",
+    "cal": 86,
+    "p": 18,
+    "f": 0.2,
+    "c": 3.3,
+    "unitWeight": 200,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "творог 0", "обезжиренный", "урал", "челябинск"]
+  },
+  {
+    "name": "Чебаркульское молоко Творог 2%",
+    "brand": "Чебаркульское молоко",
+    "cal": 103,
+    "p": 18,
+    "f": 2,
+    "c": 3.3,
+    "unitWeight": 200,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "творог 2"]
+  },
+  {
+    "name": "Чебаркульское молоко Творог 5%",
+    "brand": "Чебаркульское молоко",
+    "cal": 121,
+    "p": 16,
+    "f": 5,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "творог 5", "творог"]
+  },
+  {
+    "name": "Чебаркульское молоко Творог 9%",
+    "brand": "Чебаркульское молоко",
+    "cal": 159,
+    "p": 16,
+    "f": 9,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "творог 9", "творог жирный"]
+  },
+  {
+    "name": "Чебаркульское молоко Молоко 2.5%",
+    "brand": "Чебаркульское молоко",
+    "cal": 53,
+    "p": 2.9,
+    "f": 2.5,
+    "c": 4.7,
+    "unitWeight": 250,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "молоко 2.5", "молоко"]
+  },
+  {
+    "name": "Чебаркульское молоко Молоко 3.2%",
+    "brand": "Чебаркульское молоко",
+    "cal": 59,
+    "p": 2.9,
+    "f": 3.2,
+    "c": 4.7,
+    "unitWeight": 250,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "молоко 3.2", "молоко"]
+  },
+  {
+    "name": "Чебаркульское молоко Кефир 1%",
+    "brand": "Чебаркульское молоко",
+    "cal": 37,
+    "p": 2.8,
+    "f": 1,
+    "c": 4,
+    "unitWeight": 250,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "кефир 1", "кефир"]
+  },
+  {
+    "name": "Чебаркульское молоко Кефир 2.5%",
+    "brand": "Чебаркульское молоко",
+    "cal": 51,
+    "p": 2.8,
+    "f": 2.5,
+    "c": 4,
+    "unitWeight": 250,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "кефир 2.5", "кефир"]
+  },
+  {
+    "name": "Чебаркульское молоко Сметана 15%",
+    "brand": "Чебаркульское молоко",
+    "cal": 162,
+    "p": 2.6,
+    "f": 15,
+    "c": 3.6,
+    "unitWeight": 50,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "сметана 15", "сметана"]
+  },
+  {
+    "name": "Чебаркульское молоко Сметана 20%",
+    "brand": "Чебаркульское молоко",
+    "cal": 206,
+    "p": 2.5,
+    "f": 20,
+    "c": 3.4,
+    "unitWeight": 50,
+    "keywords": ["чебаркульское молоко", "чебаркуль", "сметана 20", "сметана"]
+  },
+  {
+    "name": "Первый вкус Творог 5%",
+    "brand": "Первый вкус",
+    "cal": 121,
+    "p": 16,
+    "f": 5,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["первый вкус", "творог 5", "творог"]
+  },
+  {
+    "name": "Первый вкус Творог 9%",
+    "brand": "Первый вкус",
+    "cal": 159,
+    "p": 16,
+    "f": 9,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["первый вкус", "творог 9", "творог"]
+  },
+  {
+    "name": "Первый вкус Молоко 2.5%",
+    "brand": "Первый вкус",
+    "cal": 52,
+    "p": 2.8,
+    "f": 2.5,
+    "c": 4.7,
+    "unitWeight": 250,
+    "keywords": ["первый вкус", "молоко 2.5", "молоко"]
+  },
+  {
+    "name": "Первый вкус Молоко 3.2%",
+    "brand": "Первый вкус",
+    "cal": 59,
+    "p": 2.9,
+    "f": 3.2,
+    "c": 4.7,
+    "unitWeight": 250,
+    "keywords": ["первый вкус", "молоко 3.2", "молоко"]
+  },
+  {
+    "name": "Первый вкус Кефир 2.5%",
+    "brand": "Первый вкус",
+    "cal": 51,
+    "p": 2.9,
+    "f": 2.5,
+    "c": 4,
+    "unitWeight": 250,
+    "keywords": ["первый вкус", "кефир 2.5", "кефир"]
+  },
+  {
+    "name": "Первый вкус Сметана 15%",
+    "brand": "Первый вкус",
+    "cal": 160,
+    "p": 2.6,
+    "f": 15,
+    "c": 3.5,
+    "unitWeight": 50,
+    "keywords": ["первый вкус", "сметана 15", "сметана"]
+  },
+  {
+    "name": "Первый вкус Йогурт питьевой 2%",
+    "brand": "Первый вкус",
+    "cal": 74,
+    "p": 2.8,
+    "f": 2,
+    "c": 11.2,
+    "unitWeight": 290,
+    "keywords": ["первый вкус", "йогурт", "питьевой"]
+  },
+  {
+    "name": "Здоровье из Предгорья Творог 5%",
+    "brand": "Здоровье из Предгорья",
+    "cal": 121,
+    "p": 16.5,
+    "f": 5,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["здоровье из предгорья", "предгорья", "творог 5", "творог"]
+  },
+  {
+    "name": "Здоровье из Предгорья Творог 9%",
+    "brand": "Здоровье из Предгорья",
+    "cal": 159,
+    "p": 16,
+    "f": 9,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["здоровье из предгорья", "предгорья", "творог 9", "творог"]
+  },
+  {
+    "name": "Здоровье из Предгорья Молоко 3.2%",
+    "brand": "Здоровье из Предгорья",
+    "cal": 60,
+    "p": 3,
+    "f": 3.2,
+    "c": 4.7,
+    "unitWeight": 250,
+    "keywords": ["здоровье из предгорья", "предгорья", "молоко"]
+  },
+  {
+    "name": "Здоровье из Предгорья Кефир 2.5%",
+    "brand": "Здоровье из Предгорья",
+    "cal": 52,
+    "p": 3,
+    "f": 2.5,
+    "c": 4,
+    "unitWeight": 250,
+    "keywords": ["здоровье из предгорья", "предгорья", "кефир"]
+  },
+  {
+    "name": "Здоровье из Предгорья Сметана 15%",
+    "brand": "Здоровье из Предгорья",
+    "cal": 162,
+    "p": 2.6,
+    "f": 15,
+    "c": 3.5,
+    "unitWeight": 50,
+    "keywords": ["здоровье из предгорья", "предгорья", "сметана"]
+  },
+  {
+    "name": "Талицкий Молоко 3.2%",
+    "brand": "Талицкий",
+    "cal": 59,
+    "p": 2.9,
+    "f": 3.2,
+    "c": 4.7,
+    "unitWeight": 250,
+    "keywords": ["талицкий", "талицкое", "молоко 3.2", "молоко"]
+  },
+  {
+    "name": "Талицкий Творог 5%",
+    "brand": "Талицкий",
+    "cal": 125,
+    "p": 16,
+    "f": 5,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["талицкий", "талицкое", "творог 5", "творог"]
+  },
+  {
+    "name": "Талицкий Творог 9%",
+    "brand": "Талицкий",
+    "cal": 159,
+    "p": 16,
+    "f": 9,
+    "c": 3,
+    "unitWeight": 200,
+    "keywords": ["талицкий", "талицкое", "творог 9", "творог"]
+  },
+  {
+    "name": "Талицкий Кефир 2.5%",
+    "brand": "Талицкий",
+    "cal": 51,
+    "p": 2.8,
+    "f": 2.5,
+    "c": 4,
+    "unitWeight": 250,
+    "keywords": ["талицкий", "талицкое", "кефир"]
+  },
+  {
+    "name": "Талицкий Ряженка 4%",
+    "brand": "Талицкий",
+    "cal": 67,
+    "p": 2.9,
+    "f": 4,
+    "c": 4.2,
+    "unitWeight": 250,
+    "keywords": ["талицкий", "талицкое", "ряженка"]
+  },
+  {
+    "name": "Талицкий Сметана 15%",
+    "brand": "Талицкий",
+    "cal": 160,
+    "p": 2.6,
+    "f": 15,
+    "c": 3.5,
+    "unitWeight": 50,
+    "keywords": ["талицкий", "талицкое", "сметана"]
   }
     ];
     const LOCAL_DB = window.LOCAL_FOOD_DB;
 
     const RU_BRAND_DICTIONARY = [
+      { pat: "здоровье из предгорья", brand: "Здоровье из Предгорья" },
+      { pat: "чебаркульское молоко", brand: "Чебаркульское молоко" },
       { pat: "ehrmann high protein", brand: "Ehrmann High Protein" },
       { pat: "первый хлебокомбинат", brand: "Первый хлебокомбинат" },
       { pat: "маркет перекресток", brand: "Маркет Перекрёсток" },
@@ -8573,6 +8905,8 @@
       { pat: "село зеленое", brand: "Село Зелёное" },
       { pat: "красная цена", brand: "Красная цена" },
       { pat: "простоквашино", brand: "Простоквашино" },
+      { pat: "первый вкус", brand: "Первый вкус" },
+      { pat: "чебаркуль", brand: "Чебаркульское молоко" },
       { pat: "агро-альянс", brand: "Агро-Альянс" },
       { pat: "агроальянс", brand: "Агро-Альянс" },
       { pat: "dr. korner", brand: "Dr. Korner" },
@@ -8582,6 +8916,8 @@
       { pat: "пятерочка", brand: "Пятёрочка" },
       { pat: "моя цена", brand: "Моя Цена" },
       { pat: "индилайт", brand: "Индилайт" },
+      { pat: "талицкий", brand: "Талицкий" },
+      { pat: "талицкое", brand: "Талицкий" },
       { pat: "cybermass", brand: "Cybermass" },
       { pat: "exponenta", brand: "Exponenta" },
       { pat: "петелинка", brand: "Петелинка" },
@@ -9702,12 +10038,19 @@
     function showUndoExerciseToast() {
       if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
       let toast = document.getElementById("undoExerciseToast");
+      const timerBar = document.getElementById("restTimerFloatingBar");
+      const timerVisible = Boolean(timerBar && !timerBar.classList.contains("hidden"));
+      const bottomOffset = timerVisible
+        ? "calc(env(safe-area-inset-bottom,20px)+145px)"
+        : "calc(env(safe-area-inset-bottom,0px)+72px)";
       if (!toast) {
         toast = document.createElement("div");
         toast.id = "undoExerciseToast";
-        toast.style.cssText = "position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+72px);left:50%;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:14px;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(16px);opacity:0;transition:opacity 0.22s ease,transform 0.22s ease;white-space:nowrap;";
+        toast.style.cssText = `position:fixed;bottom:${bottomOffset};left:50%;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:14px;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(16px);opacity:0;transition:opacity 0.22s ease,transform 0.22s ease,bottom 0.2s ease;white-space:nowrap;`;
         toast.innerHTML = '<span style="font-size:12px;font-family:ui-monospace,monospace;color:#d1d5db">Упражнение удалено</span><button onclick="undoDeleteExercise()" style="font-size:11px;font-weight:800;font-family:ui-monospace,monospace;color:var(--accent-cal,#E63946);background:none;border:none;padding:0;cursor:pointer;letter-spacing:0.04em">ВЕРНУТЬ</button>';
         document.body.appendChild(toast);
+      } else {
+        toast.style.bottom = bottomOffset;
       }
       requestAnimationFrame(() => {
         toast.style.opacity = "1";
@@ -11038,6 +11381,132 @@
 
     // // OPENFOODFACTS: ОТКРЫТАЯ БАЗА ПРОДУКТОВ И ШТРИХКОДОВ
     // =========================================================================
+    function hasInvalidZeroMacros(item) {
+      if (!item || typeof item !== "object") return true;
+      const cal = Number(item.cal100 ?? item.cal ?? 0);
+      const p = Number(item.p100 ?? item.p ?? 0);
+      const f = Number(item.f100 ?? item.f ?? 0);
+      const c = Number(item.c100 ?? item.c ?? 0);
+      return !(cal > 0) || (p + f + c) <= 0;
+    }
+
+    function purgeCorruptedZeroCacheEntry(barcode, productName) {
+      let changed = false;
+      const cleanCode = String(barcode || "").trim();
+      if (cleanCode && state.barcodeCache && state.barcodeCache[cleanCode]) {
+        if (hasInvalidZeroMacros(state.barcodeCache[cleanCode])) {
+          delete state.barcodeCache[cleanCode];
+          changed = true;
+        }
+      }
+      const normName = productName ? normalizeSearchText(productName) : "";
+      if (state.foodCache && typeof state.foodCache === "object") {
+        Object.keys(state.foodCache).forEach(k => {
+          const entry = state.foodCache[k];
+          const keyMatches = (productName && k === productName.toLowerCase()) || (normName && normalizeSearchText(entry?.name || k) === normName);
+          if ((keyMatches || hasInvalidZeroMacros(entry)) && hasInvalidZeroMacros(entry)) {
+            delete state.foodCache[k];
+            changed = true;
+          }
+        });
+      }
+      if (Array.isArray(state.customHistory)) {
+        const beforeLen = state.customHistory.length;
+        state.customHistory = state.customHistory.filter(h => {
+          if (!hasInvalidZeroMacros(h)) return true;
+          if (cleanCode && h.barcode === cleanCode) return false;
+          if (normName && normalizeSearchText(h.name) === normName) return false;
+          return true;
+        });
+        if (state.customHistory.length !== beforeLen) changed = true;
+      }
+      if (changed) saveState();
+    }
+
+    window.isValidEANBarcode = function(code) {
+      const digits = String(code || "").replace(/\D/g, "");
+      if (digits.length !== 13 && digits.length !== 12) return false;
+      const arr = digits.split("").map(Number);
+      if (digits.length === 13) {
+        let sum = 0;
+        for (let i = 0; i < 12; i++) sum += arr[i] * (i % 2 === 0 ? 1 : 3);
+        const check = (10 - (sum % 10)) % 10;
+        return check === arr[12];
+      }
+      // UPC-A (12 цифр)
+      let sum = 0;
+      for (let i = 0; i < 11; i++) sum += arr[i] * (i % 2 === 0 ? 3 : 1);
+      const check = (10 - (sum % 10)) % 10;
+      return check === arr[11];
+    };
+
+    window.enrichBarcodeProductWithGemini = async function(productName, barcode, base64Image) {
+      const cleanName = stripEmojis(productName || "").trim();
+      const cleanCode = String(barcode || "").replace(/\D/g, "");
+      if (!cleanName && !base64Image) return null;
+
+      const prompt = `Ты эксперт по составу и КБЖУ продуктов питания РФ и стран СНГ.
+По штрихкоду "${cleanCode}" найден продукт: "${cleanName || 'продукт по фото'}".
+База OpenFoodFacts не вернула КБЖУ (пришли нули). Определи реальные точные значения КБЖУ СТРОГО НА 100 ГРАММ и типичный вес упаковки/порции для этого продукта (если есть фото упаковки — ориентируйся на этикетку).
+Верни СТРОГО JSON без пояснений:
+{"name":"${cleanName || 'Продукт'}","cal100":число,"p100":число,"f100":число,"c100":число,"weight":число_г,"package_net_weight":число_г_или_0,"is_piece":false,"piece_weight":0}`;
+
+      const parts = [{ text: prompt }];
+      if (base64Image) {
+        let b64 = String(base64Image).trim();
+        if (b64.includes(",")) b64 = b64.split(",")[1];
+        b64 = b64.replace(/\s+/g, "");
+        if (b64) parts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
+      }
+
+      try {
+        const res = await callGemini3Flash({
+          contents: [{ parts }],
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const raw = res?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const parsed = extractJsonFromAiResponse(raw);
+        if (!parsed) return null;
+
+        const cal100 = Math.round(Number(parsed.cal100) || 0);
+        const p100 = round1(Number(parsed.p100) || 0);
+        const f100 = round1(Number(parsed.f100) || 0);
+        const c100 = round1(Number(parsed.c100) || 0);
+        if (cal100 <= 0 || (p100 + f100 + c100) <= 0) return null;
+
+        const finalName = stripEmojis(parsed.name || cleanName || `Штрихкод ${cleanCode}`).trim();
+        const pkgW = Number(parsed.package_net_weight) > 0 ? Math.round(Number(parsed.package_net_weight)) : null;
+        const defW = Math.round(Number(parsed.weight) || pkgW || 100);
+        const pieceW = Number(parsed.piece_weight) > 0 ? Math.round(Number(parsed.piece_weight)) : 0;
+
+        const enriched = {
+          name: finalName,
+          cal100,
+          p100,
+          f100,
+          c100,
+          weight: defW,
+          standardUnitWeight: pieceW || defW,
+          packageNetWeight: pkgW,
+          isPiece: Boolean(parsed.is_piece),
+          pieceWeight: pieceW,
+          barcode: cleanCode,
+          source: "ИИ + Штрихкод"
+        };
+
+        if (cleanCode) {
+          if (!state.barcodeCache) state.barcodeCache = {};
+          state.barcodeCache[cleanCode] = enriched;
+        }
+        if (!state.foodCache) state.foodCache = {};
+        state.foodCache[finalName.toLowerCase()] = enriched;
+        saveState();
+        return enriched;
+      } catch (e) {
+        return null;
+      }
+    };
+
     window.fetchProductByBarcodeOFF = async function(barcode) {
       if (!barcode) return null;
       const cleanCode = String(barcode).trim();
@@ -11057,8 +11526,14 @@
         };
       }
 
+      let cachedFallbackName = "";
       if (state.barcodeCache && state.barcodeCache[cleanCode]) {
-        return state.barcodeCache[cleanCode];
+        const cached = state.barcodeCache[cleanCode];
+        if (!hasInvalidZeroMacros(cached)) {
+          return cached;
+        }
+        cachedFallbackName = cached.name || "";
+        purgeCorruptedZeroCacheEntry(cleanCode, cachedFallbackName);
       }
 
       try {
@@ -11072,7 +11547,7 @@
 
         const p = data.product;
         const nut = p.nutriments || {};
-        const name = stripEmojis(p.product_name_ru || p.product_name || `Штрихкод ${cleanCode}`);
+        const name = stripEmojis(p.product_name_ru || p.product_name || cachedFallbackName || `Штрихкод ${cleanCode}`);
         const cal100 = Math.round(Number(nut["energy-kcal_100g"] || nut["energy-kcal"] || (Number(nut["energy_100g"] || 0) / 4.184)) || 0);
         const p100 = round1(Number(nut.proteins_100g || nut.proteins || 0));
         const f100 = round1(Number(nut.fat_100g || nut.fat || 0));
@@ -11095,6 +11570,11 @@
           source: "OpenFoodFacts"
         };
 
+        if (hasInvalidZeroMacros(entry)) {
+          purgeCorruptedZeroCacheEntry(cleanCode, name);
+          return { ...entry, hasEmptyMacros: true };
+        }
+
         if (!state.barcodeCache) state.barcodeCache = {};
         state.barcodeCache[cleanCode] = entry;
         if (!state.foodCache) state.foodCache = {};
@@ -11102,6 +11582,20 @@
         saveState();
         return entry;
       } catch (err) {
+        if (cachedFallbackName && !/^Штрихкод\s+\d+$/i.test(cachedFallbackName)) {
+          return {
+            name: cachedFallbackName,
+            cal100: 0,
+            p100: 0,
+            f100: 0,
+            c100: 0,
+            weight: 100,
+            standardUnitWeight: 100,
+            barcode: cleanCode,
+            source: "OpenFoodFacts",
+            hasEmptyMacros: true
+          };
+        }
         return null;
       }
     };
@@ -11178,12 +11672,27 @@
 
     window.onNativeBarcodeScanned = async function(code) {
       if (!code) return;
-      showToast(`Штрихкод: ${code}`);
+      const cleanCode = String(code).replace(/\D/g, "");
+      showToast(`Штрихкод: ${cleanCode}`);
       const modal = document.getElementById("scannerModal");
-      const product = await fetchProductByBarcodeOFF(code);
+      let product = await fetchProductByBarcodeOFF(cleanCode);
+      if (product && (product.hasEmptyMacros || hasInvalidZeroMacros(product))) {
+        showToast("Определяем КБЖУ через ИИ...");
+        const enriched = await enrichBarcodeProductWithGemini(product.name, cleanCode, window._lastScannerBase64 || null);
+        product = enriched || null;
+      }
       if (product) {
+        const target = window._scannerTargetCtx;
+        if (target && (target.modal === "addMeal" || target.modal === "override")) {
+          if (modal?.classList.contains("open")) {
+            showScannedCard({ ...product, weight: product.weight || 100, source: product.source || `Штрихкод ${cleanCode}` });
+          } else {
+            applyScannedProductToPlanModal(product);
+          }
+          return;
+        }
         if (modal?.classList.contains("open")) {
-          showScannedResult(product);
+          showScannedCard({ ...product, weight: product.weight || 100, source: product.source || `Штрихкод ${cleanCode}` });
         } else {
           addFoodEntryFrom100g(product);
           showToast(`Добавлено: ${product.name}`);
@@ -11195,7 +11704,7 @@
         if (!modal?.classList.contains("open")) {
           const input = document.getElementById("foodInput");
           if (input) {
-            input.value = `Штрихкод ${code} `;
+            input.value = `Штрихкод ${cleanCode} `;
             input.focus();
           }
         }
@@ -12473,6 +12982,46 @@
         }
         if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
           state.workout.exerciseNotes = {};
+        } else {
+          // Авто-миграция старых абсолютных путей медиа в заметках на независимый от UUID формат form-media://<filename>
+          let mediaMigrated = false;
+          Object.keys(state.workout.exerciseNotes).forEach(exKey => {
+            const notesArr = state.workout.exerciseNotes[exKey];
+            const list = Array.isArray(notesArr) ? notesArr : (notesArr ? [notesArr] : []);
+            list.forEach(note => {
+              if (!note || typeof note !== "object") return;
+              if (note.media && typeof note.media === "object") {
+                ["url", "audioUrl", "thumbUrl"].forEach(field => {
+                  if (typeof note.media[field] === "string" && note.media[field]) {
+                    const norm = normalizeNoteMediaUrl(note.media[field]);
+                    if (norm !== note.media[field]) {
+                      note.media[field] = norm;
+                      mediaMigrated = true;
+                    }
+                  }
+                });
+              }
+              ["mediaUrl", "videoUrl", "audioUrl"].forEach(field => {
+                if (typeof note[field] === "string" && note[field]) {
+                  const norm = normalizeNoteMediaUrl(note[field]);
+                  if (norm !== note[field]) {
+                    note[field] = norm;
+                    mediaMigrated = true;
+                  }
+                }
+              });
+            });
+          });
+          if (mediaMigrated) saveState();
+        }
+        // Очистка битых 0-калорийных записей из foodCache и customHistory (чтобы не маскировали реальные КБЖУ)
+        if (state.foodCache && typeof state.foodCache === "object") {
+          Object.keys(state.foodCache).forEach(k => {
+            if (hasInvalidZeroMacros(state.foodCache[k])) delete state.foodCache[k];
+          });
+        }
+        if (Array.isArray(state.customHistory)) {
+          state.customHistory = state.customHistory.filter(h => !hasInvalidZeroMacros(h));
         }
         if (!state.restTimerSettings) {
           state.restTimerSettings = {
@@ -12629,26 +13178,65 @@
     }
     window.haptic = haptic;
 
+    function normalizeNoteMediaUrl(rawUrl) {
+      if (!rawUrl || typeof rawUrl !== "string") return rawUrl;
+      const trimmed = rawUrl.trim();
+      if (!trimmed || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+      if (/^form-media:\/\//i.test(trimmed)) {
+        const cleanFile = trimmed.replace(/^form-media:\/\/+/i, "").split("?")[0].split("/").filter(Boolean).pop();
+        return cleanFile ? `form-media://${cleanFile}` : trimmed;
+      }
+      if (trimmed.includes("/var/mobile/") || trimmed.includes("/Containers/") || trimmed.includes("/Documents/") || trimmed.startsWith("file://") || trimmed.startsWith("/")) {
+        const cleanFile = trimmed.replace(/^file:\/\//i, "").split("?")[0].split("/").filter(Boolean).pop();
+        return cleanFile ? `form-media://${cleanFile}` : trimmed;
+      }
+      return trimmed;
+    }
+    window.normalizeNoteMediaUrl = normalizeNoteMediaUrl;
+
+    function extractActiveNoteMediaFiles(exerciseNotes) {
+      const activeMediaFiles = [];
+      if (!exerciseNotes || typeof exerciseNotes !== "object") return activeMediaFiles;
+      const pushUrl = u => {
+        if (typeof u !== "string" || !u || u.startsWith("data:") || u.startsWith("blob:")) return;
+        const norm = normalizeNoteMediaUrl(u);
+        if (norm) activeMediaFiles.push(norm);
+      };
+      Object.values(exerciseNotes).forEach(entry => {
+        if (!entry) return;
+        const notesList = Array.isArray(entry) ? entry : [entry];
+        notesList.forEach(note => {
+          if (!note || typeof note !== "object") return;
+          if (Array.isArray(note.media)) {
+            note.media.forEach(m => {
+              if (!m) return;
+              pushUrl(m.url);
+              pushUrl(m.audioUrl);
+              pushUrl(m.thumbUrl);
+            });
+          } else if (note.media && typeof note.media === "object") {
+            pushUrl(note.media.url);
+            pushUrl(note.media.audioUrl);
+            pushUrl(note.media.thumbUrl);
+          }
+          pushUrl(note.mediaUrl);
+          pushUrl(note.videoUrl);
+          pushUrl(note.audioUrl);
+        });
+      });
+      return Array.from(new Set(activeMediaFiles));
+    }
+    window.extractActiveNoteMediaFiles = extractActiveNoteMediaFiles;
+
     function scheduleMediaGarbageCollection() {
       setTimeout(() => {
         try {
           if (!state || !state.workout || typeof state.workout.exerciseNotes !== "object" || !state.workout.exerciseNotes) {
             return;
           }
-          const activeMediaFiles = [];
-          Object.values(state.workout.exerciseNotes).forEach(note => {
-            if (!note) return;
-            if (Array.isArray(note.media)) {
-              note.media.forEach(m => {
-                if (m && m.url) activeMediaFiles.push(m.url);
-              });
-            }
-            if (note.mediaUrl) activeMediaFiles.push(note.mediaUrl);
-            if (note.videoUrl) activeMediaFiles.push(note.videoUrl);
-            if (note.audioUrl) activeMediaFiles.push(note.audioUrl);
-          });
+          const activeMediaFiles = extractActiveNoteMediaFiles(state.workout.exerciseNotes);
           const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
-          bridge?.postMessage({ action: "cleanupOrphanedMedia", activeMediaFiles: activeMediaFiles });
+          bridge?.postMessage({ action: "cleanupOrphanedMedia", activeMediaFiles: activeMediaFiles, confirmed: true });
         } catch (e) {}
       }, 5000);
     }
@@ -13691,18 +14279,40 @@
     // =========================================================================
     // ДОБАВЛЕНИЕ ПРОДУКТА В ПРИЕМ ПИЩИ (+ Продукт)
     // =========================================================================
-    function openAddMealProductModal(mealId, variantKey = null) {
+    function resolveMealVariantTitle(meal, variantKey) {
+      if (!meal || !meal.hasVariants || !variantKey || variantKey === "null" || variantKey === "undefined") {
+        return "";
+      }
+      const v = meal.variants?.[variantKey];
+      if (v && typeof v === "object" && v.title && String(v.title).trim()) {
+        return String(v.title).trim();
+      }
+      return RU_VAR_NAMES[variantKey] ? ("Вариант " + RU_VAR_NAMES[variantKey]) : String(variantKey);
+    }
+
+    function openAddMealProductModal(mealId, variantKey = null, options = {}) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
 
+      let resolvedVarKey = null;
+      if (meal.hasVariants) {
+        const candidate = (variantKey && variantKey !== "null" && variantKey !== "undefined") ? variantKey : null;
+        resolvedVarKey = candidate || getMealActiveVariantKey(meal, getTodayProgress()) || Object.keys(meal.variants || {})[0] || "A";
+      }
+      const variantTitle = resolveMealVariantTitle(meal, resolvedVarKey);
+
       pendingAddProductCtx = {
         mealId,
-        variantKey,
-        selectedItem: null
+        variantKey: resolvedVarKey,
+        selectedItem: null,
+        skipAutoLog: Boolean(options?.skipAutoLog)
       };
 
-      document.getElementById("addMealProductSlotTitle").textContent = "В «" + meal.title + "»" + (variantKey ? ` (${variantKey})` : "");
+      const slotTitleEl = document.getElementById("addMealProductSlotTitle");
+      if (slotTitleEl) {
+        slotTitleEl.textContent = "В «" + meal.title + "»" + (variantTitle ? ` (${variantTitle})` : "");
+      }
       document.getElementById("addMealProductSearchInput").value = "";
       document.getElementById("addMealProductSearchResults").innerHTML = "";
       document.getElementById("addMealProductSelectedBox").classList.add("hidden");
@@ -13718,22 +14328,182 @@
     }
     window.closeAddMealProductModal = closeAddMealProductModal;
 
-    function handleAddMealProductSearch(val) {
-      const resContainer = document.getElementById("addMealProductSearchResults");
-      if (!resContainer) return;
-      const q = (val || "").trim();
-      if (!q) { resContainer.innerHTML = ""; return; }
+    window._modalSearchTimers = window._modalSearchTimers || {};
 
-      const matches = searchCombinedDatabase(q, 10);
-      if (matches.length === 0) {
-        resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в базе</div>`;
+    function getModalSearchConfig(modalType) {
+      if (modalType === "override") {
+        return {
+          inputId: "overrideSearchInput",
+          resultsId: "overrideSearchResults",
+          matchesKey: "_currentOverrideMatches",
+          selectFn: "selectOverrideCandidateIndex",
+          sourceModal: "override"
+        };
+      }
+      return {
+        inputId: "addMealProductSearchInput",
+        resultsId: "addMealProductSearchResults",
+        matchesKey: "_currentAddMealMatches",
+        selectFn: "selectAddMealProductCandidateIndex",
+        sourceModal: "addMeal"
+      };
+    }
+
+    function renderModalSearchResultsList(modalType, matches, query, isOnlineLoading = false) {
+      const cfg = getModalSearchConfig(modalType);
+      const resContainer = document.getElementById(cfg.resultsId);
+      if (!resContainer) return;
+
+      window[cfg.matchesKey] = matches;
+      let html = "";
+
+      if (matches.length === 0 && !isOnlineLoading) {
+        html = `
+          <div class="py-2 text-[11px] mono text-zinc-400 text-center">Локально не найдено</div>
+          <button type="button" onclick="triggerModalOnlineSearch('${modalType}')" class="w-full py-2 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-center text-[11px] mono text-zinc-200 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
+            <span>Глубокий онлайн-поиск «${escapeHtml(query)}» (ИИ + OFF) →</span>
+          </button>
+        `;
+      } else {
+        html = matches.map((m, idx) =>
+          renderFatSecretSearchItemHTML(m, idx, `${cfg.selectFn}(${idx})`, null, null, true)
+        ).join("");
+        if (!isOnlineLoading) {
+          html += `
+            <button type="button" onclick="triggerModalOnlineSearch('${modalType}')" class="w-full mt-1 py-2 px-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-center text-[10.5px] mono text-zinc-400 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
+              <span>Глубокий онлайн-поиск (ИИ + OFF) →</span>
+            </button>
+          `;
+        }
+      }
+
+      if (isOnlineLoading) {
+        html += `
+          <div class="py-2 text-[11px] mono text-zinc-400 flex items-center justify-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[var(--accent-cal)] animate-ping"></span>
+            <span>Онлайн-поиск «${escapeHtml(query)}» (ИИ + OFF)...</span>
+          </div>
+        `;
+      }
+
+      resContainer.innerHTML = html;
+    }
+
+    async function executeModalOnlineSearch(modalType, querySnapshot) {
+      const cfg = getModalSearchConfig(modalType);
+      const inputEl = document.getElementById(cfg.inputId);
+      const curQ = (inputEl?.value || "").trim();
+      if (!curQ || curQ !== querySnapshot) return;
+
+      const localMatches = searchCombinedDatabase(querySnapshot, 12);
+      renderModalSearchResultsList(modalType, localMatches, querySnapshot, true);
+
+      try {
+        const [aiRes, offRes] = await Promise.allSettled([
+          fetchAiRussianFoodSearch(querySnapshot),
+          searchOpenFoodFacts(querySnapshot)
+        ]);
+
+        // Проверка на актуальность запроса в инпуте после ответа сети
+        if ((document.getElementById(cfg.inputId)?.value || "").trim() !== querySnapshot) return;
+
+        const onlineMatches = [];
+        if (aiRes.status === "fulfilled" && Array.isArray(aiRes.value) && aiRes.value.length > 0) {
+          if (!Array.isArray(state.customHistory)) state.customHistory = [];
+          aiRes.value.forEach(r => {
+            if (hasInvalidZeroMacros(r)) return;
+            const rNorm = normalizeSearchText(r.name);
+            if (!state.customHistory.some(h => normalizeSearchText(h.name) === rNorm)) {
+              state.customHistory.push({ ...r, useCount: 0, lastUsedAt: 0 });
+            }
+          });
+          saveState();
+          onlineMatches.push(...aiRes.value);
+        }
+        if (offRes.status === "fulfilled" && Array.isArray(offRes.value) && offRes.value.length > 0) {
+          onlineMatches.push(...offRes.value.filter(x => !hasInvalidZeroMacros(x)));
+        }
+
+        const merged = [];
+        const seen = new Set();
+        localMatches.filter(i => (i.useCount || 0) > 0).forEach(i => {
+          const k = normalizeSearchText(i.name);
+          if (k && !seen.has(k)) { seen.add(k); merged.push(i); }
+        });
+        onlineMatches.forEach(i => {
+          const k = normalizeSearchText(i.name);
+          if (k && !seen.has(k)) { seen.add(k); merged.push(i); }
+        });
+        localMatches.forEach(i => {
+          const k = normalizeSearchText(i.name);
+          if (k && !seen.has(k)) { seen.add(k); merged.push(i); }
+        });
+
+        const resContainer = document.getElementById(cfg.resultsId);
+        if (!resContainer) return;
+        if (merged.length === 0) {
+          window[cfg.matchesKey] = [];
+          resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено даже онлайн — добавьте «+ Создать свой продукт»</div>`;
+          return;
+        }
+        renderModalSearchResultsList(modalType, merged.slice(0, 18), querySnapshot, false);
+      } catch (err) {
+        if ((document.getElementById(cfg.inputId)?.value || "").trim() === querySnapshot) {
+          renderModalSearchResultsList(modalType, localMatches, querySnapshot, false);
+        }
+      }
+    }
+
+    function runModalHybridFoodSearch(modalType, val, forceOnline = false) {
+      const cfg = getModalSearchConfig(modalType);
+      const resContainer = document.getElementById(cfg.resultsId);
+      if (!resContainer) return;
+
+      if (window._modalSearchTimers[modalType]) {
+        clearTimeout(window._modalSearchTimers[modalType]);
+        window._modalSearchTimers[modalType] = null;
+      }
+
+      const q = (val || "").trim();
+      if (!q) {
+        resContainer.innerHTML = "";
         return;
       }
 
-      window._currentAddMealMatches = matches;
-      resContainer.innerHTML = matches.map((m, idx) =>
-        renderFatSecretSearchItemHTML(m, idx, `selectAddMealProductCandidateIndex(${idx})`, null, null, true)
-      ).join("");
+      if (forceOnline) {
+        executeModalOnlineSearch(modalType, q);
+        return;
+      }
+
+      const localMatches = searchCombinedDatabase(q, 10);
+      renderModalSearchResultsList(modalType, localMatches, q, false);
+
+      if (localMatches.length < 3 && q.length >= 3) {
+        window._modalSearchTimers[modalType] = setTimeout(() => {
+          executeModalOnlineSearch(modalType, q);
+        }, 450);
+      }
+    }
+
+    function triggerModalOnlineSearch(modalType) {
+      const cfg = getModalSearchConfig(modalType);
+      const val = document.getElementById(cfg.inputId)?.value || "";
+      if (!val.trim()) {
+        showToast("Введите название продукта", true);
+        return;
+      }
+      runModalHybridFoodSearch(modalType, val, true);
+    }
+    window.triggerModalOnlineSearch = triggerModalOnlineSearch;
+
+    function openScannerForPlanModal(modalType) {
+      window._scannerTargetCtx = { modal: modalType };
+      openScanner("auto");
+    }
+    window.openScannerForPlanModal = openScannerForPlanModal;
+
+    function handleAddMealProductSearch(val) {
+      runModalHybridFoodSearch("addMeal", val, false);
     }
     window.handleAddMealProductSearch = handleAddMealProductSearch;
 
@@ -13767,30 +14537,26 @@
     }
     window.selectAddMealProductCandidate = selectAddMealProductCandidate;
 
-    function submitAddMealProduct() {
-      const ctx = pendingAddProductCtx;
-      if (!ctx || !ctx.mealId || !ctx.selectedItem) {
-        showToast("Сначала выберите продукт из поиска", true);
-        return;
-      }
+    function addMealProductToSlotAndToday(mealId, variantKey, selectedItem, weight, isPermanent, autoLogToday = false) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
-      const meal = (template.meals || []).find(m => m.id === ctx.mealId);
-      if (!meal) return;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal || !selectedItem) return null;
 
-      const w = Math.max(5, Number(document.getElementById("addMealProductWeightInput").value) || 100);
-      const isPermanent = document.getElementById("addMealProductPermanentCheckbox").checked;
-
-      const pieceW = Number(ctx.selectedItem.pieceWeight) || 0;
+      const w = Math.max(1, Math.round(Number(weight) || Number(selectedItem.weight) || 100));
+      const pieceW = Number(selectedItem.pieceWeight) || 0;
       const newProd = {
         id: "p_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
-        name: ctx.selectedItem.name,
+        name: selectedItem.name,
         weight: w,
-        cal100: ctx.selectedItem.cal100,
-        p100: ctx.selectedItem.p100,
-        f100: ctx.selectedItem.f100,
-        c100: ctx.selectedItem.c100
+        cal100: Number(selectedItem.cal100) || 0,
+        p100: Number(selectedItem.p100) || 0,
+        f100: Number(selectedItem.f100) || 0,
+        c100: Number(selectedItem.c100) || 0
       };
-      if (ctx.selectedItem.isPiece && pieceW > 0) {
+      if (selectedItem.packageNetWeight) {
+        newProd.packageNetWeight = selectedItem.packageNetWeight;
+      }
+      if (selectedItem.isPiece && pieceW > 0) {
         newProd.isPiece = true;
         newProd.pieceWeight = pieceW;
         newProd.standardUnitWeight = pieceW;
@@ -13799,24 +14565,72 @@
 
       if (isPermanent) {
         if (meal.hasVariants) {
-          const vk = ctx.variantKey || meal.activeVariant || "A";
+          const vk = (variantKey && variantKey !== "null") ? variantKey : (meal.activeVariant || "A");
           if (!meal.variants[vk]) meal.variants[vk] = { title: "Вариант " + vk, items: [] };
-          meal.variants[vk].items.push(newProd);
+          if (Array.isArray(meal.variants[vk])) meal.variants[vk].push(newProd);
+          else {
+            if (!Array.isArray(meal.variants[vk].items)) meal.variants[vk].items = [];
+            meal.variants[vk].items.push(newProd);
+          }
         } else {
           if (!Array.isArray(meal.items)) meal.items = [];
           meal.items.push(newProd);
         }
       } else {
         const progress = getTodayProgress();
-        if (!progress.todayAddedItems[ctx.mealId]) progress.todayAddedItems[ctx.mealId] = [];
-        progress.todayAddedItems[ctx.mealId].push(newProd);
+        if (!progress.todayAddedItems[mealId]) progress.todayAddedItems[mealId] = [];
+        progress.todayAddedItems[mealId].push(newProd);
+      }
+
+      if (autoLogToday) {
+        checkDayRollover();
+        if (!Array.isArray(state.todayItems)) state.todayItems = [];
+        const cal = Math.round((w * newProd.cal100) / 100);
+        const p = round1((w * newProd.p100) / 100);
+        const f = round1((w * newProd.f100) / 100);
+        const c = round1((w * newProd.c100) / 100);
+        state.todayItems.push({
+          id: "plan_" + newProd.id + "_" + Date.now(),
+          name: newProd.name,
+          weight: w,
+          cal,
+          p,
+          f,
+          c,
+          cal100: newProd.cal100,
+          p100: newProd.p100,
+          f100: newProd.f100,
+          c100: newProd.c100,
+          meal: meal.type || "snack",
+          fromPlan: true,
+          planItemId: newProd.id,
+          source: "Свой продукт"
+        });
       }
 
       saveState();
-      closeAddMealProductModal();
+      if (document.getElementById("editMealSlotModal")?.classList.contains("open") && pendingEditSlotCtx?.mealId === mealId) {
+        renderEditMealSlotProductsList(mealId);
+      }
       renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("✓ Продукт добавлен: " + newProd.name);
+      return newProd;
+    }
+    window.addMealProductToSlotAndToday = addMealProductToSlotAndToday;
+
+    function submitAddMealProduct() {
+      const ctx = pendingAddProductCtx;
+      if (!ctx || !ctx.mealId || !ctx.selectedItem) {
+        showToast("Сначала выберите продукт из поиска", true);
+        return;
+      }
+      const w = Math.max(5, Number(document.getElementById("addMealProductWeightInput").value) || 100);
+      const isPermanent = Boolean(document.getElementById("addMealProductPermanentCheckbox")?.checked);
+      const added = addMealProductToSlotAndToday(ctx.mealId, ctx.variantKey, ctx.selectedItem, w, isPermanent, false);
+      if (!added) return;
+
+      closeAddMealProductModal();
+      if (typeof showToast === "function") showToast("✓ Продукт добавлен: " + added.name);
     }
     window.submitAddMealProduct = submitAddMealProduct;
 
@@ -14126,23 +14940,102 @@
       }
 
       listEl.innerHTML = tabsHtml + activeItems.map(it => {
-        const pieceDisplay = (it.isPiece && it.pieceCount) ? `${it.pieceCount} шт (${it.weight}г)` : `${it.weight}г`;
+        const cal = Math.round((it.weight * (it.cal100 || 0)) / 100);
+        const p = round1((it.weight * (it.p100 || 0)) / 100);
+        const f = round1((it.weight * (it.f100 || 0)) / 100);
+        const c = round1((it.weight * (it.c100 || 0)) / 100);
+        const pieceInfo = (it.isPiece && it.pieceCount) ? `<span class="whitespace-nowrap">${it.pieceCount} шт ·</span>` : "";
         return `
-        <div class="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-          <div class="min-w-0 flex-1 mr-2">
-            <div class="text-xs text-zinc-200 font-medium truncate">${it.name}</div>
-            <div class="text-[10px] mono text-zinc-500 mt-0.5">
-              ${pieceDisplay} · ${Math.round((it.weight * (it.cal100 || 0)) / 100)} ккал (Б ${round1((it.weight * (it.p100 || 0)) / 100)} · Ж ${round1((it.weight * (it.f100 || 0)) / 100)} · У ${round1((it.weight * (it.c100 || 0)) / 100)})
+        <div class="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+          <div class="min-w-0 flex-1">
+            <div class="text-xs text-zinc-200 font-medium truncate">${escapeHtml(it.name)}</div>
+            <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] mono text-zinc-500 mt-0.5">
+              ${pieceInfo}
+              <span class="whitespace-nowrap">${cal} ккал</span>
+              <span class="whitespace-nowrap">(Б ${p} · Ж ${f} · У ${c})</span>
             </div>
           </div>
-          <button type="button" onclick="deleteProductFromSlotModal('${meal.id}', '${it.id}', '${currentVariantKey || ''}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition shrink-0" title="Удалить из плана">
-            ✕
-          </button>
+          <div class="flex items-center gap-1 shrink-0">
+            <div class="flex items-center bg-black/50 border border-white/10 rounded-lg px-1.5 py-0.5">
+              <input
+                type="number"
+                min="1"
+                value="${Math.round(it.weight || 100)}"
+                onchange="updateTemplateProductWeight('${meal.id}', '${it.id}', '${currentVariantKey || ''}', this.value)"
+                class="w-10 bg-transparent text-center text-[11px] mono font-bold text-white outline-none"
+                title="Вес в шаблоне (г)"
+              />
+              <span class="text-[10px] mono text-zinc-500">г</span>
+            </div>
+            <button
+              type="button"
+              onclick="replaceTemplateProductInSlot('${meal.id}', '${it.id}', '${currentVariantKey || ''}')"
+              class="h-7 px-1.5 rounded-lg bg-white/[0.06] hover:bg-white/15 border border-white/10 text-[10px] mono text-zinc-200 active:scale-95 transition shrink-0"
+              title="Заменить продукт в шаблоне"
+            >Заменить</button>
+            <button type="button" onclick="deleteProductFromSlotModal('${meal.id}', '${it.id}', '${currentVariantKey || ''}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition shrink-0" title="Удалить из плана">
+              ✕
+            </button>
+          </div>
         </div>
       `;
       }).join("");
     }
     window.renderEditMealSlotProductsList = renderEditMealSlotProductsList;
+
+    function updateTemplateProductWeight(mealId, itemId, variantKey, rawWeight) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      const w = Math.max(1, Math.round(Number(rawWeight) || 100));
+
+      let list = [];
+      if (meal.hasVariants) {
+        const vk = (variantKey && variantKey !== "null") ? variantKey : (meal.activeVariant || "A");
+        const vData = meal.variants?.[vk];
+        list = Array.isArray(vData) ? vData : (vData?.items || []);
+      } else {
+        list = meal.items || [];
+      }
+      const target = list.find(i => i.id === itemId);
+      if (!target) return;
+
+      target.weight = w;
+      if (target.isPiece && target.pieceWeight > 0) {
+        target.pieceCount = Math.max(1, Math.round(w / target.pieceWeight));
+      }
+      syncUpdatedPlanItemInTodayItems(itemId, w, target);
+      saveState();
+      renderEditMealSlotProductsList(mealId);
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast(`Вес в шаблоне обновлен: ${w}г`);
+    }
+    window.updateTemplateProductWeight = updateTemplateProductWeight;
+
+    function openAddProductFromSlotTemplateModal() {
+      const mealId = pendingEditSlotCtx?.mealId;
+      if (!mealId) return;
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      const vk = meal.hasVariants ? (pendingEditSlotCtx.activeModalVariant || meal.activeVariant || "A") : null;
+      openAddMealProductModal(mealId, vk, { skipAutoLog: true });
+    }
+    window.openAddProductFromSlotTemplateModal = openAddProductFromSlotTemplateModal;
+
+    function replaceTemplateProductInSlot(mealId, itemId, variantKey) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (!meal) return;
+      if (meal.hasVariants && variantKey) {
+        const progress = getTodayProgress();
+        if (!progress.variantChoice) progress.variantChoice = {};
+        progress.variantChoice[mealId] = variantKey;
+      }
+      openMealPlanOverrideModal(mealId, itemId, { permanent: true, variantKey: variantKey || null });
+    }
+    window.replaceTemplateProductInSlot = replaceTemplateProductInSlot;
 
     function deleteProductFromSlotModal(mealId, itemId, variantKey = null) {
       deleteProductFromTemplate(mealId, itemId, variantKey);
@@ -14492,6 +15385,24 @@
       let btnHtml = "";
       let isOverflow = false;
 
+      const isWholeEggItem = it => {
+        const lower = String(it?.name || "").toLowerCase();
+        if (/белок|белки|меланж/.test(lower)) return false;
+        return Boolean((it?.isPiece && /яйц/.test(lower)) || /яйцо\s+курин/.test(lower));
+      };
+      const pickGramDonor = (pool, macroKey, minThreshold, filterFn = null) => {
+        const usable = pool.filter(it => !isWholeEggItem(it) && (!filterFn || filterFn(it)));
+        const nonPiece = usable.filter(it => !it.isPiece);
+        const primary = (nonPiece.length > 0 ? nonPiece : usable)
+          .filter(it => Number(it[macroKey]) >= minThreshold)
+          .sort((a, b) => (b[macroKey] || 0) - (a[macroKey] || 0));
+        if (primary[0]) return primary[0];
+        const fallback = (nonPiece.length > 0 ? nonPiece : usable)
+          .filter(it => Number(it[macroKey]) > 0)
+          .sort((a, b) => (b[macroKey] || 0) - (a[macroKey] || 0));
+        return fallback[0] || null;
+      };
+
       if (deltaC >= 2.0 || deltaF >= 1.5) {
         isOverflow = true;
         const overParts = [];
@@ -14500,9 +15411,7 @@
         const summaryPrefix = `Перебор: ${deltaCal >= 0 ? '+' : ''}${deltaCal} ккал (${overParts.join(" / ")})`;
 
         if (deltaF >= 1.5 && deltaF >= deltaC) {
-          const donor = activeCandidates
-            .filter(it => Number(it.f100) > 0 && Number(it.weight) > 10)
-            .sort((a, b) => (b.f100 || 0) - (a.f100 || 0))[0];
+          const donor = pickGramDonor(activeCandidates, "f100", 0, it => Number(it.weight) > 10);
           if (donor && Number(donor.f100) > 0) {
             const rawReduce = Math.max(5, Math.round(deltaF / (donor.f100 / 100)));
             const reduceGrams = Math.min(Math.max(5, Math.round(donor.weight - 5)), rawReduce);
@@ -14512,9 +15421,7 @@
             recText = summaryPrefix;
           }
         } else {
-          const donor = activeCandidates
-            .filter(it => Number(it.c100) > 0 && Number(it.weight) > 10)
-            .sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+          const donor = pickGramDonor(activeCandidates, "c100", 0, it => Number(it.weight) > 10);
           if (donor && Number(donor.c100) > 0) {
             const rawReduce = Math.max(5, Math.round(deltaC / (donor.c100 / 100)));
             const reduceGrams = Math.min(Math.max(5, Math.round(donor.weight - 5)), rawReduce);
@@ -14525,9 +15432,8 @@
           }
         }
       } else if (deltaF <= -1.5) {
-        const fDonors = activeCandidates.filter(it => Number(it.f100) >= 10).sort((a, b) => (b.f100 || 0) - (a.f100 || 0));
-        const donor = fDonors[0];
-        if (donor && Number(donor.f100) > 0) {
+        const donor = pickGramDonor(activeCandidates, "f100", 10);
+        if (donor && Number(donor.f100) >= 10) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaF) / (donor.f100 / 100)));
           recText = `Нехватка жиров: Ж ${deltaF}г -> Добавь +${neededGrams}г ${donor.name}`;
           btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
@@ -14537,16 +15443,14 @@
           btnHtml = `<button type="button" onclick="addExternalDonorToMeal('${meal.id}', 'peanut_paste_dopdrop', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г пасты в прием ]</button>`;
         }
       } else if (deltaP <= -1.5) {
-        const pDonors = activeCandidates.filter(it => Number(it.p100) >= 8).sort((a, b) => (b.p100 || 0) - (a.p100 || 0));
-        const donor = pDonors[0] || activeCandidates.filter(it => Number(it.p100) > 0).sort((a, b) => (b.p100 || 0) - (a.p100 || 0))[0];
+        const donor = pickGramDonor(activeCandidates, "p100", 8);
         if (donor && Number(donor.p100) > 0) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaP) / (donor.p100 / 100)));
           recText = `Чтобы закрыть белок: добавь +${neededGrams}г ${donor.name}`;
           btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
         }
       } else if (deltaC <= -2.0) {
-        const cDonors = activeCandidates.filter(it => Number(it.c100) >= 15).sort((a, b) => (b.c100 || 0) - (a.c100 || 0));
-        const donor = cDonors[0] || activeCandidates.filter(it => Number(it.c100) > 0).sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+        const donor = pickGramDonor(activeCandidates, "c100", 15);
         if (donor && Number(donor.c100) > 0) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaC) / (donor.c100 / 100)));
           recText = `Чтобы закрыть угли: добавь +${neededGrams}г ${donor.name}`;
@@ -14584,8 +15488,8 @@
             </div>
           </div>
           ${recText ? `
-            <div class="flex items-center justify-between gap-1.5 pt-1 ${isOverflow ? 'border-t border-red-500/15' : 'border-t border-white/[0.04]'}">
-              <span class="${isOverflow ? 'text-red-200' : 'text-zinc-300'} break-words leading-snug">${recText}</span>
+            <div class="flex items-center justify-between gap-2 pt-1 ${isOverflow ? 'border-t border-red-500/15' : 'border-t border-white/[0.04]'}">
+              <span class="${isOverflow ? 'text-red-200' : 'text-zinc-300'} min-w-0 flex-1 whitespace-normal break-words leading-snug">${recText}</span>
               ${btnHtml}
             </div>
           ` : ''}
@@ -14601,11 +15505,34 @@
       let actualDailyCal = 0, actualDailyP = 0, actualDailyF = 0, actualDailyC = 0;
 
       const uncompletedMeals = [];
+      let mealsWithDeltaCount = 0;
+
+      const isWholeEggItem = it => {
+        const lower = String(it?.name || "").toLowerCase();
+        if (/белок|белки|меланж/.test(lower)) return false;
+        return Boolean((it?.isPiece && /яйц/.test(lower)) || /яйцо\s+курин/.test(lower));
+      };
+      const pickGramDonor = (pool, macroKey, minThreshold, filterFn = null) => {
+        const usable = pool.filter(it => !isWholeEggItem(it) && (!filterFn || filterFn(it)));
+        const nonPiece = usable.filter(it => !it.isPiece);
+        const primary = (nonPiece.length > 0 ? nonPiece : usable)
+          .filter(it => Number(it[macroKey]) >= minThreshold)
+          .sort((a, b) => (b[macroKey] || 0) - (a[macroKey] || 0));
+        if (primary[0]) return primary[0];
+        const fallback = (nonPiece.length > 0 ? nonPiece : usable)
+          .filter(it => Number(it[macroKey]) > 0)
+          .sort((a, b) => (b[macroKey] || 0) - (a[macroKey] || 0));
+        return fallback[0] || null;
+      };
 
       template.meals.forEach(meal => {
         if (meal.isSupplement) return;
         const rawItems = getMealRawVariantItems(meal, progress);
         const mealItems = (rawItems || []).slice().concat(progress.todayAddedItems?.[meal.id] || []);
+
+        if (mealItems.length > 0 && buildMealDeltaBannerData(meal, progress, mealItems, rawItems)) {
+          mealsWithDeltaCount++;
+        }
 
         (rawItems || []).forEach(it => {
           const w = Number(it.weight) || 0;
@@ -14634,6 +15561,9 @@
         }
       });
 
+      // Устраняем дублирование: если отклонение пока только в 1 приеме пищи, работает локальный баннер внутри приема
+      if (mealsWithDeltaCount < 2) return "";
+
       const dailyDeltaCal = Math.round(actualDailyCal - targetDailyCal);
       const dailyDeltaP = round1(actualDailyP - targetDailyP);
       const dailyDeltaF = round1(actualDailyF - targetDailyF);
@@ -14658,14 +15588,14 @@
 
         if (dailyDeltaC >= 3.5 || dailyDeltaF >= 2.0) {
           if (dailyDeltaF >= 2.0 && dailyDeltaF >= dailyDeltaC) {
-            const donor = candidates.filter(it => Number(it.f100) > 0 && Number(it.weight) > 10).sort((a, b) => (b.f100 || 0) - (a.f100 || 0))[0];
+            const donor = pickGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.f100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaF / (donor.f100 / 100))));
               dailyRecText = `Перебор: убавить -${red}г ${donor.name} в ${destMeal.title}`;
               dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2 py-0.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10px] active:scale-95 transition shrink-0">[ -${red}г ]</button>`;
             }
           } else {
-            const donor = candidates.filter(it => Number(it.c100) > 0 && Number(it.weight) > 10).sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+            const donor = pickGramDonor(candidates, "c100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.c100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaC / (donor.c100 / 100))));
               dailyRecText = `Перебор: убавить -${red}г ${donor.name} в ${destMeal.title}`;
@@ -14673,9 +15603,8 @@
             }
           }
         } else if (dailyDeltaF <= -2.0) {
-          const fDonors = candidates.filter(it => Number(it.f100) >= 10).sort((a, b) => (b.f100 || 0) - (a.f100 || 0));
-          const donor = fDonors[0];
-          if (donor && Number(donor.f100) > 0) {
+          const donor = pickGramDonor(candidates, "f100", 10);
+          if (donor && Number(donor.f100) >= 10) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
             dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
             dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
@@ -14685,16 +15614,14 @@
             dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г пасты ]</button>`;
           }
         } else if (dailyDeltaP <= -2.5) {
-          const pDonors = candidates.filter(it => Number(it.p100) >= 8).sort((a, b) => (b.p100 || 0) - (a.p100 || 0));
-          const donor = pDonors[0] || candidates.filter(it => Number(it.p100) > 0).sort((a, b) => (b.p100 || 0) - (a.p100 || 0))[0];
+          const donor = pickGramDonor(candidates, "p100", 8);
           if (donor && Number(donor.p100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
             dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
             dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г ]</button>`;
           }
         } else if (dailyDeltaC <= -3.5) {
-          const cDonors = candidates.filter(it => Number(it.c100) >= 15).sort((a, b) => (b.c100 || 0) - (a.c100 || 0));
-          const donor = cDonors[0] || candidates.filter(it => Number(it.c100) > 0).sort((a, b) => (b.c100 || 0) - (a.c100 || 0))[0];
+          const donor = pickGramDonor(candidates, "c100", 15);
           if (donor && Number(donor.c100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
             dailyRecText = `Компенсация: +${needed}г ${donor.name} в ${destMeal.title}`;
@@ -14724,8 +15651,8 @@
             </div>
           </div>
           ${dailyRecText ? `
-            <div class="flex items-center justify-between gap-1.5 pt-1 ${hasDailyOverflow ? 'border-t border-red-500/15' : 'border-t border-white/[0.04]'}">
-              <span class="${hasDailyOverflow ? 'text-red-200' : 'text-zinc-300'} break-words leading-snug">${dailyRecText}</span>
+            <div class="flex items-center justify-between gap-2 pt-1 ${hasDailyOverflow ? 'border-t border-red-500/15' : 'border-t border-white/[0.04]'}">
+              <span class="${hasDailyOverflow ? 'text-red-200' : 'text-zinc-300'} min-w-0 flex-1 whitespace-normal break-words leading-snug">${dailyRecText}</span>
               ${dailyActionBtn}
             </div>
           ` : ''}
@@ -14966,7 +15893,7 @@
 
             <!-- Кнопка + Продукт в этот прием пищи -->
             <div class="mb-2">
-              <button type="button" onclick="openAddMealProductModal('${meal.id}', '${meal.hasVariants ? (progress.variantChoice?.[meal.id] || meal.activeVariant || 'A') : null}')" class="w-full py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-dashed border-white/10 text-xs mono text-zinc-400 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
+              <button type="button" onclick="openAddMealProductModal('${meal.id}', ${meal.hasVariants ? `'${progress.variantChoice?.[meal.id] || meal.activeVariant || 'A'}'` : 'null'})" class="w-full py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-dashed border-white/10 text-xs mono text-zinc-400 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
                 <span>+ Продукт</span>
               </button>
             </div>
@@ -15022,7 +15949,7 @@
         <div class="coach-meal-card">
           <div class="flex items-center justify-between mb-3">
             <span class="text-xs font-bold text-white tracking-wide uppercase mono">Контроль гидратации и соусов</span>
-            <span class="text-[10px] mono text-zinc-500">Нормы тренера</span>
+            <span class="text-[10px] mono text-zinc-500">Целевые нормы</span>
           </div>
 
           <!-- Трекер соусов -->
@@ -15073,7 +16000,16 @@
     // =========================================================================
     // МОДАЛКА РАЗОВОЙ ЗАМЕНЫ НА СЕГОДНЯ («Заменить сегодня»)
     // =========================================================================
-    function openMealPlanOverrideModal(mealId, itemId) {
+    function updateOverrideSubmitLabel() {
+      const isPerm = Boolean(document.getElementById("overridePermanentToggle")?.checked);
+      const subEl = document.getElementById("overrideModalSubtitle");
+      const btnEl = document.getElementById("overrideSubmitBtn");
+      if (subEl) subEl.textContent = isPerm ? "Постоянная замена в шаблоне" : "Разовая замена на сегодня";
+      if (btnEl) btnEl.textContent = isPerm ? "Заменить в шаблоне" : "Заменить сегодня";
+    }
+    window.updateOverrideSubmitLabel = updateOverrideSubmitLabel;
+
+    function openMealPlanOverrideModal(mealId, itemId, options = {}) {
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
@@ -15084,6 +16020,7 @@
       pendingOverrideCtx = {
         mealId,
         itemId,
+        variantKey: options?.variantKey || (meal.hasVariants ? getMealActiveVariantKey(meal, progress) : null),
         originalItem: item,
         selectedItem: null,
         weight: item.weight || 100
@@ -15100,6 +16037,12 @@
       document.getElementById("overrideSearchInput").value = "";
       document.getElementById("overrideSearchResults").innerHTML = "";
       document.getElementById("overrideSelectedCard").classList.add("hidden");
+
+      const permToggle = document.getElementById("overridePermanentToggle");
+      if (permToggle) {
+        permToggle.checked = Boolean(options?.permanent);
+      }
+      updateOverrideSubmitLabel();
 
       const hasOverride = !!progress.overrides?.[itemId];
       const resetBtn = document.getElementById("btnResetOverride");
@@ -15118,21 +16061,7 @@
     window.closeMealPlanOverrideModal = closeMealPlanOverrideModal;
 
     function handleOverrideSearchInput(val) {
-      const resContainer = document.getElementById("overrideSearchResults");
-      if (!resContainer) return;
-      const q = (val || "").trim();
-      if (!q) { resContainer.innerHTML = ""; return; }
-
-      const matches = searchCombinedDatabase(q, 10);
-      if (matches.length === 0) {
-        resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено в базе</div>`;
-        return;
-      }
-
-      window._currentOverrideMatches = matches;
-      resContainer.innerHTML = matches.map((m, idx) =>
-        renderFatSecretSearchItemHTML(m, idx, `selectOverrideCandidateIndex(${idx})`, null, null, true)
-      ).join("");
+      runModalHybridFoodSearch("override", val, false);
     }
     window.handleOverrideSearchInput = handleOverrideSearchInput;
 
@@ -15229,32 +16158,75 @@
     function applyTodayOverride() {
       const sel = pendingOverrideCtx.selectedItem;
       const itemId = pendingOverrideCtx.itemId;
+      const mealId = pendingOverrideCtx.mealId;
       if (!sel || !itemId) {
         closeMealPlanOverrideModal();
         return;
       }
+      const w = Math.max(1, Math.round(Number(pendingOverrideCtx.weight) || sel.weight || 100));
+      const savePermanent = Boolean(document.getElementById("overridePermanentToggle")?.checked);
       const progress = getTodayProgress();
-      if (!progress.overrides) progress.overrides = {};
-      progress.overrides[itemId] = {
+
+      const replacementFields = {
         name: sel.name,
-        weight: pendingOverrideCtx.weight,
-        cal100: sel.cal100,
-        p100: sel.p100,
-        f100: sel.f100,
-        c100: sel.c100,
+        weight: w,
+        cal100: Number(sel.cal100) || 0,
+        p100: Number(sel.p100) || 0,
+        f100: Number(sel.f100) || 0,
+        c100: Number(sel.c100) || 0,
         isPiece: Boolean(sel.isPiece),
-        pieceWeight: sel.isPiece ? (sel.pieceWeight || pendingOverrideCtx.weight) : undefined,
-        pieceCount: sel.isPiece && sel.pieceWeight ? Math.max(1, Math.round(pendingOverrideCtx.weight / sel.pieceWeight)) : undefined
+        pieceWeight: sel.isPiece ? (sel.pieceWeight || w) : undefined,
+        standardUnitWeight: sel.isPiece ? (sel.pieceWeight || w) : undefined,
+        pieceCount: sel.isPiece && sel.pieceWeight ? Math.max(1, Math.round(w / sel.pieceWeight)) : undefined,
+        packageNetWeight: sel.packageNetWeight || undefined
       };
 
+      let updatedTemplate = false;
+      if (savePermanent && mealId) {
+        const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+        const meal = (template.meals || []).find(m => m.id === mealId);
+        if (meal) {
+          let targetList = null;
+          if (meal.hasVariants) {
+            const vk = (pendingOverrideCtx.variantKey && pendingOverrideCtx.variantKey !== "null")
+              ? pendingOverrideCtx.variantKey
+              : getMealActiveVariantKey(meal, progress);
+            const vData = meal.variants?.[vk];
+            targetList = Array.isArray(vData) ? vData : (vData?.items || null);
+          } else {
+            targetList = meal.items || null;
+          }
+          if (Array.isArray(targetList)) {
+            const idx = targetList.findIndex(i => i.id === itemId);
+            if (idx !== -1) {
+              targetList[idx] = { ...targetList[idx], ...replacementFields };
+              updatedTemplate = true;
+            }
+          }
+        }
+        if (progress.overrides && progress.overrides[itemId]) {
+          delete progress.overrides[itemId];
+        }
+      }
+
+      if (!updatedTemplate) {
+        if (!progress.overrides) progress.overrides = {};
+        progress.overrides[itemId] = replacementFields;
+      }
+
       // Реактивная синхронизация: обновляем уже съеденную запись в todayItems
-      syncUpdatedPlanItemInTodayItems(itemId, pendingOverrideCtx.weight, sel);
+      syncUpdatedPlanItemInTodayItems(itemId, w, sel);
 
       saveState();
       closeMealPlanOverrideModal();
+      if (document.getElementById("editMealSlotModal")?.classList.contains("open") && pendingEditSlotCtx?.mealId === mealId) {
+        renderEditMealSlotProductsList(mealId);
+      }
       renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("✓ Замена применена на сегодня");
+      if (typeof showToast === "function") {
+        showToast(updatedTemplate ? "✓ Заменено в постоянном шаблоне" : "✓ Замена применена на сегодня");
+      }
     }
     window.applyTodayOverride = applyTodayOverride;
 
@@ -15647,10 +16619,23 @@
 
     function getCombinedDatabase() {
       const map = new Map();
-      (state.customHistory || []).forEach(item => {
-        const key = normalizeSearchText(item.name);
-        if (key) map.set(key, { ...item, isRecent: (item.useCount > 0) });
-      });
+      if (Array.isArray(state.customHistory)) {
+        let historyCleaned = false;
+        const validHistory = [];
+        state.customHistory.forEach(item => {
+          if (hasInvalidZeroMacros(item)) {
+            historyCleaned = true;
+            return;
+          }
+          validHistory.push(item);
+          const key = normalizeSearchText(item.name);
+          if (key) map.set(key, { ...item, isRecent: (item.useCount > 0) });
+        });
+        if (historyCleaned) {
+          state.customHistory = validHistory;
+          saveState();
+        }
+      }
       LOCAL_DB.forEach(item => {
         const key = normalizeSearchText(item.name);
         if (key && !map.has(key)) map.set(key, { ...item, isRecent: false, useCount: 0 });
@@ -15726,7 +16711,7 @@
 Пользователь ищет продукт или блюдо: "${query}".
 
 Сформируй 8-12 реалистичных, качественных вариантов для российского пользователя:
-- Обязательно разделяй продукты по популярным российским брендам и сетям из РФ: Красная цена, Моя Цена, Global Village, Рестория, Зеленая линия, Маркет Перекрёсток, ВкусВилл, Самокат, Брест-Литовск, Савушкин Teos, Простоквашино, Домик в деревне, Село Зелёное, Экомилк, Агро-Альянс, Увелка, Макфа, Barilla, Петелинка, Индилайт, Мираторг, Harry's, Первый хлебокомбинат, Мэри, Dr. Korner, BombBar, DopDrops, Cybermass, Ehrmann High Protein, Exponenta.
+- Обязательно разделяй продукты по популярным российским и региональным (Урал/Челябинск) брендам и сетям из РФ: Красная цена, Моя Цена, Global Village, Рестория, Зеленая линия, Маркет Перекрёсток, ВкусВилл, Самокат, Брест-Литовск, Савушкин Teos, Простоквашино, Домик в деревне, Село Зелёное, Экомилк, Чебаркульское молоко, Первый вкус, Здоровье из Предгорья, Талицкий, Агро-Альянс, Увелка, Макфа, Barilla, Петелинка, Индилайт, Мираторг, Harry's, Первый хлебокомбинат, Мэри, Dr. Korner, BombBar, DopDrops, Cybermass, Ehrmann High Protein, Exponenta.
 - Если это готовое блюдо (например "макароны с мясом", "плов", "борщ"): предложи домашние и магазинные варианты (ВкусВилл, Самокат, Перекрёсток).
 - Если продукт фирменный, обязательно укажи бренд отдельно в поле "brand" (например, "Самокат", "ВкусВилл", "Красная цена"), а чистое название в "name".
 - Строго рассчитай КБЖУ НА 100 ГРАММ ("cal", "p", "f", "c").
@@ -15969,11 +16954,14 @@
         f100,
         c100,
         unitWeight: Math.round(wIn),
-        standardUnitWeight: Math.round(wIn),
+        packageNetWeight: Math.round(wIn),
+        standardUnitWeight: (mode === "portion") ? Math.round(wIn) : null,
+        isPiece: (mode === "portion"),
         portionLabel: (mode === "portion") ? "1 порция" : undefined
       });
 
       const sourceModal = window._createCustomFoodCtx?.sourceModal || "diary";
+      const portionW = Math.round(wIn);
       const itemPayload = {
         name: fullName,
         brand: brandRaw,
@@ -15981,15 +16969,36 @@
         p100,
         f100,
         c100,
-        weight: Math.round(wIn)
+        weight: portionW,
+        packageNetWeight: portionW,
+        isPiece: (mode === "portion"),
+        pieceWeight: (mode === "portion") ? portionW : undefined
       };
 
       closeCreateCustomFoodModal();
 
-      if (sourceModal === "override" && typeof selectOverrideCandidate === "function") {
-        selectOverrideCandidate(itemPayload);
-      } else if (sourceModal === "addMeal" && typeof selectAddMealProductCandidate === "function") {
-        selectAddMealProductCandidate(itemPayload);
+      if (sourceModal === "override" && typeof applyTodayOverride === "function") {
+        pendingOverrideCtx.selectedItem = itemPayload;
+        pendingOverrideCtx.weight = portionW;
+        applyTodayOverride();
+        saveState();
+        if (typeof showToast === "function") showToast("Сохранено и заменено: " + fullName + ` (${portionW}г)`);
+        return;
+      } else if (sourceModal === "addMeal" && typeof addMealProductToSlotAndToday === "function" && pendingAddProductCtx?.mealId) {
+        const isPermanent = Boolean(document.getElementById("addMealProductPermanentCheckbox")?.checked);
+        const shouldAutoLog = !pendingAddProductCtx?.skipAutoLog;
+        addMealProductToSlotAndToday(
+          pendingAddProductCtx.mealId,
+          pendingAddProductCtx.variantKey,
+          itemPayload,
+          portionW,
+          isPermanent,
+          shouldAutoLog
+        );
+        closeAddMealProductModal();
+        saveState();
+        if (typeof showToast === "function") showToast("Сохранено и добавлено в прием: " + fullName + ` (${portionW}г)`);
+        return;
       } else {
         addFoodEntryFrom100g({
           name: fullName,
@@ -15998,7 +17007,8 @@
           p100,
           f100,
           c100,
-          weight: Math.round(wIn),
+          weight: portionW,
+          packageNetWeight: portionW,
           source: "Свой продукт"
         });
         const input = document.getElementById("foodInput");
@@ -16164,12 +17174,51 @@
       }
     }
 
-    function openScanner(mode = "auto") {
+    function applyScannedProductToPlanModal(product) {
+      const target = window._scannerTargetCtx;
+      if (!target || !product) return false;
+      const item = {
+        name: stripEmojis(product.name || "Продукт").trim(),
+        brand: getFoodBrand(product) || product.brand || "",
+        cal100: Number(product.cal100 ?? product.cal ?? 0),
+        p100: Number(product.p100 ?? product.p ?? 0),
+        f100: Number(product.f100 ?? product.f ?? 0),
+        c100: Number(product.c100 ?? product.c ?? 0),
+        weight: Math.round(Number(product.weight || product.packageNetWeight || product.standardUnitWeight || 100)),
+        packageNetWeight: product.packageNetWeight || null,
+        isPiece: Boolean(product.isPiece),
+        pieceWeight: product.pieceWeight || product.standardUnitWeight || undefined
+      };
+      if (target.modal === "override" && typeof selectOverrideCandidate === "function") {
+        selectOverrideCandidate(item);
+        window._scannerTargetCtx = null;
+        return true;
+      }
+      if (target.modal === "addMeal" && typeof selectAddMealProductCandidate === "function") {
+        selectAddMealProductCandidate(item);
+        window._scannerTargetCtx = null;
+        return true;
+      }
+      return false;
+    }
+    window.applyScannedProductToPlanModal = applyScannedProductToPlanModal;
+
+    function openScanner(mode = "auto", preserveTargetCtx = false) {
+      if (!preserveTargetCtx) {
+        window._scannerTargetCtx = null;
+      }
+      window._lastScannerBase64 = null;
       document.getElementById("scannedResultCard")?.classList.add("hidden");
       document.getElementById("scannedAlternativesBox")?.classList.add("hidden");
       const barcodeInput = document.getElementById("barcodeInput");
       if (barcodeInput) barcodeInput.value = "";
       window.pendingScannedProduct = null;
+      const confirmBtn = document.querySelector("#scannedResultCard button[onclick='confirmScannedProduct()']");
+      if (confirmBtn) {
+        confirmBtn.textContent = (window._scannerTargetCtx?.modal)
+          ? "Выбрать продукт"
+          : "+ Добавить в Сегодня";
+      }
       document.getElementById("scannerModal")?.classList.add("open");
       setScannerMode(mode);
       clearScannerOverlay();
@@ -16331,7 +17380,17 @@
       }
     }
 
+    function stopLiveBarcodeLoop() {
+      if (window._liveBarcodeLoopTimer) {
+        clearTimeout(window._liveBarcodeLoopTimer);
+        window._liveBarcodeLoopTimer = null;
+      }
+      window._liveBarcodeLastCode = null;
+      window._liveBarcodeConfirmCount = 0;
+    }
+
     function forceStopScannerCamera() {
+      stopLiveBarcodeLoop();
       if (typeof Quagga !== "undefined" && typeof Quagga.stop === "function") {
         try { Quagga.stop(); } catch (e) {}
       }
@@ -16396,38 +17455,70 @@
           src: srcDataUrl, numOfWorkers: 0, locate: true,
           inputStream: { size: 800 },
           locator: { patchSize: patchSize || "medium", halfSample: false },
-          decoder: { readers: ["ean_reader", "ean_8_reader", "upc_reader"] }
+          decoder: { readers: ["ean_reader", "upc_reader"] }
         }, result => {
-          resolve(result && result.codeResult && result.codeResult.code ? result : null);
+          const rawCode = result && result.codeResult && result.codeResult.code ? String(result.codeResult.code).replace(/\D/g, "") : "";
+          if (!rawCode || !isValidEANBarcode(rawCode)) {
+            resolve(null);
+            return;
+          }
+          resolve({ ...result, codeResult: { ...result.codeResult, code: rawCode } });
         });
       });
     }
 
+    function buildQuaggaNormBox(res, cropMeta, fullW, fullH) {
+      if (!res || !res.box || res.box.length !== 4) return null;
+      const xs = res.box.map(p => p[0] + cropMeta.ox);
+      const ys = res.box.map(p => p[1] + cropMeta.oy);
+      return {
+        x: Math.min(...xs) / fullW,
+        y: Math.min(...ys) / fullH,
+        w: (Math.max(...xs) - Math.min(...xs)) / fullW,
+        h: (Math.max(...ys) - Math.min(...ys)) / fullH,
+        isReal: true
+      };
+    }
+
     async function detectBarcodeMultiPass(dataUrl, imgEl) {
-      let res = await detectWithQuaggaPass(dataUrl, "medium");
-      let cropMeta = { ox: 0, oy: 0 };
-      if (!res) {
+      const fullW = imgEl.naturalWidth || 800;
+      const fullH = imgEl.naturalHeight || 800;
+
+      const makeCropDataUrl = (fracW, fracH) => {
         const c = document.createElement("canvas");
-        const iw = imgEl.naturalWidth || 800, ih = imgEl.naturalHeight || 800;
-        const cw = Math.round(iw * 0.8), ch = Math.round(ih * 0.55);
-        const ox = Math.round((iw - cw) / 2), oy = Math.round((ih - ch) / 2);
+        const cw = Math.round(fullW * fracW), ch = Math.round(fullH * fracH);
+        const ox = Math.round((fullW - cw) / 2), oy = Math.round((fullH - ch) / 2);
         c.width = cw; c.height = ch;
         c.getContext("2d").drawImage(imgEl, ox, oy, cw, ch, 0, 0, cw, ch);
-        res = await detectWithQuaggaPass(c.toDataURL("image/jpeg", 0.88), "large");
-        if (res) cropMeta = { ox, oy };
-      }
-      if (res && res.codeResult && res.codeResult.code) {
-        let normBox = null;
-        if (res.box && res.box.length === 4) {
-          const xs = res.box.map(p => p[0] + cropMeta.ox), ys = res.box.map(p => p[1] + cropMeta.oy);
-          const fullW = imgEl.naturalWidth || 800, fullH = imgEl.naturalHeight || 800;
-          normBox = {
-            x: Math.min(...xs) / fullW, y: Math.min(...ys) / fullH,
-            w: (Math.max(...xs) - Math.min(...xs)) / fullW, h: (Math.max(...ys) - Math.min(...ys)) / fullH,
-            isReal: true
+        return { url: c.toDataURL("image/jpeg", 0.9), ox, oy };
+      };
+
+      const res1 = await detectWithQuaggaPass(dataUrl, "medium");
+      if (res1?.codeResult?.code) {
+        // Требуем подтверждение по 2-му проходу (другой кроп/масштаб), чтобы исключить ложные 8-значные срабатывания
+        const crop = makeCropDataUrl(0.85, 0.65);
+        const res2 = await detectWithQuaggaPass(crop.url, "large")
+          || await detectWithQuaggaPass(dataUrl, "large");
+        if (res2?.codeResult?.code && res2.codeResult.code === res1.codeResult.code) {
+          return {
+            code: res1.codeResult.code,
+            normBox: buildQuaggaNormBox(res1, { ox: 0, oy: 0 }, fullW, fullH)
           };
         }
-        return { code: res.codeResult.code, normBox };
+      }
+
+      const cropA = makeCropDataUrl(0.8, 0.55);
+      const resA = await detectWithQuaggaPass(cropA.url, "large");
+      if (resA?.codeResult?.code) {
+        const cropB = makeCropDataUrl(0.72, 0.48);
+        const resB = await detectWithQuaggaPass(cropB.url, "medium")
+          || await detectWithQuaggaPass(cropA.url, "medium");
+        if (resB?.codeResult?.code && resB.codeResult.code === resA.codeResult.code) {
+          return {
+            code: resA.codeResult.code,
+            normBox: buildQuaggaNormBox(resA, { ox: cropA.ox, oy: cropA.oy }, fullW, fullH)
+          };
+        }
       }
       return null;
     }
@@ -16462,6 +17553,7 @@
       loading.classList.remove("hidden");
       loading.classList.add("flex");
       try {
+        window._lastScannerBase64 = dataUrl;
         let imgElement = optionalImgEl || await new Promise((res, rej) => {
           const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
         });
@@ -16497,7 +17589,7 @@
           const [ymin, xmin, ymax, xmax] = parsed.barcode_box.map(Number);
           if (ymax > ymin && xmax > xmin) normBox = { x: xmin / 1000, y: ymin / 1000, w: (xmax - xmin) / 1000, h: (ymax - ymin) / 1000 };
         }
-        if (cleanCode.length >= 8) {
+        if (cleanCode && isValidEANBarcode(cleanCode)) {
           drawHighlightedRegion(normBox, cleanCode);
           if (await fetchProductByBarcode(cleanCode, true)) return;
         } else {
@@ -16533,12 +17625,21 @@
 
     async function fetchProductByBarcode(code, silentIfNotFound) {
       const cleanCode = String(code).replace(/\D/g, "");
+      if (silentIfNotFound && !isValidEANBarcode(cleanCode)) {
+        return false;
+      }
       const loading = document.getElementById("scannerLoading");
+      const loadingText = document.getElementById("scannerLoadingText");
       if (loading) { loading.classList.remove("hidden"); loading.classList.add("flex"); }
       try {
-        const item = await fetchProductByBarcodeOFF(cleanCode);
-        if (item) {
-          showScannedCard({ ...item, weight: item.weight || 100, source: `Штрихкод ${cleanCode}` });
+        let item = await fetchProductByBarcodeOFF(cleanCode);
+        if (item && (item.hasEmptyMacros || hasInvalidZeroMacros(item))) {
+          if (loadingText) loadingText.textContent = `Определяем КБЖУ для «${item.name}» через ИИ...`;
+          const enriched = await enrichBarcodeProductWithGemini(item.name, cleanCode, window._lastScannerBase64 || null);
+          item = enriched || null;
+        }
+        if (item && !hasInvalidZeroMacros(item)) {
+          showScannedCard({ ...item, weight: item.weight || 100, source: item.source || `Штрихкод ${cleanCode}` });
           showToast(`Найден: ${item.name}`);
           return true;
         }
@@ -17244,6 +18345,14 @@
       const dot = document.getElementById("toastDot");
       const text = document.getElementById("toastMsg");
       if (!box || !dot || !text) return;
+
+      const timerBar = document.getElementById("restTimerFloatingBar");
+      const timerVisible = Boolean(timerBar && !timerBar.classList.contains("hidden"));
+      const inWorkoutView = (typeof currentMainView !== "undefined" && currentMainView === "split");
+      box.style.bottom = (timerVisible || inWorkoutView)
+        ? "calc(env(safe-area-inset-bottom, 20px) + 150px)"
+        : "";
+
       text.textContent = msg;
       dot.style.backgroundColor = isError ? "#ef4444" : "var(--accent-cal)";
       box.classList.remove("opacity-0", "translate-y-3");
@@ -18753,18 +19862,19 @@
 
       if (weightsDiffer) {
         if (!repsDiffer) {
-          const wTokens = doneSets.map(s => (s.weight === 0 ? "0" : `${s.weight}`));
-          return ` <span class="text-zinc-500 font-mono">[${wTokens.join("·")} кг]</span>`;
+          const wTokens = doneSets.map((s, i) => `<span class="whitespace-nowrap">${i === 0 ? "[" : ""}${s.weight === 0 ? "0" : s.weight}${i === doneSets.length - 1 ? " кг]" : "·"}</span>`);
+          return `<span class="inline-flex flex-wrap items-center gap-x-0.5 text-zinc-500 font-mono max-w-full">${wTokens.join("")}</span>`;
         } else {
-          const comboTokens = doneSets.map(s => {
+          const comboTokens = doneSets.map((s, i) => {
             const wStr = s.weight === 0 ? "0" : `${s.weight}кг`;
-            return `${wStr}×${s.reps}`;
+            const sep = i < doneSets.length - 1 ? " ·" : "]";
+            return `<span class="whitespace-nowrap">${i === 0 ? "[" : ""}${wStr}×${s.reps}${sep}</span>`;
           });
-          return ` <span class="text-zinc-500 font-mono">[${comboTokens.join(" · ")}]</span>`;
+          return `<span class="inline-flex flex-wrap items-center gap-x-1 text-zinc-500 font-mono max-w-full">${comboTokens.join("")}</span>`;
         }
       } else {
         const repsTokens = doneSets.map(s => s.reps);
-        return ` <span class="text-zinc-500 font-mono">[${repsTokens.join("·")}]</span>`;
+        return `<span class="text-zinc-500 font-mono whitespace-nowrap">[${repsTokens.join("·")}]</span>`;
       }
     }
 
@@ -18847,7 +19957,8 @@
               </div>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
-                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong>${setsBreakdown}</span>
+                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong></span>
+                ${setsBreakdown}
                 ${progressDot}
               </div>
             </div>
@@ -19051,20 +20162,48 @@
         submitBtn.classList.remove("opacity-50", "pointer-events-none");
       }
       if (!data || data.cancelled) {
+        window._pendingReattachNoteCtx = null;
         if (!pendingNoteMedia) {
           document.getElementById("newNoteMediaPreview")?.classList.add("hidden");
         }
         return;
       }
       if (data.error) {
+        window._pendingReattachNoteCtx = null;
         showToast(data.error, true);
         if (!pendingNoteMedia) {
           document.getElementById("newNoteMediaPreview")?.classList.add("hidden");
         }
         return;
       }
+      const reattachCtx = window._pendingReattachNoteCtx;
+      if (reattachCtx && reattachCtx.noteId) {
+        window._pendingReattachNoteCtx = null;
+        const exKey = getExerciseNoteKey(reattachCtx.exName || data.exName || currentActiveNotesExName || "");
+        const list = state.workout?.exerciseNotes?.[exKey];
+        const target = Array.isArray(list) ? list.find(n => n.id === reattachCtx.noteId) : null;
+        if (target) {
+          target.media = {
+            type: data.type || "video",
+            url: normalizeNoteMediaUrl(data.url),
+            audioUrl: data.audioUrl ? normalizeNoteMediaUrl(data.audioUrl) : null,
+            thumbUrl: data.thumbUrl ? normalizeNoteMediaUrl(data.thumbUrl) : null,
+            duration: data.duration || undefined
+          };
+          saveState();
+          if (currentActiveNotesExName) {
+            renderExerciseNotesList(currentActiveNotesExName);
+            renderSetLoggerNotesPreview(currentActiveNotesExName);
+          }
+          showToast(data.type === "video" ? "Видео прикреплено к заметке" : "Медиа обновлено");
+          return;
+        }
+      }
       pendingNoteMedia = {
         ...data,
+        url: normalizeNoteMediaUrl(data.url),
+        audioUrl: data.audioUrl ? normalizeNoteMediaUrl(data.audioUrl) : null,
+        thumbUrl: data.thumbUrl ? normalizeNoteMediaUrl(data.thumbUrl) : null,
         exName: data.exName || currentActiveNotesExName || ""
       };
       renderNewNoteMediaPreview();
@@ -19180,11 +20319,29 @@
       }
     };
 
-    window.handleNoteVideoError = function(vid, url, noteId) {
+    window.reattachNoteVideoFromGallery = function(noteId, exName) {
+      window._pendingReattachNoteCtx = {
+        noteId,
+        exName: exName || currentActiveNotesExName || ""
+      };
+      if (window.webkit?.messageHandlers?.widgetBridge) {
+        window.webkit.messageHandlers.widgetBridge.postMessage({
+          action: "pickNoteMedia",
+          noteId: noteId,
+          exName: exName || currentActiveNotesExName || ""
+        });
+      } else {
+        document.getElementById("noteMediaFileInput")?.click();
+      }
+    };
+
+    window.handleNoteVideoError = function(vid, url, noteId, exName = "") {
       if (!vid) return;
       vid.classList.add("hidden");
       const wrap = document.getElementById("noteVideoWrap_" + noteId) || vid.parentElement;
       if (!wrap || wrap.querySelector(".video-error-fallback")) return;
+      const safeUrl = escapeHtml(url || "").replace(/'/g, "\\'");
+      const safeEx = escapeHtml(exName || currentActiveNotesExName || "").replace(/'/g, "\\'");
       const fb = document.createElement("div");
       fb.className = "video-error-fallback flex flex-col items-center justify-center p-4 bg-zinc-900/90 border border-red-500/30 rounded-xl text-center space-y-2";
       fb.innerHTML = `
@@ -19192,10 +20349,15 @@
           <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
           <span>СБОЙ ЗАГРУЗКИ ВИДЕО</span>
         </div>
-        <p class="text-[10px] text-zinc-400 font-mono">Проверьте соединение в зале</p>
-        <button type="button" onclick="retryNoteVideo('${noteId}', '${escapeHtml(url).replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] mono text-white font-semibold transition active:scale-95">
-          ПОВТОРИТЬ ЗАГРУЗКУ
-        </button>
+        <p class="text-[10px] text-zinc-400 font-mono leading-snug">Локальный файл видео не найден на устройстве</p>
+        <div class="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+          <button type="button" onclick="reattachNoteVideoFromGallery('${noteId}', '${safeEx}')" class="px-3 py-1.5 rounded-lg accent-btn text-[10px] mono font-semibold transition active:scale-95">
+            Выбрать видео заново из галереи
+          </button>
+          <button type="button" onclick="retryNoteVideo('${noteId}', '${safeUrl}')" class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] mono text-white font-semibold transition active:scale-95">
+            Повторить
+          </button>
+        </div>
       `;
       wrap.appendChild(fb);
     };
@@ -19315,7 +20477,7 @@
           mediaHtml = `
             <div class="mt-2 space-y-1.5">
               <div id="noteVideoWrap_${note.id}" class="relative rounded-xl overflow-hidden bg-black border border-white/10">
-                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" onplay="onNoteVideoPlay(this, '${note.id}')" onerror="handleNoteVideoError(this, '${escapeHtml(note.media.url)}', '${note.id}')"></video>
+                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" onplay="onNoteVideoPlay(this, '${note.id}')" onerror="handleNoteVideoError(this, '${escapeHtml(note.media.url)}', '${note.id}', '${escapeHtml(exName || '').replace(/'/g, "\\'")}')"></video>
               </div>
               ${note.media.audioUrl ? `
                 <div class="flex items-center justify-between pt-0.5">
@@ -20100,6 +21262,53 @@
       });
     };
 
+    window.startLiveBarcodeScanLoop = function() {
+      stopLiveBarcodeLoop();
+      if (scannerMode !== "barcode" && scannerMode !== "auto") return;
+      const tick = async () => {
+        if (!videoStream || (scannerMode !== "barcode" && scannerMode !== "auto")) return;
+        const video = document.getElementById("cameraStream");
+        const preview = document.getElementById("photoPreview");
+        const placeholder = document.getElementById("cameraPlaceholder");
+        if (video && video.videoWidth > 0 && !video.paused) {
+          try {
+            const frameUrl = cropImageToViewfinder(video, 720, 560, 0.85);
+            const passRes = await detectWithQuaggaPass(frameUrl, "medium");
+            if (!videoStream) return;
+            const detected = passRes?.codeResult?.code;
+            if (detected && isValidEANBarcode(detected)) {
+              if (window._liveBarcodeLastCode === detected) {
+                window._liveBarcodeConfirmCount = (window._liveBarcodeConfirmCount || 0) + 1;
+              } else {
+                window._liveBarcodeLastCode = detected;
+                window._liveBarcodeConfirmCount = 1;
+              }
+              if (window._liveBarcodeConfirmCount >= 2) {
+                window._lastScannerBase64 = frameUrl;
+                stopCamera();
+                if (preview) {
+                  preview.src = frameUrl;
+                  preview.classList.remove("hidden");
+                }
+                if (placeholder) placeholder.classList.add("hidden");
+                setScannerBadgeText(`ШТРИХКОД // ${detected}`);
+                const bInput = document.getElementById("barcodeInput");
+                if (bInput) bInput.value = detected;
+                if (!(await fetchProductByBarcode(detected, true))) {
+                  await processCapturedDataUrl(frameUrl);
+                }
+                return;
+              }
+            }
+          } catch (e) {}
+        }
+        if (videoStream) {
+          window._liveBarcodeLoopTimer = setTimeout(tick, 320);
+        }
+      };
+      window._liveBarcodeLoopTimer = setTimeout(tick, 450);
+    };
+
     // Запускаем живую камеру в родном широком угле iPhone (без принудительного 1280x960, который вызывал зум)
     window.handleLiveCameraAction = async function() {
       const video = document.getElementById("cameraStream");
@@ -20133,6 +21342,7 @@
         document.getElementById("scannedResultCard")?.classList.add("hidden");
         btnText.textContent = "Снять кадр";
         stopBtn.classList.remove("hidden");
+        window.startLiveBarcodeScanLoop();
       } catch (err) {
         showToast("Откройте камеру через кнопку «Сделать фото / Файл»", true);
       }
@@ -20194,18 +21404,36 @@
       recalcScannedCard();
     };
 
+    function syncScannedPieceWeightHint(unitW) {
+      const hint = document.getElementById("pieceUnitWeightHint");
+      if (hint && unitW > 0) {
+        const cleanW = Math.round(unitW * 10) / 10;
+        hint.textContent = `1 шт = ${cleanW}г`;
+      }
+    }
+
     window.toggleScannedPieceMode = function() {
       scannedPieceModeActive = !scannedPieceModeActive;
       const toggleBtn = document.getElementById("scannedPieceToggle");
       const box = document.getElementById("scannedPieceWeightBox");
       const input = document.getElementById("scannedPieceWeightInput");
+      const pieceRow = document.getElementById("pieceQuickSelectorRow");
       if (scannedPieceModeActive) {
         if (toggleBtn) toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
         if (box) { box.classList.remove("hidden"); box.classList.add("flex"); }
-        if (input && !input.value) input.value = pendingScannedProduct?.pieceWeight || "5";
+        const val = parseFloat(input?.value) || pendingScannedProduct?.pieceWeight || 10;
+        if (input) input.value = val;
+        if (pendingScannedProduct) {
+          pendingScannedProduct.isPiece = true;
+          pendingScannedProduct.pieceWeight = val;
+        }
+        syncScannedPieceWeightHint(val);
+        if (pieceRow) pieceRow.classList.remove("hidden");
       } else {
         if (toggleBtn) toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition";
         if (box) { box.classList.add("hidden"); box.classList.remove("flex"); }
+        if (pieceRow) pieceRow.classList.add("hidden");
+        if (pendingScannedProduct) pendingScannedProduct.isPiece = false;
       }
     };
 
@@ -20213,7 +21441,15 @@
       if (!pendingScannedProduct) return;
       const unitW = parseFloat(document.getElementById("scannedPieceWeightInput")?.value);
       if (unitW > 0) {
-        pendingScannedProduct.pieceWeight = unitW;
+        const cleanUnitW = Math.round(unitW * 10) / 10;
+        pendingScannedProduct.pieceWeight = cleanUnitW;
+        syncScannedPieceWeightHint(cleanUnitW);
+        const count = Math.max(1, Number(pendingScannedProduct.pieceCount) || 1);
+        const totalW = Math.round(count * cleanUnitW);
+        pendingScannedProduct.weight = totalW;
+        const wInput = document.getElementById("scannedResWeightInput");
+        if (wInput) wInput.value = totalW;
+        if (typeof recalcScannedCard === "function") recalcScannedCard();
       }
     };
 
@@ -20275,11 +21511,11 @@
       });
 
       const pieceRow = document.getElementById("pieceQuickSelectorRow");
-      const pieceHint = document.getElementById("pieceUnitWeightHint");
+      const cleanUnitPieceW = unitPieceW > 0 ? Math.round(unitPieceW * 10) / 10 : 0;
       if (pieceRow) {
-        if (isPiece && unitPieceW > 0) {
+        if (isPiece && cleanUnitPieceW > 0) {
           pieceRow.classList.remove("hidden");
-          if (pieceHint) pieceHint.textContent = `1 шт = ${unitPieceW}г`;
+          syncScannedPieceWeightHint(cleanUnitPieceW);
           updatePieceButtonsHighlight(startCount);
         } else {
           pieceRow.classList.add("hidden");
@@ -20308,7 +21544,10 @@
           toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/30 text-[10px] mono text-white bg-white/15 active:scale-95 transition";
           box.classList.remove("hidden");
           box.classList.add("flex");
-          input.value = unitPieceW || 5;
+          const effectiveUnitW = cleanUnitPieceW || 10;
+          input.value = effectiveUnitW;
+          syncScannedPieceWeightHint(effectiveUnitW);
+          pendingScannedProduct.pieceWeight = effectiveUnitW;
         } else {
           toggleBtn.className = "px-2.5 py-1 rounded-lg border border-white/10 text-[10px] mono text-zinc-400 bg-white/[0.04] active:scale-95 transition";
           box.classList.add("hidden");
@@ -20372,11 +21611,11 @@
       if (!pendingScannedProduct) return;
       const unitInput = document.getElementById("scannedPieceWeightInput");
       const unitW = scannedPieceModeActive ? (parseFloat(unitInput ? unitInput.value : "") || pendingScannedProduct.pieceWeight || 5) : null;
-      
       const currentW = Math.max(1, Number(document.getElementById("scannedResWeightInput")?.value) || pendingScannedProduct.weight || 100);
 
-      addFoodEntryFrom100g({
+      const finalized = {
         name: pendingScannedProduct.name,
+        brand: pendingScannedProduct.brand || "",
         cal100: pendingScannedProduct.cal100,
         p100: pendingScannedProduct.p100,
         f100: pendingScannedProduct.f100,
@@ -20384,10 +21623,18 @@
         weight: currentW,
         source: pendingScannedProduct.source,
         standardUnitWeight: unitW,
+        pieceWeight: unitW,
         isPiece: scannedPieceModeActive,
         packageNetWeight: pendingScannedProduct.packageNetWeight
-      });
+      };
 
+      if (window._scannerTargetCtx && applyScannedProductToPlanModal(finalized)) {
+        document.getElementById("scannedResultCard")?.classList.add("hidden");
+        closeScanner();
+        return;
+      }
+
+      addFoodEntryFrom100g(finalized);
       document.getElementById("scannedResultCard")?.classList.add("hidden");
       closeScanner();
     };
@@ -20457,6 +21704,7 @@
       loading.classList.add("flex");
 
       try {
+        window._lastScannerBase64 = dataUrl;
         let imgElement = optionalImgEl || await new Promise((res, rej) => {
           const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
         });
@@ -20611,7 +21859,7 @@ ${knownPiecesContext}
           }
         }
 
-        if (cleanCode.length >= 8 && scannerMode !== "dish") {
+        if (cleanCode && isValidEANBarcode(cleanCode) && scannerMode !== "dish") {
           if (barcodeBox && barcodeBox.isReal) {
             drawHighlightedRegion(barcodeBox, `ШТРИХКОД // ${cleanCode}`, true);
           } else {

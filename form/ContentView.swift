@@ -63,6 +63,8 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
     private var captureSession: AVCaptureSession?
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var hasDetected = false
+    private var lastDetectedCode: String?
+    private var detectionConfirmCount = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -74,6 +76,8 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         hasDetected = false
+        lastDetectedCode = nil
+        detectionConfirmCount = 0
         if let session = captureSession, !session.isRunning {
             DispatchQueue.global(qos: .userInitiated).async {
                 session.startRunning()
@@ -108,7 +112,7 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
         session.addOutput(metadataOutput)
 
         metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-        metadataOutput.metadataObjectTypes = [.ean13, .ean8, .upce, .code128, .code39, .qr]
+        metadataOutput.metadataObjectTypes = [.ean13, .upce]
 
         let preview = AVCaptureVideoPreviewLayer(session: session)
         preview.videoGravity = .resizeAspectFill
@@ -180,17 +184,47 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
         dismiss(animated: true)
     }
 
+    private func isValidEANOrUPC(_ code: String, type: AVMetadataObject.ObjectType) -> Bool {
+        let digits = code.filter { $0.isNumber }
+        if type == .ean13 {
+            guard digits.count == 13 else { return false }
+            let nums = digits.compactMap { Int(String($0)) }
+            guard nums.count == 13 else { return false }
+            var sum = 0
+            for i in 0..<12 {
+                sum += nums[i] * (i % 2 == 0 ? 1 : 3)
+            }
+            let check = (10 - (sum % 10)) % 10
+            return check == nums[12]
+        }
+        if type == .upce {
+            // UPC-E на iOS состоит из 8 цифр и начинается строго с 0 или 1
+            return digits.count == 8 && (digits.first == "0" || digits.first == "1")
+        }
+        return false
+    }
+
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         guard !hasDetected,
               let metadataObj = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-              let stringVal = metadataObj.stringValue else {
+              let stringVal = metadataObj.stringValue,
+              isValidEANOrUPC(stringVal, type: metadataObj.type) else {
             return
         }
+        let cleanCode = stringVal.filter { $0.isNumber }
+        if lastDetectedCode == cleanCode {
+            detectionConfirmCount += 1
+        } else {
+            lastDetectedCode = cleanCode
+            detectionConfirmCount = 1
+        }
+        guard detectionConfirmCount >= 2 else { return }
+
         hasDetected = true
         captureSession?.stopRunning()
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         dismiss(animated: true) { [weak self] in
-            self?.onCodeScanned?(stringVal)
+            self?.onCodeScanned?(cleanCode)
         }
     }
 }
@@ -243,24 +277,62 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         return str
     }
     
-    static func deleteMediaFile(urlStringOrName: String) {
-        guard !urlStringOrName.isEmpty else { return }
-        var cleanName = urlStringOrName
-        if cleanName.hasPrefix("form-media://") {
-            cleanName = String(cleanName.dropFirst("form-media://".count))
+    static var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+
+    static func extractMediaFileName(from raw: String) -> String {
+        var trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        if let qIdx = trimmed.firstIndex(of: "?") {
+            trimmed = String(trimmed[..<qIdx])
         }
-        cleanName = cleanName.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard !cleanName.isEmpty else { return }
-        let fileURL = notesMediaDirectory.appendingPathComponent(cleanName)
-        try? FileManager.default.removeItem(at: fileURL)
+        if trimmed.hasPrefix("form-media://") {
+            trimmed = String(trimmed.dropFirst("form-media://".count))
+        } else if trimmed.hasPrefix("file://") {
+            trimmed = String(trimmed.dropFirst("file://".count))
+        }
+        let comps = trimmed.split(separator: "/").map(String.init).filter { !$0.isEmpty }
+        return comps.last ?? ""
+    }
+
+    static func extractMediaFileName(from url: URL) -> String {
+        let last = url.lastPathComponent.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if !last.isEmpty && last != "/" {
+            return last
+        }
+        return extractMediaFileName(from: url.absoluteString)
+    }
+
+    static func resolveMediaFileURL(rawUrlOrName: String) -> URL? {
+        let fileName = extractMediaFileName(from: rawUrlOrName)
+        guard !fileName.isEmpty else { return nil }
+        let primary = notesMediaDirectory.appendingPathComponent(fileName)
+        if FileManager.default.fileExists(atPath: primary.path) {
+            return primary
+        }
+        let fallback = documentsDirectory.appendingPathComponent(fileName)
+        if FileManager.default.fileExists(atPath: fallback.path) {
+            return fallback
+        }
+        return nil
+    }
+
+    static func deleteMediaFile(urlStringOrName: String) {
+        let fileName = extractMediaFileName(from: urlStringOrName)
+        guard !fileName.isEmpty else { return }
+        try? FileManager.default.removeItem(at: notesMediaDirectory.appendingPathComponent(fileName))
+        try? FileManager.default.removeItem(at: documentsDirectory.appendingPathComponent(fileName))
     }
 
     static func cleanupOrphanedMediaFiles(activeFileNames: Set<String>) {
+        // Не выполняем очистку, если передан пустой набор без явного подтверждения
+        let normalized = Set(activeFileNames.map { extractMediaFileName(from: $0) }.filter { !$0.isEmpty })
         let dir = notesMediaDirectory
         guard let files = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return }
         for file in files {
             guard !file.hasPrefix(".") else { continue }
-            if !activeFileNames.contains(file) && !activeFileNames.contains("form-media://" + file) {
+            if !normalized.contains(file) {
                 let fileURL = dir.appendingPathComponent(file)
                 try? FileManager.default.removeItem(at: fileURL)
             }
@@ -278,11 +350,8 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         
-        let rawName = (url.host ?? "").isEmpty ? url.lastPathComponent : (url.host ?? "")
-        let fileName = rawName.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let fileURL = Self.notesMediaDirectory.appendingPathComponent(fileName)
-        
-        guard FileManager.default.fileExists(atPath: fileURL.path),
+        let fileName = Self.extractMediaFileName(from: url)
+        guard let fileURL = Self.resolveMediaFileURL(rawUrlOrName: fileName),
               let attr = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
               let fileSize = attr[.size] as? UInt64, fileSize > 0 else {
             if isTaskActive(urlSchemeTask) {
@@ -659,14 +728,10 @@ struct WebView: UIViewRepresentable {
                 return
             }
             if action == "cleanupOrphanedMedia" {
-                if let activeList = dict["activeMediaFiles"] as? [String] {
-                    let cleanSet = Set(activeList.map { name -> String in
-                        var s = name
-                        if s.hasPrefix("form-media://") {
-                            s = String(s.dropFirst("form-media://".count))
-                        }
-                        return s.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-                    })
+                let confirmed = dict["confirmed"] as? Bool ?? false
+                if let activeList = dict["activeMediaFiles"] as? [String],
+                   (confirmed || !activeList.isEmpty) {
+                    let cleanSet = Set(activeList.map { FormMediaSchemeHandler.extractMediaFileName(from: $0) }.filter { !$0.isEmpty })
                     FormMediaSchemeHandler.cleanupOrphanedMediaFiles(activeFileNames: cleanSet)
                 }
                 return
