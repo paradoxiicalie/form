@@ -20767,13 +20767,14 @@
           const hasVid = exNotes.some(n => n.media?.type === "video");
           const hasPhoto = exNotes.some(n => n.media?.type === "photo");
           const bLabel = hasVid ? "Видео" : (hasPhoto ? "Фото" : "Заметка");
-          notesBadge = `
-            <span class="px-1.5 py-0.5 rounded text-[9px] mono font-semibold bg-white/[0.08] text-zinc-300 border border-white/10 shrink-0 leading-none flex items-center gap-1">
-              <span>${bLabel}</span>
-              <span class="text-zinc-500 font-bold">${exNotes.length}</span>
-            </span>
-          `;
+          notesBadge = `<span class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[9px] mono font-semibold bg-white/[0.08] text-zinc-300 border border-white/10 leading-none"><span>${bLabel}</span><span class="text-zinc-500 font-bold">${exNotes.length}</span></span>`;
         }
+
+        const rawName = String(ex.name || "");
+        const lastSpaceIdx = rawName.lastIndexOf(" ");
+        const titleWithBadgeHtml = (notesBadge && lastSpaceIdx > 0)
+          ? `${escapeHtml(rawName.slice(0, lastSpaceIdx))} <span class="whitespace-nowrap">${escapeHtml(rawName.slice(lastSpaceIdx + 1))}${notesBadge}</span>`
+          : `${escapeHtml(rawName)}${notesBadge}`;
 
         const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
         const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}')`;
@@ -20782,12 +20783,9 @@
           : "";
 
         return `
-          <div class="exercise-row py-3.5 pr-1 flex items-center justify-between gap-3" data-ex-id="${ex.id}">
+          <div class="exercise-row py-3.5 pr-1 flex items-center justify-between gap-2.5" data-ex-id="${ex.id}">
             <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
-              <div class="flex items-center flex-wrap gap-1.5">
-                <span class="text-[14.5px] font-semibold text-white leading-snug">${escapeHtml(ex.name)}</span>
-                ${notesBadge}
-              </div>
+              <div class="text-[14.5px] font-semibold text-white leading-snug">${titleWithBadgeHtml}</div>
               <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong></span>
