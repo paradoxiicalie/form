@@ -388,15 +388,15 @@
 
     /* Кружки рабочих подходов */
     .set-dot {
-      width: 30px;
-      height: 30px;
+      width: 34px;
+      height: 34px;
       border-radius: 999px;
       border: 1.5px solid rgba(255, 255, 255, 0.18);
       background: rgba(255, 255, 255, 0.03);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: #71717a;
       transition: all 0.15s ease;
@@ -584,9 +584,16 @@
         resize: none !important;
       }
       .sets-row-compact .set-dot {
-        width: 27px !important;
-        height: 27px !important;
-        font-size: 10.5px !important;
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 12px !important;
+      }
+      @media (max-width: 390px) {
+        .sets-row-compact .set-dot {
+          width: 28px !important;
+          height: 28px !important;
+          font-size: 11px !important;
+        }
       }
       #cameraStream, #photoPreview {
         width: 100% !important;
@@ -1100,6 +1107,9 @@
       <!-- Быстрые вкладки самих тренировочных программ -->
       <div id="splitProgramPills" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2 no-scrollbar"></div>
 
+      <!-- Варианты тренировочного дня (А / Б / В...) -->
+      <div id="splitVariantPills" class="no-swipe flex items-center gap-1.5 overflow-x-auto pb-2 mb-1 no-scrollbar hidden"></div>
+
       <!-- Список упражнений выбранного дня (или карточка ОТДЫХА) -->
       <div id="workoutExercisesContainer" class="divide-y divide-white/[0.06] touch-pan-y"></div>
 
@@ -1288,9 +1298,12 @@
             <span id="exNotesMuscleBadge" class="px-2 py-0.5 rounded-full text-[9px] font-semibold mono uppercase tracking-wide bg-white/10 text-zinc-300">Мышцы</span>
             <span class="text-[9px] uppercase tracking-wider font-semibold mono text-zinc-400">База заметок</span>
           </div>
-          <h3 id="exNotesModalTitle" class="text-sm font-semibold text-white truncate">Упражнение</h3>
+          <h3 id="exNotesModalTitle" class="text-sm font-semibold text-white leading-snug line-clamp-2">Упражнение</h3>
         </div>
-        <button type="button" onclick="closeExerciseNotesModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0 ml-2">✕</button>
+        <div class="flex items-center gap-1.5 shrink-0 ml-2">
+          <button type="button" id="btnOpenReplaceExModal" onclick="openReplaceExerciseModal()" class="h-8 px-2.5 rounded-full bg-white/[0.06] hover:bg-white/10 border border-white/10 text-[11px] mono font-semibold text-zinc-200 hover:text-white active:scale-95 transition whitespace-nowrap">⇄ Заменить</button>
+          <button type="button" onclick="closeExerciseNotesModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+        </div>
       </div>
 
       <!-- Список заметок к упражнению в стиле GitHub alerts -->
@@ -1358,6 +1371,101 @@
             + Записать
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- МОДАЛКА: УПРАВЛЕНИЕ ВАРИАНТОМ ТРЕНИРОВОЧНОГО ДНЯ                      -->
+  <!-- ===================================================================== -->
+  <div id="workoutVariantModal" class="sheet-backdrop z-[120]" onclick="if(event.target===this) closeWorkoutVariantModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Вариант дня</span>
+          <h3 id="workoutVariantModalSub" class="text-base font-bold text-white mt-0.5">Настройка варианта</h3>
+        </div>
+        <button type="button" onclick="closeWorkoutVariantModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="space-y-3 bg-zinc-900/75 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Название варианта</label>
+          <input id="workoutVariantTitleInput" type="text" placeholder="Напр. Б: С акцентом на ширину" class="dark-field text-sm font-semibold" />
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" id="btnDeleteWorkoutVariant" onclick="deleteCurrentWorkoutVariant()" class="py-3 px-4 rounded-2xl bg-red-500/15 border border-red-500/25 text-red-400 text-xs font-semibold active:scale-95 transition">
+          Удалить
+        </button>
+        <button type="button" onclick="saveWorkoutVariantTitle()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- МОДАЛКА: БЫСТРАЯ ЗАМЕНА УПРАЖНЕНИЯ В ТЕКУЩЕМ ВАРИАНТЕ                 -->
+  <!-- ===================================================================== -->
+  <div id="replaceExerciseModal" class="sheet-backdrop z-[130]" onclick="if(event.target===this) closeReplaceExerciseModal()">
+    <div class="sheet-panel max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="min-w-0 flex-1 pr-2">
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Замена в варианте</span>
+          <h3 class="text-base font-bold text-white mt-0.5">Заменить упражнение</h3>
+          <p id="replaceExOldNameSub" class="text-[11px] text-zinc-400 truncate mt-0.5"></p>
+        </div>
+        <button type="button" onclick="closeReplaceExerciseModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 shrink-0">✕</button>
+      </div>
+
+      <div id="replaceExHistorySection" class="mb-3 hidden">
+        <div class="text-[10px] mono uppercase tracking-wider text-zinc-500 mb-1.5">Быстрый выбор из базы / вариантов:</div>
+        <div id="replaceExHistoryChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+
+      <div class="space-y-3 bg-zinc-900/75 border border-white/[0.08] rounded-2xl p-3.5 mb-3">
+        <div>
+          <label class="text-[11px] text-zinc-400 block mb-1">Новое название упражнения</label>
+          <input id="replaceExNameInput" type="text" oninput="autoDetectReplaceExerciseMuscle(this.value)" placeholder="Напр. Жим в тренажере Хаммер" class="dark-field text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Мышечная группа</label>
+            <select id="replaceExMuscleSelect" class="dark-field text-xs">
+              <option value="chest">Грудь</option>
+              <option value="back">Спина</option>
+              <option value="legs">Ноги</option>
+              <option value="arms">Плечи / Руки</option>
+              <option value="core">Пресс / Кор</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Подходов</label>
+            <input id="replaceExSetsInput" type="number" min="1" max="8" value="3" class="dark-field mono text-center font-bold" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <div class="flex items-center justify-between gap-1 mb-1">
+              <label class="text-[11px] text-zinc-400 truncate">Рабочий вес</label>
+              <button type="button" onclick="setReplaceExBodyweight()" class="text-[10px] mono px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 shrink-0">Свой вес</button>
+            </div>
+            <input id="replaceExWeightInput" type="number" step="0.5" value="0" class="dark-field mono text-center" />
+          </div>
+          <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Повторения</label>
+            <input id="replaceExRepsInput" type="number" min="1" value="10" class="dark-field mono text-center" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeReplaceExerciseModal()" class="flex-1 py-3 rounded-2xl bg-white/10 text-zinc-300 text-xs font-semibold active:scale-95 transition">Отмена</button>
+        <button type="button" onclick="submitReplaceExerciseInVariant()" class="flex-1 py-3 rounded-2xl accent-btn text-xs font-semibold active:scale-95 transition">Заменить</button>
       </div>
     </div>
   </div>
@@ -9680,8 +9788,116 @@
       return `${y}-${m}-${da}`;
     }
 
+    const WORKOUT_VAR_RU = { A: "А", B: "Б", C: "В", D: "Г", E: "Д", F: "Е", G: "Ж", H: "З", I: "И", J: "К" };
+    const WORKOUT_VAR_ALPHABET = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    window.WORKOUT_VAR_RU = WORKOUT_VAR_RU;
+
+    function getAllProgramExerciseLists(prog) {
+      if (!prog) return [];
+      const lists = [];
+      if (prog.variants && typeof prog.variants === "object") {
+        Object.values(prog.variants).forEach(v => {
+          if (v && Array.isArray(v.exercises)) lists.push(v.exercises);
+        });
+      }
+      if (Array.isArray(prog.exercises) && !lists.includes(prog.exercises)) {
+        lists.push(prog.exercises);
+      }
+      return lists;
+    }
+    window.getAllProgramExerciseLists = getAllProgramExerciseLists;
+
+    function ensureProgramVariants(prog) {
+      if (!prog || typeof prog !== "object") return prog;
+      if (!prog.variants || typeof prog.variants !== "object" || Object.keys(prog.variants).length === 0) {
+        const initialEx = Array.isArray(prog.exercises) ? prog.exercises : [];
+        prog.variants = {
+          A: { title: "А: Основной", exercises: initialEx }
+        };
+        prog.activeVariant = "A";
+      }
+      const keys = Object.keys(prog.variants);
+      let activeVk = prog.activeVariant;
+      if (!activeVk || !prog.variants[activeVk]) {
+        activeVk = keys[0] || "A";
+        prog.activeVariant = activeVk;
+      }
+      keys.forEach((vk, idx) => {
+        const vObj = prog.variants[vk];
+        const ru = WORKOUT_VAR_RU[vk] || vk;
+        if (Array.isArray(vObj)) {
+          prog.variants[vk] = { title: idx === 0 ? `${ru}: Основной` : `${ru}: Вариант ${idx + 1}`, exercises: vObj };
+        } else if (!vObj || typeof vObj !== "object") {
+          prog.variants[vk] = { title: `${ru}: Вариант ${idx + 1}`, exercises: [] };
+        } else {
+          if (!Array.isArray(vObj.exercises)) vObj.exercises = [];
+          if (!vObj.title || !String(vObj.title).trim()) {
+            vObj.title = idx === 0 ? `${ru}: Основной` : `${ru}: Вариант ${idx + 1}`;
+          }
+        }
+      });
+      // После JSON.parse восстанавливаем жесткую ссылку prog.exercises на активный вариант
+      prog.exercises = prog.variants[activeVk].exercises;
+      return prog;
+    }
+    window.ensureProgramVariants = ensureProgramVariants;
+
+    function ensureAllWorkoutProgramVariants() {
+      if (!state.workout || !state.workout.programs) return;
+      Object.values(state.workout.programs).forEach(prog => ensureProgramVariants(prog));
+    }
+    window.ensureAllWorkoutProgramVariants = ensureAllWorkoutProgramVariants;
+
+    function getActiveProgramVariantKey(prog) {
+      if (!prog) return "A";
+      ensureProgramVariants(prog);
+      return prog.activeVariant || "A";
+    }
+    window.getActiveProgramVariantKey = getActiveProgramVariantKey;
+
+    function getActiveProgramExercises(prog) {
+      if (!prog) return [];
+      ensureProgramVariants(prog);
+      return prog.variants[prog.activeVariant].exercises;
+    }
+    window.getActiveProgramExercises = getActiveProgramExercises;
+
+    function setActiveProgramExercises(prog, nextList) {
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      const arr = Array.isArray(nextList) ? nextList : [];
+      prog.variants[prog.activeVariant].exercises = arr;
+      prog.exercises = arr;
+    }
+    window.setActiveProgramExercises = setActiveProgramExercises;
+
+    function syncExerciseProgressionAcrossVariants(prog, sourceEx) {
+      if (!prog || !sourceEx || !sourceEx.name) return;
+      ensureProgramVariants(prog);
+      const normName = String(sourceEx.name).trim().toLowerCase();
+      if (!normName) return;
+      const activeVk = prog.activeVariant;
+      Object.keys(prog.variants || {}).forEach(vk => {
+        if (vk === activeVk) return;
+        const list = prog.variants[vk]?.exercises || [];
+        list.forEach(peerEx => {
+          if (!peerEx || peerEx === sourceEx) return;
+          if (String(peerEx.name || "").trim().toLowerCase() !== normName) return;
+          if (sourceEx.lastWeight !== undefined) peerEx.lastWeight = sourceEx.lastWeight;
+          if (sourceEx.lastReps !== undefined) peerEx.lastReps = sourceEx.lastReps;
+          if (sourceEx.baseWeight !== undefined) peerEx.baseWeight = sourceEx.baseWeight;
+          if (sourceEx.baseReps !== undefined) peerEx.baseReps = sourceEx.baseReps;
+          if (sourceEx.prevWeight !== undefined) peerEx.prevWeight = sourceEx.prevWeight;
+          if (sourceEx.prevReps !== undefined) peerEx.prevReps = sourceEx.prevReps;
+          if (sourceEx.prevSnapshotDate !== undefined) peerEx.prevSnapshotDate = sourceEx.prevSnapshotDate;
+        });
+      });
+    }
+    window.syncExerciseProgressionAcrossVariants = syncExerciseProgressionAcrossVariants;
+
     function checkWorkoutWeekRollover() {
       if (!state.workout) return;
+      ensureAllWorkoutProgramVariants();
       const currentMonday = getMondayKey();
       if (!state.workout.lastMondayKey) {
         state.workout.lastMondayKey = currentMonday;
@@ -9690,7 +9906,9 @@
       if (state.workout.lastMondayKey !== currentMonday) {
         state.workout.weeklySetsByMuscle = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
         Object.values(state.workout.programs || {}).forEach(prog => {
-          (prog.exercises || []).forEach(ex => { ex.setsToday = []; });
+          getAllProgramExerciseLists(prog).forEach(list => {
+            list.forEach(ex => { ex.setsToday = []; });
+          });
         });
         state.workout.lastMondayKey = currentMonday;
         saveState();
@@ -9698,9 +9916,10 @@
     }
 
     function recalculateWeeklySetsFromPrograms() {
+      ensureAllWorkoutProgramVariants();
       const totals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
       Object.values(state.workout.programs || {}).forEach(prog => {
-        (prog.exercises || []).forEach(ex => {
+        getActiveProgramExercises(prog).forEach(ex => {
           const doneCount = (ex.setsToday || []).filter(Boolean).length;
           const m = ex.muscle || "chest";
           if (totals[m] !== undefined) totals[m] += doneCount;
@@ -9979,7 +10198,7 @@
 
     function changeExTargetSets(delta) {
       const prog = state.workout.programs?.[activeSetEdit.progId];
-      const ex = (prog?.exercises || []).find(e => e.id === activeSetEdit.exId);
+      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex) return;
       ex.targetSets = Math.max(1, Math.min(8, (Number(ex.targetSets) || 3) + delta));
       document.getElementById("setExTotalSetsLabel").textContent = ex.targetSets;
@@ -10040,11 +10259,12 @@
     function deleteExerciseFromSplit() {
       const prog = state.workout.programs?.[activeSetEdit.progId];
       if (!prog) return;
-      const exList = prog.exercises || [];
+      const vk = getActiveProgramVariantKey(prog);
+      const exList = getActiveProgramExercises(prog);
       const idx = exList.findIndex(e => e.id === activeSetEdit.exId);
       if (idx === -1) return;
-      lastDeletedExercise = { progId: activeSetEdit.progId, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
-      prog.exercises = exList.filter(e => e.id !== activeSetEdit.exId);
+      lastDeletedExercise = { progId: activeSetEdit.progId, variantKey: vk, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
+      setActiveProgramExercises(prog, exList.filter(e => e.id !== activeSetEdit.exId));
       saveState();
       renderWorkoutAll();
       closeSetLoggerModal();
@@ -10054,11 +10274,12 @@
     function deleteExerciseFromSplitById(progId, exId) {
       const prog = state.workout.programs?.[progId];
       if (!prog) return;
-      const exList = prog.exercises || [];
+      const vk = getActiveProgramVariantKey(prog);
+      const exList = getActiveProgramExercises(prog);
       const idx = exList.findIndex(e => e.id === exId);
       if (idx === -1) return;
-      lastDeletedExercise = { progId, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
-      prog.exercises = exList.filter(e => e.id !== exId);
+      lastDeletedExercise = { progId, variantKey: vk, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
+      setActiveProgramExercises(prog, exList.filter(e => e.id !== exId));
       saveState();
       renderWorkoutAll();
       showUndoExerciseToast();
@@ -10095,13 +10316,16 @@
     function undoDeleteExercise() {
       if (!lastDeletedExercise) return;
       if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
-      const { progId, ex, idx } = lastDeletedExercise;
+      const { progId, variantKey, ex, idx } = lastDeletedExercise;
       lastDeletedExercise = null;
       const prog = state.workout.programs?.[progId];
       if (!prog) return;
-      const list = prog.exercises || [];
+      ensureProgramVariants(prog);
+      const vk = (variantKey && prog.variants?.[variantKey]) ? variantKey : prog.activeVariant;
+      const list = prog.variants[vk].exercises || [];
       list.splice(idx, 0, ex);
-      prog.exercises = list;
+      prog.variants[vk].exercises = list;
+      if (vk === prog.activeVariant) prog.exercises = list;
       saveState();
       renderWorkoutAll();
       const toast = document.getElementById("undoExerciseToast");
@@ -10152,6 +10376,11 @@
 
         row.addEventListener("touchstart", e => {
           if (e.touches.length !== 1) return;
+          if (e.target && e.target.closest(".no-swipe, .overflow-x-auto")) {
+            isSwiping = false;
+            dirDecided = true;
+            return;
+          }
           startX = e.touches[0].clientX;
           startY = e.touches[0].clientY;
           dx = 0;
@@ -10313,11 +10542,11 @@
       }
     }
 
-    function autoDetectExerciseMuscle(name) {
+    function autoDetectExerciseMuscle(name, muscleSelId = "newExMuscle", weightInpId = "newExWeight") {
       if (!name) return;
       const lower = name.toLowerCase();
-      const muscleSel = document.getElementById("newExMuscle");
-      const weightInp = document.getElementById("newExWeight");
+      const muscleSel = document.getElementById(muscleSelId);
+      const weightInp = document.getElementById(weightInpId);
       if (!muscleSel) return;
       if (/пресс|скручиван|планк|вакуум|подъем ног|косые|складк/i.test(lower)) {
         muscleSel.value = "core";
@@ -10341,9 +10570,10 @@
 
       const prog = state.workout.programs[activeProgramId];
       if (!prog) return;
-      if (!Array.isArray(prog.exercises)) prog.exercises = [];
+      ensureProgramVariants(prog);
+      const activeList = getActiveProgramExercises(prog);
 
-      prog.exercises.push({
+      activeList.push({
         id: "ex_" + Date.now(),
         name,
         muscle,
@@ -10352,6 +10582,7 @@
         lastReps,
         setsToday: []
       });
+      setActiveProgramExercises(prog, activeList);
 
       saveState();
       renderWorkoutAll();
@@ -10361,9 +10592,12 @@
 
     function resetCurrentWeekSetsConfirm() {
       Object.values(state.workout.programs || {}).forEach(prog => {
-        (prog.exercises || []).forEach(ex => { ex.setsToday = []; });
+        ensureProgramVariants(prog);
+        getAllProgramExerciseLists(prog).forEach(list => {
+          list.forEach(ex => { ex.setsToday = []; });
+        });
       });
-      state.workout.weeklySetsByMuscle = { chest: 0, back: 0, legs: 0, arms: 0 };
+      state.workout.weeklySetsByMuscle = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
       saveState();
       renderWorkoutAll();
       showToast("Недельные подходы обнулены");
@@ -10380,10 +10614,20 @@
       cutoff.setDate(cutoff.getDate() - 14);
       const cutoffKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
 
-      // Собираем все упражнения из сплита
+      // Собираем все упражнения из сплита (из всех вариантов без дублей по нормализованному имени)
       const allExercises = [];
+      const seenProgNames = new Set();
       Object.values(state.workout.programs || {}).forEach(p => {
-        (p.exercises || []).forEach(ex => allExercises.push({ ...ex, progTitle: p.short }));
+        ensureProgramVariants(p);
+        getAllProgramExerciseLists(p).forEach(list => {
+          list.forEach(ex => {
+            const key = `${p.id}::${(ex.name || "").trim().toLowerCase()}`;
+            if (!seenProgNames.has(key)) {
+              seenProgNames.add(key);
+              allExercises.push({ ...ex, progTitle: p.short });
+            }
+          });
+        });
       });
 
       container.innerHTML = allExercises.map(ex => {
@@ -13128,6 +13372,7 @@
             exerciseNotes: {}
           };
         }
+        ensureAllWorkoutProgramVariants();
         if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
           state.workout.exerciseNotes = {};
         } else {
@@ -13217,6 +13462,7 @@
               logs: [],
               exerciseNotes: {}
             };
+            ensureAllWorkoutProgramVariants();
           }
 
           const hasLegacyBody = (state.body?.weight === 70) || (state.targets?.cal === 2979) || (state.weightLogs?.some(l => l.weight === 70));
@@ -19001,9 +19247,11 @@
           const cloneId = "d_" + dow + "_" + Math.random().toString(36).slice(2, 6);
           state.workout.programs[cloneId] = JSON.parse(JSON.stringify(prog));
           state.workout.programs[cloneId].id = cloneId;
+          ensureProgramVariants(state.workout.programs[cloneId]);
           state.workout.weekSchedule[dow] = cloneId;
           seen.add(cloneId);
         } else {
+          ensureProgramVariants(prog);
           seen.add(assigned);
         }
       });
@@ -19058,9 +19306,11 @@
         const cloneId = "d_" + dow + "_" + Date.now();
         state.workout.programs[cloneId] = JSON.parse(JSON.stringify(src));
         state.workout.programs[cloneId].id = cloneId;
+        ensureProgramVariants(state.workout.programs[cloneId]);
         state.workout.weekSchedule[dow] = cloneId;
         activeProgramId = cloneId;
       } else {
+        ensureProgramVariants(src);
         state.workout.weekSchedule[dow] = progOrRest;
         activeProgramId = progOrRest;
       }
@@ -19068,6 +19318,194 @@
       saveState();
       renderWorkoutAll();
       showToast(`Назначено: ${src.title}`);
+    };
+
+    let variantPressTimer = null;
+    let variantPressTriggered = false;
+    let activeVariantModalCtx = null;
+
+    window.handleVariantPillTouchStart = function(progId, vk) {
+      variantPressTriggered = false;
+      if (variantPressTimer) clearTimeout(variantPressTimer);
+      variantPressTimer = setTimeout(() => {
+        variantPressTriggered = true;
+        openWorkoutVariantModal(progId, vk);
+      }, 500);
+    };
+
+    window.handleVariantPillTouchEnd = function() {
+      if (variantPressTimer) {
+        clearTimeout(variantPressTimer);
+        variantPressTimer = null;
+      }
+    };
+
+    window.switchWorkoutVariant = function(progId, variantKey) {
+      if (variantPressTriggered) {
+        variantPressTriggered = false;
+        return;
+      }
+      const prog = state.workout?.programs?.[progId];
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      if (!prog.variants[variantKey]) return;
+      prog.activeVariant = variantKey;
+      prog.exercises = prog.variants[variantKey].exercises;
+      recalculateWeeklySetsFromPrograms();
+      saveState();
+      renderWorkoutAll();
+    };
+
+    window.addNewWorkoutDayVariant = function(progId) {
+      const prog = state.workout?.programs?.[progId];
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      const existingKeys = Object.keys(prog.variants);
+      let nextKey = WORKOUT_VAR_ALPHABET.find(k => !prog.variants[k]);
+      if (!nextKey) nextKey = "V" + (existingKeys.length + 1);
+      const ru = WORKOUT_VAR_RU[nextKey] || nextKey;
+      const newTitle = `${ru}: Вариант`;
+
+      const srcList = getActiveProgramExercises(prog);
+      const stamp = Date.now();
+      const clonedList = srcList.map((ex, idx) => {
+        const copy = JSON.parse(JSON.stringify(ex));
+        copy.id = `ex_${stamp}_${idx}_${Math.random().toString(36).slice(2, 5)}`;
+        copy.setsToday = [];
+        return copy;
+      });
+
+      prog.variants[nextKey] = {
+        title: newTitle,
+        exercises: clonedList
+      };
+      prog.activeVariant = nextKey;
+      prog.exercises = prog.variants[nextKey].exercises;
+
+      recalculateWeeklySetsFromPrograms();
+      saveState();
+      renderWorkoutAll();
+      showToast(`Создан вариант «${newTitle}»`);
+    };
+
+    window.openWorkoutVariantModal = function(progId, vk) {
+      const prog = state.workout?.programs?.[progId];
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      const targetVk = vk && prog.variants[vk] ? vk : getActiveProgramVariantKey(prog);
+      const vObj = prog.variants[targetVk];
+      if (!vObj) return;
+
+      activeVariantModalCtx = { progId, variantKey: targetVk };
+      const sub = document.getElementById("workoutVariantModalSub");
+      const inp = document.getElementById("workoutVariantTitleInput");
+      const delBtn = document.getElementById("btnDeleteWorkoutVariant");
+      if (sub) sub.textContent = prog.title || prog.short || "Тренировочный день";
+      if (inp) inp.value = vObj.title || "";
+      if (delBtn) {
+        if (Object.keys(prog.variants).length > 1) delBtn.classList.remove("hidden");
+        else delBtn.classList.add("hidden");
+      }
+      document.getElementById("workoutVariantModal")?.classList.add("open");
+    };
+
+    window.closeWorkoutVariantModal = function() {
+      document.getElementById("workoutVariantModal")?.classList.remove("open");
+      activeVariantModalCtx = null;
+    };
+
+    window.saveWorkoutVariantTitle = function() {
+      if (!activeVariantModalCtx) return;
+      const prog = state.workout?.programs?.[activeVariantModalCtx.progId];
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      const vObj = prog.variants[activeVariantModalCtx.variantKey];
+      if (!vObj) return;
+      const inp = document.getElementById("workoutVariantTitleInput");
+      const nextTitle = (inp?.value || "").trim();
+      if (!nextTitle) {
+        showToast("Введите название варианта", true);
+        return;
+      }
+      vObj.title = nextTitle;
+      saveState();
+      renderWorkoutAll();
+      closeWorkoutVariantModal();
+      showToast(`Сохранено: ${nextTitle}`);
+    };
+
+    window.deleteCurrentWorkoutVariant = function() {
+      if (!activeVariantModalCtx) return;
+      const prog = state.workout?.programs?.[activeVariantModalCtx.progId];
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      const keys = Object.keys(prog.variants);
+      if (keys.length <= 1) {
+        showToast("Нельзя удалить единственный вариант", true);
+        return;
+      }
+      const vk = activeVariantModalCtx.variantKey;
+      const oldTitle = prog.variants[vk]?.title || vk;
+      delete prog.variants[vk];
+      const remainingKeys = Object.keys(prog.variants);
+      const fallbackKey = remainingKeys.includes("A") ? "A" : remainingKeys[0];
+      prog.activeVariant = fallbackKey;
+      prog.exercises = prog.variants[fallbackKey].exercises;
+      recalculateWeeklySetsFromPrograms();
+      saveState();
+      renderWorkoutAll();
+      closeWorkoutVariantModal();
+      showToast(`Удален вариант «${oldTitle}»`);
+    };
+
+    window.renderWorkoutVariantPills = function(activeProg) {
+      const varBox = document.getElementById("splitVariantPills");
+      if (!varBox) return;
+      if (!activeProg) {
+        varBox.classList.add("hidden");
+        varBox.innerHTML = "";
+        return;
+      }
+      ensureProgramVariants(activeProg);
+      const activeVk = getActiveProgramVariantKey(activeProg);
+      const keys = Object.keys(activeProg.variants);
+      varBox.classList.remove("hidden");
+
+      const editSvg = `<svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+      const pillsHtml = keys.map(vk => {
+        const isActive = vk === activeVk;
+        const vTitle = activeProg.variants[vk]?.title || `${WORKOUT_VAR_RU[vk] || vk}: Вариант`;
+        const editIconHtml = isActive
+          ? `<span role="button" tabindex="0" onclick="event.stopPropagation(); openWorkoutVariantModal('${activeProg.id}', '${vk}')" class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/15 hover:bg-white/25 text-white shrink-0" title="Настроить вариант">${editSvg}</span>`
+          : "";
+        return `
+          <button
+            type="button"
+            onclick="switchWorkoutVariant('${activeProg.id}', '${vk}')"
+            ontouchstart="handleVariantPillTouchStart('${activeProg.id}', '${vk}')"
+            ontouchend="handleVariantPillTouchEnd()"
+            ontouchmove="handleVariantPillTouchEnd()"
+            ontouchcancel="handleVariantPillTouchEnd()"
+            class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold mono whitespace-nowrap shrink-0 border transition flex items-center gap-1 ${
+              isActive
+                ? 'bg-white/15 border-white/40 text-white'
+                : 'bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-zinc-200'
+            }"
+          >
+            <span>${escapeHtml(vTitle)}</span>${editIconHtml}
+          </button>
+        `;
+      }).join("");
+
+      const addBtnHtml = `
+        <button
+          type="button"
+          onclick="addNewWorkoutDayVariant('${activeProg.id}')"
+          class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold mono whitespace-nowrap shrink-0 border border-dashed border-white/20 bg-white/[0.02] text-zinc-400 hover:text-white hover:border-white/40 transition"
+        >+ Вариант</button>
+      `;
+
+      varBox.innerHTML = pillsHtml + addBtnHtml;
     };
 
     // 5. Полный и безопасный рендер вкладки «ТРЕНИ» (без фантомных кнопок шаблонов!)
@@ -19206,7 +19644,8 @@
         }
       }
 
-      // 5) Список упражнений или карточка ОТДЫХА
+      // 5) Полоса вариантов тренировочного дня + список упражнений или карточка ОТДЫХА
+      renderWorkoutVariantPills(activeProg);
       const exContainer = document.getElementById("workoutExercisesContainer");
       const titleEl = document.getElementById("activeSplitDayTitle");
 
@@ -19229,11 +19668,12 @@
           </div>
         `;
       } else {
+        ensureProgramVariants(activeProg);
         titleEl.textContent = activeProg.title;
         titleEl.onclick = () => openDayManagerModal();
         titleEl.classList.add("cursor-pointer");
 
-        const exList = activeProg.exercises || [];
+        const exList = getActiveProgramExercises(activeProg);
         if (exList.length === 0) {
           exContainer.innerHTML = `
             <div class="py-6 text-center space-y-2.5">
@@ -19488,7 +19928,15 @@
       const t = document.getElementById("newDayTitleInput").value.trim() || `${s} · Тренировка`;
       const newId = "d_" + dow + "_" + Date.now();
 
-      state.workout.programs[newId] = { id: newId, short: s, title: t, exercises: [] };
+      state.workout.programs[newId] = {
+        id: newId,
+        short: s,
+        title: t,
+        activeVariant: "A",
+        variants: { A: { title: "А: Основной", exercises: [] } },
+        exercises: []
+      };
+      ensureProgramVariants(state.workout.programs[newId]);
       state.workout.weekSchedule[dow] = newId;
       activeProgramId = newId;
 
@@ -19500,6 +19948,7 @@
 
     window.restoreDefaultSplitPrograms = function() {
       state.workout.programs = JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS));
+      ensureAllWorkoutProgramVariants();
       state.workout.weekSchedule = { 1: "d1", 2: "d2", 3: "rest", 4: "d3", 5: "rest", 6: "d4", 0: "rest" };
       activeProgramId = "d1";
       saveState();
@@ -20118,7 +20567,8 @@
 
     window.openSetLoggerModal = function(progId, exId, setIdx) {
       const prog = state.workout.programs?.[progId];
-      const ex = (prog?.exercises || []).find(e => e.id === exId);
+      ensureProgramVariants(prog);
+      const ex = getActiveProgramExercises(prog).find(e => e.id === exId);
       if (!ex) return;
 
       ensureExerciseBaseline(ex);
@@ -20155,7 +20605,8 @@
 
     window.confirmSetCompleted = function() {
       const prog = state.workout.programs?.[activeSetEdit.progId];
-      const ex = (prog?.exercises || []).find(e => e.id === activeSetEdit.exId);
+      ensureProgramVariants(prog);
+      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex) return;
 
       ensureExerciseBaseline(ex);
@@ -20184,6 +20635,7 @@
       else state.workout.logs.push(logEntry);
       if (state.workout.logs.length > 400) state.workout.logs.shift();
 
+      syncExerciseProgressionAcrossVariants(prog, ex);
       saveState();
       renderWorkoutAll();
       closeSetLoggerModal();
@@ -20197,7 +20649,8 @@
 
     window.uncheckCurrentSet = function() {
       const prog = state.workout.programs?.[activeSetEdit.progId];
-      const ex = (prog?.exercises || []).find(e => e.id === activeSetEdit.exId);
+      ensureProgramVariants(prog);
+      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex || !Array.isArray(ex.setsToday)) return;
 
       const todayKey = getTodayKey();
@@ -20218,13 +20671,14 @@
         ex.lastReps = ex.prevReps || 10;
       }
 
+      syncExerciseProgressionAcrossVariants(prog, ex);
       saveState();
       renderWorkoutAll();
       closeSetLoggerModal();
       showToast("Подход снят");
     };
 
-    function getSetsBreakdownHtml(ex, targetS) {
+    window.getSetsBreakdownHtml = function(ex, targetS) {
       const doneSets = [];
       for (let idx = 0; idx < targetS; idx++) {
         const s = (ex.setsToday || [])[idx];
@@ -20238,25 +20692,11 @@
 
       const firstW = doneSets[0].weight;
       const weightsDiffer = doneSets.some(s => s.weight !== firstW);
-      const firstR = doneSets[0].reps;
-      const repsDiffer = doneSets.some(s => s.reps !== firstR);
+      const text = weightsDiffer
+        ? `[ ${doneSets.map(s => `${s.weight === 0 ? "0" : s.weight}×${s.reps}`).join(" · ")} ]`
+        : `[ ${doneSets.map(s => s.reps).join(" · ")} ]`;
 
-      if (weightsDiffer) {
-        if (!repsDiffer) {
-          const wTokens = doneSets.map((s, i) => `<span class="whitespace-nowrap">${i === 0 ? "[" : ""}${s.weight === 0 ? "0" : s.weight}${i === doneSets.length - 1 ? " кг]" : "·"}</span>`);
-          return `<span class="inline-flex flex-wrap items-center gap-x-0.5 text-zinc-500 font-mono max-w-full">${wTokens.join("")}</span>`;
-        } else {
-          const comboTokens = doneSets.map((s, i) => {
-            const wStr = s.weight === 0 ? "0" : `${s.weight}кг`;
-            const sep = i < doneSets.length - 1 ? " ·" : "]";
-            return `<span class="whitespace-nowrap">${i === 0 ? "[" : ""}${wStr}×${s.reps}${sep}</span>`;
-          });
-          return `<span class="inline-flex flex-wrap items-center gap-x-1 text-zinc-500 font-mono max-w-full">${comboTokens.join("")}</span>`;
-        }
-      } else {
-        const repsTokens = doneSets.map(s => s.reps);
-        return `<span class="text-zinc-500 font-mono whitespace-nowrap">[${repsTokens.join("·")}]</span>`;
-      }
+      return `<div class="no-swipe overflow-x-auto no-scrollbar whitespace-nowrap max-w-full"><span class="inline-block text-[10.5px] font-mono text-zinc-400 bg-white/[0.04] border border-white/[0.06] rounded-md px-1.5 py-0.5 leading-tight">${text}</span></div>`;
     }
 
     const prevRenderWorkoutAll = window.renderWorkoutAll;
@@ -20266,12 +20706,15 @@
       const dow = Number.isInteger(Number(selectedWeekdayKey)) ? Number(selectedWeekdayKey) : new Date().getDay();
       const assignedId = state.workout.weekSchedule?.[dow] || "rest";
       const activeProg = assignedId !== "rest" ? state.workout.programs?.[assignedId] : null;
-      if (!activeProg || !Array.isArray(activeProg.exercises) || activeProg.exercises.length === 0) return;
+      if (!activeProg) return;
+      ensureProgramVariants(activeProg);
+      const activeExercises = getActiveProgramExercises(activeProg);
+      if (activeExercises.length === 0) return;
 
       const exContainer = document.getElementById("workoutExercisesContainer");
       if (!exContainer) return;
 
-      exContainer.innerHTML = activeProg.exercises.map(ex => {
+      exContainer.innerHTML = activeExercises.map(ex => {
         ensureExerciseBaseline(ex);
         const bestToday = getBestSetFromList(ex.setsToday);
         const curW = (ex.lastWeight !== undefined && ex.lastWeight !== null) 
@@ -20285,6 +20728,7 @@
         const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
         const mColor = mMeta.color || mMeta.colorVar || "var(--accent-cal)";
         const mBg = mMeta.bg || "rgba(255,255,255,0.06)";
+        const shortMuscle = ex.muscle === "arms" ? "Плечи/Руки" : (ex.muscle === "core" ? "Пресс/Кор" : mMeta.label);
 
         let circlesHtml = "";
         for (let idx = 0; idx < targetS; idx++) {
@@ -20309,9 +20753,9 @@
           const diffW = round1((Number(bestToday.weight) || 0) - (Number(ex.prevWeight) || 0));
           const diffR = (Number(bestToday.reps) || 0) - (Number(ex.prevReps) || 0);
           if (diffW > 0) {
-            progressDot = `<span class="text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0">+${diffW} кг ↑</span>`;
+            progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffW} кг ↑</span>`;
           } else if (diffW === 0 && diffR > 0) {
-            progressDot = `<span class="text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0">+${diffR} повт. ↑</span>`;
+            progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffR} повт. ↑</span>`;
           }
         }
 
@@ -20322,28 +20766,33 @@
           const hasPhoto = exNotes.some(n => n.media?.type === "photo");
           const bLabel = hasVid ? "Видео" : (hasPhoto ? "Фото" : "Заметка");
           notesBadge = `
-            <span class="px-1.5 py-0.5 rounded text-[9px] mono font-semibold bg-white/[0.08] text-zinc-300 border border-white/10 shrink-0 leading-none flex items-center gap-1">
+            <span class="px-1.5 py-0.5 rounded text-[9px] mono font-semibold bg-white/[0.08] text-zinc-300 border border-white/10 shrink-0 leading-none flex items-center gap-1 mt-0.5">
               <span>${bLabel}</span>
               <span class="text-zinc-500 font-bold">${exNotes.length}</span>
             </span>
           `;
         }
 
+        const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
+        const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}')`;
+
         return `
-          <div class="exercise-row py-3.5 flex items-center justify-between gap-2.5" data-ex-id="${ex.id}">
-            <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
-              <div class="flex items-center gap-2 min-w-0">
-                <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                ${notesBadge}
-              </div>
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
-                <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
-                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong></span>
-                ${setsBreakdown}
-                ${progressDot}
-              </div>
+          <div class="exercise-row py-3.5" data-ex-id="${ex.id}">
+            <div class="flex items-start justify-between gap-2 w-full cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
+              <div class="text-[15px] font-semibold text-white leading-snug line-clamp-2 min-w-0">${escapeHtml(ex.name)}</div>
+              ${notesBadge}
             </div>
-            <div class="flex items-center ${targetS >= 4 ? 'gap-1 sets-row-compact' : 'gap-1.5'} shrink-0">${circlesHtml}</div>
+            <div class="flex items-center justify-between gap-2.5 mt-2">
+              <div class="min-w-0 flex-1 flex flex-col gap-1.5 cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
+                <div class="flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden text-[11px] mono text-zinc-400">
+                  <span class="px-1.5 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${shortMuscle}</span>
+                  <span class="truncate min-w-0 text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong></span>
+                  ${progressDot}
+                </div>
+                ${setsBreakdown}
+              </div>
+              <div class="flex items-center ${targetS >= 4 ? 'gap-1.5 sets-row-compact' : 'gap-1.5'} shrink-0">${circlesHtml}</div>
+            </div>
           </div>
         `;
       }).join("");
@@ -21014,19 +21463,50 @@
       container.innerHTML = notes.map(n => renderSingleNoteCardHtml(n, exName)).join("");
     };
 
-    window.openExerciseNotesModal = function(exName) {
+    let currentActiveNotesCtx = { exName: "", progId: null, exId: null };
+    window._replaceExercisePresets = [];
+
+    window.openExerciseNotesModal = function(exName, progId = null, exId = null) {
       currentActiveNotesExName = exName;
       const modal = document.getElementById("exerciseNotesModal");
       const title = document.getElementById("exNotesModalTitle");
       const badge = document.getElementById("exNotesMuscleBadge");
+      const replaceBtn = document.getElementById("btnOpenReplaceExModal");
       if (title) title.textContent = exName;
 
+      let resolvedProgId = progId;
+      let resolvedExId = exId;
+      const targetProg = resolvedProgId ? state.workout?.programs?.[resolvedProgId] : state.workout?.programs?.[activeProgramId];
+      if (targetProg) {
+        ensureProgramVariants(targetProg);
+        const list = getActiveProgramExercises(targetProg);
+        const matched = resolvedExId
+          ? list.find(e => e.id === resolvedExId)
+          : list.find(e => (e.name || "").trim().toLowerCase() === (exName || "").trim().toLowerCase());
+        if (matched) {
+          resolvedProgId = targetProg.id;
+          resolvedExId = matched.id;
+        } else {
+          resolvedExId = null;
+        }
+      }
+      currentActiveNotesCtx = { exName, progId: resolvedProgId || null, exId: resolvedExId || null };
+
+      if (replaceBtn) {
+        if (currentActiveNotesCtx.progId && currentActiveNotesCtx.exId) replaceBtn.classList.remove("hidden");
+        else replaceBtn.classList.add("hidden");
+      }
+
       let muscle = "chest";
+      const normExName = (exName || "").trim().toLowerCase();
       Object.values(state.workout?.programs || {}).forEach(p => {
-        (p.exercises || []).forEach(e => {
-          if (e.name.trim().toLowerCase() === exName.trim().toLowerCase() && e.muscle) {
-            muscle = e.muscle;
-          }
+        ensureProgramVariants(p);
+        getAllProgramExerciseLists(p).forEach(list => {
+          list.forEach(e => {
+            if ((e.name || "").trim().toLowerCase() === normExName && e.muscle) {
+              muscle = e.muscle;
+            }
+          });
         });
       });
       const mMeta = MUSCLE_META[muscle] || MUSCLE_META.chest;
@@ -21049,6 +21529,195 @@
 
       renderExerciseNotesList(exName);
       if (modal) modal.classList.add("open");
+    };
+
+    window.autoDetectReplaceExerciseMuscle = function(name) {
+      autoDetectExerciseMuscle(name, "replaceExMuscleSelect", "replaceExWeightInput");
+    };
+
+    window.setReplaceExBodyweight = function() {
+      const inp = document.getElementById("replaceExWeightInput");
+      if (inp) {
+        inp.value = 0;
+        showToast("Установлен свой вес (0 кг)");
+      }
+    };
+
+    window.selectReplaceExercisePreset = function(idx) {
+      const preset = (window._replaceExercisePresets || [])[idx];
+      if (!preset) return;
+      const nameInp = document.getElementById("replaceExNameInput");
+      const muscleSel = document.getElementById("replaceExMuscleSelect");
+      const setsInp = document.getElementById("replaceExSetsInput");
+      const weightInp = document.getElementById("replaceExWeightInput");
+      const repsInp = document.getElementById("replaceExRepsInput");
+
+      if (nameInp) nameInp.value = String(preset.name || "");
+      if (muscleSel) muscleSel.value = String(preset.muscle || "chest");
+      if (setsInp) setsInp.value = String(preset.targetSets || 3);
+      if (weightInp) weightInp.value = String((preset.lastWeight !== undefined && preset.lastWeight !== null) ? preset.lastWeight : 0);
+      if (repsInp) repsInp.value = String(preset.lastReps || 10);
+    };
+
+    window.openReplaceExerciseModal = function() {
+      const prog = state.workout?.programs?.[currentActiveNotesCtx.progId];
+      if (!prog) {
+        showToast("Упражнение не привязано к дню", true);
+        return;
+      }
+      ensureProgramVariants(prog);
+      const activeList = getActiveProgramExercises(prog);
+      const oldEx = activeList.find(e => e.id === currentActiveNotesCtx.exId);
+      if (!oldEx) {
+        showToast("Упражнение не найдено в текущем варианте", true);
+        return;
+      }
+
+      const oldNorm = (oldEx.name || "").trim().toLowerCase();
+      const sub = document.getElementById("replaceExOldNameSub");
+      const nameInp = document.getElementById("replaceExNameInput");
+      const muscleSel = document.getElementById("replaceExMuscleSelect");
+      const setsInp = document.getElementById("replaceExSetsInput");
+      const weightInp = document.getElementById("replaceExWeightInput");
+      const repsInp = document.getElementById("replaceExRepsInput");
+
+      if (sub) sub.textContent = `Текущее: ${oldEx.name}`;
+      if (nameInp) nameInp.value = "";
+      if (muscleSel) muscleSel.value = oldEx.muscle || "chest";
+      if (setsInp) setsInp.value = Math.max(1, Number(oldEx.targetSets) || 3);
+      if (weightInp) weightInp.value = (oldEx.lastWeight !== undefined && oldEx.lastWeight !== null) ? oldEx.lastWeight : 0;
+      if (repsInp) repsInp.value = oldEx.lastReps || 10;
+
+      const presetsMap = new Map();
+      const upsertPreset = (candidate) => {
+        const cleanName = (candidate?.name || "").trim();
+        const key = cleanName.toLowerCase();
+        if (!key || key === oldNorm) return;
+        const normalized = {
+          name: cleanName,
+          muscle: candidate.muscle && MUSCLE_META[candidate.muscle] ? candidate.muscle : "chest",
+          targetSets: Math.max(1, Math.min(8, Number(candidate.targetSets) || 3)),
+          lastWeight: (candidate.lastWeight !== undefined && candidate.lastWeight !== null && !isNaN(Number(candidate.lastWeight))) ? Number(candidate.lastWeight) : 0,
+          lastReps: Math.max(1, Number(candidate.lastReps) || 10)
+        };
+        if (!presetsMap.has(key)) {
+          presetsMap.set(key, normalized);
+        } else {
+          const prev = presetsMap.get(key);
+          if (normalized.lastWeight > prev.lastWeight || (prev.lastWeight === 0 && normalized.lastWeight === 0 && normalized.lastReps > prev.lastReps)) {
+            presetsMap.set(key, normalized);
+          }
+        }
+      };
+
+      Object.values(state.workout?.programs || {}).forEach(p => {
+        ensureProgramVariants(p);
+        getAllProgramExerciseLists(p).forEach(list => {
+          list.forEach(ex => upsertPreset(ex));
+        });
+      });
+
+      const logs = Array.isArray(state.workout?.logs) ? state.workout.logs : [];
+      for (let i = logs.length - 1; i >= 0; i--) {
+        const l = logs[i];
+        if (!l || !l.exName) continue;
+        const key = l.exName.trim().toLowerCase();
+        if (key === oldNorm) continue;
+        if (!presetsMap.has(key)) {
+          upsertPreset({ name: l.exName, muscle: l.muscle, targetSets: 3, lastWeight: l.weight, lastReps: l.reps });
+        }
+      }
+
+      Object.keys(state.workout?.exerciseNotes || {}).forEach(nKey => {
+        const cleanKey = (nKey || "").trim();
+        if (!cleanKey || cleanKey === oldNorm || presetsMap.has(cleanKey)) return;
+        const capName = cleanKey.charAt(0).toUpperCase() + cleanKey.slice(1);
+        upsertPreset({ name: capName, muscle: oldEx.muscle || "chest", targetSets: oldEx.targetSets || 3, lastWeight: 0, lastReps: 10 });
+      });
+
+      const presets = Array.from(presetsMap.values()).slice(0, 24);
+      window._replaceExercisePresets = presets;
+
+      const histSec = document.getElementById("replaceExHistorySection");
+      const chipsBox = document.getElementById("replaceExHistoryChips");
+      if (histSec && chipsBox) {
+        if (presets.length > 0) {
+          histSec.classList.remove("hidden");
+          chipsBox.innerHTML = presets.map((p, idx) => {
+            const wTxt = p.lastWeight === 0 ? "Свой вес" : `${p.lastWeight}кг`;
+            return `
+              <button
+                type="button"
+                onclick="selectReplaceExercisePreset(${idx})"
+                class="px-2.5 py-1 rounded-xl text-[11px] bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-200 whitespace-nowrap shrink-0 transition"
+              >
+                ${escapeHtml(p.name)} <span class="text-zinc-500 mono text-[10px]">${wTxt}×${p.lastReps}</span>
+              </button>
+            `;
+          }).join("");
+        } else {
+          histSec.classList.add("hidden");
+          chipsBox.innerHTML = "";
+        }
+      }
+
+      document.getElementById("replaceExerciseModal")?.classList.add("open");
+    };
+
+    window.closeReplaceExerciseModal = function() {
+      document.getElementById("replaceExerciseModal")?.classList.remove("open");
+    };
+
+    window.submitReplaceExerciseInVariant = function() {
+      const prog = state.workout?.programs?.[currentActiveNotesCtx.progId];
+      if (!prog) return;
+      ensureProgramVariants(prog);
+      const activeList = getActiveProgramExercises(prog);
+      const idx = activeList.findIndex(e => e.id === currentActiveNotesCtx.exId);
+      if (idx < 0) {
+        showToast("Упражнение не найдено", true);
+        return;
+      }
+
+      const newName = String(document.getElementById("replaceExNameInput")?.value ?? "").trim();
+      if (!newName) {
+        showToast("Введите название упражнения", true);
+        return;
+      }
+
+      const muscle = document.getElementById("replaceExMuscleSelect")?.value || "chest";
+      const targetSets = Math.max(1, Math.min(8, parseInt(document.getElementById("replaceExSetsInput")?.value, 10) || 3));
+      const wRaw = String(document.getElementById("replaceExWeightInput")?.value ?? "").trim();
+      const lastWeight = wRaw === "" ? 0 : Math.max(0, parseFloat(wRaw) || 0);
+      const lastReps = Math.max(1, parseInt(document.getElementById("replaceExRepsInput")?.value, 10) || 10);
+
+      const newEx = {
+        id: "ex_" + Date.now() + "_" + Math.random().toString(36).slice(2, 5),
+        name: newName,
+        muscle,
+        targetSets,
+        lastWeight,
+        lastReps,
+        baseWeight: lastWeight,
+        baseReps: lastReps,
+        prevWeight: lastWeight,
+        prevReps: lastReps,
+        prevSnapshotDate: getTodayKey(),
+        setsToday: []
+      };
+
+      activeList[idx] = newEx;
+      setActiveProgramExercises(prog, activeList);
+
+      recalculateWeeklySetsFromPrograms();
+      saveState();
+      renderWorkoutAll();
+      closeReplaceExerciseModal();
+
+      if (document.getElementById("exerciseNotesModal")?.classList.contains("open")) {
+        openExerciseNotesModal(newName, prog.id, newEx.id);
+      }
+      showToast(`Заменено на «${newName}»`);
     };
 
     window.closeExerciseNotesModal = function() {
@@ -21243,17 +21912,20 @@
 
       const uniqueExercisesMap = new Map();
       Object.values(state.workout?.programs || {}).forEach(p => {
-        (p.exercises || []).forEach(ex => {
-          ensureExerciseBaseline(ex);
-          const key = ex.name.trim().toLowerCase();
-          if (!uniqueExercisesMap.has(key)) {
-            uniqueExercisesMap.set(key, { ...ex, progTitle: p.short });
-          } else {
-            const existing = uniqueExercisesMap.get(key);
-            const curDone = (ex.setsToday || []).filter(Boolean).length;
-            const oldDone = (existing.setsToday || []).filter(Boolean).length;
-            if (curDone > oldDone) uniqueExercisesMap.set(key, { ...ex, progTitle: p.short });
-          }
+        ensureProgramVariants(p);
+        getAllProgramExerciseLists(p).forEach(list => {
+          list.forEach(ex => {
+            ensureExerciseBaseline(ex);
+            const key = ex.name.trim().toLowerCase();
+            if (!uniqueExercisesMap.has(key)) {
+              uniqueExercisesMap.set(key, { ...ex, progTitle: p.short });
+            } else {
+              const existing = uniqueExercisesMap.get(key);
+              const curDone = (ex.setsToday || []).filter(Boolean).length;
+              const oldDone = (existing.setsToday || []).filter(Boolean).length;
+              if (curDone > oldDone) uniqueExercisesMap.set(key, { ...ex, progTitle: p.short });
+            }
+          });
         });
       });
 
@@ -22417,12 +23089,14 @@ ${knownPiecesContext}
         const progId = schedule[dow];
         if (!progId || progId === "rest") return;
         const prog = programs[progId];
-        if (!prog || !Array.isArray(prog.exercises)) return;
+        if (!prog) return;
+        ensureProgramVariants(prog);
+        const activeExList = getActiveProgramExercises(prog);
 
         const isNewProgForDone = !seenDoneProgs.has(progId);
         if (isNewProgForDone) seenDoneProgs.add(progId);
 
-        prog.exercises.forEach(ex => {
+        activeExList.forEach(ex => {
           const m = (ex.muscle && doneTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
           const targetS = Math.max(1, Number(ex.targetSets) || 3);
           const doneS = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
@@ -22475,7 +23149,9 @@ ${knownPiecesContext}
         targetEditorModal: () => typeof closeTargetEditorModal === "function" && closeTargetEditorModal(),
         confirmDeleteDayModal: () => typeof closeConfirmDeleteDayModal === "function" && closeConfirmDeleteDayModal(),
         dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal(),
-        exerciseNotesModal: () => typeof closeExerciseNotesModal === "function" && closeExerciseNotesModal()
+        exerciseNotesModal: () => typeof closeExerciseNotesModal === "function" && closeExerciseNotesModal(),
+        workoutVariantModal: () => typeof closeWorkoutVariantModal === "function" && closeWorkoutVariantModal(),
+        replaceExerciseModal: () => typeof closeReplaceExerciseModal === "function" && closeReplaceExerciseModal()
       };
 
       if (map[modalId]) {
