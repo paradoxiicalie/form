@@ -588,11 +588,21 @@
         height: 28px !important;
         font-size: 11px !important;
       }
+      .sets-row-tight .set-dot {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 10px !important;
+      }
       @media (max-width: 390px) {
         .sets-row-compact .set-dot {
           width: 26px !important;
           height: 26px !important;
           font-size: 10.5px !important;
+        }
+        .sets-row-tight .set-dot {
+          width: 22px !important;
+          height: 22px !important;
+          font-size: 9.5px !important;
         }
       }
       #cameraStream, #photoPreview {
@@ -1223,7 +1233,7 @@
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="text-[11px] text-zinc-400 block mb-1">Мышечная группа</label>
-            <select id="newExMuscle" class="dark-field text-xs">
+            <select id="newExMuscle" class="dark-field dark-select-center text-xs text-center">
               <option value="chest">Грудь</option>
               <option value="back">Спина</option>
               <option value="legs">Ноги</option>
@@ -1435,7 +1445,7 @@
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="text-[11px] text-zinc-400 block mb-1">Мышечная группа</label>
-            <select id="replaceExMuscleSelect" class="dark-field text-xs">
+            <select id="replaceExMuscleSelect" class="dark-field dark-select-center text-xs text-center">
               <option value="chest">Грудь</option>
               <option value="back">Спина</option>
               <option value="legs">Ноги</option>
@@ -20699,8 +20709,8 @@
         return `<span class="whitespace-nowrap">${prefix}${core}${suffix}</span>`;
       });
 
-      return `<span class="inline-flex flex-wrap items-center gap-x-1 text-zinc-500 font-mono">${tokens.join("")}</span>`;
-    }
+      return tokens.join("");
+    };
 
     const prevRenderWorkoutAll = window.renderWorkoutAll;
     window.renderWorkoutAll = function() {
@@ -20779,8 +20789,9 @@
         const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
         const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}')`;
         const metaSecondRow = (setsBreakdown || progressDot)
-          ? `<div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] mono">${setsBreakdown}${progressDot}</div>`
+          ? `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] mono text-zinc-500">${setsBreakdown}${progressDot}</div>`
           : "";
+        const setsRowClass = targetS >= 5 ? 'gap-[2px] sets-row-tight' : (targetS === 4 ? 'gap-1 sets-row-compact' : 'gap-1.5');
 
         return `
           <div class="exercise-row py-3.5 pr-1 flex items-center justify-between gap-2.5" data-ex-id="${ex.id}">
@@ -20792,7 +20803,7 @@
               </div>
               ${metaSecondRow}
             </div>
-            <div class="flex items-center ${targetS >= 4 ? 'gap-1 sets-row-compact' : 'gap-1.5'} shrink-0">${circlesHtml}</div>
+            <div class="flex items-center ${setsRowClass} shrink-0">${circlesHtml}</div>
           </div>
         `;
       }).join("");
@@ -20967,6 +20978,10 @@
     };
 
     window.onNoteMediaLoading = function(info) {
+      if (window._pendingReattachNoteCtx) {
+        showToast(info?.type === "video" ? "Обработка видео..." : "Обработка фото...");
+        return;
+      }
       const preview = document.getElementById("newNoteMediaPreview");
       const title = document.getElementById("newNoteMediaTitle");
       const sub = document.getElementById("newNoteMediaSub");
@@ -20994,7 +21009,7 @@
       if (!data || data.cancelled) {
         window._pendingReattachNoteCtx = null;
         if (!pendingNoteMedia) {
-          document.getElementById("newNoteMediaPreview")?.classList.add("hidden");
+          clearNewNoteMedia();
         }
         return;
       }
@@ -21002,13 +21017,16 @@
         window._pendingReattachNoteCtx = null;
         showToast(data.error, true);
         if (!pendingNoteMedia) {
-          document.getElementById("newNoteMediaPreview")?.classList.add("hidden");
+          clearNewNoteMedia();
         }
         return;
       }
       const reattachCtx = window._pendingReattachNoteCtx;
       if (reattachCtx && reattachCtx.noteId) {
         window._pendingReattachNoteCtx = null;
+        if (!pendingNoteMedia) {
+          clearNewNoteMedia();
+        }
         const exKey = getExerciseNoteKey(reattachCtx.exName || data.exName || currentActiveNotesExName || "");
         const list = state.workout?.exerciseNotes?.[exKey];
         const target = Array.isArray(list) ? list.find(n => n.id === reattachCtx.noteId) : null;

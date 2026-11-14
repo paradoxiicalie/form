@@ -61,6 +61,32 @@ get_paired_device() {
     return 1
 }
 
+get_profile_info() {
+    local prof_path="$1"
+    if [[ ! -f "$prof_path" ]]; then
+        echo "0|0|none"
+        return
+    fi
+    security cms -D -i "$prof_path" 2>/dev/null | python3 -c "
+import sys, plistlib, datetime
+try:
+    data = sys.stdin.buffer.read()
+    if data:
+        pl = plistlib.loads(data)
+        exp = pl.get('ExpirationDate')
+        if exp:
+            exp_ts = int(exp.timestamp()) if hasattr(exp, 'timestamp') else 0
+            now_ts = int(datetime.datetime.now().timestamp())
+            rem_sec = max(0, exp_ts - now_ts)
+            exp_str = exp.strftime('%Y-%m-%d %H:%M')
+            print(f'{exp_ts}|{rem_sec}|{exp_str}')
+            sys.exit(0)
+except Exception:
+    pass
+print('0|0|none')
+" 2>/dev/null || echo "0|0|none"
+}
+
 show_status() {
     echo -e "${CLR_CYAN}======================================================${CLR_RESET}"
     echo -e "${CLR_CYAN}        FORM // SYSTEM — СТАТУС СЕРТИФИКАТА И АВТОМАТИЗАЦИИ${CLR_RESET}"
@@ -78,6 +104,35 @@ show_status() {
         echo -e "Сопряжение: ${CLR_YELLOW}Ожидание сопряжения с iPhone...${CLR_RESET}"
     fi
 
+    # Ищем актуальный профиль form.app
+    local main_prov
+    main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | while read -r p; do
+        if security cms -D -i "$p" 2>/dev/null | grep -q "com.form.app.form<"; then
+            echo "$p"
+            break
+        fi
+    done)
+    [[ -z "$main_prov" ]] && main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | head -n 1)
+
+    if [[ -n "$main_prov" && -f "$main_prov" ]]; then
+        local prof_info
+        prof_info=$(get_profile_info "$main_prov")
+        local exp_ts="${prof_info%%|*}"
+        local rest="${prof_info#*|}"
+        local rem_sec="${rest%%|*}"
+        local exp_str="${rest#*|}"
+        local rem_days=$((rem_sec / 86400))
+        local rem_hours=$(((rem_sec % 86400) / 3600))
+
+        if [[ $rem_sec -gt 0 ]]; then
+            echo -e "Профиль Apple: ${CLR_GREEN}АКТИВЕН до $exp_str${CLR_RESET} (осталось: $rem_days дн. $rem_hours ч.)"
+        else
+            echo -e "Профиль Apple: ${CLR_RED}ИСТЕК ($exp_str)${CLR_RESET}. Откройте Xcode -> Accounts для обновления!"
+        fi
+    else
+        echo -e "Профиль Apple: ${CLR_YELLOW}Не найден в UserData/Provisioning Profiles${CLR_RESET}"
+    fi
+
     if [[ -f "$STATE_FILE" ]]; then
         local last_run
         last_run=$(cat "$STATE_FILE" 2>/dev/null)
@@ -86,26 +141,13 @@ show_status() {
         local elapsed=$((now - last_run))
         local days=$((elapsed / 86400))
         local hours=$(((elapsed % 86400) / 3600))
-        local remaining_days=$((7 - days))
 
         local last_date
         last_date=$(date -r "$last_run" "+%Y-%m-%d %H:%M:%S")
 
-        echo -e "Последнее обновление: ${CLR_CYAN}$last_date${CLR_RESET} ($days дн. $hours ч. назад)"
-        if [[ $remaining_days -gt 0 ]]; then
-            echo -e "До истечения 7 дней: ${CLR_GREEN}осталось ~$remaining_days дн.${CLR_RESET}"
-        else
-            echo -e "До истечения 7 дней: ${CLR_RED}Сертификат мог истечь! Требуется запуск.${CLR_RESET}"
-        fi
-
-        if [[ $elapsed -ge $MAX_AGE_SECONDS ]]; then
-            echo -e "План автообновления: ${CLR_YELLOW}ПОРА ОБНОВЛЯТЬ (прошло >= $MAX_AGE_DAYS дней)${CLR_RESET}"
-        else
-            local next_hours=$(((MAX_AGE_SECONDS - elapsed) / 3600))
-            echo -e "План автообновления: ${CLR_GREEN}В норме (плановое обновление через ~$next_hours ч.)${CLR_RESET}"
-        fi
+        echo -e "Последняя установка: ${CLR_CYAN}$last_date${CLR_RESET} ($days дн. $hours ч. назад)"
     else
-        echo -e "Последнее обновление: ${CLR_YELLOW}Еще не запускалось${CLR_RESET}"
+        echo -e "Последняя установка: ${CLR_YELLOW}Еще не запускалось${CLR_RESET}"
     fi
 
     echo -e "${CLR_CYAN}------------------------------------------------------${CLR_RESET}"
@@ -171,19 +213,48 @@ run_autoresign() {
         cp -f "$PROJECT_DIR/index.html" "$PROJECT_DIR/form/index.html"
     fi
 
-    # 3. Собираем проект с обновлением профилей (-allowProvisioningUpdates)
+    # 3. Проверяем остаток жизни текущего профиля form.app
+    local main_prov
+    main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | while read -r p; do
+        if security cms -D -i "$p" 2>/dev/null | grep -q "com.form.app.form<"; then
+            echo "$p"
+            break
+        fi
+    done)
+    [[ -z "$main_prov" ]] && main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | head -n 1)
+
+    local prof_info
+    prof_info=$(get_profile_info "$main_prov")
+    local exp_ts="${prof_info%%|*}"
+    local rest="${prof_info#*|}"
+    local rem_sec="${rest%%|*}"
+    local exp_str="${rest#*|}"
+    local rem_hours=$((rem_sec / 3600))
+    local rem_days=$((rem_sec / 86400))
+
+    # Запрашиваем обновление у Apple через -allowProvisioningUpdates ТОЛЬКО если до конца профиля осталось <= 48 часов
+    # Это предотвращает частый спам серверов Apple и спасает от разлогина аккаунта в Xcode!
+    local prov_flag=""
+    if [[ -z "$main_prov" || $rem_sec -le 172800 ]]; then
+        prov_flag="-allowProvisioningUpdates"
+        log_msg "⏰ До истечения профиля Apple осталось $rem_hours ч. (<= 48ч). Запрашиваем обновление профиля у Apple..."
+    else
+        log_msg "🛡️ Профиль Apple в норме (до $exp_str, осталось $rem_days дн. $rem_hours ч.). Сборка без запроса к Apple."
+    fi
+
+    # 4. Собираем проект
     local build_log="/tmp/form_xcodebuild.log"
     local build_ok=1
     if ! xcodebuild -project "$PROJECT_FILE" \
          -scheme "$SCHEME" \
          -destination "id=$dev_id" \
-         -allowProvisioningUpdates \
+         $prov_flag \
          build > "$build_log" 2>&1; then
         build_ok=0
-        log_msg "⚠️ xcodebuild завершился с кодом ошибки (возможно, истек вспомогательный профиль FormWidget). Проверяем fallback..."
+        log_msg "⚠️ xcodebuild завершился с кодом ошибки (возможно, истек профиль FormWidget). Проверяем fallback..."
     fi
 
-    # 4. Находим путь к собранному form.app
+    # 5. Находим путь к собранному form.app
     local app_dir
     app_dir=$(xcodebuild -project "$PROJECT_FILE" -scheme "$SCHEME" -destination "id=$dev_id" -showBuildSettings 2>/dev/null | grep -m 1 "TARGET_BUILD_DIR =" | awk '{print $3}')
     [[ -z "$app_dir" ]] && app_dir="/Users/alexeytikunov/Library/Developer/Xcode/DerivedData/form-fpxkpcjqfxaqpcahuyayortcbknp/Build/Products/Debug-iphoneos"
@@ -216,27 +287,12 @@ run_autoresign() {
             fi
         fi
 
-        local is_widget_valid=0
-        if [[ -f "$widget_prov" ]]; then
-            local exp_status
-            exp_status=$(security cms -D -i "$widget_prov" 2>/dev/null | python3 -c "
-import sys, plistlib, datetime
-data = sys.stdin.buffer.read()
-if data:
-    pl = plistlib.loads(data)
-    exp = pl.get('ExpirationDate')
-    if exp:
-        exp_ts = exp.timestamp() if hasattr(exp, 'timestamp') else 0
-        now_ts = datetime.datetime.now().timestamp()
-        if exp_ts > now_ts:
-            print('valid')
-" 2>/dev/null || true)
-            if [[ "$exp_status" == "valid" ]]; then
-                is_widget_valid=1
-            fi
-        fi
+        local widget_info
+        widget_info=$(get_profile_info "$widget_prov")
+        local w_rem_sec="${widget_info#*|}"
+        w_rem_sec="${w_rem_sec%%|*}"
 
-        if [[ $is_widget_valid -eq 1 ]]; then
+        if [[ $w_rem_sec -gt 0 ]]; then
             log_msg "📱 Профиль FormWidgetExtension активен. Подписываем виджет..."
             local widget_ent="/tmp/form_widget_entitlements_extracted.plist"
             security cms -D -i "$widget_prov" 2>/dev/null | python3 -c "
@@ -267,6 +323,22 @@ if data:
         fi
     fi
 
+    # Проверяем итоговый срок действия профиля перед установкой на устройство
+    local final_info
+    final_info=$(get_profile_info "$app_path/embedded.mobileprovision")
+    local final_exp_ts="${final_info%%|*}"
+    local final_rest="${final_info#*|}"
+    local final_rem_sec="${final_rest%%|*}"
+    local final_exp_str="${final_rest#*|}"
+    local final_days=$((final_rem_sec / 86400))
+    local final_hours=$(((final_rem_sec % 86400) / 3600))
+
+    if [[ $final_rem_sec -le 0 ]]; then
+        log_msg "❌ Ошибка: Устанавливаемый профиль истек ($final_exp_str). Откройте Xcode -> Settings -> Accounts!"
+        notify_mac "FORM // ВНИМАНИЕ" "Профиль приложения истек! Войдите в Apple ID в Xcode."
+        exit 1
+    fi
+
     # Извлекаем полные entitlements из активного профиля form.app и переподписываем
     if [[ -f "$app_path/embedded.mobileprovision" ]]; then
         local ent_file="/tmp/form_entitlements_extracted.plist"
@@ -287,18 +359,18 @@ if data:
         fi
     fi
 
-    # 5. Устанавливаем обновленный бандл на iPhone через devicectl
+    # 6. Устанавливаем обновленный бандл на iPhone через devicectl
     local install_log="/tmp/form_devicectl.log"
     if ! xcrun devicectl device install app --device "$dev_id" "$app_path" > "$install_log" 2>&1; then
         log_msg "❌ Ошибка установки devicectl на $dev_name. Подробности в $install_log"
         exit 1
     fi
 
-    # 6. Фиксируем успех
+    # 7. Фиксируем успех
     echo "$now" > "$STATE_FILE"
     rm -f "$ALERT_FILE" 2>/dev/null || true
-    log_msg "✅ УСПЕХ: form переподписан и обновлен на $dev_name! 7-дневный сертификат продлен."
-    notify_mac "FORM // SYSTEM" "Сертификат form продлен еще на 7 дней! Приложение обновлено на $dev_name."
+    log_msg "✅ УСПЕХ: form обновлен и установлен на $dev_name! Профиль Apple активен до $final_exp_str (осталось $final_days дн. $final_hours ч.)."
+    notify_mac "FORM // SYSTEM" "Приложение form обновлено на $dev_name (профиль активен до $final_exp_str)."
 }
 
 # Обработка аргументов командной строки
