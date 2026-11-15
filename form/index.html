@@ -266,47 +266,45 @@
     }
     .accent-btn:active { transform: scale(0.96); }
 
-    /* Сегментированный бегунок переключения вкладок (Liquid Glass / Telegram Style) */
+    /* Сегментированный бегунок переключения вкладок (Apple Liquid Glass) */
     .segmented-slider-container {
       position: relative;
       display: inline-flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(255, 255, 255, 0.05);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       isolation: isolate;
+      padding: 2.5px;
     }
 
     .segmented-slider-pill {
       position: absolute;
-      top: 3px;
+      top: 2.5px;
       left: 0;
-      height: calc(100% - 6px);
+      height: calc(100% - 5px);
       width: 0px;
       transform: translate3d(0, 0, 0);
       border-radius: inherit;
-      background: var(--accent-cal);
-      box-shadow: 0 0 16px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.18), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.18);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
+      border: 0.5px solid rgba(255, 255, 255, 0.28);
+      box-shadow: 
+        0 3px 10px rgba(0, 0, 0, 0.42),
+        0 1px 2px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.55),
+        inset 0 -0.5px 0.5px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      transition: transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease;
       pointer-events: none;
       z-index: 1;
     }
 
-    .segmented-slider-pill::after {
-      content: "";
-      position: absolute;
-      top: 1px;
-      left: 10%;
-      right: 10%;
-      height: 40%;
-      border-radius: inherit;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 100%);
-      pointer-events: none;
-    }
-
-    html[data-ui-glow="off"] .segmented-slider-pill {
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    .segmented-slider-container.rounded-full .segmented-slider-pill,
+    .rounded-full > .segmented-slider-pill {
+      border-radius: 9999px !important;
     }
 
     /* Отключение свечения в матовом режиме */
@@ -9432,7 +9430,7 @@
           const w = (bR.width > 0) ? bR.width : activeBtn.offsetWidth;
           const h = (bR.height > 0) ? bR.height : activeBtn.offsetHeight;
           if (w > 0) {
-            pill.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.18), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.18), top 0.2s ease, height 0.2s ease";
+            pill.style.transition = immediate ? "none" : "transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease";
             pill.style.transform = `translate3d(${l}px, 0, 0)`;
             pill.style.top = `${t}px`;
             pill.style.height = `${h}px`;
@@ -9442,7 +9440,7 @@
         return;
       }
 
-      pill.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.18), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.18), top 0.2s ease, height 0.2s ease";
+      pill.style.transition = immediate ? "none" : "transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease";
       pill.style.transform = `translate3d(${left}px, 0, 0)`;
       pill.style.top = `${top}px`;
       pill.style.height = `${height}px`;
@@ -9453,6 +9451,11 @@
     function updateAllSegmentedSliders() {
       updateSegmentedSlider("mainSegmentedNav", (currentMainView === "split") ? "navTabSplit" : "navTabDiet", true);
       updateSegmentedSlider("dietSubSegmentedNav", (state?.dietViewMode === "diary") ? "dietModeDiaryBtn" : "dietModePlanBtn", true);
+      const settingsCont = document.getElementById("settingsTabsContainer");
+      if (settingsCont) {
+        const activeSettingBtn = settingsCont.querySelector("button.text-white");
+        if (activeSettingBtn) updateSegmentedSlider(settingsCont, activeSettingBtn, true);
+      }
     }
     window.updateAllSegmentedSliders = updateAllSegmentedSliders;
 
@@ -9460,7 +9463,15 @@
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
     function switchMainView(view, immediate = false) {
-      if (currentMainView === view && !immediate) return;
+      if (currentMainView === view && !immediate) {
+        updateSegmentedSlider("mainSegmentedNav", (view === "split") ? "navTabSplit" : "navTabDiet", false);
+        const trk = document.getElementById("viewsTrack");
+        if (trk) {
+          trk.style.transition = "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+          trk.style.transform = (view === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+        }
+        return;
+      }
       if (typeof forceStopScannerCamera === "function") forceStopScannerCamera();
       const prevView = currentMainView;
       if (prevView === "diet") savedDietScrollY = window.scrollY || 0;
@@ -14330,6 +14341,15 @@
     let _dietSubCollapseTimeout = null;
 
     function switchDietViewMode(mode, immediate = false) {
+      if (state.dietViewMode === mode && !immediate) {
+        updateSegmentedSlider("dietSubSegmentedNav", (mode === "diary") ? "dietModeDiaryBtn" : "dietModePlanBtn", false);
+        const subTrack = document.getElementById("dietSubTrack");
+        if (subTrack) {
+          subTrack.style.transition = "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+          subTrack.style.transform = (mode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+        }
+        return;
+      }
       state.dietViewMode = mode;
       saveState();
 
@@ -16563,6 +16583,16 @@
     }
     window.renderMealCompensator = renderMealCompensator;
 
+    function toggleDailyBreakdownDetails() {
+      state._dailyBreakdownCollapsed = !state._dailyBreakdownCollapsed;
+      saveState();
+      const list = document.getElementById("dailyBreakdownList");
+      const chev = document.getElementById("dailyBreakdownChevron");
+      if (list) list.classList.toggle("hidden", state._dailyBreakdownCollapsed);
+      if (chev) chev.classList.toggle("-rotate-90", state._dailyBreakdownCollapsed);
+    }
+    window.toggleDailyBreakdownDetails = toggleDailyBreakdownDetails;
+
     function renderDailyPlanDeltaBanner(template, progress) {
       if (!template || !Array.isArray(template.meals)) return "";
       ensureMealSlotTargetMacros(template);
@@ -16603,7 +16633,9 @@
 
       nonSuppMeals.forEach(meal => {
         const rawItems = getMealRawVariantItems(meal, progress);
-        const mealItems = (rawItems || []).slice().concat(getMealTodayAddedItems(meal, progress));
+        const activeVk = meal.hasVariants ? getMealActiveVariantKey(meal, progress) : null;
+        const activeVTitle = activeVk ? (meal.variants?.[activeVk]?.title || `В ${activeVk}`) : null;
+        const mealItems = (rawItems || []).slice().concat(getMealTodayAddedItems(meal, progress, activeVk));
 
         let mCal = 0, mP = 0, mF = 0, mC = 0;
         let mealDoneCount = 0;
@@ -16631,9 +16663,6 @@
           ? computeItemsMacros(rawItems || [])
           : ((meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0) ? meal.slotTargetMacros : computeItemsMacros(rawItems || []));
 
-        const activeVk = meal.hasVariants ? getMealActiveVariantKey(meal, progress) : null;
-        const activeVTitle = activeVk ? (meal.variants?.[activeVk]?.title || `В ${activeVk}`) : null;
-
         mealSnapshots.push({
           meal,
           mealItems,
@@ -16660,37 +16689,51 @@
       const hasDailyOverflow = (dailyDeltaF >= 1.5) || (dailyDeltaC >= 3.0);
 
       const mealBreakdownRowsHtml = mealSnapshots.map(s => {
-        const vTag = s.activeVarTitle ? `<span class="px-1 py-0.2 rounded bg-white/[0.06] text-[9.5px] text-zinc-300 font-normal ml-1">${escapeHtml(s.activeVarTitle)}</span>` : '';
-        const addTag = s.hasAdded ? `<span class="text-cyan-400 text-[9px] font-normal ml-1">+добавка</span>` : '';
-        const doneTag = s.isCompleted ? `<span class="text-emerald-400 text-[9px] font-normal ml-1">✓ съеден</span>` : '';
+        const vTag = s.activeVarTitle ? `<span class="px-1.5 py-0.5 rounded bg-white/[0.08] text-[9.5px] text-zinc-300 font-mono shrink-0">${escapeHtml(s.activeVarTitle)}</span>` : "";
+        const addTag = s.hasAdded ? `<span class="px-1 py-0.5 rounded bg-cyan-500/15 text-cyan-300 text-[9px] font-mono shrink-0">+доп</span>` : "";
+        const doneTag = s.isCompleted ? `<span class="px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-mono shrink-0">✓</span>` : "";
         return `
-          <div class="flex items-center justify-between text-[10.5px] py-0.5">
-            <div class="flex items-center truncate min-w-0 pr-2">
+          <div class="flex items-center justify-between text-[11px] py-1 border-b border-white/[0.03] last:border-0 gap-2">
+            <div class="flex items-center gap-1.5 min-w-0 flex-1">
               <span class="text-zinc-200 font-medium truncate">${escapeHtml(s.meal.title || 'Прием')}</span>
-              ${vTag}${addTag}${doneTag}
+              ${vTag}
+              ${addTag}
+              ${doneTag}
             </div>
-            <div class="shrink-0 text-right mono">
-              <span class="text-white font-semibold">${s.mCal}</span> <span class="text-zinc-500 text-[9.5px]">ккал</span>
-              <span class="text-zinc-500 text-[9.5px] ml-1">(Б ${s.mP} · Ж ${s.mF} · У ${s.mC})</span>
+            <div class="shrink-0 text-right mono whitespace-nowrap">
+              <span class="text-white font-bold">${s.mCal}</span> <span class="text-zinc-500 text-[9.5px]">ккал</span>
+              <span class="text-zinc-400 text-[10px] ml-1.5">(Б ${s.mP} · Ж ${s.mF} · У ${s.mC})</span>
             </div>
           </div>
         `;
       }).join("");
 
+      const breakdownSectionHtml = `
+        <div class="pt-2 border-t border-white/[0.06] flex flex-col gap-1">
+          <div onclick="toggleDailyBreakdownDetails()" class="flex items-center justify-between py-0.5 cursor-pointer active:opacity-70 transition select-none">
+            <div class="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider text-zinc-400 hover:text-white">
+              <span>Сводка по приемам (${mealSnapshots.length})</span>
+              <span id="dailyBreakdownChevron" class="text-[9px] transition-transform duration-200 ${state._dailyBreakdownCollapsed ? '-rotate-90' : ''}">▾</span>
+            </div>
+            <span class="text-[9.5px] mono text-zinc-500">КБЖУ факта</span>
+          </div>
+          <div id="dailyBreakdownList" class="flex flex-col gap-0.5 ${state._dailyBreakdownCollapsed ? 'hidden' : ''}">
+            ${mealBreakdownRowsHtml}
+          </div>
+        </div>
+      `;
+
       if (!hasDailyDeficit && !hasDailyOverflow) {
         return `
-          <div class="mb-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex flex-col gap-1.5">
+          <div class="mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2.5 text-[10.5px] mono">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-zinc-300 font-semibold">Баланс рациона сходится с целью дня (${Math.round(goalP)} / ${Math.round(goalF)} / ${Math.round(goalC)})</span>
-              <span class="text-zinc-400 shrink-0 font-bold">${Math.round(actualDailyCal)} ккал</span>
-            </div>
-            <div class="pt-1.5 border-t border-white/[0.06] flex flex-col gap-0.5">
-              <div class="flex items-center justify-between text-[9px] uppercase tracking-wider text-zinc-500 font-semibold mb-0.5">
-                <span>Сводка по приемам</span>
-                <span>КБЖУ факта</span>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                <span class="text-zinc-200 font-semibold text-xs">Баланс рациона сходится (${Math.round(goalP)}/${Math.round(goalF)}/${Math.round(goalC)})</span>
               </div>
-              ${mealBreakdownRowsHtml}
+              <span class="text-white font-bold text-xs shrink-0">${Math.round(actualDailyCal)} ккал</span>
             </div>
+            ${breakdownSectionHtml}
           </div>
         `;
       }
@@ -16731,15 +16774,15 @@
             const donor = pickGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.f100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaF / (donor.f100 / 100))));
-              dailyRecText = `Перебор: убавить -${red}г ${donor.name} в ${destMeal.title}`;
-              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2 py-0.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10px] active:scale-95 transition shrink-0">[ -${red}г ]</button>`;
+              dailyRecText = `Перебор жиров: убавить -${red}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-red-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
+              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">- Убавить</button>`;
             }
           } else {
             const donor = pickGramDonor(candidates, "c100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.c100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaC / (donor.c100 / 100))));
-              dailyRecText = `Перебор: убавить -${red}г ${donor.name} в ${destMeal.title}`;
-              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2 py-0.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10px] active:scale-95 transition shrink-0">[ -${red}г ]</button>`;
+              dailyRecText = `Перебор углеводов: убавить -${red}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-red-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
+              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">- Убавить</button>`;
             }
           }
         }
@@ -16753,12 +16796,12 @@
           const donor = pickGramDonor(candidates, "f100", 10);
           if (donor && Number(donor.f100) >= 10) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
-            dailyRecText = `Восполнить жиры: +${needed}г ${donor.name}`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
+            dailyRecText = `Восполнить жиры: +${needed}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
           } else {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / 0.45));
-            dailyRecText = `Восполнить жиры: +${needed}г DopDrops Арахисовая паста`;
-            dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
+            dailyRecText = `Восполнить жиры: +${needed}г <span class="text-white font-semibold">DopDrops Арахисовая паста</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
+            dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
           }
         }
       } else if (dailyDeltaP <= -2.0) {
@@ -16771,8 +16814,8 @@
           const donor = pickGramDonor(candidates, "p100", 8);
           if (donor && Number(donor.p100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
-            dailyRecText = `Восполнить белок: +${needed}г ${donor.name}`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
+            dailyRecText = `Восполнить белок: +${needed}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
           }
         }
       } else if (dailyDeltaC <= -3.0) {
@@ -16785,45 +16828,51 @@
           const donor = pickGramDonor(candidates, "c100", 15);
           if (donor && Number(donor.c100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
-            dailyRecText = `Восполнить угли: +${needed}г ${donor.name}`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10px] active:scale-95 transition shrink-0">[ +${needed}г в ${destMeal.title} ]</button>`;
+            dailyRecText = `Восполнить угли: +${needed}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
           }
         }
       }
 
       const dBoxCls = hasDailyOverflow
-        ? "mb-2 p-2 rounded-xl bg-red-500/[0.08] border border-red-500/20 text-[10.5px] mono flex flex-col gap-1"
-        : "mb-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex flex-col gap-1";
-      const dTitleCls = hasDailyOverflow ? "text-red-400 font-bold" : "text-zinc-300 font-semibold";
-      const dTitleTxt = hasDailyOverflow ? "Перебор в рационе относительно нормы дня:" : "В рационе не хватает до нормы дня:";
+        ? "mb-3 p-3 rounded-2xl bg-red-500/[0.07] border border-red-500/20 backdrop-blur-md flex flex-col gap-2.5 text-[10.5px] mono"
+        : "mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2.5 text-[10.5px] mono";
 
       return `
         <div class="${dBoxCls}">
-          <div class="flex items-center justify-between flex-wrap gap-1">
-            <span class="${dTitleCls}">${dTitleTxt}</span>
+          <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-2 h-2 rounded-full ${hasDailyOverflow ? 'bg-red-400 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]'}"></span>
+              <span class="text-xs font-semibold ${hasDailyOverflow ? 'text-red-300' : 'text-zinc-200'} truncate">
+                ${hasDailyOverflow ? 'Перебор в рационе дня' : 'Нехватка в рационе дня'}
+              </span>
+            </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              <span class="${hasDailyOverflow && dailyDeltaCal > 0 ? 'text-red-300 font-bold' : (dailyDeltaCal < 0 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
-              <span>·</span>
-              <span class="${dailyDeltaP <= -2.0 ? 'text-amber-400 font-bold' : 'text-zinc-300'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}г</span>
-              <span>·</span>
-              <span class="${dailyDeltaF >= 1.5 ? 'text-red-400 font-bold' : (dailyDeltaF <= -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}г</span>
-              <span>·</span>
-              <span class="${dailyDeltaC >= 3.0 ? 'text-red-400 font-bold' : (dailyDeltaC <= -3.0 ? 'text-amber-400 font-bold' : 'text-zinc-300')}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}г</span>
+              <span class="font-bold ${hasDailyOverflow && dailyDeltaCal > 0 ? 'text-red-300' : (dailyDeltaCal < 0 ? 'text-amber-400' : 'text-zinc-300')}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
+              <span class="text-zinc-600">·</span>
+              <span class="${dailyDeltaP <= -2.0 ? 'text-amber-400 font-bold' : 'text-zinc-400'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}г</span>
+              <span class="text-zinc-600">·</span>
+              <span class="${dailyDeltaF >= 1.5 ? 'text-red-400 font-bold' : (dailyDeltaF <= -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-400')}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}г</span>
+              <span class="text-zinc-600">·</span>
+              <span class="${dailyDeltaC >= 3.0 ? 'text-red-400 font-bold' : (dailyDeltaC <= -3.0 ? 'text-amber-400 font-bold' : 'text-zinc-400')}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}г</span>
             </div>
           </div>
+
           ${dailyRecText ? `
-            <div class="flex items-center justify-between gap-2 pt-1 ${hasDailyOverflow ? 'border-t border-red-500/15' : 'border-t border-white/[0.04]'}">
-              <span class="${hasDailyOverflow ? 'text-red-200' : 'text-zinc-300'} min-w-0 flex-1 whitespace-normal break-words leading-snug">${dailyRecText}</span>
+            <div class="p-2.5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex items-center justify-between gap-2.5">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <div class="w-6 h-6 rounded-lg ${hasDailyOverflow ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'} flex items-center justify-center shrink-0 text-xs">
+                  ${hasDailyOverflow ? '⚠️' : '💡'}
+                </div>
+                <div class="text-[11px] leading-snug min-w-0 flex-1 text-zinc-300">
+                  ${dailyRecText}
+                </div>
+              </div>
               ${dailyActionBtn}
             </div>
           ` : ''}
-          <div class="pt-1.5 mt-0.5 border-t border-white/[0.06] flex flex-col gap-0.5">
-            <div class="flex items-center justify-between text-[9px] uppercase tracking-wider text-zinc-500 font-semibold mb-0.5">
-              <span>Сводка по приемам</span>
-              <span>КБЖУ факта</span>
-            </div>
-            ${mealBreakdownRowsHtml}
-          </div>
+
+          ${breakdownSectionHtml}
         </div>
       `;
     }
@@ -24015,48 +24064,6 @@ ${knownPiecesContext}
             if (dietSubTrack) dietSubTrack.style.transition = "none";
             const width = viewport.offsetWidth || window.innerWidth || 390;
 
-            // Живое следование бегунка шапки [РАЦИОН // ТРЕНИ]
-            const mainPill = document.getElementById("mainNavSliderPill");
-            const btnDiet = document.getElementById("navTabDiet");
-            const btnSplit = document.getElementById("navTabSplit");
-            if (mainPill && btnDiet && btnSplit) {
-              const dL = btnDiet.offsetLeft;
-              const sL = btnSplit.offsetLeft;
-              const span = sL - dL;
-              let ratio = 0;
-              if (startingMainView === "split") {
-                ratio = Math.max(0, Math.min(1, 1 - (dx / width)));
-              } else if (startingDietMode === "diary" && dx < 0) {
-                ratio = Math.max(0, Math.min(1, -dx / width));
-              }
-              if (ratio > 0 || startingMainView === "split") {
-                mainPill.style.transition = "none";
-                mainPill.style.transform = `translate3d(${dL + span * ratio}px, 0, 0)`;
-                mainPill.style.width = `${btnDiet.offsetWidth + (btnSplit.offsetWidth - btnDiet.offsetWidth) * ratio}px`;
-              }
-            }
-
-            // Живое следование бегунка [МОЙ РАЦИОН // ДНЕВНИК]
-            const subPill = document.getElementById("dietSubSliderPill");
-            const btnP = document.getElementById("dietModePlanBtn");
-            const btnD = document.getElementById("dietModeDiaryBtn");
-            if (subPill && btnP && btnD && startingMainView === "diet") {
-              const pL = btnP.offsetLeft;
-              const dL = btnD.offsetLeft;
-              const span = dL - pL;
-              let subRatio = 0;
-              if (startingDietMode === "plan") {
-                subRatio = Math.max(0, Math.min(1, -dx / width));
-              } else if (dx > 0) {
-                subRatio = Math.max(0, Math.min(1, 1 - (dx / width)));
-              } else {
-                subRatio = 1;
-              }
-              subPill.style.transition = "none";
-              subPill.style.transform = `translate3d(${pL + span * subRatio}px, 0, 0)`;
-              subPill.style.width = `${btnP.offsetWidth + (btnD.offsetWidth - btnP.offsetWidth) * subRatio}px`;
-            }
-
             if (startingMainView === "split") {
               // Вкладка ТРЕНИ
               if (dietSubTrack) dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
@@ -24115,6 +24122,17 @@ ${knownPiecesContext}
           isSwiping = false;
           cancelGesture = false;
           isScrollingVertically = false;
+          const springBezier = "280ms cubic-bezier(0.22, 1, 0.36, 1)";
+          const dietSubTrack = document.getElementById("dietSubTrack");
+          if (track) {
+            track.style.transition = `transform ${springBezier}`;
+            track.style.transform = (currentMainView === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+          }
+          if (dietSubTrack) {
+            dietSubTrack.style.transition = `transform ${springBezier}`;
+            dietSubTrack.style.transform = (state.dietViewMode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+          }
+          if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
           return;
         }
         isSwiping = false;
@@ -24181,10 +24199,15 @@ ${knownPiecesContext}
             switchDietViewMode("plan");
           }
         }
+        if (typeof updateAllSegmentedSliders === "function") {
+          requestAnimationFrame(updateAllSegmentedSliders);
+        }
       };
 
       viewport.addEventListener("touchend", endHandler, { passive: true });
       viewport.addEventListener("touchcancel", endHandler, { passive: true });
+      window.addEventListener("touchend", endHandler, { passive: true });
+      window.addEventListener("touchcancel", endHandler, { passive: true });
     }
 
     // =========================================================================
