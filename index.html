@@ -271,18 +271,60 @@
       position: relative;
       display: inline-flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.045);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.65);
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: none;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       isolation: isolate;
       padding: 2.5px;
     }
 
-    .segmented-slider-container > button {
+    #mainSegmentedNav,
+    #dietSubSegmentedNav,
+    #settingsTabsContainer {
+      overflow: visible !important;
+    }
+
+    [id^="mealVariantsBar_"],
+    #splitVariantPills {
+      padding-top: 4px !important;
+      padding-bottom: 4px !important;
+    }
+
+    .segmented-slider-container > button,
+    .segmented-slider-container button {
       position: relative;
       z-index: 2;
+      background: transparent !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+      border-color: transparent !important;
+      color: rgba(255, 255, 255, 0.48);
+      font-weight: 500;
+      transition: color 220ms cubic-bezier(0.32, 0.72, 0, 1), opacity 220ms ease;
+    }
+
+    .segmented-slider-container > button.is-active,
+    .segmented-slider-container > button[class*="text-white"],
+    .segmented-slider-container > button[class*="font-bold"],
+    .segmented-slider-container button.is-active,
+    .segmented-slider-container button[class*="text-white"],
+    .segmented-slider-container button[class*="font-bold"] {
+      color: #ffffff !important;
+      font-weight: 600;
+    }
+
+    .segmented-slider-container > button[class*="border-dashed"],
+    .segmented-slider-container button[class*="border-dashed"] {
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      background: rgba(255, 255, 255, 0.02) !important;
+      color: rgba(255, 255, 255, 0.4) !important;
+    }
+    .segmented-slider-container > button[class*="border-dashed"]:hover,
+    .segmented-slider-container button[class*="border-dashed"]:hover {
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.25) !important;
     }
 
     .segmented-slider-pill {
@@ -297,52 +339,78 @@
       pointer-events: none;
       z-index: 1;
       will-change: transform, width;
+      overflow: visible;
     }
 
-    /* 1. Нейтральный кристалл (РАЦИОН / ТРЕНИ и Настройки) */
-    .segmented-slider-pill,
-    .segmented-slider-pill.pill-neutral,
-    #mainSegmentedNav .segmented-slider-pill,
-    #settingsTabsContainer .segmented-slider-pill {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%);
-      border: 0.5px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.32),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+    /* Единый Apple Liquid Glass (iOS 26 Dark Mode) для всех табов */
+    .liquid-glass-body {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: color-mix(in srgb, var(--accent-cal) 15%, rgba(255, 255, 255, 0.07));
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+      transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1), background 200ms ease, backdrop-filter 200ms ease, -webkit-backdrop-filter 200ms ease, box-shadow 200ms ease;
+      will-change: transform, background, filter;
+      overflow: hidden;
     }
 
-    /* 2. Акцентное тонированное стекло (МОЙ РАЦИОН / ДНЕВНИК, варианты блюд В1/В2, варианты тренировок) */
-    .segmented-slider-pill.pill-accent,
-    #dietSubSegmentedNav .segmented-slider-pill,
-    [id^="mealVariantsBar_"] .segmented-slider-pill,
-    #workoutDayVariantsBar .segmented-slider-pill,
-    #splitVariantPills .segmented-slider-pill,
-    .segmented-accent .segmented-slider-pill {
-      background: linear-gradient(180deg, color-mix(in srgb, var(--accent-cal) 78%, white 18%) 0%, color-mix(in srgb, var(--accent-cal) 62%, black 22%) 100%);
-      border: 0.5px solid color-mix(in srgb, var(--accent-cal) 45%, rgba(255, 255, 255, 0.4));
-      box-shadow: 
-        0 4px 14px color-mix(in srgb, var(--accent-cal) 30%, transparent),
-        0 2px 6px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.35),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.25);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+    /* Тончайший диагональный световой обод 135deg через CSS-маску */
+    .liquid-glass-body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.34) 0%,
+        rgba(255, 255, 255, 0.05) 32%,
+        rgba(255, 255, 255, 0.02) 68%,
+        color-mix(in srgb, var(--accent-cal) 42%, rgba(255, 255, 255, 0.16)) 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      filter: brightness(1);
+      transition: filter 200ms ease, opacity 200ms ease;
+      will-change: filter;
+    }
+
+    /* Реакция жидкой капли при движении (.is-liquid-moving) */
+    .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
+      transform: scale(1.04, 1.08);
+      background: color-mix(in srgb, var(--accent-cal) 10%, rgba(255, 255, 255, 0.05));
+      backdrop-filter: blur(8px) brightness(1.35) saturate(190%);
+      -webkit-backdrop-filter: blur(8px) brightness(1.35) saturate(190%);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    }
+
+    .segmented-slider-pill.is-liquid-moving .liquid-glass-body::before {
+      filter: brightness(1.48);
+    }
+
+    /* Безопасный scale внутри скролл-лент вариантов */
+    [id^="mealVariantsBar_"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body,
+    #splitVariantPills .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
+      transform: scale(1.03, 1.04);
     }
 
     .segmented-slider-container.rounded-full .segmented-slider-pill,
-    .rounded-full > .segmented-slider-pill {
+    .rounded-full > .segmented-slider-pill,
+    .segmented-slider-container.rounded-full .liquid-glass-body,
+    .rounded-full > .segmented-slider-pill .liquid-glass-body {
       border-radius: 9999px !important;
     }
 
-    html[data-ui-glow="off"] .segmented-slider-pill.pill-accent,
-    html[data-ui-glow="off"] #dietSubSegmentedNav .segmented-slider-pill,
-    html[data-ui-glow="off"] [id^="mealVariantsBar_"] .segmented-slider-pill,
-    html[data-ui-glow="off"] #workoutDayVariantsBar .segmented-slider-pill,
-    html[data-ui-glow="off"] #splitVariantPills .segmented-slider-pill {
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    html[data-ui-glow="off"] .liquid-glass-body {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+    }
+    html[data-ui-glow="off"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
+      transform: scale(1.02, 1.03) !important;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
     }
 
     /* Отключение свечения в матовом режиме */
@@ -861,8 +929,8 @@
       </button>
 
       <!-- Центральный переключатель вкладок -->
-      <div id="mainSegmentedNav" class="relative flex items-center bg-white/[0.04] border border-white/[0.08] p-1 rounded-full backdrop-blur-md overflow-hidden">
-        <div id="mainNavSliderPill" class="segmented-slider-pill"></div>
+      <div id="mainSegmentedNav" class="segmented-slider-container relative flex items-center bg-white/[0.035] border border-white/[0.06] p-1 rounded-full backdrop-blur-md overflow-visible">
+        <div id="mainNavSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
         <button
           type="button"
           id="navTabDiet"
@@ -983,8 +1051,8 @@
 
       <!-- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА: [ МОЙ РАЦИОН ] [ ДНЕВНИК ] -->
       <div class="flex items-center justify-between mb-3 px-0.5">
-        <div id="dietSubSegmentedNav" class="relative flex items-center bg-white/[0.04] border border-white/[0.08] p-0.5 rounded-xl backdrop-blur-md overflow-hidden">
-          <div id="dietSubSliderPill" class="segmented-slider-pill"></div>
+        <div id="dietSubSegmentedNav" class="segmented-slider-container relative flex items-center bg-white/[0.035] border border-white/[0.06] p-0.5 rounded-xl backdrop-blur-md overflow-visible">
+          <div id="dietSubSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
           <button
             type="button"
             id="dietModePlanBtn"
@@ -1796,8 +1864,8 @@
         <button type="button" onclick="closeSettings()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
 
-      <div id="settingsTabsContainer" class="relative grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-2xl border border-white/[0.06] mb-4 overflow-hidden">
-        <div id="settingsSliderPill" class="segmented-slider-pill"></div>
+      <div id="settingsTabsContainer" class="segmented-slider-container relative grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-2xl border border-white/[0.06] mb-4 overflow-visible">
+        <div id="settingsSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
         <button type="button" id="setTabGoals" onclick="switchSettingsTab('goals')" class="relative z-10 py-2 text-[11px] font-bold rounded-xl text-white transition-colors duration-200">Цели</button>
         <button type="button" id="setTabStyle" onclick="switchSettingsTab('style')" class="relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Стиль</button>
         <button type="button" id="setTabPush" onclick="switchSettingsTab('push')" class="relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Пуши</button>
@@ -9472,8 +9540,45 @@
       if (!pill) {
         pill = document.createElement("div");
         pill.className = "segmented-slider-pill";
+        const body = document.createElement("div");
+        body.className = "liquid-glass-body";
+        pill.appendChild(body);
         container.insertBefore(pill, container.firstChild);
+      } else if (!pill.querySelector(".liquid-glass-body")) {
+        const body = document.createElement("div");
+        body.className = "liquid-glass-body";
+        pill.appendChild(body);
       }
+
+      // Безопасный таймер эффекта жидкой капли (Requirement 4)
+      if (pill._liquidMoveTimer) {
+        clearTimeout(pill._liquidMoveTimer);
+        pill._liquidMoveTimer = null;
+      }
+      if (!immediate) {
+        pill.classList.add("is-liquid-moving");
+        pill._liquidMoveTimer = setTimeout(() => {
+          pill.classList.remove("is-liquid-moving");
+          pill._liquidMoveTimer = null;
+        }, 280);
+      } else {
+        pill.classList.remove("is-liquid-moving");
+      }
+
+      // Обновление подсветки текста активной кнопки
+      Array.from(container.children).forEach(btn => {
+        if (btn.tagName === "BUTTON") {
+          const isTarget = (btn === activeBtn);
+          btn.classList.toggle("is-active", isTarget);
+          if (isTarget) {
+            btn.classList.add("text-white", "font-bold");
+            btn.classList.remove("text-zinc-400");
+          } else if (!btn.classList.contains("border-dashed")) {
+            btn.classList.remove("text-white", "font-bold");
+            btn.classList.add("text-zinc-400");
+          }
+        }
+      });
 
       const cRect = container.getBoundingClientRect();
       const bRect = activeBtn.getBoundingClientRect();
@@ -17113,8 +17218,8 @@
           mealItems = rawMealItems.slice().concat(getMealTodayAddedItems(meal, progress, activeVar));
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
-            <div id="mealVariantsBar_${meal.id}" class="segmented-slider-container no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar relative">
-              <div class="segmented-slider-pill"></div>
+            <div id="mealVariantsBar_${meal.id}" class="segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 bg-white/[0.035] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar relative">
+              <div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
               ${variantKeys.map(vk => `
                 <button type="button" id="mealVarBtn_${meal.id}_${vk}" onclick="switchMealVariant('${meal.id}', '${vk}')" class="relative z-10 shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200 ${activeVar === vk ? 'text-white font-bold' : 'text-zinc-400 hover:text-white'}">
                   ${formatVariantTabTitle(meal.variants[vk]?.title, vk)}
@@ -20365,8 +20470,8 @@
         >+ Вариант</button>
       `;
 
-      varBox.className = "segmented-slider-container no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
-      varBox.innerHTML = `<div class="segmented-slider-pill"></div>` + pillsHtml + addBtnHtml;
+      varBox.className = "segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 bg-white/[0.035] border border-white/[0.06] rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
+      varBox.innerHTML = `<div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>` + pillsHtml + addBtnHtml;
 
       updateSegmentedSlider("splitVariantPills", "workoutVarBtn_" + activeProg.id + "_" + activeVk, false);
     };
@@ -24241,6 +24346,21 @@ ${knownPiecesContext}
 
             // 1:1 Live следование бегунка [РАЦИОН // ТРЕНИ]
             const mainPill = document.getElementById("mainNavSliderPill");
+            const subPill = document.getElementById("dietSubSliderPill");
+            if (mainPill) {
+              if (mainPill._liquidMoveTimer) {
+                clearTimeout(mainPill._liquidMoveTimer);
+                mainPill._liquidMoveTimer = null;
+              }
+              mainPill.classList.add("is-liquid-moving");
+            }
+            if (subPill) {
+              if (subPill._liquidMoveTimer) {
+                clearTimeout(subPill._liquidMoveTimer);
+                subPill._liquidMoveTimer = null;
+              }
+              subPill.classList.add("is-liquid-moving");
+            }
             const btnDiet = document.getElementById("navTabDiet");
             const btnSplit = document.getElementById("navTabSplit");
             if (mainPill && btnDiet && btnSplit) {
@@ -24262,7 +24382,6 @@ ${knownPiecesContext}
             }
 
             // 1:1 Live следование бегунка [МОЙ РАЦИОН // ДНЕВНИК]
-            const subPill = document.getElementById("dietSubSliderPill");
             const btnP = document.getElementById("dietModePlanBtn");
             const btnD = document.getElementById("dietModeDiaryBtn");
             if (subPill && btnP && btnD && startingMainView === "diet") {
@@ -24341,8 +24460,22 @@ ${knownPiecesContext}
         const pillSpring = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1)";
         const mainPill = document.getElementById("mainNavSliderPill");
         const subPill = document.getElementById("dietSubSliderPill");
-        if (mainPill) mainPill.style.transition = pillSpring;
-        if (subPill) subPill.style.transition = pillSpring;
+        if (mainPill) {
+          mainPill.style.transition = pillSpring;
+          if (mainPill._liquidMoveTimer) clearTimeout(mainPill._liquidMoveTimer);
+          mainPill._liquidMoveTimer = setTimeout(() => {
+            mainPill.classList.remove("is-liquid-moving");
+            mainPill._liquidMoveTimer = null;
+          }, 320);
+        }
+        if (subPill) {
+          subPill.style.transition = pillSpring;
+          if (subPill._liquidMoveTimer) clearTimeout(subPill._liquidMoveTimer);
+          subPill._liquidMoveTimer = setTimeout(() => {
+            subPill.classList.remove("is-liquid-moving");
+            subPill._liquidMoveTimer = null;
+          }, 320);
+        }
 
         if (cancelGesture || !isSwiping) {
           isSwiping = false;
