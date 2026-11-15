@@ -271,40 +271,78 @@
       position: relative;
       display: inline-flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.05);
-      border: 0.5px solid rgba(255, 255, 255, 0.12);
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       isolation: isolate;
       padding: 2.5px;
+    }
+
+    .segmented-slider-container > button {
+      position: relative;
+      z-index: 2;
     }
 
     .segmented-slider-pill {
       position: absolute;
       top: 2.5px;
-      left: 0;
+      left: 0 !important;
       height: calc(100% - 5px);
       width: 0px;
       transform: translate3d(0, 0, 0);
       border-radius: inherit;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
-      border: 0.5px solid rgba(255, 255, 255, 0.28);
-      box-shadow: 
-        0 3px 10px rgba(0, 0, 0, 0.42),
-        0 1px 2px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0.5px rgba(255, 255, 255, 0.55),
-        inset 0 -0.5px 0.5px rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      transition: transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
       pointer-events: none;
       z-index: 1;
+      will-change: transform, width;
+    }
+
+    /* 1. Нейтральный кристалл (РАЦИОН / ТРЕНИ и Настройки) */
+    .segmented-slider-pill,
+    .segmented-slider-pill.pill-neutral,
+    #mainSegmentedNav .segmented-slider-pill,
+    #settingsTabsContainer .segmented-slider-pill {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* 2. Акцентное тонированное стекло (МОЙ РАЦИОН / ДНЕВНИК, варианты блюд В1/В2, варианты тренировок) */
+    .segmented-slider-pill.pill-accent,
+    #dietSubSegmentedNav .segmented-slider-pill,
+    [id^="mealVariantsBar_"] .segmented-slider-pill,
+    #workoutDayVariantsBar .segmented-slider-pill,
+    #splitVariantPills .segmented-slider-pill,
+    .segmented-accent .segmented-slider-pill {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--accent-cal) 78%, white 18%) 0%, color-mix(in srgb, var(--accent-cal) 62%, black 22%) 100%);
+      border: 0.5px solid color-mix(in srgb, var(--accent-cal) 45%, rgba(255, 255, 255, 0.4));
+      box-shadow: 
+        0 4px 14px color-mix(in srgb, var(--accent-cal) 30%, transparent),
+        0 2px 6px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .segmented-slider-container.rounded-full .segmented-slider-pill,
     .rounded-full > .segmented-slider-pill {
       border-radius: 9999px !important;
+    }
+
+    html[data-ui-glow="off"] .segmented-slider-pill.pill-accent,
+    html[data-ui-glow="off"] #dietSubSegmentedNav .segmented-slider-pill,
+    html[data-ui-glow="off"] [id^="mealVariantsBar_"] .segmented-slider-pill,
+    html[data-ui-glow="off"] #workoutDayVariantsBar .segmented-slider-pill,
+    html[data-ui-glow="off"] #splitVariantPills .segmented-slider-pill {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
     }
 
     /* Отключение свечения в матовом режиме */
@@ -809,9 +847,9 @@
   <!-- Основной экран -->
   <div class="app-shell">
     <!-- Настраиваемая эстетичная строка статуса сверху -->
-    <div onclick="openSettings('style')" class="flex items-center justify-between gap-2 text-[9px] sm:text-[10px] mono tracking-wider uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition select-none">
-      <span id="atelierBrandLabel" class="truncate min-w-0 max-w-[52%]">FORM // OBSIDIAN NOIR</span>
-      <span id="atelierNumbersLabel" class="truncate min-w-0 max-w-[48%] text-right">[ STUDIO · 02 · SILK ]</span>
+    <div onclick="openSettings('style')" class="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] mono tracking-wider uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition select-none min-w-0">
+      <span id="atelierBrandLabel" class="truncate min-w-0 flex-1">FORM // OBSIDIAN NOIR</span>
+      <span id="atelierNumbersLabel" class="truncate min-w-0 shrink-0 text-right">[ STUDIO · 02 · SILK ]</span>
     </div>
 
     <!-- Верхняя шапка с переключателем [ РАЦИОН // ТРЕНИ ] -->
@@ -9305,6 +9343,7 @@
 
     let state = {
       dietViewMode: "plan",
+      _dailyBreakdownCollapsed: true,
       mealPlanTemplate: JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE)),
       dailyMealPlanProgress: {},
       themeId: "monolith",
@@ -9397,8 +9436,32 @@
     let savedSplitScrollY = 0;
 
     // =========================================================================
-    // СЕГМЕНТИРОВАННЫЙ БЕГУНОК ВКЛАДОК (LIQUID GLASS / TELEGRAM SLIDER)
+    // СЕГМЕНТИРОВАННЫЙ БЕГУНОК ВКЛАДОК (APPLE LIQUID GLASS SLIDER)
     // =========================================================================
+    window._prevPillRects = window._prevPillRects || {};
+
+    function savePillRect(containerId) {
+      try {
+        const container = (typeof containerId === "string") ? document.getElementById(containerId) : containerId;
+        if (!container || typeof container.getBoundingClientRect !== "function") return;
+        const pill = container.querySelector(".segmented-slider-pill");
+        if (!pill || typeof pill.getBoundingClientRect !== "function") return;
+        const id = container.id || (typeof containerId === "string" ? containerId : null);
+        if (!id) return;
+        const cRect = container.getBoundingClientRect();
+        const pRect = pill.getBoundingClientRect();
+        if (pRect.width > 0 && cRect.width > 0) {
+          window._prevPillRects[id] = {
+            x: pRect.left - cRect.left,
+            y: pRect.top - cRect.top,
+            width: pRect.width,
+            height: pRect.height
+          };
+        }
+      } catch (e) {}
+    }
+    window.savePillRect = savePillRect;
+
     function updateSegmentedSlider(container, activeBtn, immediate = false) {
       if (typeof container === "string") container = document.getElementById(container);
       if (typeof activeBtn === "string") activeBtn = document.getElementById(activeBtn);
@@ -9420,6 +9483,30 @@
       let width = (bRect.width > 0) ? bRect.width : activeBtn.offsetWidth;
       let height = (bRect.height > 0) ? bRect.height : activeBtn.offsetHeight;
 
+      const containerId = container.id || null;
+      const prevRect = (containerId && window._prevPillRects) ? window._prevPillRects[containerId] : null;
+
+      const springTransition = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1), top 0.2s ease, height 0.2s ease";
+
+      if (prevRect && !immediate && prevRect.width > 0) {
+        pill.style.transition = "none";
+        pill.style.transform = `translate3d(${prevRect.x}px, 0, 0)`;
+        pill.style.width = `${prevRect.width}px`;
+        pill.style.top = `${prevRect.y || top}px`;
+        pill.style.height = `${prevRect.height || height}px`;
+        void pill.offsetHeight; // Force reflow
+        delete window._prevPillRects[containerId];
+
+        requestAnimationFrame(() => {
+          pill.style.transition = springTransition;
+          pill.style.transform = `translate3d(${left}px, 0, 0)`;
+          pill.style.top = `${top}px`;
+          pill.style.height = `${height}px`;
+          pill.style.width = `${width}px`;
+        });
+        return;
+      }
+
       if (width <= 0) {
         requestAnimationFrame(() => {
           if (!container || !activeBtn) return;
@@ -9430,7 +9517,7 @@
           const w = (bR.width > 0) ? bR.width : activeBtn.offsetWidth;
           const h = (bR.height > 0) ? bR.height : activeBtn.offsetHeight;
           if (w > 0) {
-            pill.style.transition = immediate ? "none" : "transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease";
+            pill.style.transition = immediate ? "none" : springTransition;
             pill.style.transform = `translate3d(${l}px, 0, 0)`;
             pill.style.top = `${t}px`;
             pill.style.height = `${h}px`;
@@ -9440,7 +9527,7 @@
         return;
       }
 
-      pill.style.transition = immediate ? "none" : "transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.22s cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease";
+      pill.style.transition = immediate ? "none" : springTransition;
       pill.style.transform = `translate3d(${left}px, 0, 0)`;
       pill.style.top = `${top}px`;
       pill.style.height = `${height}px`;
@@ -11102,25 +11189,25 @@
             onclick="applyTheme('${t.id}', true)"
             class="cursor-pointer select-none w-full p-3.5 rounded-2xl border text-left transition flex items-center justify-between gap-3 ${active ? 'border-white/50 bg-white/[0.08]' : 'border-white/[0.07] bg-black/40 hover:border-white/20 active:bg-white/[0.04]'}"
           >
-            <div class="min-w-0 flex-1">
-              <div class="text-xs font-bold text-white mono flex items-center gap-2">
-                <span class="truncate">${escapeHtml(t.title)}</span>
-                ${active ? `<span class="text-[9px] px-1.5 py-0.5 rounded accent-btn font-extrabold shrink-0">ACTIVE</span>` : ""}
+            <div class="min-w-0 flex-1 pr-2">
+              <div class="text-xs font-bold text-white mono flex items-center gap-2 min-w-0">
+                <span class="truncate min-w-0">${escapeHtml(t.title)}</span>
+                ${active ? `<span class="text-[9px] px-1.5 py-0.5 rounded accent-btn font-extrabold shrink-0 whitespace-nowrap">ACTIVE</span>` : ""}
               </div>
-              <div class="text-[11px] text-zinc-400 mt-0.5 leading-snug truncate">${escapeHtml(t.subtitle)}</div>
+              <div class="text-[11px] text-zinc-400 mt-0.5 leading-snug truncate min-w-0">${escapeHtml(t.subtitle)}</div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20" style="background:${t.cal}"></span>
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20" style="background:${t.p}"></span>
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20" style="background:${t.c}"></span>
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20" style="background:${t.f}"></span>
+              <div class="flex items-center gap-1 shrink-0">
+                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.cal}"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.p}"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.c}"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.f}"></span>
               </div>
               <button
                 type="button"
                 onclick="event.stopPropagation(); deleteTheme('${t.id}')"
                 title="Удалить стиль"
-                class="w-7 h-7 -mr-1 rounded-xl flex items-center justify-center text-zinc-500 hover:text-red-400 active:text-red-400 hover:bg-white/10 active:scale-90 transition text-sm font-bold"
+                class="w-7 h-7 -mr-1 rounded-xl flex items-center justify-center text-zinc-500 hover:text-red-400 active:text-red-400 hover:bg-white/10 active:scale-90 transition text-sm font-bold shrink-0"
               >
                 ✕
               </button>
@@ -13474,6 +13561,7 @@
         }
         if (!state.goalCalcMode) state.goalCalcMode = "auto";
         if (!state.dietViewMode) state.dietViewMode = "plan";
+        if (state._dailyBreakdownCollapsed === undefined) state._dailyBreakdownCollapsed = true;
         if (!state.mealPlanTemplate || !Array.isArray(state.mealPlanTemplate.meals) || state.mealPlanTemplate.meals.length === 0) {
           // Try to recover from backup before falling back to empty default
           try {
@@ -14451,6 +14539,7 @@
     window.switchBreakfastVariant = switchBreakfastVariant;
 
     function switchMealVariant(mealId, variantKey) {
+      if (typeof savePillRect === "function") savePillRect("mealVariantsBar_" + mealId);
       const progress = getTodayProgress();
       if (!progress.variantChoice) progress.variantChoice = {};
       progress.variantChoice[mealId] = variantKey;
@@ -16406,6 +16495,36 @@
     }
     window.addExternalDonorToMeal = addExternalDonorToMeal;
 
+    function isOptionalMealItem(it) {
+      return Boolean(it?.isOptional || it?.optional);
+    }
+    window.isOptionalMealItem = isOptionalMealItem;
+
+    function formatCleanMealTitle(title) {
+      if (!title) return "Прием";
+      let clean = String(title)
+        .replace(/\/\/.*$/g, "")
+        .replace(/\(.*?\)/g, "")
+        .replace(/--.*$/g, "")
+        .trim();
+      return clean || title;
+    }
+    window.formatCleanMealTitle = formatCleanMealTitle;
+
+    function formatCleanVariantTag(vTitle, vk) {
+      if (!vTitle && !vk) return "";
+      let raw = String(vTitle || vk).trim();
+      raw = raw.replace(/\(.*?\)/g, "").replace(/\/\/.*$/g, "").trim();
+      if (/^вариант\s+/i.test(raw)) {
+        return raw.replace(/^вариант\s+/i, "");
+      }
+      if (/^в\s*(\d+)$/i.test(raw)) {
+        return "В" + raw.match(/^в\s*(\d+)$/i)[1];
+      }
+      return raw;
+    }
+    window.formatCleanVariantTag = formatCleanVariantTag;
+
     function buildMealDeltaBannerData(meal, progress, mealItems, rawMealItems) {
       let targetCal = 0, targetP = 0, targetF = 0, targetC = 0;
       if (meal.hasVariants) {
@@ -16413,6 +16532,7 @@
           return null;
         }
         rawMealItems.forEach(it => {
+          if (isOptionalMealItem(it) && !isMealItemLogged(it.id)) return;
           const w = Number(it.weight) || 0;
           targetCal += (w * (it.cal100 || 0)) / 100;
           targetP += (w * (it.p100 || 0)) / 100;
@@ -16429,6 +16549,7 @@
           return null;
         }
         rawMealItems.forEach(it => {
+          if (isOptionalMealItem(it) && !isMealItemLogged(it.id)) return;
           const w = Number(it.weight) || 0;
           targetCal += (w * (it.cal100 || 0)) / 100;
           targetP += (w * (it.p100 || 0)) / 100;
@@ -16440,6 +16561,7 @@
       let actualCal = 0, actualP = 0, actualF = 0, actualC = 0;
       mealItems.forEach(it => {
         if (progress.skippedItems?.[it.id]) return;
+        if (isOptionalMealItem(it) && !isMealItemLogged(it.id)) return; // Опциональные соусы не создают перебор
         const eff = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
         const w = Number(eff.weight) || 0;
         actualCal += (w * (eff.cal100 || 0)) / 100;
@@ -16453,15 +16575,13 @@
       const deltaF = round1(actualF - targetF);
       const deltaC = round1(actualC - targetC);
 
-      // Белок — нижняя граница: небольшой перебор до +12г при нормальных Ж/У допустим.
-      // Строгий контроль перебора — по Жирам (>= 1.5г) и Углеводам (>= 2.0г).
       const hasDeficit = (deltaP <= -1.5) || (deltaF <= -1.5) || (deltaC <= -2.0);
       const hasStrictOverflow = (deltaF >= 1.5) || (deltaC >= 2.0);
 
       if (!hasDeficit && !hasStrictOverflow) return null;
 
       const activeCandidates = mealItems
-        .filter(it => !progress.skippedItems?.[it.id])
+        .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
         .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
 
       if (activeCandidates.length === 0) return null;
@@ -16476,7 +16596,7 @@
         return Boolean((it?.isPiece && /яйц/.test(lower)) || /яйцо\s+курин/.test(lower));
       };
       const pickGramDonor = (pool, macroKey, minThreshold, filterFn = null) => {
-        const usable = pool.filter(it => !isWholeEggItem(it) && (!filterFn || filterFn(it)));
+        const usable = pool.filter(it => !isWholeEggItem(it) && !isOptionalMealItem(it) && (!filterFn || filterFn(it)));
         const nonPiece = usable.filter(it => !it.isPiece);
         const primary = (nonPiece.length > 0 ? nonPiece : usable)
           .filter(it => Number(it[macroKey]) >= minThreshold)
@@ -16488,64 +16608,56 @@
         return fallback[0] || null;
       };
 
+      const cleanMealName = formatCleanMealTitle(meal.title);
+
       if (deltaC >= 2.0 || deltaF >= 1.5) {
         isOverflow = true;
-        const overParts = [];
-        if (deltaC >= 2.0) overParts.push(`У +${deltaC}г`);
-        if (deltaF >= 1.5) overParts.push(`Ж +${deltaF}г`);
-        const summaryPrefix = `Перебор: ${deltaCal >= 0 ? '+' : ''}${deltaCal} ккал (${overParts.join(" / ")})`;
-
         if (deltaF >= 1.5 && deltaF >= deltaC) {
           const donor = pickGramDonor(activeCandidates, "f100", 0, it => Number(it.weight) > 10);
           if (donor && Number(donor.f100) > 0) {
             const rawReduce = Math.max(5, Math.round(deltaF / (donor.f100 / 100)));
             const reduceGrams = Math.min(Math.max(5, Math.round(donor.weight - 5)), rawReduce);
-            recText = `${summaryPrefix} — убавить: -${reduceGrams}г ${donor.name}`;
-            btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2 py-0.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ -${reduceGrams}г ]</button>`;
-          } else {
-            recText = summaryPrefix;
+            recText = `${cleanMealName}: убавить жиры (-${reduceGrams}г ${donor.name})`;
+            btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${reduceGrams}г</button>`;
           }
         } else {
           const donor = pickGramDonor(activeCandidates, "c100", 0, it => Number(it.weight) > 10);
           if (donor && Number(donor.c100) > 0) {
             const rawReduce = Math.max(5, Math.round(deltaC / (donor.c100 / 100)));
             const reduceGrams = Math.min(Math.max(5, Math.round(donor.weight - 5)), rawReduce);
-            recText = `${summaryPrefix} — убавить: -${reduceGrams}г ${donor.name}`;
-            btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2 py-0.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ -${reduceGrams}г ]</button>`;
-          } else {
-            recText = summaryPrefix;
+            recText = `${cleanMealName}: убавить угли (-${reduceGrams}г ${donor.name})`;
+            btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${reduceGrams}г</button>`;
           }
         }
       } else if (deltaF <= -1.5) {
         const donor = pickGramDonor(activeCandidates, "f100", 10);
         if (donor && Number(donor.f100) >= 10) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaF) / (donor.f100 / 100)));
-          recText = `Нехватка жиров: Ж ${deltaF}г -> Добавь +${neededGrams}г ${donor.name}`;
-          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
+          recText = `${cleanMealName}: добрать жиры (+${neededGrams}г ${donor.name})`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${neededGrams}г</button>`;
         } else {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaF) / 0.45));
-          recText = `Нехватка жиров: Ж ${deltaF}г -> Добавь +${neededGrams}г DopDrops Арахисовая паста`;
-          btnHtml = `<button type="button" onclick="addExternalDonorToMeal('${meal.id}', 'peanut_paste_dopdrop', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г пасты в прием ]</button>`;
+          recText = `${cleanMealName}: добрать жиры (+${neededGrams}г DopDrops пасты)`;
+          btnHtml = `<button type="button" onclick="addExternalDonorToMeal('${meal.id}', 'peanut_paste_dopdrop', ${neededGrams})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${neededGrams}г</button>`;
         }
       } else if (deltaP <= -1.5) {
         const donor = pickGramDonor(activeCandidates, "p100", 8);
         if (donor && Number(donor.p100) > 0) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaP) / (donor.p100 / 100)));
-          recText = `Чтобы закрыть белок: добавь +${neededGrams}г ${donor.name}`;
-          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
+          recText = `${cleanMealName}: добрать белок (+${neededGrams}г ${donor.name})`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${neededGrams}г</button>`;
         }
       } else if (deltaC <= -2.0) {
         const donor = pickGramDonor(activeCandidates, "c100", 15);
         if (donor && Number(donor.c100) > 0) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaC) / (donor.c100 / 100)));
-          recText = `Чтобы закрыть угли: добавь +${neededGrams}г ${donor.name}`;
-          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2 py-0.5 rounded-lg bg-white/[0.08] hover:bg-white/15 border border-white/15 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0">[ +${neededGrams}г ]</button>`;
+          recText = `${cleanMealName}: добрать угли (+${neededGrams}г ${donor.name})`;
+          btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${neededGrams}г</button>`;
         }
       }
 
       return { deltaCal, deltaP, deltaF, deltaC, recText, btnHtml, isOverflow };
     }
-
     function renderMealCompensator(meal, progress, mealItems, rawMealItems) {
       if (!meal || !Array.isArray(mealItems) || mealItems.length === 0) return "";
       const res = buildMealDeltaBannerData(meal, progress, mealItems, rawMealItems);
@@ -16619,7 +16731,7 @@
         return Boolean((it?.isPiece && /яйц/.test(lower)) || /яйцо\s+курин/.test(lower));
       };
       const pickGramDonor = (pool, macroKey, minThreshold, filterFn = null) => {
-        const usable = pool.filter(it => !isWholeEggItem(it) && (!filterFn || filterFn(it)));
+        const usable = pool.filter(it => !isWholeEggItem(it) && !isOptionalMealItem(it) && (!filterFn || filterFn(it)));
         const nonPiece = usable.filter(it => !it.isPiece);
         const primary = (nonPiece.length > 0 ? nonPiece : usable)
           .filter(it => Number(it[macroKey]) >= minThreshold)
@@ -16643,6 +16755,7 @@
 
         mealItems.forEach(it => {
           if (progress.skippedItems?.[it.id]) return;
+          if (isOptionalMealItem(it) && !isMealItemLogged(it.id)) return; // Исключаем опциональные соусы из перебора
           activeCount++;
           totalActiveItemsCount++;
           if (isMealItemLogged(it.id)) mealDoneCount++;
@@ -16674,9 +16787,10 @@
           activeVarTitle: activeVTitle,
           hasAdded: (getMealTodayAddedItems(meal, progress, activeVk) || []).length > 0,
           hasOverrides: (mealItems || []).some(it => progress.overrides?.[it.id]),
-          slotDeltaP: mP - (Number(slotRef.p) || 0),
-          slotDeltaF: mF - (Number(slotRef.f) || 0),
-          slotDeltaC: mC - (Number(slotRef.c) || 0)
+          slotDeltaCal: Math.round(mCal - (Number(slotRef.cal) || mCal)),
+          slotDeltaP: round1(mP - (Number(slotRef.p) || 0)),
+          slotDeltaF: round1(mF - (Number(slotRef.f) || 0)),
+          slotDeltaC: round1(mC - (Number(slotRef.c) || 0))
         });
       });
 
@@ -16688,36 +16802,69 @@
       const hasDailyDeficit = (dailyDeltaP <= -2.0) || (dailyDeltaF <= -1.5) || (dailyDeltaC <= -3.0);
       const hasDailyOverflow = (dailyDeltaF >= 1.5) || (dailyDeltaC >= 3.0);
 
+      // Подсчет приемов с отклонением для шапки аккордеона
+      let issueCount = 0;
+      mealSnapshots.forEach(s => {
+        if (Math.abs(s.slotDeltaF) >= 1.5 || Math.abs(s.slotDeltaC) >= 3.0 || Math.abs(s.slotDeltaP) >= 2.5) {
+          issueCount++;
+        }
+      });
+      const issueStatusHtml = issueCount > 0
+        ? `<span class="text-amber-400 font-semibold">${issueCount} ${issueCount === 1 ? 'отклонение' : (issueCount < 5 ? 'отклонения' : 'отклонений')}</span>`
+        : `<span class="text-zinc-500 font-normal">В норме</span>`;
+
       const mealBreakdownRowsHtml = mealSnapshots.map(s => {
-        const vTag = s.activeVarTitle ? `<span class="px-1.5 py-0.5 rounded bg-white/[0.08] text-[9.5px] text-zinc-300 font-mono shrink-0">${escapeHtml(s.activeVarTitle)}</span>` : "";
-        const addTag = s.hasAdded ? `<span class="px-1 py-0.5 rounded bg-cyan-500/15 text-cyan-300 text-[9px] font-mono shrink-0">+доп</span>` : "";
-        const doneTag = s.isCompleted ? `<span class="px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-mono shrink-0">✓</span>` : "";
+        const cleanTitle = formatCleanMealTitle(s.meal.title);
+        const cleanVar = s.activeVarTitle ? formatCleanVariantTag(s.activeVarTitle) : '';
+        const vTag = cleanVar ? `<span class="px-1.5 py-0.2 rounded bg-white/[0.07] text-[9.5px] text-zinc-300 font-mono shrink-0">${escapeHtml(cleanVar)}</span>` : '';
+        const addTag = s.hasAdded ? `<span class="px-1 py-0.2 rounded bg-cyan-500/15 text-cyan-300 text-[9px] font-mono shrink-0">+доп</span>` : '';
+        const doneTag = s.isCompleted ? `<span class="px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-mono shrink-0 inline-flex items-center"><svg class="w-2.5 h-2.5 stroke-emerald-300 stroke-[2.5]" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>` : '';
+
+        // Статус отклонения конкретно этого приема
+        let statusHtml = '';
+        if (s.slotDeltaF <= -1.5) {
+          statusHtml = `<span class="text-amber-400 font-bold">Ж ${s.slotDeltaF}г</span> <span class="text-zinc-600 text-[9px]">· ${s.mCal} ккал</span>`;
+        } else if (s.slotDeltaF >= 1.5) {
+          statusHtml = `<span class="text-red-400 font-bold">Ж +${s.slotDeltaF}г</span> <span class="text-zinc-600 text-[9px]">· ${s.mCal} ккал</span>`;
+        } else if (s.slotDeltaC >= 3.0) {
+          statusHtml = `<span class="text-red-400 font-bold">У +${s.slotDeltaC}г</span> <span class="text-zinc-600 text-[9px]">· ${s.mCal} ккал</span>`;
+        } else if (s.slotDeltaC <= -3.0) {
+          statusHtml = `<span class="text-amber-400 font-bold">У ${s.slotDeltaC}г</span> <span class="text-zinc-600 text-[9px]">· ${s.mCal} ккал</span>`;
+        } else if (s.slotDeltaP <= -2.5) {
+          statusHtml = `<span class="text-amber-400 font-bold">Б ${s.slotDeltaP}г</span> <span class="text-zinc-600 text-[9px]">· ${s.mCal} ккал</span>`;
+        } else {
+          statusHtml = `<span class="text-zinc-500 font-normal">Ок · ${s.mCal} ккал</span>`;
+        }
+
         return `
-          <div class="flex items-center justify-between text-[11px] py-1 border-b border-white/[0.03] last:border-0 gap-2">
-            <div class="flex items-center gap-1.5 min-w-0 flex-1">
-              <span class="text-zinc-200 font-medium truncate">${escapeHtml(s.meal.title || 'Прием')}</span>
+          <div onclick="document.getElementById('coachMealCard_${s.meal.id}')?.scrollIntoView({ behavior: 'smooth', block: 'center' })" class="grid grid-cols-[1fr_auto] items-center text-[11px] py-1 border-b border-white/[0.03] last:border-0 gap-2 cursor-pointer active:opacity-70 transition">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-zinc-200 font-medium truncate">${escapeHtml(cleanTitle)}</span>
               ${vTag}
               ${addTag}
               ${doneTag}
             </div>
-            <div class="shrink-0 text-right mono whitespace-nowrap">
-              <span class="text-white font-bold">${s.mCal}</span> <span class="text-zinc-500 text-[9.5px]">ккал</span>
-              <span class="text-zinc-400 text-[10px] ml-1.5">(Б ${s.mP} · Ж ${s.mF} · У ${s.mC})</span>
+            <div class="shrink-0 text-right mono tabular-nums whitespace-nowrap">
+              ${statusHtml}
             </div>
           </div>
         `;
       }).join("");
 
+      const isCollapsed = state._dailyBreakdownCollapsed !== false;
+
       const breakdownSectionHtml = `
-        <div class="pt-2 border-t border-white/[0.06] flex flex-col gap-1">
-          <div onclick="toggleDailyBreakdownDetails()" class="flex items-center justify-between py-0.5 cursor-pointer active:opacity-70 transition select-none">
+        <div class="pt-1.5 border-t border-white/[0.06] flex flex-col gap-1">
+          <div onclick="toggleDailyBreakdownDetails()" class="flex items-center justify-between py-1 cursor-pointer active:opacity-70 transition select-none">
             <div class="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider text-zinc-400 hover:text-white">
-              <span>Сводка по приемам (${mealSnapshots.length})</span>
-              <span id="dailyBreakdownChevron" class="text-[9px] transition-transform duration-200 ${state._dailyBreakdownCollapsed ? '-rotate-90' : ''}">▾</span>
+              <span>Детали по приемам (${mealSnapshots.length})</span>
+              <span id="dailyBreakdownChevron" class="text-[9px] transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}">▾</span>
             </div>
-            <span class="text-[9.5px] mono text-zinc-500">КБЖУ факта</span>
+            <div class="text-[10px] mono">
+              ${issueStatusHtml}
+            </div>
           </div>
-          <div id="dailyBreakdownList" class="flex flex-col gap-0.5 ${state._dailyBreakdownCollapsed ? 'hidden' : ''}">
+          <div id="dailyBreakdownList" class="flex flex-col gap-0.5 ${isCollapsed ? 'hidden' : ''}">
             ${mealBreakdownRowsHtml}
           </div>
         </div>
@@ -16725,11 +16872,11 @@
 
       if (!hasDailyDeficit && !hasDailyOverflow) {
         return `
-          <div class="mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2.5 text-[10.5px] mono">
+          <div class="mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2 text-[10.5px] mono">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
-                <span class="text-zinc-200 font-semibold text-xs">Баланс рациона сходится (${Math.round(goalP)}/${Math.round(goalF)}/${Math.round(goalC)})</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]"></span>
+                <span class="text-zinc-200 font-semibold text-xs">Баланс в норме</span>
               </div>
               <span class="text-white font-bold text-xs shrink-0">${Math.round(actualDailyCal)} ккал</span>
             </div>
@@ -16766,23 +16913,24 @@
 
         if (destMealObj) {
           const destMeal = destMealObj.meal;
+          const cleanDestTitle = formatCleanMealTitle(destMeal.title);
           const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id])
+            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
             .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
 
           if (dailyDeltaF >= 1.5 && dailyDeltaF >= dailyDeltaC) {
             const donor = pickGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.f100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaF / (donor.f100 / 100))));
-              dailyRecText = `Перебор жиров: убавить -${red}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-red-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
-              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">- Убавить</button>`;
+              dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> убавить жиры (-${red}г ${escapeHtml(donor.name)})`;
+              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${red}г</button>`;
             }
           } else {
             const donor = pickGramDonor(candidates, "c100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.c100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaC / (donor.c100 / 100))));
-              dailyRecText = `Перебор углеводов: убавить -${red}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-red-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
-              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">- Убавить</button>`;
+              dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> убавить угли (-${red}г ${escapeHtml(donor.name)})`;
+              dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${red}г</button>`;
             }
           }
         }
@@ -16790,88 +16938,88 @@
         const destMealObj = pickTargetMealSnapshot("slotDeltaF");
         if (destMealObj) {
           const destMeal = destMealObj.meal;
+          const cleanDestTitle = formatCleanMealTitle(destMeal.title);
           const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id])
+            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
             .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
           const donor = pickGramDonor(candidates, "f100", 10);
           if (donor && Number(donor.f100) >= 10) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
-            dailyRecText = `Восполнить жиры: +${needed}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать жиры (+${needed}г ${escapeHtml(donor.name)})`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           } else {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / 0.45));
-            dailyRecText = `Восполнить жиры: +${needed}г <span class="text-white font-semibold">DopDrops Арахисовая паста</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
-            dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать жиры (+${needed}г DopDrops пасты)`;
+            dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           }
         }
       } else if (dailyDeltaP <= -2.0) {
         const destMealObj = pickTargetMealSnapshot("slotDeltaP");
         if (destMealObj) {
           const destMeal = destMealObj.meal;
+          const cleanDestTitle = formatCleanMealTitle(destMeal.title);
           const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id])
+            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
             .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
           const donor = pickGramDonor(candidates, "p100", 8);
           if (donor && Number(donor.p100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
-            dailyRecText = `Восполнить белок: +${needed}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать белок (+${needed}г ${escapeHtml(donor.name)})`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           }
         }
       } else if (dailyDeltaC <= -3.0) {
         const destMealObj = pickTargetMealSnapshot("slotDeltaC");
         if (destMealObj) {
           const destMeal = destMealObj.meal;
+          const cleanDestTitle = formatCleanMealTitle(destMeal.title);
           const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id])
+            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
             .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
           const donor = pickGramDonor(candidates, "c100", 15);
           if (donor && Number(donor.c100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
-            dailyRecText = `Восполнить угли: +${needed}г <span class="text-white font-semibold">${escapeHtml(donor.name)}</span> → в <span class="text-amber-300 font-semibold">${escapeHtml(destMeal.title)}</span>`;
-            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+ Добавить</button>`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать угли (+${needed}г ${escapeHtml(donor.name)})`;
+            dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           }
         }
       }
 
       const dBoxCls = hasDailyOverflow
-        ? "mb-3 p-3 rounded-2xl bg-red-500/[0.07] border border-red-500/20 backdrop-blur-md flex flex-col gap-2.5 text-[10.5px] mono"
-        : "mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2.5 text-[10.5px] mono";
+        ? "mb-3 p-3 rounded-2xl bg-red-500/[0.04] border border-red-500/25 backdrop-blur-md flex flex-col gap-2 text-[10.5px] mono"
+        : "mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2 text-[10.5px] mono";
 
       return `
         <div class="${dBoxCls}">
-          <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-white/[0.06]">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="w-2 h-2 rounded-full ${hasDailyOverflow ? 'bg-red-400 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]'}"></span>
-              <span class="text-xs font-semibold ${hasDailyOverflow ? 'text-red-300' : 'text-zinc-200'} truncate">
-                ${hasDailyOverflow ? 'Перебор в рационе дня' : 'Нехватка в рационе дня'}
+          <!-- Строка 1: Четкий статус и дельты макросов (tabular-nums, без эмодзи) -->
+          <div class="flex items-center justify-between flex-wrap gap-x-2 gap-y-1 pb-1.5 border-b border-white/[0.06]">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-2 h-2 rounded-full ${hasDailyOverflow ? 'bg-red-400' : (hasDailyDeficit ? 'bg-amber-400' : 'bg-emerald-400')} shrink-0"></span>
+              <span class="text-xs font-bold ${hasDailyOverflow ? 'text-red-300' : 'text-zinc-200'} whitespace-nowrap">
+                ${hasDailyOverflow ? 'Перебор' : (hasDailyDeficit ? 'Недобор' : 'Баланс в норме')}:
+                <span class="tabular-nums ${hasDailyOverflow ? 'text-red-400 font-bold' : (hasDailyDeficit ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold')}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
               </span>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <span class="font-bold ${hasDailyOverflow && dailyDeltaCal > 0 ? 'text-red-300' : (dailyDeltaCal < 0 ? 'text-amber-400' : 'text-zinc-300')}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
-              <span class="text-zinc-600">·</span>
-              <span class="${dailyDeltaP <= -2.0 ? 'text-amber-400 font-bold' : 'text-zinc-400'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}г</span>
-              <span class="text-zinc-600">·</span>
-              <span class="${dailyDeltaF >= 1.5 ? 'text-red-400 font-bold' : (dailyDeltaF <= -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-400')}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}г</span>
-              <span class="text-zinc-600">·</span>
-              <span class="${dailyDeltaC >= 3.0 ? 'text-red-400 font-bold' : (dailyDeltaC <= -3.0 ? 'text-amber-400 font-bold' : 'text-zinc-400')}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}г</span>
+            <div class="flex items-center gap-1 tabular-nums text-[10.5px] mono shrink-0 whitespace-nowrap">
+              <span class="${dailyDeltaP <= -2.0 ? 'text-amber-400 font-bold' : 'text-zinc-500'}">Б ${dailyDeltaP > 0 ? '+' : ''}${dailyDeltaP}</span>
+              <span class="text-zinc-700">·</span>
+              <span class="${dailyDeltaF >= 1.5 ? 'text-red-400 font-bold' : (dailyDeltaF <= -1.5 ? 'text-amber-400 font-bold' : 'text-zinc-500')}">Ж ${dailyDeltaF > 0 ? '+' : ''}${dailyDeltaF}</span>
+              <span class="text-zinc-700">·</span>
+              <span class="${dailyDeltaC >= 3.0 ? 'text-red-400 font-bold' : (dailyDeltaC <= -3.0 ? 'text-amber-400 font-bold' : 'text-zinc-500')}">У ${dailyDeltaC > 0 ? '+' : ''}${dailyDeltaC}</span>
             </div>
           </div>
 
+          <!-- Строка 2: Компактная рекомендация (без эмодзи) -->
           ${dailyRecText ? `
-            <div class="p-2.5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex items-center justify-between gap-2.5">
-              <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                <div class="w-6 h-6 rounded-lg ${hasDailyOverflow ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'} flex items-center justify-center shrink-0 text-xs">
-                  ${hasDailyOverflow ? '⚠️' : '💡'}
-                </div>
-                <div class="text-[11px] leading-snug min-w-0 flex-1 text-zinc-300">
-                  ${dailyRecText}
-                </div>
+            <div class="flex items-center justify-between gap-2.5 pt-0.5">
+              <div class="text-[11px] leading-snug min-w-0 flex-1 text-zinc-300">
+                ${dailyRecText}
               </div>
               ${dailyActionBtn}
             </div>
           ` : ''}
 
+          <!-- Строка 3: Диагностика по приемам (аккордеон, свернут по умолчанию) -->
           ${breakdownSectionHtml}
         </div>
       `;
@@ -16918,7 +17066,7 @@
           // Чеклист витаминов
           const allVChecked = (meal.items || []).length > 0 && (meal.items || []).every(v => progress.vitamins?.[v.id]);
           htmlCards += `
-            <div class="coach-meal-card ${allVChecked ? 'all-done' : ''}">
+            <div class="coach-meal-card ${allVChecked ? 'all-done' : ''}" id="coachMealCard_${meal.id}">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                   <span class="w-1.5 h-3.5 rounded-full" style="background: ${accent}"></span>
@@ -16982,10 +17130,11 @@
           mealItems = (meal.items || []).concat(getMealTodayAddedItems(meal, progress));
         }
 
-        // Подсчет макросов приема (без учета пропущенных)
+        // Подсчет макросов приема (без учета пропущенных и несъеденных опциональных)
         let mealCal = 0, mealP = 0, mealF = 0, mealC = 0;
         mealItems.forEach(it => {
           if (progress.skippedItems?.[it.id]) return;
+          if (isOptionalMealItem(it) && !isMealItemLogged(it.id)) return;
           const effective = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
           mealCal += (effective.weight * effective.cal100) / 100;
           mealP += (effective.weight * effective.p100) / 100;
@@ -16993,15 +17142,36 @@
           mealC += (effective.weight * effective.c100) / 100;
         });
 
-        const activeItems = mealItems.filter(it => !progress.skippedItems?.[it.id]);
+        const activeItems = mealItems.filter(it => !progress.skippedItems?.[it.id] && (!isOptionalMealItem(it) || isMealItemLogged(it.id)));
         const allDone = activeItems.length > 0 && activeItems.every(it => isMealItemLogged(it.id));
 
+        const slotRef = meal.hasVariants
+          ? computeItemsMacros((rawMealItems || []).filter(it => !isOptionalMealItem(it) || isMealItemLogged(it.id)))
+          : ((meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0) ? meal.slotTargetMacros : computeItemsMacros((rawMealItems || []).filter(it => !isOptionalMealItem(it) || isMealItemLogged(it.id))));
+        const slotDeltaP = round1(mealP - (Number(slotRef.p) || 0));
+        const slotDeltaF = round1(mealF - (Number(slotRef.f) || 0));
+        const slotDeltaC = round1(mealC - (Number(slotRef.c) || 0));
+
+        let slotMicroBadgeHtml = "";
+        if (slotDeltaF <= -1.5) {
+          slotMicroBadgeHtml = `<span class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/25 text-amber-400 font-mono text-[9.5px] tabular-nums shrink-0 font-bold">Ж ${slotDeltaF > 0 ? '+' : ''}${slotDeltaF}г</span>`;
+        } else if (slotDeltaF >= 1.5) {
+          slotMicroBadgeHtml = `<span class="px-1.5 py-0.5 rounded bg-red-500/15 border border-red-500/25 text-red-400 font-mono text-[9.5px] tabular-nums shrink-0 font-bold">Ж +${slotDeltaF}г</span>`;
+        } else if (slotDeltaC >= 3.0) {
+          slotMicroBadgeHtml = `<span class="px-1.5 py-0.5 rounded bg-red-500/15 border border-red-500/25 text-red-400 font-mono text-[9.5px] tabular-nums shrink-0 font-bold">У +${slotDeltaC}г</span>`;
+        } else if (slotDeltaC <= -3.0) {
+          slotMicroBadgeHtml = `<span class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/25 text-amber-400 font-mono text-[9.5px] tabular-nums shrink-0 font-bold">У ${slotDeltaC > 0 ? '+' : ''}${slotDeltaC}г</span>`;
+        } else if (slotDeltaP <= -2.5) {
+          slotMicroBadgeHtml = `<span class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/25 text-amber-400 font-mono text-[9.5px] tabular-nums shrink-0 font-bold">Б ${slotDeltaP > 0 ? '+' : ''}${slotDeltaP}г</span>`;
+        }
+
         htmlCards += `
-          <div class="coach-meal-card ${allDone ? 'all-done' : ''}">
+          <div class="coach-meal-card ${allDone ? 'all-done' : ''}" id="coachMealCard_${meal.id}">
             <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <span class="w-1.5 h-3.5 rounded-full" style="background: ${accent}"></span>
-                <span class="text-xs font-bold text-white tracking-wide uppercase mono">${meal.title}</span>
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-1.5 h-3.5 rounded-full shrink-0" style="background: ${accent}"></span>
+                <span class="text-xs font-bold text-white tracking-wide uppercase mono truncate">${meal.title}</span>
+                ${slotMicroBadgeHtml}
               </div>
               <div class="flex items-center gap-1.5">
                 <!-- Кнопки перемещения слота вверх/вниз -->
@@ -17264,7 +17434,7 @@
       (template.meals || []).forEach(meal => {
         if (meal.hasVariants) {
           const vk = getMealActiveVariantKey(meal, progress);
-          updateSegmentedSlider("mealVariantsBar_" + meal.id, "mealVarBtn_" + meal.id + "_" + vk, true);
+          updateSegmentedSlider("mealVariantsBar_" + meal.id, "mealVarBtn_" + meal.id + "_" + vk, false);
         }
       });
     }
@@ -20033,6 +20203,7 @@
         variantPressTriggered = false;
         return;
       }
+      if (typeof savePillRect === "function") savePillRect("splitVariantPills");
       const prog = state.workout?.programs?.[progId];
       if (!prog) return;
       ensureProgramVariants(prog);
@@ -20169,15 +20340,16 @@
         return `
           <button
             type="button"
+            id="workoutVarBtn_${activeProg.id}_${vk}"
             onclick="switchWorkoutVariant('${activeProg.id}', '${vk}')"
             ontouchstart="handleVariantPillTouchStart('${activeProg.id}', '${vk}')"
             ontouchend="handleVariantPillTouchEnd()"
             ontouchmove="handleVariantPillTouchEnd()"
             ontouchcancel="handleVariantPillTouchEnd()"
-            class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold mono whitespace-nowrap shrink-0 border transition flex items-center gap-1 ${
+            class="relative z-10 shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200 flex items-center gap-1 ${
               isActive
-                ? 'bg-white/15 border-white/40 text-white'
-                : 'bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-zinc-200'
+                ? 'text-white font-bold'
+                : 'text-zinc-400 hover:text-white'
             }"
           >
             <span>${escapeHtml(vTitle)}</span>${editIconHtml}
@@ -20189,11 +20361,14 @@
         <button
           type="button"
           onclick="addNewWorkoutDayVariant('${activeProg.id}')"
-          class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold mono whitespace-nowrap shrink-0 border border-dashed border-white/20 bg-white/[0.02] text-zinc-400 hover:text-white hover:border-white/40 transition"
+          class="relative z-10 shrink-0 px-2 py-1 text-[11px] mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition"
         >+ Вариант</button>
       `;
 
-      varBox.innerHTML = pillsHtml + addBtnHtml;
+      varBox.className = "segmented-slider-container no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
+      varBox.innerHTML = `<div class="segmented-slider-pill"></div>` + pillsHtml + addBtnHtml;
+
+      updateSegmentedSlider("splitVariantPills", "workoutVarBtn_" + activeProg.id + "_" + activeVk, false);
     };
 
     // 5. Полный и безопасный рендер вкладки «ТРЕНИ» (без фантомных кнопок шаблонов!)
@@ -24064,6 +24239,50 @@ ${knownPiecesContext}
             if (dietSubTrack) dietSubTrack.style.transition = "none";
             const width = viewport.offsetWidth || window.innerWidth || 390;
 
+            // 1:1 Live следование бегунка [РАЦИОН // ТРЕНИ]
+            const mainPill = document.getElementById("mainNavSliderPill");
+            const btnDiet = document.getElementById("navTabDiet");
+            const btnSplit = document.getElementById("navTabSplit");
+            if (mainPill && btnDiet && btnSplit) {
+              const dL = btnDiet.offsetLeft;
+              const sL = btnSplit.offsetLeft;
+              const dW = btnDiet.offsetWidth;
+              const sW = btnSplit.offsetWidth;
+              let ratio = 0;
+              if (startingMainView === "split") {
+                ratio = Math.max(0, Math.min(1, 1 - (dx / width)));
+              } else if (startingDietMode === "diary" && dx < 0) {
+                ratio = Math.max(0, Math.min(1, -dx / width));
+              }
+              if (ratio > 0 || startingMainView === "split") {
+                mainPill.style.transition = "none";
+                mainPill.style.transform = `translate3d(${dL + (sL - dL) * ratio}px, 0, 0)`;
+                mainPill.style.width = `${dW + (sW - dW) * ratio}px`;
+              }
+            }
+
+            // 1:1 Live следование бегунка [МОЙ РАЦИОН // ДНЕВНИК]
+            const subPill = document.getElementById("dietSubSliderPill");
+            const btnP = document.getElementById("dietModePlanBtn");
+            const btnD = document.getElementById("dietModeDiaryBtn");
+            if (subPill && btnP && btnD && startingMainView === "diet") {
+              const pL = btnP.offsetLeft;
+              const dL = btnD.offsetLeft;
+              const pW = btnP.offsetWidth;
+              const dW = btnD.offsetWidth;
+              let subRatio = 0;
+              if (startingDietMode === "plan") {
+                subRatio = Math.max(0, Math.min(1, -dx / width));
+              } else if (dx > 0) {
+                subRatio = Math.max(0, Math.min(1, 1 - (dx / width)));
+              } else {
+                subRatio = 1;
+              }
+              subPill.style.transition = "none";
+              subPill.style.transform = `translate3d(${pL + (dL - pL) * subRatio}px, 0, 0)`;
+              subPill.style.width = `${pW + (dW - pW) * subRatio}px`;
+            }
+
             if (startingMainView === "split") {
               // Вкладка ТРЕНИ
               if (dietSubTrack) dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
@@ -24118,11 +24337,17 @@ ${knownPiecesContext}
 
       const endHandler = () => {
         if (rafId) cancelAnimationFrame(rafId);
+        const springBezier = "280ms cubic-bezier(0.22, 1, 0.36, 1)";
+        const pillSpring = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1)";
+        const mainPill = document.getElementById("mainNavSliderPill");
+        const subPill = document.getElementById("dietSubSliderPill");
+        if (mainPill) mainPill.style.transition = pillSpring;
+        if (subPill) subPill.style.transition = pillSpring;
+
         if (cancelGesture || !isSwiping) {
           isSwiping = false;
           cancelGesture = false;
           isScrollingVertically = false;
-          const springBezier = "280ms cubic-bezier(0.22, 1, 0.36, 1)";
           const dietSubTrack = document.getElementById("dietSubTrack");
           if (track) {
             track.style.transition = `transform ${springBezier}`;
@@ -24148,7 +24373,6 @@ ${knownPiecesContext}
         const isSwipeLeft = (dx < -distanceThreshold) || (dx < -25 && isFlick);
         const isSwipeRight = (dx > distanceThreshold) || (dx > 25 && isFlick);
 
-        const springBezier = "280ms cubic-bezier(0.22, 1, 0.36, 1)";
         const dietSubTrack = document.getElementById("dietSubTrack");
 
         if (startingMainView === "split") {
