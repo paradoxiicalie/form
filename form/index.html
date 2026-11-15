@@ -335,7 +335,7 @@
       width: 0px;
       transform: translate3d(0, 0, 0);
       border-radius: inherit;
-      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+      transition: transform 360ms cubic-bezier(0.25, 1, 0.5, 1), width 360ms cubic-bezier(0.25, 1, 0.5, 1);
       pointer-events: none;
       z-index: 1;
       will-change: transform, width;
@@ -347,12 +347,19 @@
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: color-mix(in srgb, var(--accent-cal) 15%, rgba(255, 255, 255, 0.07));
+      background-color: color-mix(in srgb, var(--accent-cal) 14%, rgba(255, 255, 255, 0.095));
+      background-image: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.11) 0%,
+        rgba(255, 255, 255, 0.02) 45%,
+        rgba(255, 255, 255, 0) 65%,
+        color-mix(in srgb, var(--accent-cal) 14%, transparent) 100%
+      );
       backdrop-filter: blur(24px) saturate(160%);
       -webkit-backdrop-filter: blur(24px) saturate(160%);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
-      transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1), background 200ms ease, backdrop-filter 200ms ease, -webkit-backdrop-filter 200ms ease, box-shadow 200ms ease;
-      will-change: transform, background, filter;
+      box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.22), 0 4px 16px rgba(0, 0, 0, 0.28);
+      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 320ms ease, background-color 200ms ease, box-shadow 200ms ease;
+      will-change: transform, filter;
       overflow: hidden;
     }
 
@@ -365,37 +372,37 @@
       padding: 1px;
       background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.34) 0%,
-        rgba(255, 255, 255, 0.05) 32%,
-        rgba(255, 255, 255, 0.02) 68%,
-        color-mix(in srgb, var(--accent-cal) 42%, rgba(255, 255, 255, 0.16)) 100%
+        rgba(255, 255, 255, 0.44) 0%,
+        rgba(255, 255, 255, 0.06) 28%,
+        rgba(255, 255, 255, 0.01) 68%,
+        color-mix(in srgb, var(--accent-cal) 45%, rgba(255, 255, 255, 0.18)) 100%
       );
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
       pointer-events: none;
       filter: brightness(1);
-      transition: filter 200ms ease, opacity 200ms ease;
+      transition: filter 320ms ease, opacity 320ms ease;
       will-change: filter;
     }
 
-    /* Реакция жидкой капли при движении (.is-liquid-moving) */
+    /* Реакция жидкой капли при движении (.is-liquid-moving) - деликатный scale */
     .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.04, 1.08);
-      background: color-mix(in srgb, var(--accent-cal) 10%, rgba(255, 255, 255, 0.05));
-      backdrop-filter: blur(8px) brightness(1.35) saturate(190%);
-      -webkit-backdrop-filter: blur(8px) brightness(1.35) saturate(190%);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      transform: scale(1.025, 1.04);
+      background-color: color-mix(in srgb, var(--accent-cal) 10%, rgba(255, 255, 255, 0.06));
+      backdrop-filter: blur(12px) brightness(1.14) saturate(175%);
+      -webkit-backdrop-filter: blur(12px) brightness(1.14) saturate(175%);
+      box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.32), 0 6px 20px rgba(0, 0, 0, 0.34);
     }
 
     .segmented-slider-pill.is-liquid-moving .liquid-glass-body::before {
-      filter: brightness(1.48);
+      filter: brightness(1.35);
     }
 
     /* Безопасный scale внутри скролл-лент вариантов */
     [id^="mealVariantsBar_"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body,
     #splitVariantPills .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.03, 1.04);
+      transform: scale(1.02, 1.025);
     }
 
     .segmented-slider-container.rounded-full .segmented-slider-pill,
@@ -409,7 +416,7 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
     }
     html[data-ui-glow="off"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.02, 1.03) !important;
+      transform: scale(1.015, 1.025) !important;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
     }
 
@@ -1081,7 +1088,7 @@
 
       <!-- ПОДТРЕК РАЦИОНА: [ ПЛАН ТРЕНЕРА ] <-> [ ДНЕВНИК ] (1:1 Telegram Swipe) -->
       <div id="dietSubViewport" class="w-full overflow-hidden">
-        <div id="dietSubTrack" class="flex w-[200%] will-change-transform" style="transform: translate3d(0%, 0, 0); backface-visibility: hidden;">
+        <div id="dietSubTrack" class="flex w-[200%] items-start will-change-transform" style="transform: translate3d(0%, 0, 0); backface-visibility: hidden;">
           <!-- СЕКЦИЯ 1: ИНТЕРАКТИВНЫЙ ПЛАН ТРЕНЕРА (Obsidian Noir) -->
           <div id="coachMealPlanSection" class="w-1/2 shrink-0 space-y-3.5 mb-6"></div>
 
@@ -9530,6 +9537,48 @@
     }
     window.savePillRect = savePillRect;
 
+    window._mealPlanDirty = false;
+    function markMealPlanDirty() {
+      window._mealPlanDirty = true;
+    }
+    window.markMealPlanDirty = markMealPlanDirty;
+
+    function prepareTracksForSwipe() {
+      const vDiet = document.getElementById("viewDiet");
+      const vSplit = document.getElementById("viewSplit");
+      const secPlan = document.getElementById("coachMealPlanSection");
+      const secDiary = document.getElementById("coachDietDiarySection");
+      if (vDiet) { vDiet.style.maxHeight = "none"; vDiet.style.overflow = "visible"; }
+      if (vSplit) { vSplit.style.maxHeight = "none"; vSplit.style.overflow = "visible"; }
+      if (secPlan) { secPlan.style.maxHeight = "none"; secPlan.style.overflow = "visible"; }
+      if (secDiary) { secDiary.style.maxHeight = "none"; secDiary.style.overflow = "visible"; }
+    }
+    window.prepareTracksForSwipe = prepareTracksForSwipe;
+
+    function lockInactiveTrackHeights() {
+      const vDiet = document.getElementById("viewDiet");
+      const vSplit = document.getElementById("viewSplit");
+      const secPlan = document.getElementById("coachMealPlanSection");
+      const secDiary = document.getElementById("coachDietDiarySection");
+
+      if (currentMainView === "split") {
+        if (vDiet) { vDiet.style.maxHeight = "100vh"; vDiet.style.overflow = "hidden"; vDiet.style.pointerEvents = "none"; }
+        if (vSplit) { vSplit.style.maxHeight = "none"; vSplit.style.overflow = "visible"; vSplit.style.pointerEvents = "auto"; }
+      } else {
+        if (vSplit) { vSplit.style.maxHeight = "100vh"; vSplit.style.overflow = "hidden"; vSplit.style.pointerEvents = "none"; }
+        if (vDiet) { vDiet.style.maxHeight = "none"; vDiet.style.overflow = "visible"; vDiet.style.pointerEvents = "auto"; }
+      }
+
+      if (state.dietViewMode === "diary") {
+        if (secPlan) { secPlan.style.maxHeight = "100vh"; secPlan.style.overflow = "hidden"; secPlan.style.pointerEvents = "none"; }
+        if (secDiary) { secDiary.style.maxHeight = "none"; secDiary.style.overflow = "visible"; secDiary.style.pointerEvents = "auto"; }
+      } else {
+        if (secDiary) { secDiary.style.maxHeight = "100vh"; secDiary.style.overflow = "hidden"; secDiary.style.pointerEvents = "none"; }
+        if (secPlan) { secPlan.style.maxHeight = "none"; secPlan.style.overflow = "visible"; secPlan.style.pointerEvents = "auto"; }
+      }
+    }
+    window.lockInactiveTrackHeights = lockInactiveTrackHeights;
+
     function updateSegmentedSlider(container, activeBtn, immediate = false) {
       if (typeof container === "string") container = document.getElementById(container);
       if (typeof activeBtn === "string") activeBtn = document.getElementById(activeBtn);
@@ -9550,7 +9599,7 @@
         pill.appendChild(body);
       }
 
-      // Безопасный таймер эффекта жидкой капли (Requirement 4)
+      // Безопасный таймер эффекта жидкой капли (снятие на 140мс в середине хода)
       if (pill._liquidMoveTimer) {
         clearTimeout(pill._liquidMoveTimer);
         pill._liquidMoveTimer = null;
@@ -9560,7 +9609,7 @@
         pill._liquidMoveTimer = setTimeout(() => {
           pill.classList.remove("is-liquid-moving");
           pill._liquidMoveTimer = null;
-        }, 280);
+        }, 140);
       } else {
         pill.classList.remove("is-liquid-moving");
       }
@@ -9583,15 +9632,16 @@
       const cRect = container.getBoundingClientRect();
       const bRect = activeBtn.getBoundingClientRect();
 
-      let left = (bRect.width > 0) ? (bRect.left - cRect.left) : activeBtn.offsetLeft;
-      let top = (bRect.height > 0) ? (bRect.top - cRect.top) : activeBtn.offsetTop;
-      let width = (bRect.width > 0) ? bRect.width : activeBtn.offsetWidth;
-      let height = (bRect.height > 0) ? bRect.height : activeBtn.offsetHeight;
+      let left = Math.round((bRect.width > 0) ? (bRect.left - cRect.left) : activeBtn.offsetLeft);
+      let top = Math.round((bRect.height > 0) ? (bRect.top - cRect.top) : activeBtn.offsetTop);
+      let width = Math.round((bRect.width > 0) ? bRect.width : activeBtn.offsetWidth);
+      let height = Math.round((bRect.height > 0) ? bRect.height : activeBtn.offsetHeight);
 
       const containerId = container.id || null;
       const prevRect = (containerId && window._prevPillRects) ? window._prevPillRects[containerId] : null;
 
-      const springTransition = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1), top 0.2s ease, height 0.2s ease";
+      // Единая 360ms iOS-кривая с экспоненциальным торможением в ноль
+      const springTransition = "transform 360ms cubic-bezier(0.25, 1, 0.5, 1), width 360ms cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease";
 
       if (prevRect && !immediate && prevRect.width > 0) {
         pill.style.transition = "none";
@@ -9617,10 +9667,10 @@
           if (!container || !activeBtn) return;
           const cR = container.getBoundingClientRect();
           const bR = activeBtn.getBoundingClientRect();
-          const l = (bR.width > 0) ? (bR.left - cR.left) : activeBtn.offsetLeft;
-          const t = (bR.height > 0) ? (bR.top - cR.top) : activeBtn.offsetTop;
-          const w = (bR.width > 0) ? bR.width : activeBtn.offsetWidth;
-          const h = (bR.height > 0) ? bR.height : activeBtn.offsetHeight;
+          const l = Math.round((bR.width > 0) ? (bR.left - cR.left) : activeBtn.offsetLeft);
+          const t = Math.round((bR.height > 0) ? (bR.top - cR.top) : activeBtn.offsetTop);
+          const w = Math.round((bR.width > 0) ? bR.width : activeBtn.offsetWidth);
+          const h = Math.round((bR.height > 0) ? bR.height : activeBtn.offsetHeight);
           if (w > 0) {
             pill.style.transition = immediate ? "none" : springTransition;
             pill.style.transform = `translate3d(${l}px, 0, 0)`;
@@ -9659,7 +9709,7 @@
         updateSegmentedSlider("mainSegmentedNav", (view === "split") ? "navTabSplit" : "navTabDiet", false);
         const trk = document.getElementById("viewsTrack");
         if (trk) {
-          trk.style.transition = "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+          trk.style.transition = "transform 360ms cubic-bezier(0.25, 1, 0.5, 1)";
           trk.style.transform = (view === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
         }
         return;
@@ -9670,6 +9720,8 @@
       else if (prevView === "split") savedSplitScrollY = window.scrollY || 0;
 
       currentMainView = view;
+      prepareTracksForSwipe();
+
       const vDiet = document.getElementById("viewDiet");
       const vSplit = document.getElementById("viewSplit");
       const tabDiet = document.getElementById("navTabDiet");
@@ -9678,12 +9730,8 @@
       const iconAddEx = document.getElementById("iconAddExTop");
       const track = document.getElementById("viewsTrack");
 
-      // Перед анимацией гарантируем разворачивание обоих видов для плавного сдвига
-      if (vDiet) { vDiet.style.height = "auto"; vDiet.style.overflow = "visible"; vDiet.style.opacity = "1"; }
-      if (vSplit) { vSplit.style.height = "auto"; vSplit.style.overflow = "visible"; vSplit.style.opacity = "1"; }
-
       if (track) {
-        track.style.transition = immediate ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+        track.style.transition = immediate ? "none" : "transform 360ms cubic-bezier(0.25, 1, 0.5, 1)";
         track.style.transform = (view === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
       }
 
@@ -9691,46 +9739,58 @@
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
         updateSegmentedSlider("mainSegmentedNav", "navTabSplit", immediate);
-        if (iconScan) iconScan.classList.add("hidden");
-        if (iconAddEx) iconAddEx.classList.remove("hidden");
+
+        // Мягкий crossfade иконки в шапке (180ms)
+        if (iconScan && iconAddEx) {
+          iconScan.style.transition = "opacity 180ms ease";
+          iconAddEx.style.transition = "opacity 180ms ease";
+          iconScan.style.opacity = "0";
+          setTimeout(() => {
+            if (currentMainView === "split") {
+              iconScan.classList.add("hidden");
+              iconAddEx.classList.remove("hidden");
+              iconAddEx.style.opacity = "1";
+            }
+          }, 180);
+        }
+
         if (vSplit) vSplit.style.pointerEvents = "auto";
+        if (vDiet) vDiet.style.pointerEvents = "none";
 
         if (prevView !== "split") {
           window.scrollTo({ top: savedSplitScrollY, behavior: "instant" });
         }
-
-        const collapseDiet = () => {
-          if (currentMainView === "split" && vDiet) {
-            vDiet.style.height = "0px";
-            vDiet.style.overflow = "hidden";
-            vDiet.style.opacity = "0";
-            vDiet.style.pointerEvents = "none";
-          }
-        };
-        if (immediate) collapseDiet();
-        else setTimeout(collapseDiet, 290);
       } else {
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
         updateSegmentedSlider("mainSegmentedNav", "navTabDiet", immediate);
-        if (iconScan) iconScan.classList.remove("hidden");
-        if (iconAddEx) iconAddEx.classList.add("hidden");
+
+        // Мягкий crossfade иконки в шапке (180ms)
+        if (iconScan && iconAddEx) {
+          iconScan.style.transition = "opacity 180ms ease";
+          iconAddEx.style.transition = "opacity 180ms ease";
+          iconAddEx.style.opacity = "0";
+          setTimeout(() => {
+            if (currentMainView === "diet") {
+              iconAddEx.classList.add("hidden");
+              iconScan.classList.remove("hidden");
+              iconScan.style.opacity = "1";
+            }
+          }, 180);
+        }
+
         if (vDiet) vDiet.style.pointerEvents = "auto";
+        if (vSplit) vSplit.style.pointerEvents = "none";
 
         if (prevView !== "diet") {
           window.scrollTo({ top: savedDietScrollY, behavior: "instant" });
         }
+      }
 
-        const collapseSplit = () => {
-          if (currentMainView === "diet" && vSplit) {
-            vSplit.style.height = "0px";
-            vSplit.style.overflow = "hidden";
-            vSplit.style.opacity = "0";
-            vSplit.style.pointerEvents = "none";
-          }
-        };
-        if (immediate) collapseSplit();
-        else setTimeout(collapseSplit, 290);
+      if (immediate) {
+        lockInactiveTrackHeights();
+      } else {
+        setTimeout(lockInactiveTrackHeights, 370);
       }
     }
     window.switchMainView = switchMainView;
@@ -14538,13 +14598,15 @@
         updateSegmentedSlider("dietSubSegmentedNav", (mode === "diary") ? "dietModeDiaryBtn" : "dietModePlanBtn", false);
         const subTrack = document.getElementById("dietSubTrack");
         if (subTrack) {
-          subTrack.style.transition = "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+          subTrack.style.transition = "transform 360ms cubic-bezier(0.25, 1, 0.5, 1)";
           subTrack.style.transform = (mode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
         }
         return;
       }
       state.dietViewMode = mode;
       saveState();
+
+      prepareTracksForSwipe();
 
       const btnPlan = document.getElementById("dietModePlanBtn");
       const btnDiary = document.getElementById("dietModeDiaryBtn");
@@ -14564,72 +14626,25 @@
         }
       }
 
-      if (_dietSubCollapseTimeout) {
-        clearTimeout(_dietSubCollapseTimeout);
-        _dietSubCollapseTimeout = null;
-      }
-
-      if (secPlan) {
-        secPlan.classList.remove("hidden");
-        secPlan.style.height = "auto";
-        secPlan.style.overflow = "visible";
-        secPlan.style.opacity = "1";
-        secPlan.style.pointerEvents = "auto";
-      }
-      if (secDiary) {
-        secDiary.classList.remove("hidden");
-        secDiary.style.height = "auto";
-        secDiary.style.overflow = "visible";
-        secDiary.style.opacity = "1";
-        secDiary.style.pointerEvents = "auto";
-      }
+      if (secPlan) secPlan.style.pointerEvents = (mode === "plan") ? "auto" : "none";
+      if (secDiary) secDiary.style.pointerEvents = (mode === "diary") ? "auto" : "none";
 
       if (subTrack) {
-        subTrack.style.transition = immediate ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+        subTrack.style.transition = immediate ? "none" : "transform 360ms cubic-bezier(0.25, 1, 0.5, 1)";
         subTrack.style.transform = (mode === "plan") ? "translate3d(0%, 0, 0)" : "translate3d(-50%, 0, 0)";
       }
 
-      if (mode === "plan") {
-        renderCoachMealPlan();
+      // Обновляем рацион только если данные реально менялись (Requirement 2)
+      if (mode === "plan" && window._mealPlanDirty) {
+        window._mealPlanDirty = false;
+        if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
       }
-
-      const collapseInactive = () => {
-        if (state.dietViewMode === "plan") {
-          if (secDiary) {
-            secDiary.style.height = "0px";
-            secDiary.style.overflow = "hidden";
-            secDiary.style.opacity = "0";
-            secDiary.style.pointerEvents = "none";
-          }
-          if (secPlan) {
-            secPlan.style.height = "auto";
-            secPlan.style.overflow = "visible";
-            secPlan.style.opacity = "1";
-            secPlan.style.pointerEvents = "auto";
-          }
-        } else {
-          if (secPlan) {
-            secPlan.style.height = "0px";
-            secPlan.style.overflow = "hidden";
-            secPlan.style.opacity = "0";
-            secPlan.style.pointerEvents = "none";
-          }
-          if (secDiary) {
-            secDiary.style.height = "auto";
-            secDiary.style.overflow = "visible";
-            secDiary.style.opacity = "1";
-            secDiary.style.pointerEvents = "auto";
-          }
-        }
-      };
 
       if (immediate) {
-        collapseInactive();
+        lockInactiveTrackHeights();
       } else {
-        _dietSubCollapseTimeout = setTimeout(collapseInactive, 290);
+        setTimeout(lockInactiveTrackHeights, 370);
       }
-
-      if (typeof renderAll === "function") renderAll();
     }
     window.switchDietViewMode = switchDietViewMode;
 
@@ -17974,6 +17989,8 @@
       try {
         if (state.dietViewMode === "plan" && typeof renderCoachMealPlan === "function") {
           renderCoachMealPlan();
+        } else {
+          window._mealPlanDirty = true;
         }
       } catch (err) {
         console.error("renderCoachMealPlan failed:", err);
@@ -24335,10 +24352,10 @@ ${knownPiecesContext}
             const secDiary = document.getElementById("coachDietDiarySection");
             const dietSubTrack = document.getElementById("dietSubTrack");
 
-            if (vDietEl) { vDietEl.style.height = "auto"; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; vDietEl.style.pointerEvents = "auto"; }
-            if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; vSplitEl.style.pointerEvents = "auto"; }
-            if (secPlan) { secPlan.style.height = "auto"; secPlan.style.overflow = "visible"; secPlan.style.opacity = "1"; secPlan.style.pointerEvents = "auto"; }
-            if (secDiary) { secDiary.style.height = "auto"; secDiary.style.overflow = "visible"; secDiary.style.opacity = "1"; secDiary.style.pointerEvents = "auto"; }
+            if (vDietEl) { vDietEl.style.height = "auto"; vDietEl.style.maxHeight = "none"; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; vDietEl.style.pointerEvents = "auto"; }
+            if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.maxHeight = "none"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; vSplitEl.style.pointerEvents = "auto"; }
+            if (secPlan) { secPlan.style.height = "auto"; secPlan.style.maxHeight = "none"; secPlan.style.overflow = "visible"; secPlan.style.opacity = "1"; secPlan.style.pointerEvents = "auto"; }
+            if (secDiary) { secDiary.style.height = "auto"; secDiary.style.maxHeight = "none"; secDiary.style.overflow = "visible"; secDiary.style.opacity = "1"; secDiary.style.pointerEvents = "auto"; }
 
             track.style.transition = "none";
             if (dietSubTrack) dietSubTrack.style.transition = "none";
@@ -24456,46 +24473,20 @@ ${knownPiecesContext}
 
       const endHandler = () => {
         if (rafId) cancelAnimationFrame(rafId);
-        const springBezier = "280ms cubic-bezier(0.22, 1, 0.36, 1)";
-        const pillSpring = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1)";
         const mainPill = document.getElementById("mainNavSliderPill");
         const subPill = document.getElementById("dietSubSliderPill");
+
+        // В момент touchend снимаем .is-liquid-moving для мягкого возврата scale по ходу торможения
         if (mainPill) {
-          mainPill.style.transition = pillSpring;
           if (mainPill._liquidMoveTimer) clearTimeout(mainPill._liquidMoveTimer);
-          mainPill._liquidMoveTimer = setTimeout(() => {
-            mainPill.classList.remove("is-liquid-moving");
-            mainPill._liquidMoveTimer = null;
-          }, 320);
+          mainPill.classList.remove("is-liquid-moving");
+          mainPill._liquidMoveTimer = null;
         }
         if (subPill) {
-          subPill.style.transition = pillSpring;
           if (subPill._liquidMoveTimer) clearTimeout(subPill._liquidMoveTimer);
-          subPill._liquidMoveTimer = setTimeout(() => {
-            subPill.classList.remove("is-liquid-moving");
-            subPill._liquidMoveTimer = null;
-          }, 320);
+          subPill.classList.remove("is-liquid-moving");
+          subPill._liquidMoveTimer = null;
         }
-
-        if (cancelGesture || !isSwiping) {
-          isSwiping = false;
-          cancelGesture = false;
-          isScrollingVertically = false;
-          const dietSubTrack = document.getElementById("dietSubTrack");
-          if (track) {
-            track.style.transition = `transform ${springBezier}`;
-            track.style.transform = (currentMainView === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
-          }
-          if (dietSubTrack) {
-            dietSubTrack.style.transition = `transform ${springBezier}`;
-            dietSubTrack.style.transform = (state.dietViewMode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
-          }
-          if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
-          return;
-        }
-        isSwiping = false;
-        cancelGesture = false;
-        isScrollingVertically = false;
 
         const dx = currentX - startX;
         const dt = Math.max(1, Date.now() - startTime);
@@ -24506,6 +24497,37 @@ ${knownPiecesContext}
         const isSwipeLeft = (dx < -distanceThreshold) || (dx < -25 && isFlick);
         const isSwipeRight = (dx > distanceThreshold) || (dx > 25 && isFlick);
 
+        // Синхронная длительность доводки для экрана и линзы (240ms..360ms)
+        const remaining = Math.max(0, width - Math.abs(dx));
+        const snapDuration = Math.round(Math.max(240, Math.min(360, (remaining / width) * 360)));
+        const snapBezier = "cubic-bezier(0.25, 1, 0.5, 1)";
+        const snapTrackTransition = `transform ${snapDuration}ms ${snapBezier}`;
+        const snapPillTransition = `transform ${snapDuration}ms ${snapBezier}, width ${snapDuration}ms ${snapBezier}`;
+
+        if (mainPill) mainPill.style.transition = snapPillTransition;
+        if (subPill) subPill.style.transition = snapPillTransition;
+
+        if (cancelGesture || !isSwiping) {
+          isSwiping = false;
+          cancelGesture = false;
+          isScrollingVertically = false;
+          const dietSubTrack = document.getElementById("dietSubTrack");
+          if (track) {
+            track.style.transition = snapTrackTransition;
+            track.style.transform = (currentMainView === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+          }
+          if (dietSubTrack) {
+            dietSubTrack.style.transition = snapTrackTransition;
+            dietSubTrack.style.transform = (state.dietViewMode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
+          }
+          if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
+          setTimeout(lockInactiveTrackHeights, snapDuration + 10);
+          return;
+        }
+        isSwiping = false;
+        cancelGesture = false;
+        isScrollingVertically = false;
+
         const dietSubTrack = document.getElementById("dietSubTrack");
 
         if (startingMainView === "split") {
@@ -24515,26 +24537,23 @@ ${knownPiecesContext}
             switchDietViewMode("diary");
             if (typeof haptic === "function") haptic("light");
           } else {
-            track.style.transition = `transform ${springBezier}`;
+            track.style.transition = snapTrackTransition;
             track.style.transform = "translate3d(-50%, 0, 0)";
             switchMainView("split");
           }
         } else if (startingMainView === "diet" && startingDietMode === "diary") {
           // Из ДНЕВНИКА
           if (isSwipeLeft) {
-            // Переход в ТРЕНИ
             switchMainView("split");
             if (typeof haptic === "function") haptic("light");
           } else if (isSwipeRight) {
-            // Возврат в ПЛАН ТРЕНЕРА
             switchDietViewMode("plan");
             if (typeof haptic === "function") haptic("light");
           } else {
-            // Отскок на место в ДНЕВНИК
-            track.style.transition = `transform ${springBezier}`;
+            track.style.transition = snapTrackTransition;
             track.style.transform = "translate3d(0%, 0, 0)";
             if (dietSubTrack) {
-              dietSubTrack.style.transition = `transform ${springBezier}`;
+              dietSubTrack.style.transition = snapTrackTransition;
               dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
             }
             switchDietViewMode("diary");
@@ -24542,20 +24561,21 @@ ${knownPiecesContext}
         } else {
           // Из ПЛАНА ТРЕНЕРА
           if (isSwipeLeft) {
-            // Переход в ДНЕВНИК
             switchDietViewMode("diary");
             if (typeof haptic === "function") haptic("light");
           } else {
-            // Отскок на место в ПЛАН ТРЕНЕРА
-            track.style.transition = `transform ${springBezier}`;
+            track.style.transition = snapTrackTransition;
             track.style.transform = "translate3d(0%, 0, 0)";
             if (dietSubTrack) {
-              dietSubTrack.style.transition = `transform ${springBezier}`;
+              dietSubTrack.style.transition = snapTrackTransition;
               dietSubTrack.style.transform = "translate3d(0%, 0, 0)";
             }
             switchDietViewMode("plan");
           }
         }
+
+        setTimeout(lockInactiveTrackHeights, snapDuration + 10);
+
         if (typeof updateAllSegmentedSliders === "function") {
           requestAnimationFrame(updateAllSegmentedSliders);
         }
@@ -24706,6 +24726,7 @@ ${knownPiecesContext}
     requestAnimationFrame(() => {
       document.documentElement.classList.add("app-ready");
       if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
+      if (typeof lockInactiveTrackHeights === "function") lockInactiveTrackHeights();
     });
 
     window.addEventListener("resize", () => {
