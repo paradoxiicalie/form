@@ -111,8 +111,8 @@
     }
 
     .status-card {
-      background: linear-gradient(180deg, rgba(20, 20, 23, 0.92) 0%, rgba(12, 12, 14, 0.96) 100%);
-      border: 1px solid var(--card-border);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg, #141417) 85%, rgba(255, 255, 255, 0.04)) 0%, var(--card-bg, #0c0c0e) 100%);
+      border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
       border-radius: var(--ui-radius-card, 24px);
       padding: 16px 18px;
       backdrop-filter: blur(20px);
@@ -187,8 +187,8 @@
     .sheet-panel {
       width: 100%;
       max-width: 480px;
-      background: #101013;
-      border-top: 1px solid var(--card-border);
+      background: color-mix(in srgb, var(--card-bg, #101013) 92%, #000);
+      border-top: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
       border-radius: var(--ui-radius-panel, 32px) var(--ui-radius-panel, 32px) 0 0;
       padding: 18px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
       max-height: 90dvh;
@@ -222,8 +222,8 @@
     }
 
     .organic-card {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
-      border: 1px solid var(--ui-card-border, rgba(255, 255, 255, 0.08));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg, #111114) 75%, rgba(255, 255, 255, 0.045)) 0%, var(--card-bg, #0d0d10) 100%);
+      border: 1px solid var(--ui-card-border, var(--card-border, rgba(255, 255, 255, 0.08)));
       border-radius: var(--ui-radius-card-sm, 18px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
       transition: border-radius 0.22s ease, border-color 0.15s ease;
@@ -676,8 +676,8 @@
 
       /* === CONSOLIDATED CORE STYLES & ADHD MODERN BRUTALIST POLISH === */
       .smart-weight-card {
-        background: linear-gradient(180deg, rgba(24, 24, 28, 0.85) 0%, rgba(14, 14, 17, 0.92) 100%);
-        border: 1px solid var(--card-border);
+        background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg, #18181c) 85%, rgba(255, 255, 255, 0.04)) 0%, var(--card-bg, #0e0e11) 100%);
+        border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
         border-radius: 18px;
         padding: 12px 15px;
         margin-bottom: 12px;
@@ -901,21 +901,24 @@
         if (raw && typeof raw === "object") {
           var themeId = raw.themeId || raw.theme || 'noir';
           var root = document.documentElement;
-          if (themeId === 'monolith') {
-            root.style.setProperty('--bg-main', '#070708');
-            root.style.setProperty('--accent-cal', '#E6DFD3');
-            root.style.setProperty('--accent-cal-text', '#070708');
-            root.style.setProperty('--accent-p', '#9CA3AF');
-            root.style.setProperty('--accent-f', '#8C8275');
-            root.style.setProperty('--accent-c', '#C2593F');
-          } else {
-            root.style.setProperty('--bg-main', '#050506');
-            root.style.setProperty('--accent-cal', '#D62828');
-            root.style.setProperty('--accent-cal-text', '#FFFFFF');
-            root.style.setProperty('--accent-p', '#E4E4E7');
-            root.style.setProperty('--accent-f', '#64748B');
-            root.style.setProperty('--accent-c', '#C8BFA8');
-          }
+          var themePalettes = {
+            monolith: { bg: '#070708', card: '#121215', accent: '#E6DFD3', cal: '#E6DFD3', calText: '#070708', p: '#9CA3AF', f: '#8C8275', c: '#C2593F' },
+            noir: { bg: '#050506', card: '#111114', accent: '#D62828', cal: '#D62828', calText: '#FFFFFF', p: '#E4E4E7', f: '#64748B', c: '#C8BFA8' },
+            bianchetto: { bg: '#09090B', card: '#121215', accent: '#F4F4F0', cal: '#F4F4F0', calText: '#09090B', p: '#A1A1AA', f: '#71717A', c: '#D6CFC2' },
+            acid: { bg: '#08080A', card: '#111412', accent: '#D4FF00', cal: '#D4FF00', calText: '#08080A', p: '#00F0FF', f: '#B55FE6', c: '#FF7A00' },
+            verdant: { bg: '#080C0A', card: '#111914', accent: '#C6F36A', cal: '#C6D9B8', calText: '#080C0A', p: '#80BFA5', f: '#9293B2', c: '#D5A16E' },
+            azure: { bg: '#070A12', card: '#111725', accent: '#55CFFF', cal: '#B8DCEB', calText: '#070A12', p: '#80A9C8', f: '#9A91BC', c: '#D38A78' },
+            teal: { bg: '#080D0E', card: '#111A1B', accent: '#45D6C3', cal: '#D8CBB5', calText: '#080D0E', p: '#82BDB2', f: '#9289A4', c: '#C9876E' }
+          };
+          var pal = themePalettes[themeId] || themePalettes.noir;
+          root.style.setProperty('--bg-main', pal.bg);
+          root.style.setProperty('--card-bg', pal.card);
+          root.style.setProperty('--accent-cal', pal.accent);
+          root.style.setProperty('--accent-cal-text', pal.calText);
+          root.style.setProperty('--macro-cal', pal.cal);
+          root.style.setProperty('--accent-p', pal.p);
+          root.style.setProperty('--accent-f', pal.f);
+          root.style.setProperty('--accent-c', pal.c);
         }
       } catch(e) {}
     })();
@@ -924,7 +927,7 @@
 <body>
 
   <!-- Защитная плашка под системный статус-бар iOS (Status Bar & Dynamic Island) -->
-  <div id="statusBarGuardOverlay" class="fixed top-0 left-0 right-0 h-[max(63px,calc(env(safe-area-inset-top,59px)+4px))] bg-[#070709]/90 backdrop-blur-md z-[120] pointer-events-none"></div>
+  <div id="statusBarGuardOverlay" class="fixed top-0 left-0 right-0 h-[max(63px,calc(env(safe-area-inset-top,59px)+4px))] backdrop-blur-md z-[120] pointer-events-none" style="background: color-mix(in srgb, var(--bg-main) 92%, transparent);"></div>
 
   <!-- Всплывающее компактное уведомление (Тост) внизу над таббаром -->
   <div id="toastBox" class="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+82px)] left-1/2 -translate-x-1/2 z-[250] pointer-events-none opacity-0 transition-all duration-200 transform translate-y-3 w-[90%] max-w-[360px]">
@@ -3622,6 +3625,9 @@
         brandHeader: "FORM // RAW MONOLITH",
         indexHeader: "[ ARCHIVE · 01 · CONCRETE ]",
         bg: "#070708",
+        cardBg: "#121215",
+        cardBorder: "rgba(255, 255, 255, 0.08)",
+        accent: "#E6DFD3",
         cal: "#E6DFD3",
         calText: "#070708",
         p: "#9CA3AF",
@@ -3635,11 +3641,62 @@
         brandHeader: "FORM // OBSIDIAN NOIR",
         indexHeader: "[ STUDIO · 02 · SILK ]",
         bg: "#050506",
+        cardBg: "#111114",
+        cardBorder: "rgba(214, 40, 40, 0.08)",
+        accent: "#D62828",
         cal: "#D62828",
         calText: "#FFFFFF",
         p: "#E4E4E7",
         f: "#64748B",
         c: "#C8BFA8"
+      },
+      verdant: {
+        id: "verdant",
+        title: "VERDANT // ACID NOIR",
+        subtitle: "Кинематографичный тёмно-зелёный с кислотным неоном",
+        brandHeader: "FORM // ACID NOIR",
+        indexHeader: "[ VERDANT · 03 · ACID ]",
+        bg: "#080C0A",
+        cardBg: "#111914",
+        cardBorder: "rgba(198, 243, 106, 0.09)",
+        accent: "#C6F36A",
+        cal: "#C6D9B8",
+        calText: "#080C0A",
+        p: "#80BFA5",
+        f: "#9293B2",
+        c: "#D5A16E"
+      },
+      azure: {
+        id: "azure",
+        title: "AZURE // DEEP SIGNAL",
+        subtitle: "Глубокий синий, электрический голубой и холодные оттенки",
+        brandHeader: "FORM // DEEP SIGNAL",
+        indexHeader: "[ AZURE · 04 · SIGNAL ]",
+        bg: "#070A12",
+        cardBg: "#111725",
+        cardBorder: "rgba(85, 207, 255, 0.09)",
+        accent: "#55CFFF",
+        cal: "#B8DCEB",
+        calText: "#070A12",
+        p: "#80A9C8",
+        f: "#9A91BC",
+        c: "#D38A78"
+      },
+      teal: {
+        id: "teal",
+        title: "TEAL // AFTER DARK",
+        subtitle: "Бирюзовый, глубокий морской и немного циана",
+        brandHeader: "FORM // AFTER DARK",
+        indexHeader: "[ TEAL · 05 · DARK ]",
+        bg: "#080D0E",
+        cardBg: "#111A1B",
+        cardBorder: "rgba(69, 214, 195, 0.09)",
+        accent: "#45D6C3",
+        cal: "#D8CBB5",
+        calText: "#080D0E",
+        p: "#82BDB2",
+        f: "#9289A4",
+        c: "#C9876E"
       },
       bianchetto: {
         id: "bianchetto",
@@ -3648,6 +3705,9 @@
         brandHeader: "FORM // ARTISANAL LAB",
         indexHeader: "[ 01 · 02 · (03) · 04 ]",
         bg: "#09090B",
+        cardBg: "#121215",
+        cardBorder: "rgba(255, 255, 255, 0.08)",
+        accent: "#F4F4F0",
         cal: "#F4F4F0",
         calText: "#09090B",
         p: "#A1A1AA",
@@ -3661,6 +3721,9 @@
         brandHeader: "FORM // ACID BRUTALISM",
         indexHeader: "[ SYS · 26 · ACTIVE ]",
         bg: "#08080A",
+        cardBg: "#111412",
+        cardBorder: "rgba(212, 255, 0, 0.08)",
+        accent: "#D4FF00",
         cal: "#D4FF00",
         calText: "#08080A",
         p: "#00F0FF",
@@ -11246,17 +11309,24 @@
         state.themeId = id;
       }
       if (id === "custom" && state.customTheme) {
+        const ct = state.customTheme;
+        const mainAccent = ct.accent || ct.cal || "#D8C8B8";
         return {
-          ...state.customTheme,
+          ...ct,
           id: "custom",
-          calText: getContrastText(state.customTheme.cal),
-          glow: hexToRgba(state.customTheme.cal, 0.55)
+          accent: mainAccent,
+          cardBg: ct.cardBg || "#111114",
+          cardBorder: ct.cardBorder || "rgba(255, 255, 255, 0.08)",
+          calText: getContrastText(mainAccent),
+          glow: hexToRgba(mainAccent, 0.55)
         };
       }
-      const preset = AVANT_THEMES[id] || (available[0] && AVANT_THEMES[available[0].id]) || AVANT_THEMES.monolith;
+      const preset = AVANT_THEMES[id] || (available[0] && AVANT_THEMES[available[0].id]) || AVANT_THEMES.noir;
+      const mainAccent = preset.accent || preset.cal;
       return {
         ...preset,
-        glow: hexToRgba(preset.cal, 0.55)
+        accent: mainAccent,
+        glow: hexToRgba(mainAccent, 0.55)
       };
     }
 
@@ -11266,8 +11336,11 @@
 
       const root = document.documentElement;
       root.style.setProperty("--bg-main", t.bg);
-      root.style.setProperty("--accent-cal", t.cal);
-      root.style.setProperty("--accent-cal-text", t.calText || getContrastText(t.cal));
+      root.style.setProperty("--card-bg", t.cardBg || "#121215");
+      root.style.setProperty("--card-border", t.cardBorder || "rgba(255, 255, 255, 0.08)");
+      root.style.setProperty("--accent-cal", t.accent || t.cal);
+      root.style.setProperty("--accent-cal-text", t.calText || getContrastText(t.accent || t.cal));
+      root.style.setProperty("--macro-cal", t.cal || t.accent);
       root.style.setProperty("--accent-p", t.p);
       root.style.setProperty("--accent-f", t.f);
       root.style.setProperty("--accent-c", t.c);
@@ -11421,10 +11494,11 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <div class="flex items-center gap-1 shrink-0">
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.cal}"></span>
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.p}"></span>
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.c}"></span>
-                <span class="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" style="background:${t.f}"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/30 shrink-0 shadow-sm" style="background:${t.accent || t.cal}; box-shadow: 0 0 5px ${t.accent || t.cal};" title="Неоновый акцент"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/15 shrink-0" style="background:${t.cal}" title="Калории"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/15 shrink-0" style="background:${t.p}" title="Белки"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/15 shrink-0" style="background:${t.f}" title="Жиры"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/15 shrink-0" style="background:${t.c}" title="Углеводы"></span>
               </div>
               <button
                 type="button"
@@ -13243,7 +13317,7 @@
             seconds: seconds,
             text: restMsg,
             exerciseName: exName || "Упражнение",
-            themeCalHex: activeTheme.cal || "#D62828"
+            themeCalHex: activeTheme.accent || activeTheme.cal || "#D62828"
           });
         } catch (e) {}
       }
@@ -13310,7 +13384,7 @@
             seconds: remaining,
             text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle),
             exerciseName: state.activeRest.exName || "Отдых",
-            themeCalHex: activeTheme.cal || "#D62828"
+            themeCalHex: activeTheme.accent || activeTheme.cal || "#D62828"
           });
         } catch (e) {}
       }
@@ -13334,7 +13408,7 @@
             seconds: seconds,
             text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle),
             exerciseName: state.activeRest.exName || "Отдых",
-            themeCalHex: activeTheme.cal || "#D62828"
+            themeCalHex: activeTheme.accent || activeTheme.cal || "#D62828"
           });
         } catch (e) {}
       }
