@@ -3156,6 +3156,90 @@
     </div>
   </div>
 
+  <!-- МОДАЛКА: НАСТРОЙКА ТРЕКЕРОВ ПРИВЫЧЕК И НОРМ -->
+  <div id="trackersConfigModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeTrackersConfigModal()">
+    <div class="sheet-panel max-w-sm mx-auto max-h-[85vh] flex flex-col">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3 shrink-0"></div>
+      <div class="flex items-center justify-between mb-3 shrink-0">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Привычки и лимиты</span>
+          <h3 class="text-base font-bold text-white mt-0.5">Настройка трекеров</h3>
+        </div>
+        <button type="button" onclick="closeTrackersConfigModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
+      </div>
+
+      <div class="overflow-y-auto no-scrollbar space-y-3 flex-1 pb-2">
+        <!-- Список активных трекеров -->
+        <div id="trackersConfigList" class="space-y-2"></div>
+
+        <!-- Форма добавления / редактирования -->
+        <div id="trackerFormContainer" class="hidden bg-zinc-900/90 border border-white/10 rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span id="trackerFormTitle" class="text-xs font-bold text-white mono uppercase">Новый трекер</span>
+            <button type="button" onclick="cancelTrackerForm()" class="text-[11px] mono text-zinc-400 hover:text-white">✕</button>
+          </div>
+          <input type="hidden" id="trackerFormId" value="" />
+          <div>
+            <label class="text-[10.5px] text-zinc-400 block mb-1">Название:</label>
+            <input id="trackerFormNameInput" type="text" placeholder="Напр. Креатин, Оливковое масло..." class="dark-field text-xs text-white w-full" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10.5px] text-zinc-400 block mb-1">Тип контроля:</label>
+              <select id="trackerFormTypeSelect" class="dark-field text-xs text-white w-full">
+                <option value="target">Цель (норма)</option>
+                <option value="limit">Лимит (макс)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10.5px] text-zinc-400 block mb-1">Единица:</label>
+              <select id="trackerFormUnitSelect" class="dark-field text-xs text-white w-full">
+                <option value="г">г (граммы)</option>
+                <option value="мл">мл (миллилитры)</option>
+                <option value="л">л (литры)</option>
+                <option value="капс">капс (капсулы)</option>
+                <option value="порц">порц (порции)</option>
+                <option value="шт">шт (штуки)</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10.5px] text-zinc-400 block mb-1">Целевое значение:</label>
+              <input id="trackerFormLimitInput" type="number" step="any" placeholder="60" class="dark-field mono text-xs text-white w-full" />
+            </div>
+            <div>
+              <label class="text-[10.5px] text-zinc-400 block mb-1">Шаги кнопок (+):</label>
+              <input id="trackerFormStepsInput" type="text" placeholder="10, 20" class="dark-field mono text-xs text-white w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[10.5px] text-zinc-400 block mb-1">Подсказка / примечание (опция):</label>
+            <input id="trackerFormSubtitleInput" type="text" placeholder="Напр. 5–7 г соли в сутки" class="dark-field text-xs text-white w-full" />
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button type="button" onclick="cancelTrackerForm()" class="flex-1 py-2 rounded-xl bg-white/10 text-xs text-zinc-300 font-semibold active:scale-95 transition">Отмена</button>
+            <button type="button" onclick="saveTrackerFromForm()" class="flex-1 py-2 rounded-xl accent-btn text-xs text-white font-semibold active:scale-95 transition">Сохранить</button>
+          </div>
+        </div>
+
+        <button type="button" id="btnAddTrackerTrigger" onclick="showNewTrackerForm()" class="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/15 text-xs mono text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 active:scale-95 transition">
+          + Добавить трекер
+        </button>
+
+        <button type="button" onclick="resetTrackersToDefault()" class="w-full py-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-[11px] mono text-zinc-500 hover:text-zinc-300 active:scale-95 transition">
+          Сбросить к стандарту (Соусы + Вода)
+        </button>
+      </div>
+
+      <div class="pt-3 border-t border-white/[0.06] shrink-0">
+        <button type="button" onclick="closeTrackersConfigModal()" class="w-full py-3 rounded-2xl bg-white/10 text-zinc-200 text-xs font-semibold active:scale-95 transition">
+          Готово
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- МОДАЛКА: ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ДНЯ ТРЕНИРОВКИ -->
   <div id="confirmDeleteDayModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeConfirmDeleteDayModal()">
     <div class="sheet-panel text-center max-w-sm mx-auto">
@@ -13303,6 +13387,23 @@
         if (!state.dailyMealPlanProgress || typeof state.dailyMealPlanProgress !== "object") {
           state.dailyMealPlanProgress = {};
         }
+        // Миграция существующих todayAddedItems без variantKey для слотов с вариантами
+        if (state.mealPlanTemplate && Array.isArray(state.mealPlanTemplate.meals)) {
+          Object.values(state.dailyMealPlanProgress).forEach(prog => {
+            if (prog?.todayAddedItems && typeof prog.todayAddedItems === "object") {
+              Object.entries(prog.todayAddedItems).forEach(([mId, items]) => {
+                const m = state.mealPlanTemplate.meals.find(meal => meal.id === mId);
+                if (m && m.hasVariants && Array.isArray(items)) {
+                  items.forEach(it => {
+                    if (!it.variantKey) {
+                      it.variantKey = prog.variantChoice?.[mId] || m.activeVariant || "B";
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
         // Защита и восстановление: если калораж был сбит спамом до неадекватных <= 1500 ккал на наборе массы
         const hasExistingWeight = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight));
         if (hasExistingWeight && state.targets && Number(state.targets.cal) <= 1500) {
@@ -14070,6 +14171,11 @@
       if (!p.skippedItems) p.skippedItems = {};
       if (!p.todayAddedItems) p.todayAddedItems = {};
       if (!p.vitamins) p.vitamins = {};
+      if (!p.trackerValues) {
+        p.trackerValues = {};
+        if (p.sauceGrams) p.trackerValues.sauce = Number(p.sauceGrams) || 0;
+        if (p.waterLiters) p.trackerValues.water = Number(p.waterLiters) || 0;
+      }
       return p;
     }
     window.getTodayProgress = getTodayProgress;
@@ -14204,6 +14310,14 @@
       const progress = getTodayProgress();
       if (!progress.variantChoice) progress.variantChoice = {};
       progress.variantChoice[mealId] = variantKey;
+      if (mealId === "breakfast" || mealId === "m_bf") {
+        progress.variantChoice.breakfast = variantKey;
+      }
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const meal = (template.meals || []).find(m => m.id === mealId);
+      if (meal && meal.hasVariants) {
+        meal.activeVariant = variantKey;
+      }
       saveState();
       renderCoachMealPlan();
       if (typeof haptic === "function") haptic("selection");
@@ -14220,41 +14334,276 @@
     }
     window.toggleVitaminCheck = toggleVitaminCheck;
 
-    function stepSauceGrams(delta) {
+    const DEFAULT_DAILY_TRACKERS = [
+      {
+        id: "sauce",
+        name: "Лимит соусов BombBar",
+        type: "limit",
+        limit: 60,
+        unit: "г",
+        subtitle: "",
+        steps: [10, 20],
+        color: "amber"
+      },
+      {
+        id: "water",
+        name: "Питьевая вода",
+        type: "target",
+        limit: 4.0,
+        unit: "л",
+        subtitle: "5–7 г соли в сутки",
+        steps: [0.25, 0.5],
+        stepLabels: ["+250 мл", "+500 мл"],
+        color: "cyan"
+      }
+    ];
+
+    function getMealPlanTrackers() {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      if (Array.isArray(template.trackers) && template.trackers.length > 0) {
+        return template.trackers;
+      }
+      const sLimit = Number(template.sauceLimitGrams) || 60;
+      const wTarget = Number(template.waterTargetLiters) || 4.0;
+      const initial = JSON.parse(JSON.stringify(DEFAULT_DAILY_TRACKERS));
+      initial[0].limit = sLimit;
+      initial[1].limit = wTarget;
+      template.trackers = initial;
+      return template.trackers;
+    }
+    window.getMealPlanTrackers = getMealPlanTrackers;
+
+    function getTrackerTodayValue(trackerId) {
       const progress = getTodayProgress();
-      const cur = Number(progress.sauceGrams) || 0;
-      progress.sauceGrams = Math.max(0, Math.min(200, cur + delta));
+      if (!progress.trackerValues) progress.trackerValues = {};
+      if (trackerId === "sauce" && progress.trackerValues.sauce === undefined) {
+        progress.trackerValues.sauce = Number(progress.sauceGrams) || 0;
+      }
+      if (trackerId === "water" && progress.trackerValues.water === undefined) {
+        progress.trackerValues.water = Number(progress.waterLiters) || 0;
+      }
+      return Number(progress.trackerValues[trackerId]) || 0;
+    }
+    window.getTrackerTodayValue = getTrackerTodayValue;
+
+    function stepTrackerValue(trackerId, delta) {
+      const progress = getTodayProgress();
+      if (!progress.trackerValues) progress.trackerValues = {};
+      const cur = getTrackerTodayValue(trackerId);
+      const next = Math.max(0, Math.round((cur + delta) * 100) / 100);
+      progress.trackerValues[trackerId] = next;
+      if (trackerId === "sauce") progress.sauceGrams = next;
+      if (trackerId === "water") progress.waterLiters = next;
       saveState();
       renderCoachMealPlan();
       if (typeof haptic === "function") haptic("selection");
     }
+    window.stepTrackerValue = stepTrackerValue;
+
+    function resetTrackerValue(trackerId) {
+      const progress = getTodayProgress();
+      if (!progress.trackerValues) progress.trackerValues = {};
+      progress.trackerValues[trackerId] = 0;
+      if (trackerId === "sauce") progress.sauceGrams = 0;
+      if (trackerId === "water") progress.waterLiters = 0;
+      saveState();
+      renderCoachMealPlan();
+      if (typeof haptic === "function") haptic("selection");
+    }
+    window.resetTrackerValue = resetTrackerValue;
+
+    function stepSauceGrams(delta) { stepTrackerValue("sauce", delta); }
     window.stepSauceGrams = stepSauceGrams;
 
-    function resetSauceGrams() {
-      const progress = getTodayProgress();
-      progress.sauceGrams = 0;
-      saveState();
-      renderCoachMealPlan();
-    }
+    function resetSauceGrams() { resetTrackerValue("sauce"); }
     window.resetSauceGrams = resetSauceGrams;
 
-    function stepWaterLiters(delta) {
-      const progress = getTodayProgress();
-      const cur = Number(progress.waterLiters) || 0;
-      progress.waterLiters = Math.max(0, Math.min(10.0, Math.round((cur + delta) * 10) / 10));
-      saveState();
-      renderCoachMealPlan();
-      if (typeof haptic === "function") haptic("selection");
-    }
+    function stepWaterLiters(delta) { stepTrackerValue("water", delta); }
     window.stepWaterLiters = stepWaterLiters;
 
-    function resetWaterLiters() {
-      const progress = getTodayProgress();
-      progress.waterLiters = 0.0;
-      saveState();
+    function resetWaterLiters() { resetTrackerValue("water"); }
+    window.resetWaterLiters = resetWaterLiters;
+
+    // Модалка настройки трекеров
+    function openTrackersConfigModal() {
+      renderTrackersConfigList();
+      cancelTrackerForm();
+      document.getElementById("trackersConfigModal")?.classList.add("open");
+    }
+    window.openTrackersConfigModal = openTrackersConfigModal;
+
+    function closeTrackersConfigModal() {
+      document.getElementById("trackersConfigModal")?.classList.remove("open");
       renderCoachMealPlan();
     }
-    window.resetWaterLiters = resetWaterLiters;
+    window.closeTrackersConfigModal = closeTrackersConfigModal;
+
+    function renderTrackersConfigList() {
+      const listEl = document.getElementById("trackersConfigList");
+      if (!listEl) return;
+      const list = getMealPlanTrackers();
+      if (!list || list.length === 0) {
+        listEl.innerHTML = '<div class="text-zinc-500 text-xs py-3 text-center mono">Нет настроенных трекеров</div>';
+        return;
+      }
+      listEl.innerHTML = list.map(tr => {
+        const isLiters = (tr.unit === "л");
+        const steps = Array.isArray(tr.steps) ? tr.steps : [10, 20];
+        const stepLabels = steps.map((s, idx) => (tr.stepLabels && tr.stepLabels[idx]) || (isLiters ? `+${Math.round(s * 1000)} мл` : `+${s}${tr.unit || 'г'}`)).join(", ");
+        return `
+          <div class="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-white">${tr.name}</span>
+                <span class="text-[9.5px] mono px-1.5 py-0.2 rounded bg-white/[0.06] text-zinc-400">
+                  ${tr.type === 'limit' ? 'Лимит' : 'Норма'}: ${tr.limit} ${tr.unit || 'г'}
+                </span>
+              </div>
+              <div class="text-[10px] mono text-zinc-500 mt-0.5">
+                Кнопки: ${stepLabels}${tr.subtitle ? ` · ${tr.subtitle}` : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button type="button" onclick="editTrackerInModal('${tr.id}')" class="px-2 py-1 rounded-lg bg-white/[0.06] hover:bg-white/10 text-zinc-300 text-[11px] mono active:scale-95 transition">
+                Ред.
+              </button>
+              <button type="button" onclick="deleteTrackerInModal('${tr.id}')" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition" title="Удалить трекер">
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+    window.renderTrackersConfigList = renderTrackersConfigList;
+
+    function deleteTrackerInModal(trackerId) {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const list = getMealPlanTrackers();
+      template.trackers = list.filter(t => t.id !== trackerId);
+      saveState();
+      renderTrackersConfigList();
+      renderCoachMealPlan();
+      if (typeof showToast === "function") showToast("Трекер удален");
+    }
+    window.deleteTrackerInModal = deleteTrackerInModal;
+
+    function showNewTrackerForm() {
+      document.getElementById("trackerFormId").value = "";
+      document.getElementById("trackerFormTitle").textContent = "Новый трекер";
+      document.getElementById("trackerFormNameInput").value = "";
+      document.getElementById("trackerFormTypeSelect").value = "target";
+      document.getElementById("trackerFormUnitSelect").value = "г";
+      document.getElementById("trackerFormLimitInput").value = "50";
+      document.getElementById("trackerFormStepsInput").value = "10, 20";
+      document.getElementById("trackerFormSubtitleInput").value = "";
+
+      document.getElementById("trackerFormContainer")?.classList.remove("hidden");
+      document.getElementById("btnAddTrackerTrigger")?.classList.add("hidden");
+    }
+    window.showNewTrackerForm = showNewTrackerForm;
+
+    function cancelTrackerForm() {
+      document.getElementById("trackerFormContainer")?.classList.add("hidden");
+      document.getElementById("btnAddTrackerTrigger")?.classList.remove("hidden");
+    }
+    window.cancelTrackerForm = cancelTrackerForm;
+
+    function editTrackerInModal(trackerId) {
+      const list = getMealPlanTrackers();
+      const tr = list.find(t => t.id === trackerId);
+      if (!tr) return;
+
+      document.getElementById("trackerFormId").value = tr.id;
+      document.getElementById("trackerFormTitle").textContent = "Редактировать трекер";
+      document.getElementById("trackerFormNameInput").value = tr.name || "";
+      document.getElementById("trackerFormTypeSelect").value = tr.type || "target";
+      document.getElementById("trackerFormUnitSelect").value = tr.unit || "г";
+      document.getElementById("trackerFormLimitInput").value = tr.limit || "";
+      document.getElementById("trackerFormStepsInput").value = (Array.isArray(tr.steps) ? tr.steps.join(", ") : "10, 20");
+      document.getElementById("trackerFormSubtitleInput").value = tr.subtitle || "";
+
+      document.getElementById("trackerFormContainer")?.classList.remove("hidden");
+      document.getElementById("btnAddTrackerTrigger")?.classList.add("hidden");
+    }
+    window.editTrackerInModal = editTrackerInModal;
+
+    function saveTrackerFromForm() {
+      const name = (document.getElementById("trackerFormNameInput").value || "").trim();
+      const limitVal = Number(document.getElementById("trackerFormLimitInput").value);
+      if (!name) {
+        if (typeof showToast === "function") showToast("Укажите название трекера", true);
+        return;
+      }
+      if (!limitVal || limitVal <= 0) {
+        if (typeof showToast === "function") showToast("Укажите корректный лимит/цель", true);
+        return;
+      }
+
+      const id = document.getElementById("trackerFormId").value;
+      const type = document.getElementById("trackerFormTypeSelect").value || "target";
+      const unit = document.getElementById("trackerFormUnitSelect").value || "г";
+      const rawSteps = document.getElementById("trackerFormStepsInput").value || "10, 20";
+      const subtitle = (document.getElementById("trackerFormSubtitleInput").value || "").trim();
+
+      const steps = rawSteps.split(",").map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
+      const finalSteps = steps.length > 0 ? steps : (unit === "л" ? [0.25, 0.5] : [10, 20]);
+
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const list = getMealPlanTrackers();
+
+      if (id) {
+        const tr = list.find(t => t.id === id);
+        if (tr) {
+          tr.name = name;
+          tr.type = type;
+          tr.unit = unit;
+          tr.limit = limitVal;
+          tr.steps = finalSteps;
+          delete tr.stepLabels;
+          tr.subtitle = subtitle;
+        }
+      } else {
+        const newTr = {
+          id: "tr_" + Date.now(),
+          name,
+          type,
+          unit,
+          limit: limitVal,
+          steps: finalSteps,
+          subtitle,
+          color: (type === "limit" ? "amber" : "cyan")
+        };
+        template.trackers.push(newTr);
+      }
+
+      // Sync legacy template values if relevant
+      const sTr = template.trackers.find(t => t.id === "sauce");
+      if (sTr) template.sauceLimitGrams = sTr.limit;
+      const wTr = template.trackers.find(t => t.id === "water");
+      if (wTr) template.waterTargetLiters = wTr.limit;
+
+      saveState();
+      renderTrackersConfigList();
+      cancelTrackerForm();
+      renderCoachMealPlan();
+      if (typeof showToast === "function") showToast("Трекер сохранен");
+    }
+    window.saveTrackerFromForm = saveTrackerFromForm;
+
+    function resetTrackersToDefault() {
+      const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+      const initial = JSON.parse(JSON.stringify(DEFAULT_DAILY_TRACKERS));
+      initial[0].limit = Number(template.sauceLimitGrams) || 60;
+      initial[1].limit = Number(template.waterTargetLiters) || 4.0;
+      template.trackers = initial;
+      saveState();
+      renderTrackersConfigList();
+      cancelTrackerForm();
+      renderCoachMealPlan();
+      if (typeof showToast === "function") showToast("Трекеры сброшены к стандарту");
+    }
+    window.resetTrackersToDefault = resetTrackersToDefault;
 
     function toggleRecipeAccordion(id) {
       const el = document.getElementById("recipeContent_" + id);
@@ -14292,11 +14641,39 @@
       return meal.items || [];
     }
 
+    function getMealTodayAddedItems(meal, progress, targetVariantKey = null) {
+      if (!meal || !progress?.todayAddedItems?.[meal.id]) return [];
+      const list = progress.todayAddedItems[meal.id];
+      if (!Array.isArray(list)) return [];
+      if (!meal.hasVariants) return list;
+      const vk = targetVariantKey || getMealActiveVariantKey(meal, progress) || "A";
+      return list.filter(it => it.variantKey === vk);
+    }
+    window.getMealTodayAddedItems = getMealTodayAddedItems;
+
+    function removeMealProductAddedToday(mealId, itemId) {
+      const progress = getTodayProgress();
+      if (Array.isArray(progress.todayAddedItems?.[mealId])) {
+        progress.todayAddedItems[mealId] = progress.todayAddedItems[mealId].filter(it => it.id !== itemId);
+      }
+      if (progress.overrides?.[itemId]) delete progress.overrides[itemId];
+      if (progress.skippedItems?.[itemId]) delete progress.skippedItems[itemId];
+      if (Array.isArray(state.todayItems)) {
+        state.todayItems = state.todayItems.filter(item => item.planItemId !== itemId);
+      }
+      saveState();
+      renderCoachMealPlan();
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("Продукт удален из приема на сегодня");
+    }
+    window.removeMealProductAddedToday = removeMealProductAddedToday;
+
     function getActiveMealItem(meal, itemId, progress) {
       let baseItem = getMealRawVariantItems(meal, progress).find(it => it.id === itemId);
       // Check if added only today
-      if (!baseItem && progress.todayAddedItems?.[meal.id]) {
-        baseItem = progress.todayAddedItems[meal.id].find(it => it.id === itemId);
+      if (!baseItem) {
+        const todayList = getMealTodayAddedItems(meal, progress);
+        baseItem = todayList.find(it => it.id === itemId);
       }
       if (!baseItem) return null;
       const override = progress.overrides?.[itemId];
@@ -14366,7 +14743,7 @@
       if (!meal) return;
       const progress = getTodayProgress();
 
-      let items = getMealRawVariantItems(meal, progress).slice().concat(progress.todayAddedItems?.[meal.id] || []);
+      let items = getMealRawVariantItems(meal, progress).slice().concat(getMealTodayAddedItems(meal, progress));
 
       // Filter out skipped items
       items = items.filter(it => !progress.skippedItems?.[it.id]);
@@ -15075,6 +15452,12 @@
         if (!hadQuota) ensureMealSlotTargetMacros(template);
       } else {
         newProd.isAddedToday = true;
+        if (meal.hasVariants) {
+          const vk = (variantKey && variantKey !== "null" && variantKey !== "undefined")
+            ? variantKey
+            : (getMealActiveVariantKey(meal, getTodayProgress()) || "A");
+          newProd.variantKey = vk;
+        }
         const progress = getTodayProgress();
         if (!progress.todayAddedItems[mealId]) progress.todayAddedItems[mealId] = [];
         progress.todayAddedItems[mealId].push(newProd);
@@ -15381,6 +15764,12 @@
         items: []
       };
       meal.activeVariant = nextKey;
+      const progress = getTodayProgress();
+      if (!progress.variantChoice) progress.variantChoice = {};
+      progress.variantChoice[mealId] = nextKey;
+      if (mealId === "breakfast" || mealId === "m_bf") {
+        progress.variantChoice.breakfast = nextKey;
+      }
       saveState();
       renderCoachMealPlan();
       if (pendingEditSlotCtx && pendingEditSlotCtx.mealId === mealId) {
@@ -15777,8 +16166,10 @@
       if (!progress.todayAddedItems) progress.todayAddedItems = {};
       if (!Array.isArray(progress.todayAddedItems[mealId])) progress.todayAddedItems[mealId] = [];
 
+      const activeVar = getMealActiveVariantKey(meal, progress);
       const rawItems = getMealRawVariantItems(meal, progress);
-      const prevCombined = rawItems.concat(progress.todayAddedItems[mealId]);
+      const todayItemsForVar = getMealTodayAddedItems(meal, progress, activeVar);
+      const prevCombined = rawItems.concat(todayItemsForVar);
       const prevActiveNonSkipped = prevCombined.filter(it => !progress.skippedItems?.[it.id]);
       const allMealItemsWereLogged = prevActiveNonSkipped.length > 0 && prevActiveNonSkipped.every(it => isMealItemLogged(it.id));
 
@@ -15791,7 +16182,7 @@
       };
 
       const existingInTemplate = rawItems.find(isPeanutMatch);
-      const existingInTodayAdded = progress.todayAddedItems[mealId].find(isPeanutMatch);
+      const existingInTodayAdded = todayItemsForVar.find(isPeanutMatch);
 
       let targetItem = null;
       let finalW = addW;
@@ -15830,7 +16221,9 @@
           cal100: donorProfile.cal100,
           p100: donorProfile.p100,
           f100: donorProfile.f100,
-          c100: donorProfile.c100
+          c100: donorProfile.c100,
+          isAddedToday: true,
+          variantKey: meal.hasVariants ? activeVar : null
         };
         progress.todayAddedItems[mealId].push(targetItem);
       }
@@ -16075,7 +16468,7 @@
 
       nonSuppMeals.forEach(meal => {
         const rawItems = getMealRawVariantItems(meal, progress);
-        const mealItems = (rawItems || []).slice().concat(progress.todayAddedItems?.[meal.id] || []);
+        const mealItems = (rawItems || []).slice().concat(getMealTodayAddedItems(meal, progress));
 
         let mCal = 0, mP = 0, mF = 0, mC = 0;
         let mealDoneCount = 0;
@@ -16341,7 +16734,7 @@
           const activeVar = getMealActiveVariantKey(meal, progress);
           const varData = meal.variants?.[activeVar];
           rawMealItems = Array.isArray(varData) ? varData : (varData?.items || []);
-          mealItems = rawMealItems.slice().concat(progress.todayAddedItems?.[meal.id] || []);
+          mealItems = rawMealItems.slice().concat(getMealTodayAddedItems(meal, progress, activeVar));
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
             <div class="no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar">
@@ -16357,7 +16750,7 @@
           `;
         } else {
           rawMealItems = (meal.items || []).slice();
-          mealItems = (meal.items || []).concat(progress.todayAddedItems?.[meal.id] || []);
+          mealItems = (meal.items || []).concat(getMealTodayAddedItems(meal, progress));
         }
 
         // Подсчет макросов приема (без учета пропущенных)
@@ -16478,15 +16871,21 @@
                       </div>
                     </div>
 
-                    <!-- Действия с продуктом: Замена и Пропуск на сегодня -->
+                    <!-- Действия с продуктом: Замена и Пропуск / Удаление на сегодня -->
                     <div class="flex items-center gap-1 shrink-0">
                       <button type="button" onclick="openMealPlanOverrideModal('${meal.id}', '${it.id}')" class="coach-swap-btn" title="Заменить сегодня">
                         <svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                         <span>Замена</span>
                       </button>
-                      <button type="button" onclick="skipMealPlanItemToday('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-white/[0.03] text-zinc-500 hover:text-zinc-300 flex items-center justify-center text-xs active:scale-95 transition" title="Пропустить сегодня">
-                        ○
-                      </button>
+                      ${isAddedTodayItem ? `
+                        <button type="button" onclick="removeMealProductAddedToday('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center text-xs active:scale-95 transition" title="Удалить добавленный продукт">
+                          ✕
+                        </button>
+                      ` : `
+                        <button type="button" onclick="skipMealPlanItemToday('${meal.id}', '${it.id}')" class="w-6 h-6 rounded-lg bg-white/[0.03] text-zinc-500 hover:text-zinc-300 flex items-center justify-center text-xs active:scale-95 transition" title="Пропустить сегодня">
+                          ○
+                        </button>
+                      `}
                     </div>
                   </div>
                 `;
@@ -16495,7 +16894,7 @@
 
             <!-- Кнопка + Продукт в этот прием пищи -->
             <div class="mb-2">
-              <button type="button" onclick="openAddMealProductModal('${meal.id}', ${meal.hasVariants ? `'${progress.variantChoice?.[meal.id] || meal.activeVariant || 'A'}'` : 'null'})" class="w-full py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-dashed border-white/10 text-xs mono text-zinc-400 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
+              <button type="button" onclick="openAddMealProductModal('${meal.id}', ${meal.hasVariants ? `'${activeVar}'` : 'null'})" class="w-full py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-dashed border-white/10 text-xs mono text-zinc-400 hover:text-white active:scale-95 transition flex items-center justify-center gap-1.5">
                 <span>+ Продукт</span>
               </button>
             </div>
@@ -16538,60 +16937,97 @@
         `;
       });
 
-      // Карточка трекеров (Соусы BombBar и Вода)
-      const sauceCur = Number(progress.sauceGrams) || 0;
-      const sauceLimit = Number(template.sauceLimitGrams) || 60;
-      const saucePct = Math.min(100, Math.round((sauceCur / sauceLimit) * 100));
+      // Карточка трекеров норм и привычек (кастомизируемая)
+      const trackersList = getMealPlanTrackers();
+      let trackersContentHtml = "";
 
-      const waterCur = Number(progress.waterLiters) || 0;
-      const waterTgt = Number(template.waterTargetLiters) || 4.0;
-      const waterPct = Math.min(100, Math.round((waterCur / waterTgt) * 100));
+      if (!trackersList || trackersList.length === 0) {
+        trackersContentHtml = `
+          <div class="p-4 text-center rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="text-xs text-zinc-400 mb-2">Нет активных трекеров</div>
+            <button type="button" onclick="openTrackersConfigModal()" class="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-xs mono text-white active:scale-95 transition">
+              + Настроить трекеры
+            </button>
+          </div>
+        `;
+      } else {
+        trackersContentHtml = trackersList.map(tr => {
+          const curVal = getTrackerTodayValue(tr.id);
+          const limitVal = Number(tr.limit) || 1;
+          const isLiters = (tr.unit === "л");
+          const pct = Math.min(100, Math.round((curVal / limitVal) * 100));
+          const isOverLimit = (tr.type === "limit") && (curVal > limitVal);
+
+          let valDisplay = "";
+          if (isLiters) {
+            valDisplay = `${curVal.toFixed(1)} / ${limitVal.toFixed(1)} л`;
+          } else {
+            valDisplay = `${curVal} / ${limitVal} ${tr.unit || 'г'}`;
+          }
+
+          let barColor = "bg-cyan-400";
+          if (tr.type === "limit") {
+            barColor = isOverLimit ? "bg-red-500" : "bg-amber-400";
+          } else if (tr.color === "green") {
+            barColor = "bg-emerald-400";
+          }
+
+          let valColorClass = "text-white";
+          if (tr.type === "limit") {
+            valColorClass = isOverLimit ? "text-red-400" : "text-white";
+          } else {
+            valColorClass = "text-cyan-400";
+          }
+
+          const steps = Array.isArray(tr.steps) && tr.steps.length > 0 ? tr.steps : [10, 20];
+          const stepBtnsHtml = steps.map((st, idx) => {
+            let label = "";
+            if (tr.stepLabels && tr.stepLabels[idx]) {
+              label = tr.stepLabels[idx];
+            } else if (isLiters) {
+              label = `+${Math.round(st * 1000)} мл`;
+            } else {
+              label = `+${st}${tr.unit || 'г'}`;
+            }
+            return `
+              <button type="button" onclick="stepTrackerValue('${tr.id}', ${st})" class="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[10.5px] mono text-zinc-300 active:scale-95 transition">
+                ${label}
+              </button>
+            `;
+          }).join("");
+
+          return `
+            <div class="mb-3 last:mb-0 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+              <div class="flex items-center justify-between mb-1.5">
+                <div>
+                  <span class="text-xs font-medium text-zinc-200">${tr.name}:</span>
+                  ${tr.subtitle ? `<span class="text-[10px] mono text-zinc-500 block">${tr.subtitle}</span>` : ''}
+                </div>
+                <span class="text-xs font-bold mono ${valColorClass}">${valDisplay}</span>
+              </div>
+              <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-2">
+                <div class="h-full rounded-full transition-all duration-200 ${barColor}" style="width: ${pct}%"></div>
+              </div>
+              <div class="flex items-center justify-between gap-1.5">
+                <div class="flex gap-1.5 flex-wrap">
+                  ${stepBtnsHtml}
+                </div>
+                <button type="button" onclick="resetTrackerValue('${tr.id}')" class="text-[10px] mono text-zinc-500 hover:text-zinc-300 active:scale-95 transition">Сброс</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
 
       htmlCards += `
         <div class="coach-meal-card">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-bold text-white tracking-wide uppercase mono">Контроль гидратации и соусов</span>
-            <span class="text-[10px] mono text-zinc-500">Целевые нормы</span>
+            <span class="text-xs font-bold text-white tracking-wide uppercase mono">Контроль привычек и норм</span>
+            <button type="button" onclick="openTrackersConfigModal()" class="px-2 py-0.5 rounded-lg bg-white/[0.04] hover:bg-white/10 border border-white/10 text-[10px] mono text-zinc-300 hover:text-white active:scale-95 transition">
+              Настроить
+            </button>
           </div>
-
-          <!-- Трекер соусов -->
-          <div class="mb-3.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs font-medium text-zinc-200">Лимит соусов BombBar:</span>
-              <span class="text-xs font-bold mono ${sauceCur > sauceLimit ? 'text-red-400' : 'text-white'}">${sauceCur} / ${sauceLimit} г</span>
-            </div>
-            <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-2">
-              <div class="h-full rounded-full transition-all duration-200 ${sauceCur > sauceLimit ? 'bg-red-500' : 'bg-amber-400'}" style="width: ${saucePct}%"></div>
-            </div>
-            <div class="flex items-center justify-between gap-1.5">
-              <div class="flex gap-1.5">
-                <button type="button" onclick="stepSauceGrams(10)" class="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[10.5px] mono text-zinc-300 active:scale-95 transition">+10г</button>
-                <button type="button" onclick="stepSauceGrams(20)" class="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[10.5px] mono text-zinc-300 active:scale-95 transition">+20г</button>
-              </div>
-              <button type="button" onclick="resetSauceGrams()" class="text-[10px] mono text-zinc-500 hover:text-zinc-300">Сброс</button>
-            </div>
-          </div>
-
-          <!-- Трекер воды -->
-          <div class="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-            <div class="flex items-center justify-between mb-1.5">
-              <div>
-                <span class="text-xs font-medium text-zinc-200">Питьевая вода:</span>
-                <span class="text-[10px] mono text-zinc-500 block">5–7 г соли в сутки</span>
-              </div>
-              <span class="text-xs font-bold mono text-cyan-400">${waterCur.toFixed(1)} / ${waterTgt.toFixed(1)} л</span>
-            </div>
-            <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-2">
-              <div class="h-full rounded-full bg-cyan-400 transition-all duration-200" style="width: ${waterPct}%"></div>
-            </div>
-            <div class="flex items-center justify-between gap-1.5">
-              <div class="flex gap-1.5">
-                <button type="button" onclick="stepWaterLiters(0.25)" class="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[10.5px] mono text-zinc-300 active:scale-95 transition">+250 мл</button>
-                <button type="button" onclick="stepWaterLiters(0.5)" class="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 border border-white/10 text-[10.5px] mono text-zinc-300 active:scale-95 transition">+500 мл</button>
-              </div>
-              <button type="button" onclick="resetWaterLiters()" class="text-[10px] mono text-zinc-500 hover:text-zinc-300">Сброс</button>
-            </div>
-          </div>
+          ${trackersContentHtml}
         </div>
       `;
 
@@ -16912,6 +17348,12 @@
       state.mealPlanTemplate.targetMacros = { cal, p, f, c };
       state.mealPlanTemplate.sauceLimitGrams = sauce;
       state.mealPlanTemplate.waterTargetLiters = water;
+      if (Array.isArray(state.mealPlanTemplate.trackers)) {
+        const sTr = state.mealPlanTemplate.trackers.find(t => t.id === "sauce");
+        if (sTr) sTr.limit = sauce;
+        const wTr = state.mealPlanTemplate.trackers.find(t => t.id === "water");
+        if (wTr) wTr.limit = water;
+      }
 
       // Также обновляем целевую норму дня КБЖУ под план
       state.targets = { cal, p, f, c };
