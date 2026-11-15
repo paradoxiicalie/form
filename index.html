@@ -16729,9 +16729,9 @@
         let rawMealItems = [];
         let mealItems = [];
         let variantHtml = "";
+        const activeVar = meal.hasVariants ? getMealActiveVariantKey(meal, progress) : null;
 
         if (meal.hasVariants) {
-          const activeVar = getMealActiveVariantKey(meal, progress);
           const varData = meal.variants?.[activeVar];
           rawMealItems = Array.isArray(varData) ? varData : (varData?.items || []);
           mealItems = rawMealItems.slice().concat(getMealTodayAddedItems(meal, progress, activeVar));
