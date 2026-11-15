@@ -160,7 +160,7 @@
     }
 
     .suggest-popover {
-      background: #121215;
+      background: var(--card-bg, #121215);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       box-shadow: 0 14px 34px rgba(0, 0, 0, 0.85);
@@ -202,8 +202,8 @@
     }
 
     .dark-field {
-      background: #08080a;
-      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: color-mix(in srgb, var(--card-bg, #08080a) 60%, black);
+      border: 1px solid var(--card-border, rgba(255, 255, 255, 0.09));
       border-radius: var(--ui-radius-field, 14px);
       color: #fff;
       padding: 10px 12px;
@@ -281,9 +281,19 @@
     }
 
     #mainSegmentedNav,
-    #dietSubSegmentedNav,
+    #dietSubSegmentedNav {
+      overflow: visible !important;
+    }
+
     #settingsTabsContainer {
       overflow: visible !important;
+      background: color-mix(in srgb, var(--card-bg, #121215) 85%, black) !important;
+      border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08)) !important;
+    }
+
+    .settings-slide-panel > div {
+      background: color-mix(in srgb, var(--card-bg, #121215) 85%, rgba(255, 255, 255, 0.02)) !important;
+      border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08)) !important;
     }
 
     [id^="mealVariantsBar_"],
@@ -550,8 +560,8 @@
     }
     .stack-pill:active { transform: scale(0.95); }
     .stack-pill.done {
-      border-color: var(--accent-cal);
-      background: rgba(255, 255, 255, 0.09);
+      border-color: color-mix(in srgb, var(--accent-cal) 45%, rgba(255, 255, 255, 0.15));
+      background: color-mix(in srgb, var(--accent-cal) 10%, rgba(255, 255, 255, 0.04));
       color: #ffffff;
     }
 
@@ -820,15 +830,15 @@
 
       /* Coach Meal Plan Obsidian Noir Styling */
       .coach-meal-card {
-        background: linear-gradient(180deg, rgba(20, 20, 24, 0.85) 0%, rgba(12, 12, 15, 0.95) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg, #141417) 85%, rgba(255, 255, 255, 0.035)) 0%, var(--card-bg, #0c0c0e) 100%);
+        border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
         border-radius: 18px;
         padding: 13px 14px;
         position: relative;
         transition: border-color 0.2s ease, transform 0.1s ease;
       }
       .coach-meal-card.all-done {
-        border-color: rgba(34, 197, 94, 0.35);
+        border-color: color-mix(in srgb, var(--accent-cal) 45%, rgba(255, 255, 255, 0.12));
       }
       .coach-check-btn {
         width: 22px;
@@ -902,13 +912,13 @@
           var themeId = raw.themeId || raw.theme || 'noir';
           var root = document.documentElement;
           var themePalettes = {
-            monolith: { bg: '#070708', card: '#121215', accent: '#E6DFD3', cal: '#E6DFD3', calText: '#070708', p: '#9CA3AF', f: '#8C8275', c: '#C2593F' },
-            noir: { bg: '#050506', card: '#111114', accent: '#D62828', cal: '#D62828', calText: '#FFFFFF', p: '#E4E4E7', f: '#64748B', c: '#C8BFA8' },
-            bianchetto: { bg: '#09090B', card: '#121215', accent: '#F4F4F0', cal: '#F4F4F0', calText: '#09090B', p: '#A1A1AA', f: '#71717A', c: '#D6CFC2' },
-            acid: { bg: '#08080A', card: '#111412', accent: '#D4FF00', cal: '#D4FF00', calText: '#08080A', p: '#00F0FF', f: '#B55FE6', c: '#FF7A00' },
-            verdant: { bg: '#080C0A', card: '#111914', accent: '#C6F36A', cal: '#C6D9B8', calText: '#080C0A', p: '#80BFA5', f: '#9293B2', c: '#D5A16E' },
-            azure: { bg: '#070A12', card: '#111725', accent: '#55CFFF', cal: '#B8DCEB', calText: '#070A12', p: '#80A9C8', f: '#9A91BC', c: '#D38A78' },
-            teal: { bg: '#080D0E', card: '#111A1B', accent: '#45D6C3', cal: '#D8CBB5', calText: '#080D0E', p: '#82BDB2', f: '#9289A4', c: '#C9876E' }
+            monolith: { bg: '#09090A', card: '#131316', accent: '#E8E2D8', cal: '#E8E2D8', calText: '#09090A', p: '#9CA3AF', f: '#8C8275', c: '#C2593F' },
+            noir: { bg: '#060608', card: '#111115', accent: '#E63946', cal: '#E63946', calText: '#FFFFFF', p: '#E2E8F0', f: '#718096', c: '#D4C7B0' },
+            verdant: { bg: '#080C0A', card: '#101813', accent: '#C6F36A', cal: '#C6D9B8', calText: '#080C0A', p: '#80BFA5', f: '#9293B2', c: '#D5A16E' },
+            azure: { bg: '#070A12', card: '#101624', accent: '#55CFFF', cal: '#B8DCEB', calText: '#070A12', p: '#80A9C8', f: '#9A91BC', c: '#D38A78' },
+            teal: { bg: '#080D0E', card: '#10191A', accent: '#45D6C3', cal: '#D8CBB5', calText: '#080D0E', p: '#82BDB2', f: '#9289A4', c: '#C9876E' },
+            bianchetto: { bg: '#080809', card: '#121214', accent: '#F4F4F0', cal: '#F4F4F0', calText: '#080809', p: '#A1A1AA', f: '#71717A', c: '#D6CFC2' },
+            acid: { bg: '#080807', card: '#141410', accent: '#D4FF00', cal: '#D4FF00', calText: '#080807', p: '#00E5FF', f: '#C084FC', c: '#FF9F1C' }
           };
           var pal = themePalettes[themeId] || themePalettes.noir;
           root.style.setProperty('--bg-main', pal.bg);
@@ -3624,12 +3634,12 @@
         subtitle: "Матовый асфальт, сырая кость, холодная сталь и терракота",
         brandHeader: "FORM // RAW MONOLITH",
         indexHeader: "[ ARCHIVE · 01 · CONCRETE ]",
-        bg: "#070708",
-        cardBg: "#121215",
-        cardBorder: "rgba(255, 255, 255, 0.08)",
-        accent: "#E6DFD3",
-        cal: "#E6DFD3",
-        calText: "#070708",
+        bg: "#09090A",
+        cardBg: "#131316",
+        cardBorder: "rgba(230, 223, 211, 0.08)",
+        accent: "#E8E2D8",
+        cal: "#E8E2D8",
+        calText: "#09090A",
         p: "#9CA3AF",
         f: "#8C8275",
         c: "#C2593F"
@@ -3640,15 +3650,15 @@
         subtitle: "Чернильный нуар, лаковый кримзон, пепельное серебро и сырой лен",
         brandHeader: "FORM // OBSIDIAN NOIR",
         indexHeader: "[ STUDIO · 02 · SILK ]",
-        bg: "#050506",
-        cardBg: "#111114",
-        cardBorder: "rgba(214, 40, 40, 0.08)",
-        accent: "#D62828",
-        cal: "#D62828",
+        bg: "#060608",
+        cardBg: "#111115",
+        cardBorder: "rgba(230, 45, 60, 0.09)",
+        accent: "#E63946",
+        cal: "#E63946",
         calText: "#FFFFFF",
-        p: "#E4E4E7",
-        f: "#64748B",
-        c: "#C8BFA8"
+        p: "#E2E8F0",
+        f: "#718096",
+        c: "#D4C7B0"
       },
       verdant: {
         id: "verdant",
@@ -3657,8 +3667,8 @@
         brandHeader: "FORM // ACID NOIR",
         indexHeader: "[ VERDANT · 03 · ACID ]",
         bg: "#080C0A",
-        cardBg: "#111914",
-        cardBorder: "rgba(198, 243, 106, 0.09)",
+        cardBg: "#101813",
+        cardBorder: "rgba(198, 243, 106, 0.08)",
         accent: "#C6F36A",
         cal: "#C6D9B8",
         calText: "#080C0A",
@@ -3673,8 +3683,8 @@
         brandHeader: "FORM // DEEP SIGNAL",
         indexHeader: "[ AZURE · 04 · SIGNAL ]",
         bg: "#070A12",
-        cardBg: "#111725",
-        cardBorder: "rgba(85, 207, 255, 0.09)",
+        cardBg: "#101624",
+        cardBorder: "rgba(85, 207, 255, 0.08)",
         accent: "#55CFFF",
         cal: "#B8DCEB",
         calText: "#070A12",
@@ -3689,8 +3699,8 @@
         brandHeader: "FORM // AFTER DARK",
         indexHeader: "[ TEAL · 05 · DARK ]",
         bg: "#080D0E",
-        cardBg: "#111A1B",
-        cardBorder: "rgba(69, 214, 195, 0.09)",
+        cardBg: "#10191A",
+        cardBorder: "rgba(69, 214, 195, 0.08)",
         accent: "#45D6C3",
         cal: "#D8CBB5",
         calText: "#080D0E",
@@ -3704,12 +3714,12 @@
         subtitle: "Деконструктивизм: оптический мел, матовый хром и пергамент",
         brandHeader: "FORM // ARTISANAL LAB",
         indexHeader: "[ 01 · 02 · (03) · 04 ]",
-        bg: "#09090B",
-        cardBg: "#121215",
-        cardBorder: "rgba(255, 255, 255, 0.08)",
+        bg: "#080809",
+        cardBg: "#121214",
+        cardBorder: "rgba(244, 244, 240, 0.1)",
         accent: "#F4F4F0",
         cal: "#F4F4F0",
-        calText: "#09090B",
+        calText: "#080809",
         p: "#A1A1AA",
         f: "#71717A",
         c: "#D6CFC2"
@@ -3720,15 +3730,15 @@
         subtitle: "Индустриальный неон: кислотный лайм, ледяной циан и янтарь",
         brandHeader: "FORM // ACID BRUTALISM",
         indexHeader: "[ SYS · 26 · ACTIVE ]",
-        bg: "#08080A",
-        cardBg: "#111412",
-        cardBorder: "rgba(212, 255, 0, 0.08)",
+        bg: "#080807",
+        cardBg: "#141410",
+        cardBorder: "rgba(212, 255, 0, 0.1)",
         accent: "#D4FF00",
         cal: "#D4FF00",
-        calText: "#08080A",
-        p: "#00F0FF",
-        f: "#B55FE6",
-        c: "#FF7A00"
+        calText: "#080807",
+        p: "#00E5FF",
+        f: "#C084FC",
+        c: "#FF9F1C"
       }
     };
 
@@ -3845,11 +3855,11 @@
     };
 
     const MUSCLE_META = {
-      chest: { label: "Грудь", target: 12, color: "#FB7185", bg: "rgba(251,113,133,0.14)", colorVar: "#FB7185" },
-      back: { label: "Спина", target: 14, color: "#38BDF8", bg: "rgba(56,189,248,0.14)", colorVar: "#38BDF8" },
-      legs: { label: "Ноги", target: 12, color: "#34D399", bg: "rgba(52,211,153,0.14)", colorVar: "#34D399" },
-      arms: { label: "Плечи / Руки", target: 14, color: "#C084FC", bg: "rgba(192,132,252,0.14)", colorVar: "#C084FC" },
-      core: { label: "Пресс / Кор", target: 8, color: "#FBBF24", bg: "rgba(251,191,36,0.14)", colorVar: "#FBBF24" }
+      chest: { label: "Грудь", target: 12, color: "#E06D7D", bg: "rgba(224,109,125,0.14)", colorVar: "#E06D7D" },
+      back: { label: "Спина", target: 14, color: "#60A5FA", bg: "rgba(96,165,250,0.14)", colorVar: "#60A5FA" },
+      legs: { label: "Ноги", target: 12, color: "#4ADE80", bg: "rgba(74,222,128,0.14)", colorVar: "#4ADE80" },
+      arms: { label: "Плечи / Руки", target: 14, color: "#A78BFA", bg: "rgba(167,139,250,0.14)", colorVar: "#A78BFA" },
+      core: { label: "Пресс / Кор", target: 8, color: "#F59E0B", bg: "rgba(245,158,11,0.14)", colorVar: "#F59E0B" }
     };
 
     const WEEKDAY_NAMES = [
@@ -11478,12 +11488,16 @@
 
       let cardsHtml = allThemes.map(t => {
         const active = t.id === current;
+        const cBg = t.cardBg || "#121215";
+        const cBorder = t.cardBorder || "rgba(255, 255, 255, 0.08)";
+        const mainAcc = t.accent || t.cal;
         return `
           <div
             role="button"
             tabindex="0"
             onclick="applyTheme('${t.id}', true)"
-            class="cursor-pointer select-none w-full p-3.5 rounded-2xl border text-left transition flex items-center justify-between gap-3 ${active ? 'border-white/50 bg-white/[0.08]' : 'border-white/[0.07] bg-black/40 hover:border-white/20 active:bg-white/[0.04]'}"
+            style="background: color-mix(in srgb, ${cBg} 85%, black); border-color: ${active ? 'rgba(255, 255, 255, 0.45)' : cBorder};"
+            class="cursor-pointer select-none w-full p-3.5 rounded-2xl border text-left transition-all duration-200 flex items-center justify-between gap-3 ${active ? 'shadow-[0_0_16px_rgba(255,255,255,0.06)]' : 'hover:border-white/20 active:scale-[0.99]'}"
           >
             <div class="min-w-0 flex-1 pr-2">
               <div class="text-xs font-bold text-white mono flex items-center gap-2 min-w-0">
@@ -17433,7 +17447,7 @@
                   <button type="button" onclick="moveMealSlot('${meal.id}', 'down')" ${!canMoveDown ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-30"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95"'}>↓</button>
                 </div>
                 <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-zinc-400 text-xs active:scale-95 transition" title="Настройки приема">${pencilSvg}</button>
-                <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2 py-0.5 rounded-lg ${allDone ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[10.5px] font-semibold active:scale-95 transition flex items-center gap-1">
+                <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2 py-0.5 rounded-lg ${allDone ? 'bg-[var(--accent-cal)]/15 text-white border border-[var(--accent-cal)]/35 shadow-sm' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[10.5px] font-semibold active:scale-95 transition flex items-center gap-1">
                   ${allDone ? '<span>✓ Прием съеден</span>' : '<span>Засчитать</span>'}
                 </button>
               </div>
