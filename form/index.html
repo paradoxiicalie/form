@@ -266,6 +266,49 @@
     }
     .accent-btn:active { transform: scale(0.96); }
 
+    /* Сегментированный бегунок переключения вкладок (Liquid Glass / Telegram Style) */
+    .segmented-slider-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      isolation: isolate;
+    }
+
+    .segmented-slider-pill {
+      position: absolute;
+      top: 3px;
+      left: 0;
+      height: calc(100% - 6px);
+      width: 0px;
+      transform: translate3d(0, 0, 0);
+      border-radius: inherit;
+      background: var(--accent-cal);
+      box-shadow: 0 0 16px var(--accent-glow), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.18), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.18);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .segmented-slider-pill::after {
+      content: "";
+      position: absolute;
+      top: 1px;
+      left: 10%;
+      right: 10%;
+      height: 40%;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    html[data-ui-glow="off"] .segmented-slider-pill {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    }
+
     /* Отключение свечения в матовом режиме */
     html[data-ui-glow="off"] .accent-btn {
       box-shadow: none !important;
@@ -768,9 +811,9 @@
   <!-- Основной экран -->
   <div class="app-shell">
     <!-- Настраиваемая эстетичная строка статуса сверху -->
-    <div onclick="openSettings('style')" class="flex items-center justify-between text-[10px] mono tracking-widest uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition">
-      <span id="atelierBrandLabel" class="truncate max-w-[55%]">FORM // OBSIDIAN NOIR</span>
-      <span id="atelierNumbersLabel" class="truncate max-w-[44%] text-right">[ STUDIO · 02 · SILK ]</span>
+    <div onclick="openSettings('style')" class="flex items-center justify-between gap-2 text-[9px] sm:text-[10px] mono tracking-wider uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition select-none">
+      <span id="atelierBrandLabel" class="truncate min-w-0 max-w-[52%]">FORM // OBSIDIAN NOIR</span>
+      <span id="atelierNumbersLabel" class="truncate min-w-0 max-w-[48%] text-right">[ STUDIO · 02 · SILK ]</span>
     </div>
 
     <!-- Верхняя шапка с переключателем [ РАЦИОН // ТРЕНИ ] -->
@@ -782,12 +825,13 @@
       </button>
 
       <!-- Центральный переключатель вкладок -->
-      <div class="flex items-center bg-white/[0.04] border border-white/[0.08] p-1 rounded-full">
+      <div id="mainSegmentedNav" class="relative flex items-center bg-white/[0.04] border border-white/[0.08] p-1 rounded-full backdrop-blur-md overflow-hidden">
+        <div id="mainNavSliderPill" class="segmented-slider-pill"></div>
         <button
           type="button"
           id="navTabDiet"
           onclick="switchMainView('diet')"
-          class="px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn"
+          class="relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white"
         >
           РАЦИОН
         </button>
@@ -795,7 +839,7 @@
           type="button"
           id="navTabSplit"
           onclick="switchMainView('split')"
-          class="px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition"
+          class="relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200"
         >
           ТРЕНИ
         </button>
@@ -903,12 +947,13 @@
 
       <!-- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА: [ МОЙ РАЦИОН ] [ ДНЕВНИК ] -->
       <div class="flex items-center justify-between mb-3 px-0.5">
-        <div class="flex items-center bg-white/[0.04] border border-white/[0.08] p-1 rounded-xl">
+        <div id="dietSubSegmentedNav" class="relative flex items-center bg-white/[0.04] border border-white/[0.08] p-0.5 rounded-xl backdrop-blur-md overflow-hidden">
+          <div id="dietSubSliderPill" class="segmented-slider-pill"></div>
           <button
             type="button"
             id="dietModePlanBtn"
             onclick="switchDietViewMode('plan')"
-            class="px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn"
+            class="relative z-10 px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition-colors duration-200 text-white"
           >
             МОЙ РАЦИОН
           </button>
@@ -916,7 +961,7 @@
             type="button"
             id="dietModeDiaryBtn"
             onclick="switchDietViewMode('diary')"
-            class="px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition"
+            class="relative z-10 px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200"
           >
             ДНЕВНИК
           </button>
@@ -1715,11 +1760,12 @@
         <button type="button" onclick="closeSettings()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
 
-      <div class="grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-2xl border border-white/[0.06] mb-4">
-        <button type="button" id="setTabGoals" onclick="switchSettingsTab('goals')" class="py-2 text-[11px] font-semibold rounded-xl bg-zinc-800 text-white transition">Цели</button>
-        <button type="button" id="setTabStyle" onclick="switchSettingsTab('style')" class="py-2 text-[11px] font-semibold rounded-xl text-zinc-400 transition">Стиль</button>
-        <button type="button" id="setTabPush" onclick="switchSettingsTab('push')" class="py-2 text-[11px] font-semibold rounded-xl text-zinc-400 transition">Пуши</button>
-        <button type="button" id="setTabApi" onclick="switchSettingsTab('api')" class="py-2 text-[11px] font-semibold rounded-xl text-zinc-400 transition">API Ключ</button>
+      <div id="settingsTabsContainer" class="relative grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-2xl border border-white/[0.06] mb-4 overflow-hidden">
+        <div id="settingsSliderPill" class="segmented-slider-pill"></div>
+        <button type="button" id="setTabGoals" onclick="switchSettingsTab('goals')" class="relative z-10 py-2 text-[11px] font-bold rounded-xl text-white transition-colors duration-200">Цели</button>
+        <button type="button" id="setTabStyle" onclick="switchSettingsTab('style')" class="relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Стиль</button>
+        <button type="button" id="setTabPush" onclick="switchSettingsTab('push')" class="relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Пуши</button>
+        <button type="button" id="setTabApi" onclick="switchSettingsTab('api')" class="relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">API Ключ</button>
       </div>
 
       <div id="settingsViewport">
@@ -9353,6 +9399,64 @@
     let savedSplitScrollY = 0;
 
     // =========================================================================
+    // СЕГМЕНТИРОВАННЫЙ БЕГУНОК ВКЛАДОК (LIQUID GLASS / TELEGRAM SLIDER)
+    // =========================================================================
+    function updateSegmentedSlider(container, activeBtn, immediate = false) {
+      if (typeof container === "string") container = document.getElementById(container);
+      if (typeof activeBtn === "string") activeBtn = document.getElementById(activeBtn);
+      if (!container || !activeBtn) return;
+      if (typeof container.getBoundingClientRect !== "function") return;
+
+      let pill = container.querySelector(".segmented-slider-pill");
+      if (!pill) {
+        pill = document.createElement("div");
+        pill.className = "segmented-slider-pill";
+        container.insertBefore(pill, container.firstChild);
+      }
+
+      const cRect = container.getBoundingClientRect();
+      const bRect = activeBtn.getBoundingClientRect();
+
+      let left = (bRect.width > 0) ? (bRect.left - cRect.left) : activeBtn.offsetLeft;
+      let top = (bRect.height > 0) ? (bRect.top - cRect.top) : activeBtn.offsetTop;
+      let width = (bRect.width > 0) ? bRect.width : activeBtn.offsetWidth;
+      let height = (bRect.height > 0) ? bRect.height : activeBtn.offsetHeight;
+
+      if (width <= 0) {
+        requestAnimationFrame(() => {
+          if (!container || !activeBtn) return;
+          const cR = container.getBoundingClientRect();
+          const bR = activeBtn.getBoundingClientRect();
+          const l = (bR.width > 0) ? (bR.left - cR.left) : activeBtn.offsetLeft;
+          const t = (bR.height > 0) ? (bR.top - cR.top) : activeBtn.offsetTop;
+          const w = (bR.width > 0) ? bR.width : activeBtn.offsetWidth;
+          const h = (bR.height > 0) ? bR.height : activeBtn.offsetHeight;
+          if (w > 0) {
+            pill.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.18), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.18), top 0.2s ease, height 0.2s ease";
+            pill.style.transform = `translate3d(${l}px, 0, 0)`;
+            pill.style.top = `${t}px`;
+            pill.style.height = `${h}px`;
+            pill.style.width = `${w}px`;
+          }
+        });
+        return;
+      }
+
+      pill.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.18), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.18), top 0.2s ease, height 0.2s ease";
+      pill.style.transform = `translate3d(${left}px, 0, 0)`;
+      pill.style.top = `${top}px`;
+      pill.style.height = `${height}px`;
+      pill.style.width = `${width}px`;
+    }
+    window.updateSegmentedSlider = updateSegmentedSlider;
+
+    function updateAllSegmentedSliders() {
+      updateSegmentedSlider("mainSegmentedNav", (currentMainView === "split") ? "navTabSplit" : "navTabDiet", true);
+      updateSegmentedSlider("dietSubSegmentedNav", (state?.dietViewMode === "diary") ? "dietModeDiaryBtn" : "dietModePlanBtn", true);
+    }
+    window.updateAllSegmentedSliders = updateAllSegmentedSliders;
+
+    // =========================================================================
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
     function switchMainView(view, immediate = false) {
@@ -9381,8 +9485,9 @@
       }
 
       if (view === "split") {
-        if (tabSplit) tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
-        if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
+        if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
+        if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
+        updateSegmentedSlider("mainSegmentedNav", "navTabSplit", immediate);
         if (iconScan) iconScan.classList.add("hidden");
         if (iconAddEx) iconAddEx.classList.remove("hidden");
         if (vSplit) vSplit.style.pointerEvents = "auto";
@@ -9402,8 +9507,9 @@
         if (immediate) collapseDiet();
         else setTimeout(collapseDiet, 290);
       } else {
-        if (tabDiet) tabDiet.className = "px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition accent-btn";
-        if (tabSplit) tabSplit.className = "px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide text-zinc-400 transition";
+        if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
+        if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
+        updateSegmentedSlider("mainSegmentedNav", "navTabDiet", immediate);
         if (iconScan) iconScan.classList.remove("hidden");
         if (iconAddEx) iconAddEx.classList.add("hidden");
         if (vDiet) vDiet.style.pointerEvents = "auto";
@@ -13358,7 +13464,23 @@
         if (!state.goalCalcMode) state.goalCalcMode = "auto";
         if (!state.dietViewMode) state.dietViewMode = "plan";
         if (!state.mealPlanTemplate || !Array.isArray(state.mealPlanTemplate.meals) || state.mealPlanTemplate.meals.length === 0) {
-          state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+          // Try to recover from backup before falling back to empty default
+          try {
+            const backupStr = localStorage.getItem('form_coach_plan_backup');
+            if (backupStr) {
+              const backupObj = JSON.parse(backupStr);
+              if (backupObj && Array.isArray(backupObj.meals) && backupObj.meals.length > 0 &&
+                  backupObj.meals.some(m => (m.items && m.items.length > 0) || (m.variants && Object.keys(m.variants).length > 0))) {
+                state.mealPlanTemplate = backupObj;
+              } else {
+                state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+              }
+            } else {
+              state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+            }
+          } catch(e) {
+            state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
+          }
         } else {
           // Мягкая миграция структуры слотов
           state.mealPlanTemplate.meals.forEach((m, idx) => {
@@ -13557,7 +13679,7 @@
           const hasLegacyCoachPlan = state.mealPlanTemplate?.meals?.some(m => 
             (m.items || []).some(i => i.id === "b_b1" || i.id === "d1_lavash" || i.id === "d2_tvorog" || i.id === "b_a1") ||
             (m.variants && Object.values(m.variants).some(v => (v.items || []).some(i => i.id === "b_b1" || i.id === "b_a1")))
-          ) || (state.mealPlanTemplate?.targetMacros?.cal === 2520);
+          );
 
           if (hasLegacyCoachPlan) {
             state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
@@ -14219,11 +14341,13 @@
 
       if (btnPlan && btnDiary) {
         if (mode === "plan") {
-          btnPlan.className = "px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn";
-          btnDiary.className = "px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition";
+          btnPlan.className = "relative z-10 px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition-colors duration-200 text-white";
+          btnDiary.className = "relative z-10 px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
+          updateSegmentedSlider("dietSubSegmentedNav", "dietModePlanBtn", immediate);
         } else {
-          btnPlan.className = "px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide text-zinc-400 transition";
-          btnDiary.className = "px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition accent-btn";
+          btnPlan.className = "relative z-10 px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
+          btnDiary.className = "relative z-10 px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition-colors duration-200 text-white";
+          updateSegmentedSlider("dietSubSegmentedNav", "dietModeDiaryBtn", immediate);
         }
       }
 
@@ -16264,7 +16388,18 @@
 
     function buildMealDeltaBannerData(meal, progress, mealItems, rawMealItems) {
       let targetCal = 0, targetP = 0, targetF = 0, targetC = 0;
-      if (meal.slotTargetMacros && typeof meal.slotTargetMacros === "object" && Number(meal.slotTargetMacros.cal) > 0) {
+      if (meal.hasVariants) {
+        if (!Array.isArray(rawMealItems) || rawMealItems.length === 0) {
+          return null;
+        }
+        rawMealItems.forEach(it => {
+          const w = Number(it.weight) || 0;
+          targetCal += (w * (it.cal100 || 0)) / 100;
+          targetP += (w * (it.p100 || 0)) / 100;
+          targetF += (w * (it.f100 || 0)) / 100;
+          targetC += (w * (it.c100 || 0)) / 100;
+        });
+      } else if (meal.slotTargetMacros && typeof meal.slotTargetMacros === "object" && Number(meal.slotTargetMacros.cal) > 0) {
         targetCal = Number(meal.slotTargetMacros.cal) || 0;
         targetP = Number(meal.slotTargetMacros.p) || 0;
         targetF = Number(meal.slotTargetMacros.f) || 0;
@@ -16492,14 +16627,24 @@
         actualDailyF += mF;
         actualDailyC += mC;
 
-        const slotRef = (meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0)
-          ? meal.slotTargetMacros
-          : computeItemsMacros(rawItems || []);
+        const slotRef = meal.hasVariants
+          ? computeItemsMacros(rawItems || [])
+          : ((meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0) ? meal.slotTargetMacros : computeItemsMacros(rawItems || []));
+
+        const activeVk = meal.hasVariants ? getMealActiveVariantKey(meal, progress) : null;
+        const activeVTitle = activeVk ? (meal.variants?.[activeVk]?.title || `В ${activeVk}`) : null;
 
         mealSnapshots.push({
           meal,
           mealItems,
+          mCal: Math.round(mCal),
+          mP: round1(mP),
+          mF: round1(mF),
+          mC: round1(mC),
           isCompleted: activeCount > 0 && mealDoneCount >= activeCount,
+          activeVarTitle: activeVTitle,
+          hasAdded: (getMealTodayAddedItems(meal, progress, activeVk) || []).length > 0,
+          hasOverrides: (mealItems || []).some(it => progress.overrides?.[it.id]),
           slotDeltaP: mP - (Number(slotRef.p) || 0),
           slotDeltaF: mF - (Number(slotRef.f) || 0),
           slotDeltaC: mC - (Number(slotRef.c) || 0)
@@ -16514,11 +16659,38 @@
       const hasDailyDeficit = (dailyDeltaP <= -2.0) || (dailyDeltaF <= -1.5) || (dailyDeltaC <= -3.0);
       const hasDailyOverflow = (dailyDeltaF >= 1.5) || (dailyDeltaC >= 3.0);
 
+      const mealBreakdownRowsHtml = mealSnapshots.map(s => {
+        const vTag = s.activeVarTitle ? `<span class="px-1 py-0.2 rounded bg-white/[0.06] text-[9.5px] text-zinc-300 font-normal ml-1">${escapeHtml(s.activeVarTitle)}</span>` : '';
+        const addTag = s.hasAdded ? `<span class="text-cyan-400 text-[9px] font-normal ml-1">+добавка</span>` : '';
+        const doneTag = s.isCompleted ? `<span class="text-emerald-400 text-[9px] font-normal ml-1">✓ съеден</span>` : '';
+        return `
+          <div class="flex items-center justify-between text-[10.5px] py-0.5">
+            <div class="flex items-center truncate min-w-0 pr-2">
+              <span class="text-zinc-200 font-medium truncate">${escapeHtml(s.meal.title || 'Прием')}</span>
+              ${vTag}${addTag}${doneTag}
+            </div>
+            <div class="shrink-0 text-right mono">
+              <span class="text-white font-semibold">${s.mCal}</span> <span class="text-zinc-500 text-[9.5px]">ккал</span>
+              <span class="text-zinc-500 text-[9.5px] ml-1">(Б ${s.mP} · Ж ${s.mF} · У ${s.mC})</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
       if (!hasDailyDeficit && !hasDailyOverflow) {
         return `
-          <div class="mb-2 px-2.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex items-center justify-between gap-2">
-            <span class="text-zinc-300 font-semibold">Баланс рациона сходится с целью дня (${Math.round(goalP)} / ${Math.round(goalF)} / ${Math.round(goalC)})</span>
-            <span class="text-zinc-400 shrink-0">${Math.round(actualDailyCal)} ккал</span>
+          <div class="mb-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[10.5px] mono flex flex-col gap-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-zinc-300 font-semibold">Баланс рациона сходится с целью дня (${Math.round(goalP)} / ${Math.round(goalF)} / ${Math.round(goalC)})</span>
+              <span class="text-zinc-400 shrink-0 font-bold">${Math.round(actualDailyCal)} ккал</span>
+            </div>
+            <div class="pt-1.5 border-t border-white/[0.06] flex flex-col gap-0.5">
+              <div class="flex items-center justify-between text-[9px] uppercase tracking-wider text-zinc-500 font-semibold mb-0.5">
+                <span>Сводка по приемам</span>
+                <span>КБЖУ факта</span>
+              </div>
+              ${mealBreakdownRowsHtml}
+            </div>
           </div>
         `;
       }
@@ -16645,6 +16817,13 @@
               ${dailyActionBtn}
             </div>
           ` : ''}
+          <div class="pt-1.5 mt-0.5 border-t border-white/[0.06] flex flex-col gap-0.5">
+            <div class="flex items-center justify-between text-[9px] uppercase tracking-wider text-zinc-500 font-semibold mb-0.5">
+              <span>Сводка по приемам</span>
+              <span>КБЖУ факта</span>
+            </div>
+            ${mealBreakdownRowsHtml}
+          </div>
         </div>
       `;
     }
@@ -16737,13 +16916,14 @@
           mealItems = rawMealItems.slice().concat(getMealTodayAddedItems(meal, progress, activeVar));
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
-            <div class="no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar">
+            <div id="mealVariantsBar_${meal.id}" class="segmented-slider-container no-swipe flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar relative">
+              <div class="segmented-slider-pill"></div>
               ${variantKeys.map(vk => `
-                <button type="button" onclick="switchMealVariant('${meal.id}', '${vk}')" class="shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition ${activeVar === vk ? 'accent-btn shadow text-white' : 'text-zinc-400 hover:text-white'}">
+                <button type="button" id="mealVarBtn_${meal.id}_${vk}" onclick="switchMealVariant('${meal.id}', '${vk}')" class="relative z-10 shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200 ${activeVar === vk ? 'text-white font-bold' : 'text-zinc-400 hover:text-white'}">
                   ${formatVariantTabTitle(meal.variants[vk]?.title, vk)}
                 </button>
               `).join("")}
-              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="shrink-0 px-2 py-1 text-[11px] mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
+              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="relative z-10 shrink-0 px-2 py-1 text-[11px] mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
                 + Вариант
               </button>
             </div>
@@ -16788,7 +16968,6 @@
             </div>
 
             ${variantHtml}
-            ${renderMealCompensator(meal, progress, mealItems, rawMealItems)}
 
             <!-- Список продуктов в приеме -->
             <div class="divide-y divide-white/[0.05] mb-2">
@@ -17032,6 +17211,13 @@
       `;
 
       container.innerHTML = htmlCards;
+
+      (template.meals || []).forEach(meal => {
+        if (meal.hasVariants) {
+          const vk = getMealActiveVariantKey(meal, progress);
+          updateSegmentedSlider("mealVariantsBar_" + meal.id, "mealVarBtn_" + meal.id + "_" + vk, true);
+        }
+      });
     }
     window.renderCoachMealPlan = renderCoachMealPlan;
 
@@ -19177,14 +19363,15 @@
         const btn = document.getElementById(tabIds[k]);
         if (btn) {
           btn.className = (k === tab)
-            ? "py-2 text-[11px] font-semibold rounded-xl bg-zinc-800 text-white transition shadow-sm"
-            : "py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition";
+            ? "relative z-10 py-2 text-[11px] font-bold rounded-xl text-white transition-colors duration-200"
+            : "relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200";
         }
         const panelEl = document.getElementById(panelIds[k]);
         if (panelEl) {
           panelEl.style.pointerEvents = (k === tab) ? "auto" : "none";
         }
       });
+      updateSegmentedSlider("settingsTabsContainer", tabIds[tab], immediate);
 
       // Перемещаем трек карусели 1:1 как в TikTok / viewsTrack на главной
       const track = document.getElementById("settingsTrack");
@@ -23828,6 +24015,48 @@ ${knownPiecesContext}
             if (dietSubTrack) dietSubTrack.style.transition = "none";
             const width = viewport.offsetWidth || window.innerWidth || 390;
 
+            // Живое следование бегунка шапки [РАЦИОН // ТРЕНИ]
+            const mainPill = document.getElementById("mainNavSliderPill");
+            const btnDiet = document.getElementById("navTabDiet");
+            const btnSplit = document.getElementById("navTabSplit");
+            if (mainPill && btnDiet && btnSplit) {
+              const dL = btnDiet.offsetLeft;
+              const sL = btnSplit.offsetLeft;
+              const span = sL - dL;
+              let ratio = 0;
+              if (startingMainView === "split") {
+                ratio = Math.max(0, Math.min(1, 1 - (dx / width)));
+              } else if (startingDietMode === "diary" && dx < 0) {
+                ratio = Math.max(0, Math.min(1, -dx / width));
+              }
+              if (ratio > 0 || startingMainView === "split") {
+                mainPill.style.transition = "none";
+                mainPill.style.transform = `translate3d(${dL + span * ratio}px, 0, 0)`;
+                mainPill.style.width = `${btnDiet.offsetWidth + (btnSplit.offsetWidth - btnDiet.offsetWidth) * ratio}px`;
+              }
+            }
+
+            // Живое следование бегунка [МОЙ РАЦИОН // ДНЕВНИК]
+            const subPill = document.getElementById("dietSubSliderPill");
+            const btnP = document.getElementById("dietModePlanBtn");
+            const btnD = document.getElementById("dietModeDiaryBtn");
+            if (subPill && btnP && btnD && startingMainView === "diet") {
+              const pL = btnP.offsetLeft;
+              const dL = btnD.offsetLeft;
+              const span = dL - pL;
+              let subRatio = 0;
+              if (startingDietMode === "plan") {
+                subRatio = Math.max(0, Math.min(1, -dx / width));
+              } else if (dx > 0) {
+                subRatio = Math.max(0, Math.min(1, 1 - (dx / width)));
+              } else {
+                subRatio = 1;
+              }
+              subPill.style.transition = "none";
+              subPill.style.transform = `translate3d(${pL + span * subRatio}px, 0, 0)`;
+              subPill.style.width = `${btnP.offsetWidth + (btnD.offsetWidth - btnP.offsetWidth) * subRatio}px`;
+            }
+
             if (startingMainView === "split") {
               // Вкладка ТРЕНИ
               if (dietSubTrack) dietSubTrack.style.transform = "translate3d(-50%, 0, 0)";
@@ -24096,7 +24325,12 @@ ${knownPiecesContext}
     switchMainView("diet", true);
     requestAnimationFrame(() => {
       document.documentElement.classList.add("app-ready");
+      if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
     });
+
+    window.addEventListener("resize", () => {
+      if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
+    }, { passive: true });
 
     try {
       const modalObserver = new MutationObserver(() => {
