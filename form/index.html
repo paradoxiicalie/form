@@ -295,6 +295,15 @@
       display: flex !important;
     }
 
+    html.is-ios-app #iosDailyTotemBtn {
+      display: flex !important;
+    }
+
+    html[data-ui-glow="off"] #iosDailyTotemGlyph,
+    html[data-ui-glow="off"] .totem-glyph-glow {
+      filter: none !important;
+    }
+
     #stackAndWeightStrip {
       -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
       mask-image: linear-gradient(to right, #000 88%, transparent 100%);
@@ -991,6 +1000,20 @@
         <svg id="iconAddExTop" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
         </svg>
+      </button>
+
+      <!-- Симметричный «Тотем дня» (только в iOS App) -->
+      <button type="button" id="iosDailyTotemBtn" onclick="cycleDailyTotem()" class="circle-btn shrink-0 ml-auto hidden relative items-center justify-center cursor-pointer select-none" style="background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07);" aria-label="Тотем дня">
+        <!-- SVG Кольцо прогресса по внешнему контуру -->
+        <svg class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="19" fill="none" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1.5" />
+          <circle id="iosDailyTotemProgressCircle" cx="21" cy="21" r="19" fill="none" stroke="var(--accent-cal)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="119.38" stroke-dashoffset="119.38" style="transition: stroke-dashoffset 0.45s cubic-bezier(0.2, 1, 0.3, 1), stroke 0.25s ease;" />
+        </svg>
+        <!-- Неоновый SVG-глиф по центру -->
+        <div id="iosDailyTotemGlyphWrap" class="relative z-10 flex items-center justify-center w-[18px] h-[18px] text-[var(--accent-cal)] transition-transform duration-200">
+          <svg id="iosDailyTotemGlyph" class="w-[18px] h-[18px] totem-glyph-glow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px var(--accent-glow)); transition: stroke 0.25s ease, filter 0.25s ease;">
+          </svg>
+        </div>
       </button>
     </div>
 
@@ -9676,41 +9699,184 @@
     }
     window.markMealPlanDirty = markMealPlanDirty;
 
+    // =========================================================================
+    // ТОТЕМ ДНЯ (ЕЖЕДНЕВНЫЙ НЕОНОВЫЙ ГЛИФ + КОЛЬЦО ПРОГРЕССА)
+    // =========================================================================
+    const DAILY_NEON_GLYPHS = [
+      { id: "lightning", name: "Молния", svg: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>' },
+      { id: "spark", name: "Искра", svg: '<path d="M12 2C12 7.5 16.5 12 22 12C16.5 12 12 16.5 12 22C12 16.5 7.5 12 2 12C7.5 12 12 7.5 12 2Z"></path>' },
+      { id: "diamond", name: "Кристалл", svg: '<polygon points="6 4 18 4 22 10 12 21 2 10"></polygon><path d="M2 10h20M12 21L8 10l2-6M12 21l4-11-2-6"></path>' },
+      { id: "crown", name: "Корона", svg: '<path d="M3 18h18l-2-11-5 4-2-7-2 7-5-4-2 11z"></path>' },
+      { id: "flame", name: "Пламя", svg: '<path d="M12 2c0 3.5-3 5.5-3 9a6 6 0 0 0 12 0c0-4-3-6-3-9-2 2-3 4-3 4s-1-2-3-4z"></path>' },
+      { id: "infinity", name: "Бесконечность", svg: '<path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.26-8-12.356-8-5.096 0-5.096 8 0 8 5.096 0 7.261-8 12.356-8z"></path>' },
+      { id: "crosshair", name: "Прицел", svg: '<circle cx="12" cy="12" r="7"></circle><line x1="12" y1="2" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="22"></line><line x1="2" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="22" y2="12"></line><circle cx="12" cy="12" r="2"></circle>' },
+      { id: "barbell", name: "Штанга", svg: '<line x1="2" y1="12" x2="22" y2="12"></line><path d="M6 7v10M18 7v10M3 9v6M21 9v6"></path>' },
+      { id: "crescent", name: "Полумесяц", svg: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>' },
+      { id: "star", name: "Звезда", svg: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>' },
+      { id: "mountain", name: "Пик горы", svg: '<path d="m8 3 4 8 5-5 5 15H2L8 3z"></path>' },
+      { id: "prism", name: "Призма", svg: '<polygon points="12 3 2 20 22 20"></polygon><line x1="12" y1="3" x2="12" y2="20"></line><polyline points="2 20 12 14 22 20"></polyline>' },
+      { id: "pulse", name: "Пульс", svg: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>' },
+      { id: "shield", name: "Щит", svg: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>' },
+      { id: "hourglass", name: "Песочные часы", svg: '<path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>' },
+      { id: "atom", name: "Атом", svg: '<circle cx="12" cy="12" r="1.5"></circle><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(30 12 12)"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(-30 12 12)"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(90 12 12)"></ellipse>' },
+      { id: "nova", name: "Сверхновая", svg: '<circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"></path>' },
+      { id: "rune", name: "Кибер-руна", svg: '<polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><circle cx="12" cy="12" r="3"></circle>' }
+    ];
+
+    function getDailyTotemIndex() {
+      const key = (typeof getTodayKey === "function") ? getTodayKey() : "2026-11-16";
+      let hash = 0;
+      for (let i = 0; i < key.length; i++) {
+        hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
+      }
+      const baseIdx = Math.abs(hash) % DAILY_NEON_GLYPHS.length;
+      const offset = Number(state.dailyTotemOffset) || 0;
+      return (baseIdx + offset) % DAILY_NEON_GLYPHS.length;
+    }
+
+    function renderDailyTotem() {
+      const glyphEl = document.getElementById("iosDailyTotemGlyph");
+      const btn = document.getElementById("iosDailyTotemBtn");
+      if (!glyphEl) return;
+      const idx = getDailyTotemIndex();
+      const item = DAILY_NEON_GLYPHS[idx] || DAILY_NEON_GLYPHS[0];
+      glyphEl.innerHTML = item.svg;
+      if (btn) btn.setAttribute("title", `Тотем дня: ${item.name}`);
+      updateDailyTotemProgress();
+    }
+    window.renderDailyTotem = renderDailyTotem;
+
+    function cycleDailyTotem() {
+      if (typeof haptic === "function") haptic("light");
+      if (!state.dailyTotemOffset) state.dailyTotemOffset = 0;
+      state.dailyTotemOffset = (state.dailyTotemOffset + 1) % DAILY_NEON_GLYPHS.length;
+      saveState();
+
+      const wrap = document.getElementById("iosDailyTotemGlyphWrap");
+      if (wrap) {
+        wrap.style.transition = "transform 0.14s ease, opacity 0.14s ease";
+        wrap.style.transform = "scale(0.5) rotate(45deg)";
+        wrap.style.opacity = "0";
+        setTimeout(() => {
+          renderDailyTotem();
+          wrap.style.transition = "none";
+          wrap.style.transform = "scale(1.25) rotate(-20deg)";
+          wrap.style.opacity = "0";
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              wrap.style.transition = "transform 0.24s cubic-bezier(0.2, 1, 0.3, 1), opacity 0.2s ease";
+              wrap.style.transform = "scale(1) rotate(0deg)";
+              wrap.style.opacity = "1";
+            });
+          });
+        }, 140);
+      } else {
+        renderDailyTotem();
+      }
+    }
+    window.cycleDailyTotem = cycleDailyTotem;
+
+    function updateDailyTotemProgress() {
+      const circle = document.getElementById("iosDailyTotemProgressCircle");
+      if (!circle) return;
+
+      let pct = 0;
+      if (currentMainView === "split") {
+        const doneEl = document.getElementById("totalSetsWeek");
+        const targetEl = document.getElementById("totalSetsTarget");
+        const done = Number(doneEl?.textContent) || 0;
+        const target = Number(targetEl?.textContent) || 52;
+        pct = target > 0 ? (done / target) : 0;
+      } else {
+        const calEatenEl = document.getElementById("calEaten");
+        const calTargetEl = document.getElementById("calTarget");
+        const eaten = Number(calEatenEl?.textContent) || 0;
+        const target = Number(calTargetEl?.textContent) || 0;
+        pct = target > 0 ? (eaten / target) : 0;
+      }
+
+      pct = Math.max(0, Math.min(1, pct));
+      const circumference = 119.38; // 2 * Math.PI * 19
+      const offset = circumference * (1 - pct);
+      circle.style.strokeDashoffset = offset.toFixed(2);
+    }
+    window.updateDailyTotemProgress = updateDailyTotemProgress;
+
+    // =========================================================================
+    // БЛОКИРОВКА ВЫСОТЫ НЕАКТИВНЫХ ТРЕКОВ (ЗАЩИТА ОТ ПУСТОГО ХВОСТА)
+    // =========================================================================
     function prepareTracksForSwipe() {
+      if (window._lockHeightsTimer) {
+        clearTimeout(window._lockHeightsTimer);
+        window._lockHeightsTimer = null;
+      }
       const vDiet = document.getElementById("viewDiet");
       const vSplit = document.getElementById("viewSplit");
       const secPlan = document.getElementById("coachMealPlanSection");
       const secDiary = document.getElementById("coachDietDiarySection");
-      if (vDiet) { vDiet.style.maxHeight = "none"; vDiet.style.overflow = "visible"; }
-      if (vSplit) { vSplit.style.maxHeight = "none"; vSplit.style.overflow = "visible"; }
-      if (secPlan) { secPlan.style.maxHeight = "none"; secPlan.style.overflow = "visible"; }
-      if (secDiary) { secDiary.style.maxHeight = "none"; secDiary.style.overflow = "visible"; }
+      [vDiet, vSplit, secPlan, secDiary].forEach(el => {
+        if (el) {
+          el.style.height = "";
+          el.style.maxHeight = "none";
+          el.style.marginBottom = "";
+          el.style.overflow = "visible";
+        }
+      });
     }
     window.prepareTracksForSwipe = prepareTracksForSwipe;
 
     function lockInactiveTrackHeights() {
+      if (window._lockHeightsTimer) {
+        clearTimeout(window._lockHeightsTimer);
+        window._lockHeightsTimer = null;
+      }
       const vDiet = document.getElementById("viewDiet");
       const vSplit = document.getElementById("viewSplit");
       const secPlan = document.getElementById("coachMealPlanSection");
       const secDiary = document.getElementById("coachDietDiarySection");
 
+      const applyInactive = (el) => {
+        if (!el) return;
+        el.style.height = "0px";
+        el.style.maxHeight = "0px";
+        el.style.marginBottom = "0px";
+        el.style.overflow = "hidden";
+        el.style.pointerEvents = "none";
+      };
+      const applyActive = (el) => {
+        if (!el) return;
+        el.style.height = "";
+        el.style.maxHeight = "none";
+        el.style.marginBottom = "";
+        el.style.overflow = "visible";
+        el.style.pointerEvents = "auto";
+      };
+
       if (currentMainView === "split") {
-        if (vDiet) { vDiet.style.maxHeight = "100vh"; vDiet.style.overflow = "hidden"; vDiet.style.pointerEvents = "none"; }
-        if (vSplit) { vSplit.style.maxHeight = "none"; vSplit.style.overflow = "visible"; vSplit.style.pointerEvents = "auto"; }
+        applyInactive(vDiet);
+        applyActive(vSplit);
       } else {
-        if (vSplit) { vSplit.style.maxHeight = "100vh"; vSplit.style.overflow = "hidden"; vSplit.style.pointerEvents = "none"; }
-        if (vDiet) { vDiet.style.maxHeight = "none"; vDiet.style.overflow = "visible"; vDiet.style.pointerEvents = "auto"; }
+        applyInactive(vSplit);
+        applyActive(vDiet);
       }
 
       if (state.dietViewMode === "diary") {
-        if (secPlan) { secPlan.style.maxHeight = "100vh"; secPlan.style.overflow = "hidden"; secPlan.style.pointerEvents = "none"; }
-        if (secDiary) { secDiary.style.maxHeight = "none"; secDiary.style.overflow = "visible"; secDiary.style.pointerEvents = "auto"; }
+        applyInactive(secPlan);
+        applyActive(secDiary);
       } else {
-        if (secDiary) { secDiary.style.maxHeight = "100vh"; secDiary.style.overflow = "hidden"; secDiary.style.pointerEvents = "none"; }
-        if (secPlan) { secPlan.style.maxHeight = "none"; secPlan.style.overflow = "visible"; secPlan.style.pointerEvents = "auto"; }
+        applyInactive(secDiary);
+        applyActive(secPlan);
       }
     }
     window.lockInactiveTrackHeights = lockInactiveTrackHeights;
+
+    function scheduleLockInactiveTrackHeights(delay = 380) {
+      if (window._lockHeightsTimer) {
+        clearTimeout(window._lockHeightsTimer);
+      }
+      window._lockHeightsTimer = setTimeout(lockInactiveTrackHeights, delay);
+    }
+    window.scheduleLockInactiveTrackHeights = scheduleLockInactiveTrackHeights;
 
     function updateSegmentedSlider(container, activeBtn, immediate = false) {
       if (typeof container === "string") container = document.getElementById(container);
@@ -9928,9 +10094,13 @@
       }
 
       if (immediate) {
+        if (window._lockHeightsTimer) clearTimeout(window._lockHeightsTimer);
         lockInactiveTrackHeights();
       } else {
-        setTimeout(lockInactiveTrackHeights, 370);
+        scheduleLockInactiveTrackHeights(380);
+      }
+      if (typeof updateDailyTotemProgress === "function") {
+        updateDailyTotemProgress();
       }
     }
     window.switchMainView = switchMainView;
@@ -11390,6 +11560,7 @@
       renderThemeSelector();
       syncCustomBuilderFields();
       updateUiStyleControlButtons();
+      if (typeof renderDailyTotem === "function") renderDailyTotem();
       if (save) {
         saveState();
         renderAll();
@@ -14861,9 +15032,13 @@
       }
 
       if (immediate) {
+        if (window._lockHeightsTimer) clearTimeout(window._lockHeightsTimer);
         lockInactiveTrackHeights();
       } else {
-        setTimeout(lockInactiveTrackHeights, 370);
+        scheduleLockInactiveTrackHeights(380);
+      }
+      if (typeof updateDailyTotemProgress === "function") {
+        updateDailyTotemProgress();
       }
     }
     window.switchDietViewMode = switchDietViewMode;
@@ -18282,6 +18457,7 @@
 
       updateHistorySubtitle();
       syncNativeWidget();
+      if (typeof updateDailyTotemProgress === "function") updateDailyTotemProgress();
     }
 
     function updateHistorySubtitle() {
@@ -22003,6 +22179,7 @@
         `;
       }).join("");
       attachExerciseSwipeDelete(exContainer, activeProg.id);
+      if (typeof updateDailyTotemProgress === "function") updateDailyTotemProgress();
     };
 
     // =========================================================================
@@ -24563,6 +24740,7 @@ ${knownPiecesContext}
 
         if (isSwiping) {
           if (e.cancelable) e.preventDefault();
+          prepareTracksForSwipe();
 
           if (rafId) cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(() => {
@@ -24572,10 +24750,10 @@ ${knownPiecesContext}
             const secDiary = document.getElementById("coachDietDiarySection");
             const dietSubTrack = document.getElementById("dietSubTrack");
 
-            if (vDietEl) { vDietEl.style.height = "auto"; vDietEl.style.maxHeight = "none"; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; vDietEl.style.pointerEvents = "auto"; }
-            if (vSplitEl) { vSplitEl.style.height = "auto"; vSplitEl.style.maxHeight = "none"; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; vSplitEl.style.pointerEvents = "auto"; }
-            if (secPlan) { secPlan.style.height = "auto"; secPlan.style.maxHeight = "none"; secPlan.style.overflow = "visible"; secPlan.style.opacity = "1"; secPlan.style.pointerEvents = "auto"; }
-            if (secDiary) { secDiary.style.height = "auto"; secDiary.style.maxHeight = "none"; secDiary.style.overflow = "visible"; secDiary.style.opacity = "1"; secDiary.style.pointerEvents = "auto"; }
+            if (vDietEl) { vDietEl.style.height = ""; vDietEl.style.maxHeight = "none"; vDietEl.style.marginBottom = ""; vDietEl.style.overflow = "visible"; vDietEl.style.opacity = "1"; vDietEl.style.pointerEvents = "auto"; }
+            if (vSplitEl) { vSplitEl.style.height = ""; vSplitEl.style.maxHeight = "none"; vSplitEl.style.marginBottom = ""; vSplitEl.style.overflow = "visible"; vSplitEl.style.opacity = "1"; vSplitEl.style.pointerEvents = "auto"; }
+            if (secPlan) { secPlan.style.height = ""; secPlan.style.maxHeight = "none"; secPlan.style.marginBottom = ""; secPlan.style.overflow = "visible"; secPlan.style.opacity = "1"; secPlan.style.pointerEvents = "auto"; }
+            if (secDiary) { secDiary.style.height = ""; secDiary.style.maxHeight = "none"; secDiary.style.marginBottom = ""; secDiary.style.overflow = "visible"; secDiary.style.opacity = "1"; secDiary.style.pointerEvents = "auto"; }
 
             track.style.transition = "none";
             if (dietSubTrack) dietSubTrack.style.transition = "none";
@@ -24745,7 +24923,7 @@ ${knownPiecesContext}
             dietSubTrack.style.transform = (state.dietViewMode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
           }
           if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
-          setTimeout(lockInactiveTrackHeights, snapDuration + 10);
+          scheduleLockInactiveTrackHeights(380);
           return;
         }
         isSwiping = false;
@@ -24798,7 +24976,7 @@ ${knownPiecesContext}
           }
         }
 
-        setTimeout(lockInactiveTrackHeights, snapDuration + 10);
+        scheduleLockInactiveTrackHeights(380);
 
         if (typeof updateAllSegmentedSliders === "function") {
           requestAnimationFrame(updateAllSegmentedSliders);
@@ -24951,6 +25129,7 @@ ${knownPiecesContext}
       document.documentElement.classList.add("app-ready");
       if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
       if (typeof lockInactiveTrackHeights === "function") lockInactiveTrackHeights();
+      if (typeof renderDailyTotem === "function") renderDailyTotem();
     });
 
     window.addEventListener("resize", () => {
