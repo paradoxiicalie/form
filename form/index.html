@@ -11,6 +11,12 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>form — ATELIER</title>
 
+  <script>
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosBridge) {
+      document.documentElement.classList.add('is-ios-app');
+    }
+  </script>
+
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js" defer></script>
 
@@ -267,13 +273,40 @@
     .accent-btn:active { transform: scale(0.96); }
 
     /* Сегментированный бегунок переключения вкладок (Apple Liquid Glass) */
+    /* Нативные адаптации под iOS App (плавающий нижний бар SwiftUI) */
+    html.is-ios-app #mainSegmentedNav,
+    html.is-ios-app #btnTopRightAction {
+      display: none !important;
+    }
+
+    html.is-ios-app #atelierStatusRow {
+      display: none !important;
+    }
+
+    html.is-ios-app #iosHeaderBrandRight {
+      display: flex !important;
+    }
+
+    html.is-ios-app .app-shell {
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 96px) !important;
+    }
+
+    html.is-ios-app #restTimerFloatingBar {
+      bottom: calc(env(safe-area-inset-bottom, 20px) + 84px) !important;
+    }
+
+    html.is-ios-app #toastBox {
+      bottom: calc(env(safe-area-inset-bottom, 20px) + 96px) !important;
+    }
+
+    /* Сегментные контролы: минималистичный стиль iOS 26 Камера (ВИДЕО | ФОТО) */
     .segmented-slider-container {
       position: relative;
       display: inline-flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      box-shadow: none;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.07) !important;
+      box-shadow: none !important;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       isolation: isolate;
@@ -287,8 +320,8 @@
 
     #settingsTabsContainer {
       overflow: visible !important;
-      background: color-mix(in srgb, var(--card-bg, #121215) 85%, black) !important;
-      border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08)) !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.07) !important;
     }
 
     .settings-slide-panel > div {
@@ -337,23 +370,6 @@
       border-color: rgba(255, 255, 255, 0.25) !important;
     }
 
-    .segmented-track-glow {
-      position: absolute;
-      top: 2.5px;
-      left: 0 !important;
-      height: calc(100% - 5px);
-      width: 0px;
-      transform: translate3d(0, 0, 0);
-      border-radius: inherit;
-      pointer-events: none;
-      z-index: 0;
-      background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-cal) 45%, transparent) 0%, transparent 70%);
-      filter: blur(12px);
-      opacity: 0.75;
-      will-change: transform, width;
-      transition: transform 360ms cubic-bezier(0.25, 1, 0.5, 1), width 360ms cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
     .segmented-slider-pill {
       position: absolute;
       top: 2.5px;
@@ -369,80 +385,43 @@
       overflow: visible;
     }
 
-    /* Единый Apple Liquid Glass (iOS 26 Dark Mode) - чистый кристалл без матовости */
+    /* Чистый спокойный графит без цветного подмешивания и яркого спекуляра */
     .liquid-glass-body {
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: color-mix(in srgb, var(--accent-cal) 8%, rgba(255, 255, 255, 0.04));
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.38), inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.35);
-      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 320ms ease, background 200ms ease, box-shadow 200ms ease;
-      will-change: transform, filter;
+      background: rgba(255, 255, 255, 0.13) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease, box-shadow 200ms ease;
+      will-change: transform;
       overflow: hidden;
     }
 
-    /* Тончайший диагональный световой обод 135deg с мощным спекуляром в верхнем левом ребре */
-    .liquid-glass-body::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      padding: 1px;
-      background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.65) 0%,
-        rgba(255, 255, 255, 0.08) 30%,
-        rgba(255, 255, 255, 0.01) 70%,
-        color-mix(in srgb, var(--accent-cal) 60%, rgba(255, 255, 255, 0.25)) 100%
-      );
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-      filter: brightness(1);
-      transition: filter 320ms ease, opacity 320ms ease;
-      will-change: filter;
-    }
-
-    /* Реакция жидкой капли при движении (.is-liquid-moving) */
+    /* Деликатная реакция в движении (.is-liquid-moving): легкое просветление графита */
     .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.025, 1.04);
-      background: color-mix(in srgb, var(--accent-cal) 6%, rgba(255, 255, 255, 0.03));
-      backdrop-filter: blur(12px) brightness(1.14) saturate(175%);
-      -webkit-backdrop-filter: blur(12px) brightness(1.14) saturate(175%);
-      box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.5), inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.15), 0 6px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .segmented-slider-pill.is-liquid-moving .liquid-glass-body::before {
-      filter: brightness(1.25);
+      transform: scale(1.02);
+      background: rgba(255, 255, 255, 0.17) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     }
 
     /* Безопасный scale внутри скролл-лент вариантов */
     [id^="mealVariantsBar_"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body,
     #splitVariantPills .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.02, 1.025);
+      transform: scale(1.015);
     }
 
     .segmented-slider-container.rounded-full .segmented-slider-pill,
     .rounded-full > .segmented-slider-pill,
     .segmented-slider-container.rounded-full .liquid-glass-body,
-    .rounded-full > .segmented-slider-pill .liquid-glass-body,
-    .segmented-slider-container.rounded-full .segmented-track-glow,
-    .rounded-full > .segmented-track-glow {
+    .rounded-full > .segmented-slider-pill .liquid-glass-body {
       border-radius: 9999px !important;
     }
 
     html[data-ui-glow="off"] .liquid-glass-body {
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
-    }
-    html[data-ui-glow="off"] .segmented-track-glow {
-      display: none !important;
-    }
-    html[data-ui-glow="off"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.015, 1.025) !important;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
     }
 
     /* Отключение свечения в матовом режиме */
@@ -949,23 +928,28 @@
 
   <!-- Основной экран -->
   <div class="app-shell">
-    <!-- Настраиваемая эстетичная строка статуса сверху -->
-    <div onclick="openSettings('style')" class="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] mono tracking-wider uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition select-none min-w-0">
+    <!-- Настраиваемая эстетичная строка статуса сверху (скрыта в iOS App, где объединена с шапкой) -->
+    <div id="atelierStatusRow" onclick="openSettings('style')" class="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] mono tracking-wider uppercase text-zinc-500 mb-2 px-0.5 cursor-pointer active:opacity-70 transition select-none min-w-0">
       <span id="atelierBrandLabel" class="truncate min-w-0 flex-1">FORM // OBSIDIAN NOIR</span>
       <span id="atelierNumbersLabel" class="truncate min-w-0 shrink-0 text-right">[ STUDIO · 02 · SILK ]</span>
     </div>
 
     <!-- Верхняя шапка с переключателем [ РАЦИОН // ТРЕНИ ] -->
-    <div class="flex items-center justify-between mb-3.5">
-      <button type="button" id="btnOpenSettings" onclick="openSettings()" class="circle-btn" aria-label="Настройки">
+    <div id="mainHeaderRow" class="flex items-center justify-between mb-3.5">
+      <button type="button" id="btnOpenSettings" onclick="openSettings()" class="circle-btn shrink-0" aria-label="Настройки">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" d="M5 9h14M5 15h14" />
         </svg>
       </button>
 
-      <!-- Центральный переключатель вкладок -->
-      <div id="mainSegmentedNav" class="segmented-slider-container relative flex items-center bg-white/[0.035] border border-white/[0.06] p-1 rounded-full backdrop-blur-md overflow-visible">
-        <div id="mainNavSliderGlow" class="segmented-track-glow"></div>
+      <!-- Компактный бренд-лейбл в одну строку для iOS App (кликабельный в Настройки -> Стиль) -->
+      <div id="iosHeaderBrandRight" onclick="openSettings('style')" class="hidden items-center gap-2 text-[10px] mono tracking-wider uppercase text-zinc-400 cursor-pointer active:opacity-70 transition select-none min-w-0 text-right">
+        <span id="atelierBrandLabelNative" class="font-bold text-zinc-300 truncate">FORM // OBSIDIAN NOIR</span>
+        <span id="atelierNumbersLabelNative" class="text-zinc-500 shrink-0">[ STUDIO · 02 · SILK ]</span>
+      </div>
+
+      <!-- Центральный переключатель вкладок (веб-фоллбэк, скрыт в iOS App) -->
+      <div id="mainSegmentedNav" class="segmented-slider-container relative flex items-center p-1 rounded-full overflow-visible">
         <div id="mainNavSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
         <button
           type="button"
@@ -985,8 +969,8 @@
         </button>
       </div>
 
-      <!-- Правая кнопка: Сканер (в Рационе) или + Упражнение (в Сплите) -->
-      <button type="button" id="btnTopRightAction" onclick="handleTopRightAction()" class="circle-btn" aria-label="Действие">
+      <!-- Правая кнопка: Сканер (в Рационе) или + Упражнение (в Сплите) (веб-фоллбэк, скрыт в iOS App) -->
+      <button type="button" id="btnTopRightAction" onclick="handleTopRightAction()" class="circle-btn shrink-0" aria-label="Действие">
         <svg id="iconScannerTop" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M7 3H5a2 2 0 00-2 2v2m14-4h2a2 2 0 012 2v2m-4 14h2a2 2 0 002-2v-2M3 17v2a2 2 0 002 2h2" />
         </svg>
@@ -1087,8 +1071,7 @@
 
       <!-- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА: [ МОЙ РАЦИОН ] [ ДНЕВНИК ] -->
       <div class="flex items-center justify-between mb-3 px-0.5">
-        <div id="dietSubSegmentedNav" class="segmented-slider-container relative flex items-center bg-white/[0.035] border border-white/[0.06] p-0.5 rounded-xl backdrop-blur-md overflow-visible">
-          <div id="dietSubSliderGlow" class="segmented-track-glow"></div>
+        <div id="dietSubSegmentedNav" class="segmented-slider-container relative flex items-center p-0.5 rounded-xl backdrop-blur-md overflow-visible">
           <div id="dietSubSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
           <button
             type="button"
@@ -1901,8 +1884,7 @@
         <button type="button" onclick="closeSettings()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
 
-      <div id="settingsTabsContainer" class="segmented-slider-container relative grid grid-cols-4 gap-1 bg-zinc-900 p-1 rounded-2xl border border-white/[0.06] mb-4 overflow-visible">
-        <div id="settingsSliderGlow" class="segmented-track-glow"></div>
+      <div id="settingsTabsContainer" class="segmented-slider-container relative grid grid-cols-4 gap-1 p-1 rounded-2xl mb-4 overflow-visible">
         <div id="settingsSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
         <button type="button" id="setTabGoals" onclick="switchSettingsTab('goals')" class="relative z-10 py-2 text-[11px] font-bold rounded-xl text-white transition-colors duration-200">Цели</button>
         <button type="button" id="setTabStyle" onclick="switchSettingsTab('style')" class="relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Стиль</button>
@@ -9676,13 +9658,6 @@
       if (!container || !activeBtn) return;
       if (typeof container.getBoundingClientRect !== "function") return;
 
-      let glow = container.querySelector(".segmented-track-glow");
-      if (!glow) {
-        glow = document.createElement("div");
-        glow.className = "segmented-track-glow";
-        container.insertBefore(glow, container.firstChild);
-      }
-
       let pill = container.querySelector(".segmented-slider-pill");
       if (!pill) {
         pill = document.createElement("div");
@@ -9748,14 +9723,6 @@
         pill.style.top = `${prevRect.y || top}px`;
         pill.style.height = `${prevRect.height || height}px`;
 
-        if (glow) {
-          glow.style.transition = "none";
-          glow.style.transform = `translate3d(${prevRect.x}px, 0, 0)`;
-          glow.style.width = `${prevRect.width}px`;
-          glow.style.top = `${prevRect.y || top}px`;
-          glow.style.height = `${prevRect.height || height}px`;
-        }
-
         void pill.offsetHeight; // Force reflow
         delete window._prevPillRects[containerId];
 
@@ -9765,14 +9732,6 @@
           pill.style.top = `${top}px`;
           pill.style.height = `${height}px`;
           pill.style.width = `${width}px`;
-
-          if (glow) {
-            glow.style.transition = springTransition;
-            glow.style.transform = `translate3d(${left}px, 0, 0)`;
-            glow.style.top = `${top}px`;
-            glow.style.height = `${height}px`;
-            glow.style.width = `${width}px`;
-          }
         });
         return;
       }
@@ -9792,14 +9751,6 @@
             pill.style.top = `${t}px`;
             pill.style.height = `${h}px`;
             pill.style.width = `${w}px`;
-
-            if (glow) {
-              glow.style.transition = immediate ? "none" : springTransition;
-              glow.style.transform = `translate3d(${l}px, 0, 0)`;
-              glow.style.top = `${t}px`;
-              glow.style.height = `${h}px`;
-              glow.style.width = `${w}px`;
-            }
           }
         });
         return;
@@ -9810,14 +9761,6 @@
       pill.style.top = `${top}px`;
       pill.style.height = `${height}px`;
       pill.style.width = `${width}px`;
-
-      if (glow) {
-        glow.style.transition = immediate ? "none" : springTransition;
-        glow.style.transform = `translate3d(${left}px, 0, 0)`;
-        glow.style.top = `${top}px`;
-        glow.style.height = `${height}px`;
-        glow.style.width = `${width}px`;
-      }
     }
     window.updateSegmentedSlider = updateSegmentedSlider;
 
@@ -9851,6 +9794,12 @@
       else if (prevView === "split") savedSplitScrollY = window.scrollY || 0;
 
       currentMainView = view;
+      if (window.webkit?.messageHandlers?.iosBridge) {
+        window.webkit.messageHandlers.iosBridge.postMessage({
+          action: "mainViewChanged",
+          view: view
+        });
+      }
       prepareTracksForSwipe();
 
       const vDiet = document.getElementById("viewDiet");
@@ -11361,6 +11310,18 @@
       const nLabel = document.getElementById("atelierNumbersLabel");
       if (bLabel) bLabel.textContent = t.brandHeader;
       if (nLabel) nLabel.textContent = t.indexHeader;
+
+      const bLabelNat = document.getElementById("atelierBrandLabelNative");
+      const nLabelNat = document.getElementById("atelierNumbersLabelNative");
+      if (bLabelNat) bLabelNat.textContent = t.brandHeader;
+      if (nLabelNat) nLabelNat.textContent = t.indexHeader;
+
+      if (window.webkit?.messageHandlers?.iosBridge) {
+        window.webkit.messageHandlers.iosBridge.postMessage({
+          action: "themeAccentUpdated",
+          calHex: t.accent || t.cal || "#D62828"
+        });
+      }
 
       renderThemeSelector();
       syncCustomBuilderFields();
@@ -17379,8 +17340,7 @@
           mealItems = rawMealItems.slice().concat(getMealTodayAddedItems(meal, progress, activeVar));
           const variantKeys = Object.keys(meal.variants || {});
           variantHtml = `
-            <div id="mealVariantsBar_${meal.id}" class="segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 bg-white/[0.035] border border-white/[0.06] rounded-xl mb-2.5 overflow-x-auto no-scrollbar relative">
-              <div class="segmented-track-glow"></div>
+            <div id="mealVariantsBar_${meal.id}" class="segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 rounded-xl mb-2.5 overflow-x-auto no-scrollbar relative">
               <div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
               ${variantKeys.map(vk => `
                 <button type="button" id="mealVarBtn_${meal.id}_${vk}" onclick="switchMealVariant('${meal.id}', '${vk}')" class="relative z-10 shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200 ${activeVar === vk ? 'text-white font-bold' : 'text-zinc-400 hover:text-white'}">
@@ -20634,8 +20594,8 @@
         >+ Вариант</button>
       `;
 
-      varBox.className = "segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 bg-white/[0.035] border border-white/[0.06] rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
-      varBox.innerHTML = `<div class="segmented-track-glow"></div><div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>` + pillsHtml + addBtnHtml;
+      varBox.className = "segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
+      varBox.innerHTML = `<div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>` + pillsHtml + addBtnHtml;
 
       updateSegmentedSlider("splitVariantPills", "workoutVarBtn_" + activeProg.id + "_" + activeVk, false);
     };
@@ -24511,8 +24471,6 @@ ${knownPiecesContext}
             // 1:1 Live следование бегунка [РАЦИОН // ТРЕНИ]
             const mainPill = document.getElementById("mainNavSliderPill");
             const subPill = document.getElementById("dietSubSliderPill");
-            const mainGlow = document.getElementById("mainNavSliderGlow");
-            const subGlow = document.getElementById("dietSubSliderGlow");
             if (mainPill) {
               if (mainPill._liquidMoveTimer) {
                 clearTimeout(mainPill._liquidMoveTimer);
@@ -24546,11 +24504,6 @@ ${knownPiecesContext}
                 mainPill.style.transition = "none";
                 mainPill.style.transform = trX;
                 mainPill.style.width = trW;
-                if (mainGlow) {
-                  mainGlow.style.transition = "none";
-                  mainGlow.style.transform = trX;
-                  mainGlow.style.width = trW;
-                }
               }
             }
 
@@ -24575,11 +24528,6 @@ ${knownPiecesContext}
               subPill.style.transition = "none";
               subPill.style.transform = sTrX;
               subPill.style.width = sTrW;
-              if (subGlow) {
-                subGlow.style.transition = "none";
-                subGlow.style.transform = sTrX;
-                subGlow.style.width = sTrW;
-              }
             }
 
             if (startingMainView === "split") {
@@ -24667,12 +24615,8 @@ ${knownPiecesContext}
         const snapTrackTransition = `transform ${snapDuration}ms ${snapBezier}`;
         const snapPillTransition = `transform ${snapDuration}ms ${snapBezier}, width ${snapDuration}ms ${snapBezier}`;
 
-        const mainGlow = document.getElementById("mainNavSliderGlow");
-        const subGlow = document.getElementById("dietSubSliderGlow");
         if (mainPill) mainPill.style.transition = snapPillTransition;
         if (subPill) subPill.style.transition = snapPillTransition;
-        if (mainGlow) mainGlow.style.transition = snapPillTransition;
-        if (subGlow) subGlow.style.transition = snapPillTransition;
 
         if (cancelGesture || !isSwiping) {
           isSwiping = false;
@@ -24900,12 +24844,29 @@ ${knownPiecesContext}
       if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
     }, { passive: true });
 
+    let _cachedModalOpenState = false;
+    function checkModalVisibilityToNative() {
+      const isOpen = !!document.querySelector(".sheet-backdrop.open");
+      if (_cachedModalOpenState !== isOpen) {
+        _cachedModalOpenState = isOpen;
+        if (window.webkit?.messageHandlers?.iosBridge) {
+          window.webkit.messageHandlers.iosBridge.postMessage({
+            action: "modalVisibilityChanged",
+            isOpen: isOpen
+          });
+        }
+      }
+    }
+    window.checkModalVisibilityToNative = checkModalVisibilityToNative;
+
     try {
       const modalObserver = new MutationObserver(() => {
         initBottomSheetGestures();
         initSettingsTabsSwipe();
+        checkModalVisibilityToNative();
       });
-      modalObserver.observe(document.body, { childList: true, subtree: true });
+      modalObserver.observe(document.body, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
+      document.addEventListener("click", () => setTimeout(checkModalVisibilityToNative, 20));
     } catch (e) {}
   })();
   </script>

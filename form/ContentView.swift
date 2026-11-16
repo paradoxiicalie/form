@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import WebKit
 import WidgetKit
 import UserNotifications
@@ -10,17 +11,59 @@ import UniformTypeIdentifiers
 import ActivityKit
 #endif
 
-final class WebViewModel {
+final class WebViewModel: ObservableObject {
     static let shared = WebViewModel()
     weak var webView: WKWebView?
     var pendingRoute: String?
     
+    @Published var currentView: String = "diet"
+    @Published var isModalOpen: Bool = false
+    @Published var accentHex: String = {
+        let d = UserDefaults(suiteName: "group.com.macro.shared")
+        return d?.string(forKey: "calHex") ?? "#D62828"
+    }()
+    
     func navigate(to route: String) {
+        if currentView != route {
+            currentView = route
+        }
         if let wv = webView {
             wv.evaluateJavaScript("switchMainView('\(route)');", completionHandler: nil)
         } else {
             pendingRoute = route
         }
+    }
+    
+    func handleTopRightAction() {
+        if let wv = webView {
+            wv.evaluateJavaScript("if (typeof handleTopRightAction === 'function') { handleTopRightAction(); }", completionHandler: nil)
+        }
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: cleaned).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch cleaned.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 214, 40, 40)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
 
@@ -508,33 +551,7 @@ struct WebView: UIViewRepresentable {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.bounces = false
         
-        NotificationCenter.default.addObserver(forName: Notification.Name("FormStopRestTimerExternally"), object: nil, queue: .main) { _ in
-            webView.evaluateJavaScript("""
-                if (typeof stopRestTimer === 'function') { stopRestTimer(); }
-                if (typeof closeRestTimer === 'function') { closeRestTimer(); }
-                if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
-                var bar = document.getElementById('rest-timer-bar') || document.getElementById('rest-bar');
-                if (bar) { bar.classList.remove('active', 'open', 'visible'); bar.style.display = 'none'; }
-                if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
-            """, completionHandler: nil)
-        }
-
-        // При возврате из фона — проверяем, не нажал ли юзер ✕ на острове/лок-скрине
-        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-            if let d = UserDefaults(suiteName: "group.com.macro.shared"),
-               d.bool(forKey: "restTimerStoppedExternally") {
-                d.set(false, forKey: "restTimerStoppedExternally")
-                d.synchronize()
-                webView.evaluateJavaScript("""
-                    if (typeof stopRestTimer === 'function') { stopRestTimer(); }
-                    if (typeof closeRestTimer === 'function') { closeRestTimer(); }
-                    if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
-                    var bar = document.getElementById('rest-timer-bar') || document.getElementById('rest-bar');
-                    if (bar) { bar.classList.remove('active', 'open', 'visible'); bar.style.display = 'none'; }
-                    if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
-                """, completionHandler: nil)
-            }
-        }
+        context.coordinator.setupNotificationObservers(webView: webView)
         
         WebViewModel.shared.webView = webView
         context.coordinator.currentWebView = webView
@@ -553,6 +570,7 @@ struct WebView: UIViewRepresentable {
         weak var currentWebView: WKWebView?
         var pendingNoteId: String = ""
         var pendingExName: String = ""
+        private var notificationTokens: [NSObjectProtocol] = []
         
         override init() {
             super.init()
@@ -564,8 +582,48 @@ struct WebView: UIViewRepresentable {
             )
         }
         
+        func setupNotificationObservers(webView: WKWebView) {
+            removeNotificationObservers()
+            
+            let t1 = NotificationCenter.default.addObserver(forName: Notification.Name("FormStopRestTimerExternally"), object: nil, queue: .main) { [weak webView] _ in
+                webView?.evaluateJavaScript("""
+                    if (typeof stopRestTimer === 'function') { stopRestTimer(); }
+                    if (typeof closeRestTimer === 'function') { closeRestTimer(); }
+                    if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
+                    var bar = document.getElementById('restTimerFloatingBar');
+                    if (bar) { bar.classList.add('hidden'); }
+                    if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
+                """, completionHandler: nil)
+            }
+            
+            let t2 = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak webView] _ in
+                if let d = UserDefaults(suiteName: "group.com.macro.shared"),
+                   d.bool(forKey: "restTimerStoppedExternally") {
+                    d.set(false, forKey: "restTimerStoppedExternally")
+                    d.synchronize()
+                    webView?.evaluateJavaScript("""
+                        if (typeof stopRestTimer === 'function') { stopRestTimer(); }
+                        if (typeof closeRestTimer === 'function') { closeRestTimer(); }
+                        if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
+                        var bar = document.getElementById('restTimerFloatingBar');
+                        if (bar) { bar.classList.add('hidden'); }
+                        if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
+                    """, completionHandler: nil)
+                }
+            }
+            notificationTokens = [t1, t2]
+        }
+        
+        func removeNotificationObservers() {
+            for token in notificationTokens {
+                NotificationCenter.default.removeObserver(token)
+            }
+            notificationTokens.removeAll()
+        }
+        
         deinit {
             NotificationCenter.default.removeObserver(self)
+            removeNotificationObservers()
         }
         
         @objc private func handleWillEnterForeground() {
@@ -635,6 +693,39 @@ struct WebView: UIViewRepresentable {
                   let dict = message.body as? [String: Any] else { return }
             
             let action = dict["action"] as? String ?? "syncData"
+            if action == "mainViewChanged" {
+                if let view = dict["view"] as? String {
+                    DispatchQueue.main.async {
+                        if WebViewModel.shared.currentView != view {
+                            withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                                WebViewModel.shared.currentView = view
+                            }
+                        }
+                    }
+                }
+                return
+            }
+            if action == "modalVisibilityChanged" {
+                let isOpen = (dict["isOpen"] as? Bool) ?? (dict["open"] as? Bool) ?? false
+                DispatchQueue.main.async {
+                    if WebViewModel.shared.isModalOpen != isOpen {
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                            WebViewModel.shared.isModalOpen = isOpen
+                        }
+                    }
+                }
+                return
+            }
+            if action == "themeAccentUpdated" {
+                if let hex = dict["calHex"] as? String ?? dict["hex"] as? String, !hex.isEmpty {
+                    DispatchQueue.main.async {
+                        if WebViewModel.shared.accentHex != hex {
+                            WebViewModel.shared.accentHex = hex
+                        }
+                    }
+                }
+                return
+            }
             if action == "fetchMotionSteps" {
                 let wv = message.webView
                 let isSilent = dict["silent"] as? Bool ?? false
@@ -777,7 +868,14 @@ struct WebView: UIViewRepresentable {
                 d.set(stateJson, forKey: "formNativeBackupJSON")
                 d.synchronize()
             }
-            if let calHex = dict["calHex"] as? String { d.set(calHex, forKey: "calHex") }
+            if let calHex = dict["calHex"] as? String {
+                d.set(calHex, forKey: "calHex")
+                DispatchQueue.main.async {
+                    if WebViewModel.shared.accentHex != calHex {
+                        WebViewModel.shared.accentHex = calHex
+                    }
+                }
+            }
             if let pHex = dict["pHex"] as? String { d.set(pHex, forKey: "pHex") }
             if let cHex = dict["cHex"] as? String { d.set(cHex, forKey: "cHex") }
             if let fHex = dict["fHex"] as? String { d.set(fHex, forKey: "fHex") }
@@ -857,30 +955,35 @@ struct WebView: UIViewRepresentable {
         
         private func scheduleDailyRandomPushes(mode: String, time1: String, time2: String, messages: [String]) {
             let center = UNUserNotificationCenter.current()
-            center.removeAllPendingNotificationRequests()
-            guard mode != "off", !messages.isEmpty else { return }
-            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-                guard granted else { return }
-                let parts1 = time1.split(separator: ":"); let h1 = parts1.count == 2 ? (Int(parts1[0]) ?? 14) : 14; let m1 = parts1.count == 2 ? (Int(parts1[1]) ?? 0) : 0
-                let parts2 = time2.split(separator: ":"); let h2 = parts2.count == 2 ? (Int(parts2[0]) ?? 23) : 23; let m2 = parts2.count == 2 ? (Int(parts2[1]) ?? 0) : 0
-                var slots: [(Int, Int)] = []
-                if mode == "2x" { slots = [(h1, m1), (h2, m2)] }
-                else if mode == "mid" { slots = [(h1, m1)] }
-                else if mode == "eve" { slots = [(h2, m2)] }
-                
-                let cal = Calendar.current; let now = Date()
-                for dayOffset in 0..<14 {
-                    guard let targetDate = cal.date(byAdding: .day, value: dayOffset, to: now) else { continue }
-                    for (idx, slot) in slots.enumerated() {
-                        var comps = cal.dateComponents([.year, .month, .day], from: targetDate)
-                        comps.hour = slot.0; comps.minute = slot.1
-                        if let fireDate = cal.date(from: comps), fireDate > now {
-                            let content = UNMutableNotificationContent()
-                            content.title = idx == 0 && slots.count > 1 ? "form // Дневной чек-ин" : "form // Итоги рациона"
-                            content.body = messages.randomElement() ?? "Запиши свой рацион."
-                            content.sound = .default
-                            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
-                            center.add(UNNotificationRequest(identifier: "form_daily_\(dayOffset)_\(idx)", content: content, trigger: trigger))
+            center.getPendingNotificationRequests { requests in
+                let dailyIds = requests.map(\.identifier).filter { $0.hasPrefix("form_daily_") }
+                if !dailyIds.isEmpty {
+                    center.removePendingNotificationRequests(withIdentifiers: dailyIds)
+                }
+                guard mode != "off", !messages.isEmpty else { return }
+                center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                    guard granted else { return }
+                    let parts1 = time1.split(separator: ":"); let h1 = parts1.count == 2 ? (Int(parts1[0]) ?? 14) : 14; let m1 = parts1.count == 2 ? (Int(parts1[1]) ?? 0) : 0
+                    let parts2 = time2.split(separator: ":"); let h2 = parts2.count == 2 ? (Int(parts2[0]) ?? 23) : 23; let m2 = parts2.count == 2 ? (Int(parts2[1]) ?? 0) : 0
+                    var slots: [(Int, Int)] = []
+                    if mode == "2x" { slots = [(h1, m1), (h2, m2)] }
+                    else if mode == "mid" { slots = [(h1, m1)] }
+                    else if mode == "eve" { slots = [(h2, m2)] }
+                    
+                    let cal = Calendar.current; let now = Date()
+                    for dayOffset in 0..<14 {
+                        guard let targetDate = cal.date(byAdding: .day, value: dayOffset, to: now) else { continue }
+                        for (idx, slot) in slots.enumerated() {
+                            var comps = cal.dateComponents([.year, .month, .day], from: targetDate)
+                            comps.hour = slot.0; comps.minute = slot.1
+                            if let fireDate = cal.date(from: comps), fireDate > now {
+                                let content = UNMutableNotificationContent()
+                                content.title = idx == 0 && slots.count > 1 ? "form // Дневной чек-ин" : "form // Итоги рациона"
+                                content.body = messages.randomElement() ?? "Запиши свой рацион."
+                                content.sound = .default
+                                let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+                                center.add(UNNotificationRequest(identifier: "form_daily_\(dayOffset)_\(idx)", content: content, trigger: trigger))
+                            }
                         }
                     }
                 }
@@ -1165,11 +1268,170 @@ struct WebView: UIViewRepresentable {
     }
 }
 
-struct ContentView: View {
+struct NativeLiquidGlassBottomBar: View {
+    @ObservedObject var viewModel: WebViewModel
+    @Namespace private var glassNamespace
+    
     var body: some View {
-        ZStack {
+        if #available(iOS 26.0, *) {
+            glassBar26
+        } else {
+            fallbackBar
+        }
+    }
+    
+    @available(iOS 26.0, *)
+    private var glassBar26: some View {
+        GlassEffectContainer(spacing: 12) {
+            capsuleContent26
+                .glassEffect(.regular.interactive(), in: Capsule())
+            
+            actionButton
+                .glassEffect(.regular.interactive(), in: Circle())
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+    
+    private var fallbackBar: some View {
+        HStack(spacing: 12) {
+            capsuleContentFallback
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                )
+            
+            actionButton
+                .background(
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                )
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+    
+    @available(iOS 26.0, *)
+    private var capsuleContent26: some View {
+        let totalWidth: CGFloat = 200
+        let height: CGFloat = 56
+        
+        return HStack(spacing: 0) {
+            tabItem26(title: "Рацион", icon: "fork.knife", key: "diet")
+            tabItem26(title: "Трени", icon: "dumbbell.fill", key: "split")
+        }
+        .frame(width: totalWidth, height: height)
+        .contentShape(Capsule())
+        .gesture(capsuleDragGesture(totalWidth: totalWidth))
+    }
+    
+    @available(iOS 26.0, *)
+    @ViewBuilder
+    private func tabItem26(title: String, icon: String, key: String) -> some View {
+        let isSelected = viewModel.currentView == key
+        let accentColor = Color(hex: viewModel.accentHex)
+        
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: isSelected ? .bold : .regular))
+                .foregroundColor(isSelected ? accentColor : Color(white: 0.55))
+            Text(title)
+                .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                .foregroundColor(isSelected ? .white : Color(white: 0.55))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(4)
+        .background {
+            if isSelected {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+                    .matchedGeometryEffect(id: "activeTabIndicator", in: glassNamespace)
+            }
+        }
+        .glassEffectID(isSelected ? "activeTab" : nil, in: glassNamespace)
+    }
+    
+    private var capsuleContentFallback: some View {
+        let totalWidth: CGFloat = 200
+        let height: CGFloat = 56
+        
+        return HStack(spacing: 0) {
+            tabItemFallback(title: "Рацион", icon: "fork.knife", key: "diet")
+            tabItemFallback(title: "Трени", icon: "dumbbell.fill", key: "split")
+        }
+        .frame(width: totalWidth, height: height)
+        .contentShape(Capsule())
+        .gesture(capsuleDragGesture(totalWidth: totalWidth))
+    }
+    
+    @ViewBuilder
+    private func tabItemFallback(title: String, icon: String, key: String) -> some View {
+        let isSelected = viewModel.currentView == key
+        let accentColor = Color(hex: viewModel.accentHex)
+        
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: isSelected ? .bold : .regular))
+                .foregroundColor(isSelected ? accentColor : Color(white: 0.55))
+            Text(title)
+                .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                .foregroundColor(isSelected ? .white : Color(white: 0.55))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(4)
+        .background {
+            if isSelected {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+                    .matchedGeometryEffect(id: "activeTabIndicatorFallback", in: glassNamespace)
+            }
+        }
+    }
+    
+    private func capsuleDragGesture(totalWidth: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                let target = value.location.x < (totalWidth / 2.0) ? "diet" : "split"
+                if viewModel.currentView != target {
+                    UISelectionFeedbackGenerator().selectionChanged()
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                        viewModel.navigate(to: target)
+                    }
+                }
+            }
+    }
+    
+    private var actionButton: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            viewModel.handleTopRightAction()
+        }) {
+            Image(systemName: viewModel.currentView == "diet" ? "viewfinder" : "plus")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 56, height: 56)
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct ContentView: View {
+    @ObservedObject private var viewModel = WebViewModel.shared
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
             Color(red: 0.03, green: 0.03, blue: 0.04).ignoresSafeArea()
             WebView().ignoresSafeArea(.container, edges: .vertical)
+            
+            NativeLiquidGlassBottomBar(viewModel: viewModel)
+                .opacity(viewModel.isModalOpen ? 0 : 1)
+                .offset(y: viewModel.isModalOpen ? 100 : 0)
+                .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.isModalOpen)
+                .allowsHitTesting(!viewModel.isModalOpen)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .preferredColorScheme(.dark)
         .onOpenURL { url in
