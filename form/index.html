@@ -299,9 +299,64 @@
       display: flex !important;
     }
 
+    /* Эффект «сломанного неона» на иконке Тотема дня по уровням прогресса (linear abrupt drops) */
+    @keyframes brokenNeonTier0 {
+      0%, 70% { opacity: 0.52; filter: drop-shadow(0 0 2px var(--accent-glow)); }
+      71.2% { opacity: 0.12; filter: none; }
+      72.4% { opacity: 0.55; filter: drop-shadow(0 0 3px var(--accent-glow)); }
+      73.6% { opacity: 0.08; filter: none; }
+      75.0% { opacity: 0.65; filter: drop-shadow(0 0 5px var(--accent-glow)); }
+      76.2% { opacity: 0.18; filter: none; }
+      77.6%, 100% { opacity: 0.52; filter: drop-shadow(0 0 2px var(--accent-glow)); }
+    }
+
+    @keyframes brokenNeonTier1 {
+      0%, 83% { opacity: 0.78; filter: drop-shadow(0 0 5px var(--accent-glow)); }
+      84.2% { opacity: 0.36; filter: drop-shadow(0 0 2px var(--accent-glow)); }
+      85.4% { opacity: 0.88; filter: drop-shadow(0 0 7px var(--accent-glow)); }
+      86.6% { opacity: 0.42; filter: drop-shadow(0 0 2px var(--accent-glow)); }
+      88.0%, 100% { opacity: 0.78; filter: drop-shadow(0 0 5px var(--accent-glow)); }
+    }
+
+    @keyframes brokenNeonTier2 {
+      0%, 90% { opacity: 0.92; filter: drop-shadow(0 0 7px var(--accent-glow)); }
+      91.2% { opacity: 0.68; filter: drop-shadow(0 0 3px var(--accent-glow)); }
+      92.4% { opacity: 0.98; filter: drop-shadow(0 0 9px var(--accent-glow)); }
+      93.6%, 100% { opacity: 0.92; filter: drop-shadow(0 0 7px var(--accent-glow)); }
+    }
+
+    #iosDailyTotemBtn[data-neon-tier="0"] #iosDailyTotemGlyph {
+      animation: brokenNeonTier0 4.8s linear infinite;
+    }
+    #iosDailyTotemBtn[data-neon-tier="1"] #iosDailyTotemGlyph {
+      animation: brokenNeonTier1 6.8s linear infinite;
+    }
+    #iosDailyTotemBtn[data-neon-tier="2"] #iosDailyTotemGlyph {
+      animation: brokenNeonTier2 9.6s linear infinite;
+    }
+    #iosDailyTotemBtn[data-neon-tier="3"] #iosDailyTotemGlyph {
+      animation: none;
+      opacity: 1;
+      filter: drop-shadow(0 0 4px var(--accent-cal)) drop-shadow(0 0 10px var(--accent-glow)) !important;
+    }
+    #iosDailyTotemBtn[data-neon-tier="3"] #iosDailyTotemProgressCircle {
+      filter: drop-shadow(0 0 3px var(--accent-cal));
+    }
+
+    /* Отключение свечения и анимаций при энергосбережении или настройке glow=off */
     html[data-ui-glow="off"] #iosDailyTotemGlyph,
-    html[data-ui-glow="off"] .totem-glyph-glow {
+    html[data-ui-glow="off"] .totem-glyph-glow,
+    html[data-ui-glow="off"] #iosDailyTotemBtn #iosDailyTotemGlyph,
+    html[data-ui-glow="off"] #iosDailyTotemProgressCircle {
+      animation: none !important;
+      opacity: 1 !important;
       filter: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #iosDailyTotemBtn #iosDailyTotemGlyph {
+        animation: none !important;
+      }
     }
 
     #stackAndWeightStrip {
@@ -318,7 +373,12 @@
     }
 
     html.is-ios-app #toastBox {
-      bottom: calc(env(safe-area-inset-bottom, 20px) + 96px) !important;
+      bottom: calc(env(safe-area-inset-bottom, 20px) + 76px);
+    }
+
+    #toastBox.toast-visible {
+      pointer-events: auto !important;
+      cursor: pointer;
     }
 
     /* Сегментные контролы: минималистичный стиль iOS 26 Камера (ВИДЕО | ФОТО) */
@@ -942,7 +1002,7 @@
   <div id="statusBarGuardOverlay" class="fixed top-0 left-0 right-0 h-[max(63px,calc(env(safe-area-inset-top,59px)+4px))] backdrop-blur-md z-[120] pointer-events-none" style="background: color-mix(in srgb, var(--bg-main) 92%, transparent);"></div>
 
   <!-- Всплывающее компактное уведомление (Тост) внизу над таббаром -->
-  <div id="toastBox" class="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+82px)] left-1/2 -translate-x-1/2 z-[250] pointer-events-none opacity-0 transition-all duration-200 transform translate-y-3 w-[90%] max-w-[360px]">
+  <div id="toastBox" class="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+76px)] left-1/2 -translate-x-1/2 z-[250] pointer-events-none opacity-0 transition-all duration-200 transform translate-y-3 w-[90%] max-w-[360px] select-none">
     <div class="bg-zinc-900/95 border border-white/15 text-white px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium backdrop-blur-xl">
       <span id="toastDot" class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent-cal)"></span>
       <span id="toastMsg" class="leading-snug break-words">Уведомление</span>
@@ -1825,9 +1885,18 @@
           ✓ Захвачен: <span id="barcodeDetectedCode"></span>
         </div>
 
-        <div id="scannerLoading" class="hidden absolute inset-0 bg-black/75 backdrop-blur-sm flex-col items-center justify-center gap-2 z-30">
-          <div class="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style="border-color: var(--accent-cal); border-top-color: transparent;"></div>
-          <span id="scannerLoadingText" class="text-xs font-medium text-zinc-200">Ищем штрихкод и читаем этикетку...</span>
+        <div id="scannerLoading" class="hidden absolute inset-0 bg-black/55 backdrop-blur-[4px] flex-col items-center justify-center p-4 z-40 transition-opacity">
+          <div class="bg-zinc-950/90 border border-white/15 rounded-2xl px-5 py-4 max-w-[280px] w-full shadow-2xl flex flex-col items-center gap-3 text-center backdrop-blur-xl">
+            <svg class="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" style="color: var(--accent-cal);">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="36" stroke-dashoffset="14" class="opacity-25" />
+              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-80"></path>
+            </svg>
+            <div id="scannerLoadingBarcodeWrap" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.07] border border-white/10 text-[11px] mono text-zinc-300">
+              <span class="w-1.5 h-1.5 rounded-full" style="background: var(--accent-cal);"></span>
+              <span id="scannerLoadingCode"></span>
+            </div>
+            <span id="scannerLoadingText" class="text-xs font-medium text-zinc-200 leading-snug">Ищем штрихкод в базе...</span>
+          </div>
         </div>
       </div>
 
@@ -1902,9 +1971,13 @@
       <div class="bg-zinc-900/80 border border-white/[0.06] rounded-2xl p-3">
         <label class="block text-[11px] text-zinc-400 mb-1.5 uppercase tracking-wider font-semibold">Цифры штрихкода (заполняются сами или вручную)</label>
         <div class="flex gap-2">
-          <input id="barcodeInput" type="number" inputmode="numeric" placeholder="Напр. 4630288090699" class="dark-field mono text-sm" />
-          <button type="button" onclick="lookupBarcodeManual()" class="px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white shrink-0 active:scale-95 transition">
-            Найти
+          <input id="barcodeInput" type="number" inputmode="numeric" placeholder="Напр. 4630288090699" class="dark-field mono text-sm flex-1 min-w-0" />
+          <button type="button" id="btnLookupBarcodeManual" onclick="lookupBarcodeManual()" class="min-w-[68px] px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white shrink-0 active:scale-95 transition flex items-center justify-center">
+            <span id="btnLookupBarcodeText">Найти</span>
+            <svg id="btnLookupBarcodeSpinner" class="hidden w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="12" class="opacity-30" />
+              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-90"></path>
+            </svg>
           </button>
         </div>
       </div>
@@ -9754,19 +9827,16 @@
 
       const wrap = document.getElementById("iosDailyTotemGlyphWrap");
       if (wrap) {
-        wrap.style.transition = "transform 0.14s ease, opacity 0.14s ease";
-        wrap.style.transform = "scale(0.5) rotate(45deg)";
-        wrap.style.opacity = "0";
+        wrap.style.transition = "transform 0.14s cubic-bezier(0.4, 0, 0.2, 1)";
+        wrap.style.transform = "scale(0.35) rotate(45deg)";
         setTimeout(() => {
           renderDailyTotem();
           wrap.style.transition = "none";
-          wrap.style.transform = "scale(1.25) rotate(-20deg)";
-          wrap.style.opacity = "0";
+          wrap.style.transform = "scale(1.22) rotate(-20deg)";
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              wrap.style.transition = "transform 0.24s cubic-bezier(0.2, 1, 0.3, 1), opacity 0.2s ease";
+              wrap.style.transition = "transform 0.24s cubic-bezier(0.2, 1, 0.3, 1)";
               wrap.style.transform = "scale(1) rotate(0deg)";
-              wrap.style.opacity = "1";
             });
           });
         }, 140);
@@ -9778,6 +9848,7 @@
 
     function updateDailyTotemProgress() {
       const circle = document.getElementById("iosDailyTotemProgressCircle");
+      const btn = document.getElementById("iosDailyTotemBtn");
       if (!circle) return;
 
       let pct = 0;
@@ -9799,6 +9870,21 @@
       const circumference = 119.38; // 2 * Math.PI * 19
       const offset = circumference * (1 - pct);
       circle.style.strokeDashoffset = offset.toFixed(2);
+
+      const pct100 = Math.round(pct * 100);
+      let tier = "0";
+      if (pct100 >= 90) {
+        tier = "3";
+      } else if (pct100 >= 60) {
+        tier = "2";
+      } else if (pct100 >= 25) {
+        tier = "1";
+      } else {
+        tier = "0";
+      }
+      if (btn && btn.getAttribute("data-neon-tier") !== tier) {
+        btn.setAttribute("data-neon-tier", tier);
+      }
     }
     window.updateDailyTotemProgress = updateDailyTotemProgress;
 
@@ -12833,44 +12919,101 @@
       }
     };
 
+    function setScannerLoadingState(active, opts = {}) {
+      const loading = document.getElementById("scannerLoading");
+      const loadingText = document.getElementById("scannerLoadingText");
+      const badge = document.getElementById("barcodeDetectedBadge");
+      const barcodeWrap = document.getElementById("scannerLoadingBarcodeWrap");
+      const barcodeCode = document.getElementById("scannerLoadingCode");
+      const btnSpinner = document.getElementById("btnLookupBarcodeSpinner");
+      const btnText = document.getElementById("btnLookupBarcodeText");
+      const btn = document.getElementById("btnLookupBarcodeManual");
+
+      if (active) {
+        if (loading) {
+          loading.classList.remove("hidden");
+          loading.classList.add("flex");
+        }
+        if (badge) {
+          badge.classList.add("hidden");
+        }
+        if (loadingText && opts.text) {
+          loadingText.textContent = opts.text;
+        }
+        if (barcodeWrap && barcodeCode) {
+          if (opts.barcode) {
+            barcodeCode.textContent = opts.barcode;
+            barcodeWrap.classList.remove("hidden");
+          } else {
+            barcodeWrap.classList.add("hidden");
+          }
+        }
+        if (btnSpinner && btnText) {
+          btnSpinner.classList.remove("hidden");
+          btnText.classList.add("hidden");
+        }
+        if (btn) btn.disabled = true;
+      } else {
+        if (loading) {
+          loading.classList.add("hidden");
+          loading.classList.remove("flex");
+        }
+        if (barcodeWrap) barcodeWrap.classList.add("hidden");
+        if (btnSpinner && btnText) {
+          btnSpinner.classList.add("hidden");
+          btnText.classList.remove("hidden");
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    window.setScannerLoadingState = setScannerLoadingState;
+
     window.onNativeBarcodeScanned = async function(code) {
       if (!code) return;
       const cleanCode = String(code).replace(/\D/g, "");
-      showToast(`Штрихкод: ${cleanCode}`);
+      const bInput = document.getElementById("barcodeInput");
+      if (bInput) bInput.value = cleanCode;
       const modal = document.getElementById("scannerModal");
-      let product = await fetchProductByBarcodeOFF(cleanCode);
-      if (product && (product.hasEmptyMacros || hasInvalidZeroMacros(product))) {
-        showToast("Определяем КБЖУ через ИИ...");
-        const enriched = await enrichBarcodeProductWithGemini(product.name, cleanCode, window._lastScannerBase64 || null);
-        product = enriched || null;
-      }
-      if (product) {
-        const target = window._scannerTargetCtx;
-        if (target && (target.modal === "addMeal" || target.modal === "override")) {
+      setScannerLoadingState(true, { text: "Ищем штрихкод в базе...", barcode: cleanCode });
+      try {
+        let product = await fetchProductByBarcodeOFF(cleanCode);
+        if (product && (product.hasEmptyMacros || hasInvalidZeroMacros(product))) {
+          setScannerLoadingState(true, { text: "Определяем КБЖУ через ИИ...", barcode: cleanCode });
+          const enriched = await enrichBarcodeProductWithGemini(product.name, cleanCode, window._lastScannerBase64 || null);
+          product = enriched || null;
+        }
+        if (product) {
+          const target = window._scannerTargetCtx;
+          if (target && (target.modal === "addMeal" || target.modal === "override")) {
+            if (modal?.classList.contains("open")) {
+              showScannedCard({ ...product, weight: product.weight || 100, source: product.source || `Штрихкод ${cleanCode}` });
+            } else {
+              applyScannedProductToPlanModal(product);
+            }
+            return;
+          }
           if (modal?.classList.contains("open")) {
             showScannedCard({ ...product, weight: product.weight || 100, source: product.source || `Штрихкод ${cleanCode}` });
           } else {
-            applyScannedProductToPlanModal(product);
+            addFoodEntryFrom100g(product);
+            showToast(`Добавлено: ${product.name}`);
           }
-          return;
-        }
-        if (modal?.classList.contains("open")) {
-          showScannedCard({ ...product, weight: product.weight || 100, source: product.source || `Штрихкод ${cleanCode}` });
         } else {
-          addFoodEntryFrom100g(product);
-          showToast(`Добавлено: ${product.name}`);
-        }
-      } else {
-        document.getElementById("scannedResultCard")?.classList.add("hidden");
-        window.pendingScannedProduct = null;
-        showToast("Товар не найден в базе, введите вручную", true);
-        if (!modal?.classList.contains("open")) {
-          const input = document.getElementById("foodInput");
-          if (input) {
-            input.value = `Штрихкод ${cleanCode} `;
-            input.focus();
+          document.getElementById("scannedResultCard")?.classList.add("hidden");
+          window.pendingScannedProduct = null;
+          showToast("Товар не найден в базе, введите вручную", true);
+          if (!modal?.classList.contains("open")) {
+            const input = document.getElementById("foodInput");
+            if (input) {
+              input.value = `Штрихкод ${cleanCode} `;
+              input.focus();
+            }
           }
         }
+      } catch (err) {
+        showToast("Ошибка поиска товара", true);
+      } finally {
+        setScannerLoadingState(false);
       }
     };
 
@@ -19541,30 +19684,26 @@
     }
 
     async function processCapturedDataUrl(dataUrl, optionalImgEl) {
-      const loading = document.getElementById("scannerLoading");
-      const loadingText = document.getElementById("scannerLoadingText");
-      loading.classList.remove("hidden");
-      loading.classList.add("flex");
+      setScannerLoadingState(true, { text: "Сканируем штрихкод..." });
       try {
         window._lastScannerBase64 = dataUrl;
         let imgElement = optionalImgEl || await new Promise((res, rej) => {
           const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
         });
         const base64Data = dataUrl.split(",")[1];
-        loadingText.textContent = "Сканируем штрихкод...";
+        setScannerLoadingState(true, { text: "Сканируем штрихкод..." });
         const localBarcode = await detectBarcodeMultiPass(dataUrl, imgElement);
         if (localBarcode && localBarcode.code) {
           drawHighlightedRegion(localBarcode.normBox, localBarcode.code);
-          loadingText.textContent = `Штрихкод ${localBarcode.code}: ищем КБЖУ...`;
+          setScannerLoadingState(true, { text: `Штрихкод ${localBarcode.code}: ищем КБЖУ...`, barcode: localBarcode.code });
           if (await fetchProductByBarcode(localBarcode.code, true)) return;
         }
-        loadingText.textContent = "Экспресс-чтение этикетки через ИИ...";
+        setScannerLoadingState(true, { text: "Экспресс-чтение этикетки через ИИ..." });
         await analyzeImageWithGemini(base64Data, "image/jpeg");
       } catch (err) {
         showToast("Ошибка обработки кадра", true);
       } finally {
-        loading.classList.add("hidden");
-        loading.classList.remove("flex");
+        setScannerLoadingState(false);
       }
     }
 
@@ -19612,8 +19751,18 @@
     }
 
     async function lookupBarcodeManual() {
-      const code = document.getElementById("barcodeInput").value.trim();
-      if (code) await fetchProductByBarcode(code, false);
+      const input = document.getElementById("barcodeInput");
+      const code = input ? input.value.trim() : "";
+      if (!code) {
+        showToast("Введите штрихкод", true);
+        return;
+      }
+      setScannerLoadingState(true, { text: "Ищем штрихкод в базе...", barcode: code });
+      try {
+        await fetchProductByBarcode(code, false);
+      } finally {
+        setScannerLoadingState(false);
+      }
     }
 
     async function fetchProductByBarcode(code, silentIfNotFound) {
@@ -19621,13 +19770,11 @@
       if (silentIfNotFound && !isValidEANBarcode(cleanCode)) {
         return false;
       }
-      const loading = document.getElementById("scannerLoading");
-      const loadingText = document.getElementById("scannerLoadingText");
-      if (loading) { loading.classList.remove("hidden"); loading.classList.add("flex"); }
+      setScannerLoadingState(true, { text: `Штрихкод ${cleanCode}: ищем в базе...`, barcode: cleanCode });
       try {
         let item = await fetchProductByBarcodeOFF(cleanCode);
         if (item && (item.hasEmptyMacros || hasInvalidZeroMacros(item))) {
-          if (loadingText) loadingText.textContent = `Определяем КБЖУ для «${item.name}» через ИИ...`;
+          setScannerLoadingState(true, { text: `Определяем КБЖУ для «${item.name}» через ИИ...`, barcode: cleanCode });
           const enriched = await enrichBarcodeProductWithGemini(item.name, cleanCode, window._lastScannerBase64 || null);
           item = enriched || null;
         }
@@ -19646,7 +19793,7 @@
         if (!silentIfNotFound) showToast(`Ошибка поиска штрихкода: ${err.message}`, true);
         return false;
       } finally {
-        if (loading) { loading.classList.add("hidden"); loading.classList.remove("flex"); }
+        setScannerLoadingState(false);
       }
     }
 
@@ -20343,27 +20490,72 @@
       showToast("Список за сегодня очищен");
     }
 
+    function dismissToast(e) {
+      if (e) {
+        if (typeof e.stopPropagation === "function") e.stopPropagation();
+        if (e.cancelable && typeof e.preventDefault === "function") e.preventDefault();
+      }
+      const box = document.getElementById("toastBox");
+      if (!box) return;
+      clearTimeout(window._toastTimer);
+      box.classList.remove("opacity-100", "translate-y-0", "toast-visible");
+      box.classList.add("opacity-0", "translate-y-3");
+    }
+    window.dismissToast = dismissToast;
+
     function showToast(msg, isError = false) {
       const box = document.getElementById("toastBox");
       const dot = document.getElementById("toastDot");
       const text = document.getElementById("toastMsg");
       if (!box || !dot || !text) return;
 
-      const timerBar = document.getElementById("restTimerFloatingBar");
-      const timerVisible = Boolean(timerBar && !timerBar.classList.contains("hidden"));
-      const inWorkoutView = (typeof currentMainView !== "undefined" && currentMainView === "split");
-      box.style.bottom = (timerVisible || inWorkoutView)
-        ? "calc(env(safe-area-inset-bottom, 20px) + 150px)"
-        : "";
+      // Приоритет 1: если открыта любая модалка (sheet-backdrop.open) — всегда внизу модалки (+18px)
+      const openModal = document.querySelector(".sheet-backdrop.open");
+      if (openModal) {
+        box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 18px)";
+      } else {
+        // Приоритет 2: если виден таймер отдыха — строго над таймером (+12px над верхней границей)
+        const timerBar = document.getElementById("restTimerFloatingBar");
+        const timerVisible = Boolean(timerBar && !timerBar.classList.contains("hidden") && timerBar.offsetHeight > 0);
+        if (timerVisible) {
+          const rect = timerBar.getBoundingClientRect();
+          if (rect.top > 0 && rect.top < window.innerHeight) {
+            const distFromBottom = Math.round(window.innerHeight - rect.top + 12);
+            box.style.bottom = `${distFromBottom}px`;
+          } else {
+            box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 226px)";
+          }
+        } else {
+          // Приоритет 3: обычный вид экрана — чистый зазор над нативным Liquid Glass баром
+          box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 76px)";
+        }
+      }
 
       text.textContent = msg;
       dot.style.backgroundColor = isError ? "#ef4444" : "var(--accent-cal)";
       box.classList.remove("opacity-0", "translate-y-3");
-      box.classList.add("opacity-100", "translate-y-0");
+      box.classList.add("opacity-100", "translate-y-0", "toast-visible");
+
+      // Привязка обработчиков тапа: мгновенное закрытие и защита от ghost-кликов на iOS
+      if (!box._toastBound) {
+        box._toastBound = true;
+        box.addEventListener("touchstart", (e) => {
+          e.stopPropagation();
+        }, { passive: true });
+        box.addEventListener("touchend", (e) => {
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+          dismissToast(e);
+        }, { passive: false });
+        box.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dismissToast(e);
+        });
+      }
+
       clearTimeout(window._toastTimer);
       window._toastTimer = setTimeout(() => {
-        box.classList.add("opacity-0", "translate-y-3");
-        box.classList.remove("opacity-100", "translate-y-0");
+        dismissToast();
       }, 3200);
     }
 
@@ -24139,12 +24331,9 @@
     };
 
     window.processCapturedDataUrl = async function(dataUrl, optionalImgEl) {
-      const loading = document.getElementById("scannerLoading");
-      const loadingText = document.getElementById("scannerLoadingText");
       clearScannerOverlay();
       setScannerBadgeText("");
-      loading.classList.remove("hidden");
-      loading.classList.add("flex");
+      setScannerLoadingState(true, { text: "Обрабатываем снимок..." });
 
       try {
         window._lastScannerBase64 = dataUrl;
@@ -24156,16 +24345,16 @@
 
         // Режим 'dish' (Блюдо / Порция): мгновенный вызов Vision без Quagga и без задержки 1.2с
         if (scannerMode === "dish") {
-          loadingText.textContent = "Определяем блюдо и вес порции через ИИ...";
+          setScannerLoadingState(true, { text: "Определяем блюдо и вес порции через ИИ..." });
           await analyzeImageWithGemini(base64Data, "image/jpeg");
           return;
         }
 
         // Режим 'barcode' или 'auto'
         if (scannerMode === "barcode" || scannerMode === "auto") {
-          loadingText.textContent = scannerMode === "barcode"
+          setScannerLoadingState(true, { text: scannerMode === "barcode"
             ? "Ищем штрихкод на упаковке..."
-            : "Сканируем штрихкод (таймаут 1.2с)...";
+            : "Сканируем штрихкод (таймаут 1.2с)..." });
 
           const barcodePromise = detectBarcodeMultiPass(dataUrl, imgElement);
           const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 1200));
@@ -24182,22 +24371,21 @@
             }
             const bInput = document.getElementById("barcodeInput");
             if (bInput) bInput.value = localBarcode.code;
-            loadingText.textContent = `Штрихкод ${localBarcode.code}: загружаем КБЖУ...`;
+            setScannerLoadingState(true, { text: `Штрихкод ${localBarcode.code}: загружаем КБЖУ...`, barcode: localBarcode.code });
             const found = await fetchProductByBarcode(localBarcode.code, true);
             if (found) return;
-            loadingText.textContent = "Штрихкод не в базе: читаем этикетку через ИИ...";
+            setScannerLoadingState(true, { text: "Штрихкод не в базе: читаем этикетку через ИИ..." });
           }
         }
 
-        loadingText.textContent = scannerMode === "barcode"
+        setScannerLoadingState(true, { text: scannerMode === "barcode"
           ? "Считываем состав и массу с упаковки..."
-          : "Определяем продукт и вес порции через ИИ...";
+          : "Определяем продукт и вес порции через ИИ..." });
         await analyzeImageWithGemini(base64Data, "image/jpeg");
       } catch (err) {
         showToast("Ошибка обработки снимка", true);
       } finally {
-        loading.classList.add("hidden");
-        loading.classList.remove("flex");
+        setScannerLoadingState(false);
       }
     };
 
