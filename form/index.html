@@ -893,15 +893,16 @@
           var themePalettes = {
             monolith: { bg: '#09090A', card: '#131316', accent: '#E8E2D8', cal: '#E8E2D8', calText: '#09090A', p: '#9CA3AF', f: '#8C8275', c: '#C2593F' },
             noir: { bg: '#060608', card: '#111115', accent: '#E63946', cal: '#E63946', calText: '#FFFFFF', p: '#E2E8F0', f: '#718096', c: '#D4C7B0' },
-            verdant: { bg: '#080C0A', card: '#101813', accent: '#C6F36A', cal: '#C6D9B8', calText: '#080C0A', p: '#80BFA5', f: '#9293B2', c: '#D5A16E' },
-            azure: { bg: '#070A12', card: '#101624', accent: '#55CFFF', cal: '#B8DCEB', calText: '#070A12', p: '#80A9C8', f: '#9A91BC', c: '#D38A78' },
-            teal: { bg: '#080D0E', card: '#10191A', accent: '#45D6C3', cal: '#D8CBB5', calText: '#080D0E', p: '#82BDB2', f: '#9289A4', c: '#C9876E' },
+            verdant: { bg: '#080C0A', card: '#111914', accent: '#C6F36A', cal: '#C6D9B8', calText: '#080C0A', p: '#80BFA5', f: '#9293B2', c: '#D5A16E' },
+            azure: { bg: '#070A12', card: '#111725', accent: '#55CFFF', cal: '#B8DCEB', calText: '#070A12', p: '#80A9C8', f: '#9A91BC', c: '#D38A78' },
+            teal: { bg: '#080D0E', card: '#111A1B', accent: '#45D6C3', cal: '#D8CBB5', calText: '#080D0E', p: '#82BDB2', f: '#9289A4', c: '#C9876E' },
             bianchetto: { bg: '#080809', card: '#121214', accent: '#F4F4F0', cal: '#F4F4F0', calText: '#080809', p: '#A1A1AA', f: '#71717A', c: '#D6CFC2' },
-            acid: { bg: '#080807', card: '#141410', accent: '#D4FF00', cal: '#D4FF00', calText: '#080807', p: '#00E5FF', f: '#C084FC', c: '#FF9F1C' }
+            acid: { bg: '#080807', card: '#141410', accent: '#D4FF00', cal: '#E2F896', calText: '#080807', p: '#00E5FF', f: '#C084FC', c: '#FF9F1C' }
           };
           var pal = themePalettes[themeId] || themePalettes.noir;
           root.style.setProperty('--bg-main', pal.bg);
           root.style.setProperty('--card-bg', pal.card);
+          root.style.setProperty('--accent-theme', pal.accent);
           root.style.setProperty('--accent-cal', pal.accent);
           root.style.setProperty('--accent-cal-text', pal.calText);
           root.style.setProperty('--macro-cal', pal.cal);
@@ -942,10 +943,10 @@
         </svg>
       </button>
 
-      <!-- Компактный бренд-лейбл в одну строку для iOS App (кликабельный в Настройки -> Стиль) -->
-      <div id="iosHeaderBrandRight" onclick="openSettings('style')" class="hidden items-center gap-2 text-[10px] mono tracking-wider uppercase text-zinc-400 cursor-pointer active:opacity-70 transition select-none min-w-0 text-right">
-        <span id="atelierBrandLabelNative" class="font-bold text-zinc-300 truncate">FORM // OBSIDIAN NOIR</span>
-        <span id="atelierNumbersLabelNative" class="text-zinc-500 shrink-0">[ STUDIO · 02 · SILK ]</span>
+      <!-- Компактный бренд-лейбл в две строки для iOS App (кликабельный в Настройки -> Стиль) -->
+      <div id="iosHeaderBrandRight" onclick="openSettings('style')" class="hidden flex-col items-end leading-tight text-right cursor-pointer active:opacity-70 transition select-none min-w-0">
+        <span id="atelierBrandLabelNative" class="text-[10px] mono font-bold text-zinc-300 tracking-wider uppercase truncate">FORM // OBSIDIAN NOIR</span>
+        <span id="atelierNumbersLabelNative" class="text-[9px] mono text-zinc-500 tracking-wider uppercase truncate">[ STUDIO · 02 · SILK ]</span>
       </div>
 
       <!-- Центральный переключатель вкладок (веб-фоллбэк, скрыт в iOS App) -->
@@ -2045,8 +2046,8 @@
               type="button"
               id="btnFillFromAuto"
               onclick="fillGoalsFromAutoCalc()"
-              class="hidden text-[11px] mono px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition border border-white/10 whitespace-nowrap shrink-0 leading-none"
-            >Рассчитать по телу</button>
+              class="hidden text-[10px] mono px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition border border-white/10 whitespace-nowrap shrink-0 leading-none"
+            >По телу</button>
           </div>
 
           <div class="space-y-1.5">
@@ -2077,8 +2078,8 @@
         <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-xs text-white font-semibold uppercase tracking-wider">Активность // Шаги (NEAT)</span>
-            <div id="settingsStepsBadge" class="text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400">
-              Здоровье
+            <div id="settingsStepsBadge" class="text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400 whitespace-nowrap shrink-0">
+              Здоровье · Live
             </div>
           </div>
 
@@ -2153,59 +2154,103 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
-              <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
-                <div class="color-swatch-wrap" id="swatchWrapCal">
-                  <input type="color" id="pickerCal" oninput="syncHexFromPicker('Cal')" />
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-[10px] text-zinc-400">Калории (Акцент)</div>
-                  <input id="hexCal" type="text" maxlength="7" oninput="syncPickerFromHex('Cal')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
-                </div>
+            <!-- Секция: Неоновый акцент (5% интерфейса) -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] mono uppercase tracking-wider text-zinc-400">01 // Неоновый акцент (5%)</span>
+                <span class="text-[9px] mono text-zinc-500">Активные табы · Кнопки · Glow</span>
               </div>
-
-              <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
-                <div class="color-swatch-wrap" id="swatchWrapP">
-                  <input type="color" id="pickerP" oninput="syncHexFromPicker('P')" />
+              <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div class="color-swatch-wrap" id="swatchWrapAccent">
+                    <input type="color" id="pickerAccent" oninput="syncHexFromPicker('Accent')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Основной неон</div>
+                    <input id="hexAccent" type="text" maxlength="7" oninput="syncPickerFromHex('Accent')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-[10px] text-zinc-400">Белки</div>
-                  <input id="hexP" type="text" maxlength="7" oninput="syncPickerFromHex('P')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
-                </div>
+                <button type="button" onclick="autoBalanceCustomTheme()" class="text-[10px] mono px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-200 transition shrink-0 whitespace-nowrap" title="Сгенерировать гармоничные 85% фон и 10% макросы по этому неону">
+                  ⚡ Авто 85/10/5
+                </button>
               </div>
+            </div>
 
-              <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
-                <div class="color-swatch-wrap" id="swatchWrapC">
-                  <input type="color" id="pickerC" oninput="syncHexFromPicker('C')" />
+            <!-- Секция: Спокойные макронутриенты (10% интерфейса) -->
+            <div class="space-y-1">
+              <span class="text-[10px] mono uppercase tracking-wider text-zinc-400 block">02 // Макронутриенты (10%)</span>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
+                  <div class="color-swatch-wrap" id="swatchWrapCal">
+                    <input type="color" id="pickerCal" oninput="syncHexFromPicker('Cal')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Калории</div>
+                    <input id="hexCal" type="text" maxlength="7" oninput="syncPickerFromHex('Cal')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-[10px] text-zinc-400">Углеводы</div>
-                  <input id="hexC" type="text" maxlength="7" oninput="syncPickerFromHex('C')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
-                </div>
-              </div>
 
-              <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
-                <div class="color-swatch-wrap" id="swatchWrapF">
-                  <input type="color" id="pickerF" oninput="syncHexFromPicker('F')" />
+                <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
+                  <div class="color-swatch-wrap" id="swatchWrapP">
+                    <input type="color" id="pickerP" oninput="syncHexFromPicker('P')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Белки</div>
+                    <input id="hexP" type="text" maxlength="7" oninput="syncPickerFromHex('P')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-[10px] text-zinc-400">Жиры</div>
-                  <input id="hexF" type="text" maxlength="7" oninput="syncPickerFromHex('F')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+
+                <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
+                  <div class="color-swatch-wrap" id="swatchWrapF">
+                    <input type="color" id="pickerF" oninput="syncHexFromPicker('F')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Жиры</div>
+                    <input id="hexF" type="text" maxlength="7" oninput="syncPickerFromHex('F')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
+                </div>
+
+                <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
+                  <div class="color-swatch-wrap" id="swatchWrapC">
+                    <input type="color" id="pickerC" oninput="syncHexFromPicker('C')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Углеводы</div>
+                    <input id="hexC" type="text" maxlength="7" oninput="syncPickerFromHex('C')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2.5">
-                <div class="color-swatch-wrap" id="swatchWrapBg">
-                  <input type="color" id="pickerBg" oninput="syncHexFromPicker('Bg')" />
+            <!-- Секция: Поверхности (85% интерфейса) -->
+            <div class="space-y-1">
+              <span class="text-[10px] mono uppercase tracking-wider text-zinc-400 block">03 // Графитовые поверхности (85%)</span>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
+                  <div class="color-swatch-wrap" id="swatchWrapBg">
+                    <input type="color" id="pickerBg" oninput="syncHexFromPicker('Bg')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Фон</div>
+                    <input id="hexBg" type="text" maxlength="7" oninput="syncPickerFromHex('Bg')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
-                <div>
-                  <div class="text-[10px] text-zinc-400">Глубина фона</div>
-                  <input id="hexBg" type="text" maxlength="7" oninput="syncPickerFromHex('Bg')" class="bg-transparent text-xs mono font-bold text-white outline-none w-24" />
+
+                <div class="bg-black/40 border border-white/[0.07] rounded-xl p-2 flex items-center gap-2">
+                  <div class="color-swatch-wrap" id="swatchWrapCardBg">
+                    <input type="color" id="pickerCardBg" oninput="syncHexFromPicker('CardBg')" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[10px] text-zinc-400">Карточки</div>
+                    <input id="hexCardBg" type="text" maxlength="7" oninput="syncPickerFromHex('CardBg')" class="bg-transparent text-xs mono font-bold text-white outline-none w-full" />
+                  </div>
                 </div>
               </div>
-              <button type="button" onclick="resetCustomThemeDefaults()" class="text-[10px] mono text-zinc-400 underline px-2">Сброс</button>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[10px] mono text-zinc-500">Баланс: 85% Dark · 10% Macro · 5% Neon</span>
+              <button type="button" onclick="resetCustomThemeDefaults()" class="text-[10px] mono text-zinc-400 hover:text-white underline px-1">Сброс к базе</button>
             </div>
 
             <button type="button" onclick="saveAndApplyCustomTheme()" class="w-full py-3 rounded-2xl accent-btn text-xs font-semibold">
@@ -3645,12 +3690,12 @@
       verdant: {
         id: "verdant",
         title: "VERDANT // ACID NOIR",
-        subtitle: "Кинематографичный тёмно-зелёный с кислотным неоном",
+        subtitle: "Кинематографичный тёмно-зелёный с кислотным лаймом",
         brandHeader: "FORM // ACID NOIR",
         indexHeader: "[ VERDANT · 03 · ACID ]",
         bg: "#080C0A",
-        cardBg: "#101813",
-        cardBorder: "rgba(198, 243, 106, 0.08)",
+        cardBg: "#111914",
+        cardBorder: "rgba(198, 243, 106, 0.09)",
         accent: "#C6F36A",
         cal: "#C6D9B8",
         calText: "#080C0A",
@@ -3665,8 +3710,8 @@
         brandHeader: "FORM // DEEP SIGNAL",
         indexHeader: "[ AZURE · 04 · SIGNAL ]",
         bg: "#070A12",
-        cardBg: "#101624",
-        cardBorder: "rgba(85, 207, 255, 0.08)",
+        cardBg: "#111725",
+        cardBorder: "rgba(85, 207, 255, 0.09)",
         accent: "#55CFFF",
         cal: "#B8DCEB",
         calText: "#070A12",
@@ -3677,12 +3722,12 @@
       teal: {
         id: "teal",
         title: "TEAL // AFTER DARK",
-        subtitle: "Бирюзовый, глубокий морской и немного циана",
+        subtitle: "Бирюзовый, глубокий нефтяной и спокойный циан",
         brandHeader: "FORM // AFTER DARK",
         indexHeader: "[ TEAL · 05 · DARK ]",
         bg: "#080D0E",
-        cardBg: "#10191A",
-        cardBorder: "rgba(69, 214, 195, 0.08)",
+        cardBg: "#111A1B",
+        cardBorder: "rgba(69, 214, 195, 0.09)",
         accent: "#45D6C3",
         cal: "#D8CBB5",
         calText: "#080D0E",
@@ -3716,7 +3761,7 @@
         cardBg: "#141410",
         cardBorder: "rgba(212, 255, 0, 0.1)",
         accent: "#D4FF00",
-        cal: "#D4FF00",
+        cal: "#E2F896",
         calText: "#080807",
         p: "#00E5FF",
         f: "#C084FC",
@@ -9508,11 +9553,13 @@
         subtitle: "Персональная палитра и кастомные индексы",
         brandHeader: "FORM // SILENT ARCHIVE",
         indexHeader: "[ 01 · CUSTOM · 26 ]",
-        bg: "#070709",
-        cal: "#D8C8B8",
-        p: "#8FA3B0",
-        c: "#C96A4A",
-        f: "#7D7482"
+        accent: "#C6F36A",
+        cal: "#C6D9B8",
+        p: "#80BFA5",
+        c: "#D5A16E",
+        f: "#9293B2",
+        bg: "#080C0A",
+        cardBg: "#111914"
       },
       goalCalcMode: "auto",
       targets: { cal: 2000, p: 140, f: 65, c: 215 },
@@ -11247,11 +11294,13 @@
           id: "custom",
           title: state.customTheme?.title || "CUSTOM // ТВОЙ КОНЦЕПТ",
           subtitle: `${state.customTheme?.brandHeader || "FORM"} · ${state.customTheme?.indexHeader || "[ 01 ]"}`,
-          cal: state.customTheme?.cal || "#D8C8B8",
-          p: state.customTheme?.p || "#8FA3B0",
-          c: state.customTheme?.c || "#C96A4A",
-          f: state.customTheme?.f || "#7D7482",
-          bg: state.customTheme?.bg || "#070709",
+          accent: state.customTheme?.accent || state.customTheme?.cal || "#C6F36A",
+          cal: state.customTheme?.cal || "#C6D9B8",
+          p: state.customTheme?.p || "#80BFA5",
+          c: state.customTheme?.c || "#D5A16E",
+          f: state.customTheme?.f || "#9293B2",
+          bg: state.customTheme?.bg || "#080C0A",
+          cardBg: state.customTheme?.cardBg || "#111914",
           brandHeader: state.customTheme?.brandHeader || "FORM // SILENT ARCHIVE",
           indexHeader: state.customTheme?.indexHeader || "[ 01 · CUSTOM · 26 ]"
         });
@@ -11269,13 +11318,14 @@
       }
       if (id === "custom" && state.customTheme) {
         const ct = state.customTheme;
-        const mainAccent = ct.accent || ct.cal || "#D8C8B8";
+        const mainAccent = ct.accent || ct.cal || "#C6F36A";
         return {
           ...ct,
           id: "custom",
           accent: mainAccent,
-          cardBg: ct.cardBg || "#111114",
-          cardBorder: ct.cardBorder || "rgba(255, 255, 255, 0.08)",
+          cal: ct.cal || "#C6D9B8",
+          cardBg: ct.cardBg || "#111914",
+          cardBorder: ct.cardBorder || hexToRgba(mainAccent, 0.12),
           calText: getContrastText(mainAccent),
           glow: hexToRgba(mainAccent, 0.55)
         };
@@ -11297,6 +11347,7 @@
       root.style.setProperty("--bg-main", t.bg);
       root.style.setProperty("--card-bg", t.cardBg || "#121215");
       root.style.setProperty("--card-border", t.cardBorder || "rgba(255, 255, 255, 0.08)");
+      root.style.setProperty("--accent-theme", t.accent || t.cal);
       root.style.setProperty("--accent-cal", t.accent || t.cal);
       root.style.setProperty("--accent-cal-text", t.calText || getContrastText(t.accent || t.cal));
       root.style.setProperty("--macro-cal", t.cal || t.accent);
@@ -11532,11 +11583,13 @@
       if (iIn && document.activeElement !== iIn) iIn.value = ct.indexHeader || "[ 01 · CUSTOM · 26 ]";
 
       const pairs = [
-        { k: "Cal", val: ct.cal || "#D8C8B8" },
-        { k: "P", val: ct.p || "#8FA3B0" },
-        { k: "C", val: ct.c || "#C96A4A" },
-        { k: "F", val: ct.f || "#7D7482" },
-        { k: "Bg", val: ct.bg || "#070709" }
+        { k: "Accent", val: ct.accent || ct.cal || "#C6F36A" },
+        { k: "Cal", val: ct.cal || "#C6D9B8" },
+        { k: "P", val: ct.p || "#80BFA5" },
+        { k: "C", val: ct.c || "#D5A16E" },
+        { k: "F", val: ct.f || "#9293B2" },
+        { k: "Bg", val: ct.bg || "#080C0A" },
+        { k: "CardBg", val: ct.cardBg || "#111914" }
       ];
       pairs.forEach(({ k, val }) => {
         const picker = document.getElementById("picker" + k);
@@ -11573,14 +11626,59 @@
       }
     }
 
+    function autoBalanceCustomTheme() {
+      const accent = document.getElementById("pickerAccent")?.value || "#C6F36A";
+      const clean = accent.replace("#", "");
+      if (clean.length !== 6) return;
+      const r = parseInt(clean.slice(0, 2), 16) || 0;
+      const g = parseInt(clean.slice(2, 4), 16) || 0;
+      const b = parseInt(clean.slice(4, 6), 16) || 0;
+
+      // 85% фон: глубочайший черный с 3-4% оттенком акцента
+      const bgR = Math.min(14, Math.max(6, Math.round(r * 0.04)));
+      const bgG = Math.min(14, Math.max(6, Math.round(g * 0.04)));
+      const bgB = Math.min(18, Math.max(8, Math.round(b * 0.05)));
+      const hexBg = `#${bgR.toString(16).padStart(2, "0")}${bgG.toString(16).padStart(2, "0")}${bgB.toString(16).padStart(2, "0")}`;
+
+      // 85% карточки: темный графит с 8-10% оттенком акцента
+      const cardR = Math.min(26, Math.max(16, Math.round(15 + r * 0.05)));
+      const cardG = Math.min(30, Math.max(16, Math.round(15 + g * 0.06)));
+      const cardB = Math.min(38, Math.max(18, Math.round(16 + b * 0.07)));
+      const hexCardBg = `#${cardR.toString(16).padStart(2, "0")}${cardG.toString(16).padStart(2, "0")}${cardB.toString(16).padStart(2, "0")}`;
+
+      // 10% калории: светлый благородный тон
+      const calR = Math.min(225, Math.round(180 + r * 0.18));
+      const calG = Math.min(225, Math.round(180 + g * 0.18));
+      const calB = Math.min(235, Math.round(180 + b * 0.18));
+      const hexCal = `#${calR.toString(16).padStart(2, "0")}${calG.toString(16).padStart(2, "0")}${calB.toString(16).padStart(2, "0")}`;
+
+      const setPickerVal = (k, v) => {
+        const picker = document.getElementById("picker" + k);
+        const hex = document.getElementById("hex" + k);
+        const wrap = document.getElementById("swatchWrap" + k);
+        if (picker) picker.value = v;
+        if (hex) hex.value = v.toUpperCase();
+        if (wrap) wrap.style.backgroundColor = v;
+      };
+
+      setPickerVal("Bg", hexBg);
+      setPickerVal("CardBg", hexCardBg);
+      setPickerVal("Cal", hexCal);
+
+      livePreviewCustomTheme();
+      showToast("Сбалансировано: 85% графит · 10% макросы · 5% неон");
+    }
+
     function livePreviewCustomTheme() {
       const brand = document.getElementById("custBrandInput")?.value.trim() || "FORM // SILENT ARCHIVE";
       const idx = document.getElementById("custIndexInput")?.value.trim() || "[ 01 · CUSTOM · 26 ]";
-      const cal = document.getElementById("pickerCal")?.value || "#D8C8B8";
-      const p = document.getElementById("pickerP")?.value || "#8FA3B0";
-      const c = document.getElementById("pickerC")?.value || "#C96A4A";
-      const f = document.getElementById("pickerF")?.value || "#7D7482";
-      const bg = document.getElementById("pickerBg")?.value || "#070709";
+      const accent = document.getElementById("pickerAccent")?.value || "#C6F36A";
+      const cal = document.getElementById("pickerCal")?.value || "#C6D9B8";
+      const p = document.getElementById("pickerP")?.value || "#80BFA5";
+      const c = document.getElementById("pickerC")?.value || "#D5A16E";
+      const f = document.getElementById("pickerF")?.value || "#9293B2";
+      const bg = document.getElementById("pickerBg")?.value || "#080C0A";
+      const cardBg = document.getElementById("pickerCardBg")?.value || "#111914";
 
       if (Array.isArray(state.deletedThemeIds)) {
         state.deletedThemeIds = state.deletedThemeIds.filter(id => id !== "custom");
@@ -11591,7 +11689,7 @@
         subtitle: `${brand} · ${idx}`,
         brandHeader: brand,
         indexHeader: idx,
-        bg, cal, p, c, f
+        accent, cal, p, c, f, bg, cardBg
       };
       applyTheme("custom", true);
     }
@@ -11608,11 +11706,13 @@
         subtitle: "Персональная палитра и кастомные индексы",
         brandHeader: "FORM // SILENT ARCHIVE",
         indexHeader: "[ 01 · CUSTOM · 26 ]",
-        bg: "#070709",
-        cal: "#D8C8B8",
-        p: "#8FA3B0",
-        c: "#C96A4A",
-        f: "#7D7482"
+        accent: "#C6F36A",
+        cal: "#C6D9B8",
+        p: "#80BFA5",
+        c: "#D5A16E",
+        f: "#9293B2",
+        bg: "#080C0A",
+        cardBg: "#111914"
       };
       syncCustomBuilderFields();
       applyTheme("custom", true);
@@ -14359,11 +14459,11 @@
 
       if (setBadge) {
         if (state.dailySteps.source === "motion" || isNative) {
-          setBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
-          setBadge.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>Apple Здоровье (Live)`;
+          setBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 whitespace-nowrap shrink-0";
+          setBadge.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>Здоровье · Live`;
         } else {
-          setBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400";
-          setBadge.textContent = "Ручной ввод / PWA";
+          setBadge.className = "text-[10px] mono px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-zinc-400 whitespace-nowrap shrink-0";
+          setBadge.textContent = "Ручной ввод";
         }
       }
 
@@ -17441,13 +17541,13 @@
                   const stdPieceUnit = (it.pieceWeight || (stdW / effective.pieceCount)) || 33.3;
                   const stdPieceTotalW = Math.round(effective.pieceCount * stdPieceUnit);
                   if (effective.customGramsToday && Math.abs(effective.weight - stdPieceTotalW) >= 1 && (!isAddedTodayItem || Boolean(effective.isCompensated))) {
-                    weightChipText = `${effective.pieceCount} шт (${effective.weight}г из ${stdPieceTotalW}г)`;
+                    weightChipText = `${effective.pieceCount} шт (${effective.weight}/${stdPieceTotalW}г)`;
                   } else {
                     weightChipText = `${effective.pieceCount} шт (${effective.weight}г)`;
                   }
                 } else {
                   if (showWeightDelta) {
-                    weightChipText = `${effective.weight}г (из ${stdW}г)`;
+                    weightChipText = `${effective.weight}/${stdW}г`;
                   } else {
                     weightChipText = `${effective.weight}г`;
                   }
@@ -17456,18 +17556,18 @@
                 if (isSkipped) {
                   return `
                     <div class="py-2 flex items-center justify-between gap-2 opacity-40">
-                      <div class="flex items-center gap-2 min-w-0">
+                      <div class="flex items-center gap-2 min-w-0 flex-1 pr-2">
                         <span class="text-xs line-through text-zinc-500 truncate">${effective.name}</span>
-                        <span class="text-[9.5px] mono text-zinc-600">(пропущен)</span>
+                        <span class="text-[9.5px] mono text-zinc-600 shrink-0">(пропущен)</span>
                       </div>
-                      <button type="button" onclick="unskipMealPlanItemToday('${meal.id}', '${it.id}')" class="px-2 py-0.5 rounded-lg bg-white/10 text-zinc-300 text-[10px] mono active:scale-95 transition">Вернуть</button>
+                      <button type="button" onclick="unskipMealPlanItemToday('${meal.id}', '${it.id}')" class="px-2 py-0.5 rounded-lg bg-white/10 text-zinc-300 text-[10px] mono active:scale-95 transition shrink-0">Вернуть</button>
                     </div>
                   `;
                 }
 
                 return `
                   <div class="py-2 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div class="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
                       <div class="coach-check-btn ${isLogged ? 'checked' : ''}" onclick="toggleMealPlanItem('${meal.id}', '${it.id}')">
                         ${isLogged ? '<svg class="w-3.5 h-3.5 stroke-white stroke-[2.5]" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                       </div>
@@ -17477,13 +17577,13 @@
                           ${effective.isOverridden ? '<span class="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] mono shrink-0">Замена</span>' : ''}
                           ${effective.optional ? '<span class="px-1 py-0.2 rounded bg-white/[0.06] text-zinc-400 text-[9px] mono shrink-0">опция</span>' : ''}
                         </div>
-                        <!-- Строка мета-информации с защитой от разрыва цифр -->
-                        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10.5px] mono text-zinc-400 mt-0.5">
-                          <span class="inline-flex items-center gap-1.5 shrink-0">
-                            <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="bg-white/[0.06] hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-md text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition flex items-center gap-1 cursor-pointer" title="Быстрый вес с кухонных весов">
+                        <!-- Строка мета-информации с защитой от наезда на кнопку замены -->
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] mono text-zinc-400 mt-0.5 min-w-0">
+                          <span class="inline-flex flex-wrap items-center gap-1.5 min-w-0">
+                            <button type="button" onclick="openQuickWeightModal('${meal.id}', '${it.id}')" class="bg-white/[0.06] hover:bg-white/10 border border-white/10 px-1.5 py-0.5 rounded-md text-zinc-200 font-semibold whitespace-nowrap active:scale-95 transition flex items-center gap-1 cursor-pointer truncate max-w-full" title="Быстрый вес с кухонных весов">
                               <span>${weightChipText}</span>
                             </button>
-                            <span class="font-medium text-white whitespace-nowrap">${cal} ккал</span>
+                            <span class="font-medium text-white whitespace-nowrap shrink-0">${cal} ккал</span>
                           </span>
                           <span class="inline-flex items-center gap-1.5 text-zinc-400 shrink-0">
                             <span class="whitespace-nowrap">Б ${p}</span>
@@ -17497,7 +17597,7 @@
                     </div>
 
                     <!-- Действия с продуктом: Замена и Пропуск / Удаление на сегодня -->
-                    <div class="flex items-center gap-1 shrink-0">
+                    <div class="flex items-center gap-1 shrink-0 ml-1">
                       <button type="button" onclick="openMealPlanOverrideModal('${meal.id}', '${it.id}')" class="coach-swap-btn" title="Заменить сегодня">
                         <svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                         <span>Замена</span>

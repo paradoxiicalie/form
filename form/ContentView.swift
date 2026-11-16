@@ -1283,14 +1283,16 @@ struct NativeLiquidGlassBottomBar: View {
     @available(iOS 26.0, *)
     private var glassBar26: some View {
         GlassEffectContainer(spacing: 12) {
-            capsuleContent26
-                .glassEffect(.regular.interactive(), in: Capsule())
-            
-            actionButton
-                .glassEffect(.regular.interactive(), in: Circle())
+            HStack(spacing: 12) {
+                capsuleContent26
+                    .glassEffect(.regular.interactive(), in: Capsule())
+                
+                actionButton
+                    .glassEffect(.regular.interactive(), in: Circle())
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 8)
+        .padding(.bottom, 6)
     }
     
     private var fallbackBar: some View {
@@ -1310,13 +1312,13 @@ struct NativeLiquidGlassBottomBar: View {
                 )
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 8)
+        .padding(.bottom, 6)
     }
     
     @available(iOS 26.0, *)
     private var capsuleContent26: some View {
-        let totalWidth: CGFloat = 200
-        let height: CGFloat = 56
+        let totalWidth: CGFloat = 196
+        let height: CGFloat = 54
         
         return HStack(spacing: 0) {
             tabItem26(title: "Рацион", icon: "fork.knife", key: "diet")
@@ -1354,8 +1356,8 @@ struct NativeLiquidGlassBottomBar: View {
     }
     
     private var capsuleContentFallback: some View {
-        let totalWidth: CGFloat = 200
-        let height: CGFloat = 56
+        let totalWidth: CGFloat = 196
+        let height: CGFloat = 54
         
         return HStack(spacing: 0) {
             tabItemFallback(title: "Рацион", icon: "fork.knife", key: "diet")
@@ -1411,7 +1413,7 @@ struct NativeLiquidGlassBottomBar: View {
             Image(systemName: viewModel.currentView == "diet" ? "viewfinder" : "plus")
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)
-                .frame(width: 56, height: 56)
+                .frame(width: 54, height: 54)
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(.plain)
