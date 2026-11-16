@@ -84,7 +84,10 @@
       transition: background-color 0.25s ease;
     }
 
-    .mono { font-family: "SF Mono", ui-monospace, Menlo, Monaco, "JetBrains Mono", monospace; }
+    .mono {
+      font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
 
     .app-shell {
       min-height: 100dvh;
@@ -222,7 +225,7 @@
     .dark-field:focus { border-color: var(--accent-cal); }
     .dark-field::placeholder {
       color: #52525b;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
       font-weight: 400;
       opacity: 0.85;
     }
@@ -283,8 +286,18 @@
       display: none !important;
     }
 
+    html.is-ios-app #mainHeaderRow {
+      justify-content: flex-start !important;
+      gap: 12px;
+    }
+
     html.is-ios-app #iosHeaderBrandRight {
       display: flex !important;
+    }
+
+    #stackAndWeightStrip {
+      -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+      mask-image: linear-gradient(to right, #000 88%, transparent 100%);
     }
 
     html.is-ios-app .app-shell {
@@ -944,9 +957,9 @@
       </button>
 
       <!-- Компактный бренд-лейбл в две строки для iOS App (кликабельный в Настройки -> Стиль) -->
-      <div id="iosHeaderBrandRight" onclick="openSettings('style')" class="hidden flex-col items-end leading-tight text-right cursor-pointer active:opacity-70 transition select-none min-w-0">
-        <span id="atelierBrandLabelNative" class="text-[10px] mono font-bold text-zinc-300 tracking-wider uppercase truncate">FORM // OBSIDIAN NOIR</span>
-        <span id="atelierNumbersLabelNative" class="text-[9px] mono text-zinc-500 tracking-wider uppercase truncate">[ STUDIO · 02 · SILK ]</span>
+      <div id="iosHeaderBrandRight" onclick="openSettings('style')" class="hidden flex-col items-start leading-tight text-left cursor-pointer active:opacity-70 transition select-none min-w-0 flex-1">
+        <span id="atelierBrandLabelNative" class="text-[11px] font-semibold tracking-[0.12em] text-zinc-200 mono uppercase truncate max-w-full">FORM // OBSIDIAN NOIR</span>
+        <span id="atelierNumbersLabelNative" class="text-[9.5px] font-medium tracking-[0.14em] text-zinc-500 mono mt-0.5 uppercase truncate max-w-full">STUDIO · 02 · SILK</span>
       </div>
 
       <!-- Центральный переключатель вкладок (веб-фоллбэк, скрыт в iOS App) -->
@@ -1039,16 +1052,16 @@
         </div>
 
         <!-- FatSecret Style: Процентное распределение макросов (% калорий) и Быстрые калории -->
-        <div id="macroRatioBarWrap" class="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10.5px] mono text-zinc-400">
+        <div id="macroRatioBarWrap" class="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[11px] text-zinc-400">
           <div class="flex items-center gap-1.5">
             <span class="text-zinc-500 font-medium">Норма:</span>
-            <span id="pPctLabel" class="font-bold" style="color: var(--accent-p)">Б 0%</span>
+            <span id="pPctLabel" class="font-bold mono" style="color: var(--accent-p)">Б 0%</span>
             <span class="text-zinc-600">·</span>
-            <span id="fPctLabel" class="font-bold" style="color: var(--accent-f)">Ж 0%</span>
+            <span id="fPctLabel" class="font-bold mono" style="color: var(--accent-f)">Ж 0%</span>
             <span class="text-zinc-600">·</span>
-            <span id="cPctLabel" class="font-bold" style="color: var(--accent-c)">У 0%</span>
+            <span id="cPctLabel" class="font-bold mono" style="color: var(--accent-c)">У 0%</span>
           </div>
-          <button type="button" onclick="openQuickCalorieModal()" class="text-[10px] mono px-2 py-0.5 rounded-lg bg-white/[0.05] hover:bg-white/10 text-zinc-300 active:scale-95 transition flex items-center gap-1">
+          <button type="button" onclick="openQuickCalorieModal()" class="text-[10.5px] font-medium px-2 py-0.5 rounded-lg bg-white/[0.05] hover:bg-white/10 text-zinc-300 active:scale-95 transition flex items-center gap-1">
             <span>+ Ккал вручную</span>
           </button>
         </div>
@@ -1058,16 +1071,16 @@
       <div id="smartMetabolismBanner" class="smart-weight-card" onclick="openMetabolismModal()"></div>
 
       <!-- Лента: [ Утренний Вес / TDEE ] + [ Стек добавок в один тап ] -->
-      <div id="stackAndWeightStrip" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar"></div>
+      <div id="stackAndWeightStrip" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar pr-6"></div>
 
       <!-- КАРТОЧКА АКТИВНОСТИ И ШАГОВ (ТОЛЬКО ВЕБ/PWA РЕЖИМ, СКРЫТА В ПРИЛОЖЕНИИ ДЛЯ ЧИСТОТЫ) -->
       <div id="stepsNeatCard" class="hidden mb-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] items-center justify-between transition">
         <div class="flex items-center gap-2">
-          <span class="text-xs text-zinc-400 mono">Шаги (PWA):</span>
+          <span class="text-xs text-zinc-400">Шаги (PWA):</span>
           <span id="stepsCountDisplay" class="text-xs font-bold mono text-white cursor-pointer active:opacity-70" onclick="promptCustomSteps()">0</span>
           <span id="stepsBurnDisplay" class="text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400">+0 ккал</span>
         </div>
-        <button type="button" onclick="openSettings('goals')" class="text-[10.5px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white font-mono active:scale-95 transition">Настроить →</button>
+        <button type="button" onclick="openSettings('goals')" class="text-[10.5px] font-medium px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white active:scale-95 transition">Настроить →</button>
       </div>
 
       <!-- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА: [ МОЙ РАЦИОН ] [ ДНЕВНИК ] -->
@@ -1094,7 +1107,7 @@
         <button
           type="button"
           onclick="openMealPlanSettingsModal()"
-          class="text-[10px] mono text-zinc-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] active:scale-95 transition flex items-center gap-1"
+          class="text-[11px] font-medium text-zinc-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] active:scale-95 transition flex items-center gap-1"
         >
           <span>Настроить план</span>
         </button>
@@ -1112,27 +1125,27 @@
       <div class="flex items-baseline justify-between mb-2 px-0.5">
         <div class="flex items-baseline gap-2.5">
           <h1 class="text-[25px] font-bold tracking-tight text-white">Сегодня</h1>
-          <span id="todayDateLabel" class="text-xs text-zinc-500 mono font-medium"></span>
+          <span id="todayDateLabel" class="text-xs text-zinc-500 font-medium"></span>
         </div>
-        <span id="itemsCountLabel" class="text-xs text-zinc-600 mono"></span>
+        <span id="itemsCountLabel" class="text-xs text-zinc-600 font-medium"></span>
       </div>
 
       <!-- FatSecret Style: Приемы пищи (Завтрак / Обед / Ужин / Перекус) -->
       <div id="mealFilterBar" class="flex items-center gap-1.5 overflow-x-auto pb-1 mb-2.5 no-scrollbar">
-        <button type="button" data-meal="all" onclick="setMealFilter('all')" class="meal-filter-btn text-[11px] mono px-2.5 py-1 rounded-xl bg-white/15 text-white font-medium border border-white/20 whitespace-nowrap active:scale-95 transition">
-          Все <span id="mealCountAll" class="opacity-70 text-[10px]"></span>
+        <button type="button" data-meal="all" onclick="setMealFilter('all')" class="meal-filter-btn text-[11.5px] px-2.5 py-1 rounded-xl bg-white/15 text-white font-medium border border-white/20 whitespace-nowrap active:scale-95 transition">
+          Все <span id="mealCountAll" class="opacity-70 text-[10px] mono"></span>
         </button>
-        <button type="button" data-meal="breakfast" onclick="setMealFilter('breakfast')" class="meal-filter-btn text-[11px] mono px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
-          Завтрак <span id="mealCalBreakfast" class="text-white font-semibold"></span>
+        <button type="button" data-meal="breakfast" onclick="setMealFilter('breakfast')" class="meal-filter-btn text-[11.5px] px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
+          Завтрак <span id="mealCalBreakfast" class="text-white font-semibold mono"></span>
         </button>
-        <button type="button" data-meal="lunch" onclick="setMealFilter('lunch')" class="meal-filter-btn text-[11px] mono px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
-          Обед <span id="mealCalLunch" class="text-white font-semibold"></span>
+        <button type="button" data-meal="lunch" onclick="setMealFilter('lunch')" class="meal-filter-btn text-[11.5px] px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
+          Обед <span id="mealCalLunch" class="text-white font-semibold mono"></span>
         </button>
-        <button type="button" data-meal="dinner" onclick="setMealFilter('dinner')" class="meal-filter-btn text-[11px] mono px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
-          Ужин <span id="mealCalDinner" class="text-white font-semibold"></span>
+        <button type="button" data-meal="dinner" onclick="setMealFilter('dinner')" class="meal-filter-btn text-[11.5px] px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
+          Ужин <span id="mealCalDinner" class="text-white font-semibold mono"></span>
         </button>
-        <button type="button" data-meal="snack" onclick="setMealFilter('snack')" class="meal-filter-btn text-[11px] mono px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
-          Снек <span id="mealCalSnack" class="text-white font-semibold"></span>
+        <button type="button" data-meal="snack" onclick="setMealFilter('snack')" class="meal-filter-btn text-[11.5px] px-2.5 py-1 rounded-xl bg-white/[0.03] text-zinc-400 border border-white/[0.06] whitespace-nowrap active:scale-95 transition">
+          Снек <span id="mealCalSnack" class="text-white font-semibold mono"></span>
         </button>
       </div>
 
@@ -1204,7 +1217,7 @@
             </div>
             <div class="text-left">
               <div class="text-sm font-semibold text-white">Показать все данные</div>
-              <div id="historySubtitle" class="text-[11px] text-zinc-500 mono">История по дням · обнуление в 00:00</div>
+              <div id="historySubtitle" class="text-[11px] text-zinc-500">История по дням · обнуление в 00:00</div>
             </div>
           </div>
           <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1226,13 +1239,13 @@
       <div class="status-card mb-4">
         <div class="flex items-center justify-between mb-2.5">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mono">Рабочие подходы за неделю</span>
+            <span class="text-[11px] font-semibold uppercase tracking-[0.06em] text-zinc-400">Рабочие подходы за неделю</span>
             <div class="flex items-baseline gap-2 mt-0.5">
               <span id="totalSetsWeek" class="text-2xl font-extrabold mono text-white">0</span>
-              <span class="text-xs text-zinc-500 mono">/ <span id="totalSetsTarget">52</span> подх.</span>
+              <span class="text-xs text-zinc-500">/ <span id="totalSetsTarget" class="mono font-bold text-white">52</span> подх.</span>
             </div>
           </div>
-          <button type="button" onclick="resetCurrentWeekSetsConfirm()" class="text-[10px] mono text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <button type="button" onclick="resetCurrentWeekSetsConfirm()" class="text-[10px] font-medium text-zinc-400 hover:text-zinc-200 px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] active:scale-95 transition">
             Сброс недели
           </button>
         </div>
@@ -1252,7 +1265,7 @@
               id="quickRestBtn"
               onclick="toggleOrStartRestTimer()"
               title="Запустить таймер отдыха между подходами"
-              class="group px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[11px] mono text-zinc-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-all shadow-sm"
+              class="group px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[11px] font-medium text-zinc-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-all shadow-sm"
             >
               <span id="quickRestBtnIcon" class="flex items-center justify-center">
                 <svg class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1306,7 +1319,7 @@
             </div>
             <div class="text-left">
               <div class="text-sm font-semibold text-white">Сводка прогрессии (14 дней)</div>
-              <div id="progressionSubtitle" class="text-[11px] text-zinc-500 mono">Рабочие веса и динамика за 2 недели</div>
+              <div id="progressionSubtitle" class="text-[11.5px] text-zinc-400 font-normal">Рабочие веса и динамика за 2 недели</div>
             </div>
           </div>
           <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1327,7 +1340,7 @@
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
       <div class="flex items-center justify-between mb-3">
         <div class="min-w-0 flex-1">
-          <span id="setLoggerBadge" class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Рабочий подход #1</span>
+          <span id="setLoggerBadge" class="text-[10.5px] uppercase tracking-wider font-semibold" style="color: var(--accent-cal)">Рабочий подход #1</span>
           <div class="flex items-center gap-2 mt-0.5 min-w-0">
             <h3 id="setLoggerExName" class="text-base font-bold text-white truncate">Упражнение</h3>
           </div>
@@ -1342,7 +1355,7 @@
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="text-xs text-zinc-400">Рабочий вес (кг)</label>
-            <button type="button" onclick="setLoggerBodyweight()" class="text-[10px] mono px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition">Свой вес (0 кг)</button>
+            <button type="button" onclick="setLoggerBodyweight()" class="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 transition">Свой вес (0 кг)</button>
           </div>
           <div class="flex items-center gap-2">
             <button type="button" onclick="stepSetWeight(-2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">-2.5</button>
@@ -2055,7 +2068,7 @@
               <span>Калории (дневная цель)</span>
               <span id="kbzhuMacroCheck" class="text-[10px] mono text-zinc-500">Б·4 + Ж·9 + У·4</span>
             </div>
-            <input id="inputTargetCal" type="number" placeholder="2000" oninput="updateMacroSumCheck()" class="dark-field mono font-bold text-lg text-center" style="color: var(--accent-cal)" />
+            <input id="inputTargetCal" type="number" placeholder="2000" oninput="updateMacroSumCheck()" class="dark-field mono font-bold text-lg text-center" style="color: var(--macro-cal, var(--accent-cal))" />
           </div>
 
           <div class="grid grid-cols-3 gap-2.5">
@@ -2736,7 +2749,7 @@
           </div>
           <div class="flex items-center gap-2">
             <button type="button" onclick="stepManualTarget('cal', -100)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">-100</button>
-            <input id="inputManualCal" type="number" oninput="updateManualPreview()" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
+            <input id="inputManualCal" type="number" oninput="updateManualPreview()" class="dark-field mono text-center text-lg font-bold" style="color: var(--macro-cal, var(--accent-cal))" />
             <button type="button" onclick="stepManualTarget('cal', 100)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">+100</button>
           </div>
         </div>
@@ -3722,7 +3735,7 @@
       teal: {
         id: "teal",
         title: "TEAL // AFTER DARK",
-        subtitle: "Бирюзовый, глубокий нефтяной и спокойный циан",
+        subtitle: "Бирюзовый, глубокий морской и немного циана",
         brandHeader: "FORM // AFTER DARK",
         indexHeader: "[ TEAL · 05 · DARK ]",
         bg: "#080D0E",
@@ -11365,7 +11378,7 @@
       const bLabelNat = document.getElementById("atelierBrandLabelNative");
       const nLabelNat = document.getElementById("atelierNumbersLabelNative");
       if (bLabelNat) bLabelNat.textContent = t.brandHeader;
-      if (nLabelNat) nLabelNat.textContent = t.indexHeader;
+      if (nLabelNat) nLabelNat.textContent = (t.indexHeader || "").replace(/^\[\s*|\s*\]$/g, "").trim();
 
       if (window.webkit?.messageHandlers?.iosBridge) {
         window.webkit.messageHandlers.iosBridge.postMessage({
@@ -17183,11 +17196,11 @@
       const breakdownSectionHtml = `
         <div class="pt-1.5 border-t border-white/[0.06] flex flex-col gap-1">
           <div onclick="toggleDailyBreakdownDetails()" class="flex items-center justify-between py-1 cursor-pointer active:opacity-70 transition select-none">
-            <div class="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider text-zinc-400 hover:text-white">
-              <span>Детали по приемам (${mealSnapshots.length})</span>
+            <div class="flex items-center gap-1.5 text-[11px] uppercase font-semibold tracking-[0.06em] text-zinc-400 hover:text-white">
+              <span>Детали по приемам</span> <span class="mono text-zinc-500 text-[10px]">(${mealSnapshots.length})</span>
               <span id="dailyBreakdownChevron" class="text-[9px] transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}">▾</span>
             </div>
-            <div class="text-[10px] mono">
+            <div class="text-[10.5px]">
               ${issueStatusHtml}
             </div>
           </div>
@@ -17199,13 +17212,13 @@
 
       if (!hasDailyDeficit && !hasDailyOverflow) {
         return `
-          <div class="mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2 text-[10.5px] mono">
+          <div class="mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2 text-[11px]">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]"></span>
                 <span class="text-zinc-200 font-semibold text-xs">Баланс в норме</span>
               </div>
-              <span class="text-white font-bold text-xs shrink-0">${Math.round(actualDailyCal)} ккал</span>
+              <span class="text-white font-bold text-xs shrink-0"><span class="mono">${Math.round(actualDailyCal)}</span> ккал</span>
             </div>
             ${breakdownSectionHtml}
           </div>
@@ -17249,14 +17262,14 @@
             const donor = pickGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.f100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaF / (donor.f100 / 100))));
-              dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> убавить жиры (-${red}г ${escapeHtml(donor.name)})`;
+              dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> убавить жиры: <span class="text-red-300 font-semibold mono">-${red}г</span> ${escapeHtml(donor.name)}`;
               dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${red}г</button>`;
             }
           } else {
             const donor = pickGramDonor(candidates, "c100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.c100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaC / (donor.c100 / 100))));
-              dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> убавить угли (-${red}г ${escapeHtml(donor.name)})`;
+              dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> убавить угли: <span class="text-red-300 font-semibold mono">-${red}г</span> ${escapeHtml(donor.name)}`;
               dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${red}г</button>`;
             }
           }
@@ -17272,11 +17285,11 @@
           const donor = pickGramDonor(candidates, "f100", 10);
           if (donor && Number(donor.f100) >= 10) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
-            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать жиры (+${needed}г ${escapeHtml(donor.name)})`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> жиры: <span class="text-white font-semibold mono">+${needed}г</span> ${escapeHtml(donor.name)}`;
             dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           } else {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / 0.45));
-            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать жиры (+${needed}г DopDrops пасты)`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> жиры: <span class="text-white font-semibold mono">+${needed}г</span> пасты DopDrops`;
             dailyActionBtn = `<button type="button" onclick="addExternalDonorToMeal('${destMeal.id}', 'peanut_paste_dopdrop', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           }
         }
@@ -17291,7 +17304,7 @@
           const donor = pickGramDonor(candidates, "p100", 8);
           if (donor && Number(donor.p100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
-            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать белок (+${needed}г ${escapeHtml(donor.name)})`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> белок: <span class="text-white font-semibold mono">+${needed}г</span> ${escapeHtml(donor.name)}`;
             dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           }
         }
@@ -17306,15 +17319,15 @@
           const donor = pickGramDonor(candidates, "c100", 15);
           if (donor && Number(donor.c100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
-            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}:</span> добрать угли (+${needed}г ${escapeHtml(donor.name)})`;
+            dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> угли: <span class="text-white font-semibold mono">+${needed}г</span> ${escapeHtml(donor.name)}`;
             dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', ${needed})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${needed}г</button>`;
           }
         }
       }
 
       const dBoxCls = hasDailyOverflow
-        ? "mb-3 p-3 rounded-2xl bg-red-500/[0.04] border border-red-500/25 backdrop-blur-md flex flex-col gap-2 text-[10.5px] mono"
-        : "mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2 text-[10.5px] mono";
+        ? "mb-3 p-3 rounded-2xl bg-red-500/[0.04] border border-red-500/25 backdrop-blur-md flex flex-col gap-2 text-[11px]"
+        : "mb-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col gap-2 text-[11px]";
 
       return `
         <div class="${dBoxCls}">
@@ -17324,7 +17337,7 @@
               <span class="w-2 h-2 rounded-full ${hasDailyOverflow ? 'bg-red-400' : (hasDailyDeficit ? 'bg-amber-400' : 'bg-emerald-400')} shrink-0"></span>
               <span class="text-xs font-bold ${hasDailyOverflow ? 'text-red-300' : 'text-zinc-200'} whitespace-nowrap">
                 ${hasDailyOverflow ? 'Перебор' : (hasDailyDeficit ? 'Недобор' : 'Баланс в норме')}:
-                <span class="tabular-nums ${hasDailyOverflow ? 'text-red-400 font-bold' : (hasDailyDeficit ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold')}">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal} ккал</span>
+                <span class="tabular-nums ${hasDailyOverflow ? 'text-red-400 font-bold' : (hasDailyDeficit ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold')}"><span class="mono">${dailyDeltaCal > 0 ? '+' : ''}${dailyDeltaCal}</span> ккал</span>
               </span>
             </div>
             <div class="flex items-center gap-1 tabular-nums text-[10.5px] mono shrink-0 whitespace-nowrap">
@@ -17339,7 +17352,7 @@
           <!-- Строка 2: Компактная рекомендация (без эмодзи) -->
           ${dailyRecText ? `
             <div class="flex items-center justify-between gap-2.5 pt-0.5">
-              <div class="text-[11px] leading-snug min-w-0 flex-1 text-zinc-300">
+              <div class="text-[11.5px] leading-tight min-w-0 flex-1 text-zinc-300 truncate">
                 ${dailyRecText}
               </div>
               ${dailyActionBtn}
@@ -17400,7 +17413,7 @@
                   <span class="text-xs font-bold text-white tracking-wide uppercase mono">${meal.title}</span>
                 </div>
                 <div class="flex items-center gap-1">
-                  <button type="button" onclick="openAddCustomVitaminModal('${meal.id}')" class="px-2 py-0.5 rounded-lg bg-white/[0.05] text-[10px] mono text-zinc-300 border border-white/10 active:scale-95 transition">+ Добавка</button>
+                  <button type="button" onclick="openAddCustomVitaminModal('${meal.id}')" class="px-2 py-0.5 rounded-lg bg-white/[0.05] text-[10.5px] font-medium text-zinc-300 border border-white/10 active:scale-95 transition">+ Добавка</button>
                   <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-zinc-400 text-xs active:scale-95 transition" title="Настройки">${pencilSvg}</button>
                 </div>
               </div>
@@ -17447,7 +17460,7 @@
                   ${formatVariantTabTitle(meal.variants[vk]?.title, vk)}
                 </button>
               `).join("")}
-              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="relative z-10 shrink-0 px-2 py-1 text-[11px] mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
+              <button type="button" onclick="addNewVariantToMealSlot('${meal.id}')" class="relative z-10 shrink-0 px-2 py-1 text-[11px] font-medium text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition">
                 + Вариант
               </button>
             </div>
@@ -17497,14 +17510,14 @@
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2 min-w-0">
                 <span class="w-1.5 h-3.5 rounded-full shrink-0" style="background: ${accent}"></span>
-                <span class="text-xs font-bold text-white tracking-wide uppercase mono truncate">${meal.title}</span>
+                <span class="text-xs font-bold text-white tracking-wide uppercase truncate">${meal.title}</span>
                 ${slotMicroBadgeHtml}
               </div>
               <div class="flex items-center gap-1.5">
                 <!-- Кнопки перемещения слота вверх/вниз -->
                 <div class="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg">
-                  <button type="button" onclick="moveMealSlot('${meal.id}', 'up')" ${!canMoveUp ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-30"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95"'}>↑</button>
-                  <button type="button" onclick="moveMealSlot('${meal.id}', 'down')" ${!canMoveDown ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-30"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95"'}>↓</button>
+                  <button type="button" onclick="moveMealSlot('${meal.id}', 'up')" ${!canMoveUp ? 'disabled class="px-1.5 py-0.5 text-zinc-600/50 text-xs opacity-40 cursor-default"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95 transition cursor-pointer"'}>↑</button>
+                  <button type="button" onclick="moveMealSlot('${meal.id}', 'down')" ${!canMoveDown ? 'disabled class="px-1.5 py-0.5 text-zinc-600/50 text-xs opacity-40 cursor-default"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95 transition cursor-pointer"'}>↓</button>
                 </div>
                 <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-zinc-400 text-xs active:scale-95 transition" title="Настройки приема">${pencilSvg}</button>
                 <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2 py-0.5 rounded-lg ${allDone ? 'bg-[var(--accent-cal)]/15 text-white border border-[var(--accent-cal)]/35 shadow-sm' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[10.5px] font-semibold active:scale-95 transition flex items-center gap-1">
@@ -18315,7 +18328,7 @@
                     <div class="text-[11px] text-zinc-500 mono mt-0.5">${items.length} поз.</div>
                   </div>
                   <div class="flex items-center gap-1.5 mono text-xs font-bold">
-                    <span class="px-2 py-1 rounded-lg bg-white/[0.06]" style="color:var(--accent-cal)">${Math.round(cal)}КК</span>
+                    <span class="px-2 py-1 rounded-lg bg-white/[0.06]" style="color:var(--macro-cal, var(--accent-cal))">${Math.round(cal)}КК</span>
                     <span class="px-1.5 py-1 rounded-lg bg-white/[0.04]" style="color:var(--accent-p)">${Math.round(p)}Б</span>
                     <span class="px-1.5 py-1 rounded-lg bg-white/[0.04]" style="color:var(--accent-c)">${Math.round(c)}У</span>
                     <span class="px-1.5 py-1 rounded-lg bg-white/[0.04]" style="color:var(--accent-f)">${Math.round(f)}Ж</span>
@@ -20811,7 +20824,7 @@
       if (pillsBox) {
         if (activeProg) {
           pillsBox.innerHTML = `
-            <button type="button" onclick="openDayManagerModal()" class="stack-pill done shrink-0">
+            <button type="button" onclick="openDayManagerModal()" class="stack-pill shrink-0">
               <span>Переименовать</span>
             </button>
             <button type="button" onclick="assignProgramToSelectedWeekday('rest')" class="stack-pill shrink-0">
@@ -21166,40 +21179,40 @@
         deltaW = round1(logs[logs.length - 1].weight - logs[Math.max(0, logs.length - 7)].weight);
       }
       const badge = logs.length === 0
-        ? `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Первый замер</span>`
+        ? `<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Первый замер</span>`
         : (daysSinceLastLog === 0
-            ? `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.07] text-zinc-300">✓ Замер сегодня</span>`
+            ? `<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.07] text-zinc-300">✓ Замер сегодня</span>`
             : (daysSinceLastLog >= 2
-                ? `<span class="text-[10px] mono font-bold px-2 py-0.5 rounded-full accent-btn">Пора взвеситься (${daysSinceLastLog} дн.)</span>`
-                : `<span class="text-[10px] mono px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Раз в 2–3 дня</span>`));
+                ? `<span class="text-[10px] font-medium px-2 py-0.5 rounded-full accent-btn">Пора взвеситься (<span class="mono font-bold">${daysSinceLastLog}</span> дн.)</span>`
+                : `<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Раз в 2–3 дня</span>`));
 
       if (banner) {
         if (logs.length === 0) {
           banner.innerHTML = `
             <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
+              <span class="text-[11px] font-semibold uppercase tracking-[0.06em]" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
               ${badge}
             </div>
             <div class="flex items-center justify-between gap-2">
-              <div class="text-xs text-zinc-400 mono truncate min-w-0">
+              <div class="text-xs text-zinc-400 truncate min-w-0">
                 Вес еще не внесен
               </div>
-              <span class="text-[11px] font-semibold mono underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
+              <span class="text-[11px] font-medium underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
             </div>
           `;
         } else {
           banner.innerHTML = `
             <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider mono" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
+              <span class="text-[11px] font-semibold uppercase tracking-[0.06em]" style="color:var(--accent-cal)">УМНЫЙ ВЕС И МЕТАБОЛИЗМ</span>
               ${badge}
             </div>
             <div class="flex items-center justify-between gap-1.5 min-w-0">
-              <div class="text-xs text-zinc-300 mono whitespace-nowrap shrink-0 flex items-center gap-1">
-                <span>Вес: <strong class="text-white text-sm">${latestW} кг</strong></span>
+              <div class="text-xs text-zinc-300 whitespace-nowrap shrink-0 flex items-center gap-1.5">
+                <span>Вес: <strong class="text-white text-sm mono font-bold">${latestW}</strong> кг</span>
                 <span class="text-zinc-500">·</span>
-                <span class="whitespace-nowrap">За 14д: <b class="text-white">${deltaW >= 0 ? '+' + deltaW : deltaW} кг</b></span>
+                <span class="whitespace-nowrap">За 14д: <b class="text-white mono font-bold">${deltaW >= 0 ? '+' + deltaW : deltaW}</b> кг</span>
               </div>
-              <span class="text-[10.5px] font-semibold mono underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
+              <span class="text-[11px] font-medium underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
             </div>
           `;
         }
@@ -21959,7 +21972,7 @@
           const hasVid = exNotes.some(n => n.media?.type === "video");
           const hasPhoto = exNotes.some(n => n.media?.type === "photo");
           const bLabel = hasVid ? "Видео" : (hasPhoto ? "Фото" : "Заметка");
-          notesBadge = `<span class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[9px] mono font-semibold bg-white/[0.08] text-zinc-300 border border-white/10 leading-none"><span>${bLabel}</span><span class="text-zinc-500 font-bold">${exNotes.length}</span></span>`;
+          notesBadge = `<span class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.08] text-zinc-300 border border-white/10 leading-none"><span>${bLabel}</span><span class="mono text-[9.5px] text-zinc-400 font-bold">${exNotes.length}</span></span>`;
         }
 
         const rawName = String(ex.name || "");
@@ -21971,7 +21984,7 @@
         const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
         const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}')`;
         const metaSecondRow = (setsBreakdown || progressDot)
-          ? `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] mono text-zinc-500">${setsBreakdown}${progressDot}</div>`
+          ? `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-500">${setsBreakdown}${progressDot}</div>`
           : "";
         const setsRowClass = targetS >= 5 ? 'gap-[2px] sets-row-tight' : (targetS === 4 ? 'gap-1 sets-row-compact' : 'gap-1.5');
 
@@ -21979,9 +21992,9 @@
           <div class="exercise-row py-3.5 pr-1 flex items-center justify-between gap-2.5" data-ex-id="${ex.id}">
             <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
               <div class="text-[14.5px] font-semibold text-white leading-snug">${titleWithBadgeHtml}</div>
-              <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] mono text-zinc-400">
+              <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
-                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white">${wLabel} × ${curR}</strong></span>
+                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white mono font-bold">${wLabel} × ${curR}</strong></span>
               </div>
               ${metaSecondRow}
             </div>
