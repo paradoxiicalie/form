@@ -400,7 +400,8 @@
       overflow: visible !important;
     }
 
-    #settingsTabsContainer {
+    #settingsTabsContainer,
+    #exModalSubNav {
       overflow: visible !important;
       background: rgba(255, 255, 255, 0.05) !important;
       border: 1px solid rgba(255, 255, 255, 0.07) !important;
@@ -544,6 +545,35 @@
     }
     .settings-slide-panel {
       width: 25%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      padding-left: 2px;
+      padding-right: 2px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+
+    /* Карусель вкладок модалки упражнения (1:1 свайп Заметки // Прогресс) */
+    #exModalViewport {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y pinch-zoom;
+      transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #exModalTrack {
+      display: flex;
+      width: 200%;
+      align-items: flex-start;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      touch-action: pan-y pinch-zoom;
+    }
+    .ex-modal-slide-panel {
+      width: 50%;
       flex-shrink: 0;
       box-sizing: border-box;
       padding-left: 2px;
@@ -1578,7 +1608,7 @@
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 mb-1">
             <span id="exNotesMuscleBadge" class="px-2 py-0.5 rounded-full text-[9px] font-semibold mono uppercase tracking-wide bg-white/10 text-zinc-300">Мышцы</span>
-            <span class="text-[9px] uppercase tracking-wider font-semibold mono text-zinc-400">База заметок</span>
+            <span id="exModalHeaderCategoryLabel" class="text-[9px] uppercase tracking-wider font-semibold mono text-zinc-400">База заметок</span>
           </div>
           <h3 id="exNotesModalTitle" class="text-sm font-semibold text-white leading-snug line-clamp-2">Упражнение</h3>
         </div>
@@ -1589,106 +1619,110 @@
       </div>
 
       <!-- Ахроматический переключатель [ ЗАМЕТКИ // ПРОГРЕСС ] в стиле Камеры iOS -->
-      <div id="exModalSubNav" class="segmented-slider-container no-swipe flex items-center gap-1 px-1 py-1 rounded-xl mb-3 relative w-full">
-        <div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
-        <button type="button" id="exModalTabBtn_notes" onclick="switchExModalSubtab('notes')" class="relative z-10 flex-1 py-1.5 text-xs font-semibold rounded-lg text-white font-bold transition-colors duration-200">
+      <div id="exModalSubNav" class="segmented-slider-container relative grid grid-cols-2 gap-1 p-1 rounded-2xl mb-3 overflow-visible">
+        <div id="exModalSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
+        <button type="button" id="exModalTabBtn_notes" onclick="switchExModalSubtab('notes')" class="relative z-10 py-1.5 text-xs font-bold rounded-xl text-white transition-colors duration-200">
           Заметки
         </button>
-        <button type="button" id="exModalTabBtn_progress" onclick="switchExModalSubtab('progress')" class="relative z-10 flex-1 py-1.5 text-xs font-semibold rounded-lg text-zinc-400 hover:text-white transition-colors duration-200">
+        <button type="button" id="exModalTabBtn_progress" onclick="switchExModalSubtab('progress')" class="relative z-10 py-1.5 text-xs font-semibold rounded-xl text-zinc-400 hover:text-white transition-colors duration-200">
           Прогресс
         </button>
       </div>
 
-      <!-- ВКЛАДКА 1: ЗАМЕТКИ (ТЕКУЩИЙ СПИСОК И ФОРМА) -->
-      <div id="exModalTabPane_notes">
-        <!-- Список заметок к упражнению в стиле GitHub alerts -->
-        <div id="exNotesListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3"></div>
+      <div id="exModalViewport">
+        <div id="exModalTrack">
+          <!-- ВКЛАДКА 1: ЗАМЕТКИ (ТЕКУЩИЙ СПИСОК И ФОРМА) -->
+          <div id="exModalTabPane_notes" class="ex-modal-slide-panel">
+            <!-- Список заметок к упражнению в стиле GitHub alerts -->
+            <div id="exNotesListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3"></div>
 
-        <!-- Форма создания новой заметки -->
-        <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5">
-          <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            Новая запись
-          </div>
+            <!-- Форма создания новой заметки -->
+            <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                Новая запись
+              </div>
 
-          <!-- Выбор категории -->
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[10px] mono">
-            <button type="button" onclick="selectNoteCategory('coach')" id="noteCatBtn_coach" class="note-cat-pill active active-coach px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="coach">
-              Совет тренера
-            </button>
-            <button type="button" onclick="selectNoteCategory('warmup')" id="noteCatBtn_warmup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="warmup">
-              Разминка
-            </button>
-            <button type="button" onclick="selectNoteCategory('technique')" id="noteCatBtn_technique" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="technique">
-              Техника
-            </button>
-            <button type="button" onclick="selectNoteCategory('setup')" id="noteCatBtn_setup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="setup">
-              Настройка
-            </button>
-            <button type="button" onclick="selectNoteCategory('general')" id="noteCatBtn_general" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="general">
-              Заметка
-            </button>
-          </div>
+              <!-- Выбор категории -->
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[10px] mono">
+                <button type="button" onclick="selectNoteCategory('coach')" id="noteCatBtn_coach" class="note-cat-pill active active-coach px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="coach">
+                  Совет тренера
+                </button>
+                <button type="button" onclick="selectNoteCategory('warmup')" id="noteCatBtn_warmup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="warmup">
+                  Разминка
+                </button>
+                <button type="button" onclick="selectNoteCategory('technique')" id="noteCatBtn_technique" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="technique">
+                  Техника
+                </button>
+                <button type="button" onclick="selectNoteCategory('setup')" id="noteCatBtn_setup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="setup">
+                  Настройка
+                </button>
+                <button type="button" onclick="selectNoteCategory('general')" id="noteCatBtn_general" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="general">
+                  Заметка
+                </button>
+              </div>
 
-          <!-- Панель действий: Быстрое форматирование и Медиа -->
-          <div class="flex items-center justify-between gap-2 pt-0.5">
-            <div class="flex items-center gap-1.5 flex-nowrap">
-              <button type="button" id="pickNoteMediaBtn" onclick="pickNoteMediaForNewNote()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
-                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-                <span>+ Медиа</span>
-              </button>
-              <input type="file" id="noteMediaFileInput" accept="image/*,video/*" class="hidden" onchange="handleWebNoteMediaPicked(event)" />
-              <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextClient()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
-                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
-                <span>Форматировать</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Превью прикрепленного медиафайла перед сохранением -->
-          <div id="newNoteMediaPreview" class="hidden relative rounded-xl border border-white/10 overflow-hidden bg-black/50 p-2">
-            <div class="flex items-center justify-between gap-2">
-              <div id="newNoteMediaThumbBox" class="flex items-center gap-2.5 min-w-0">
-                <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden"></div>
-                <div class="min-w-0">
-                  <div id="newNoteMediaTitle" class="text-xs font-semibold text-white truncate">Медиафайл</div>
-                  <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400 truncate">Готов к сохранению</div>
+              <!-- Панель действий: Быстрое форматирование и Медиа -->
+              <div class="flex items-center justify-between gap-2 pt-0.5">
+                <div class="flex items-center gap-1.5 flex-nowrap">
+                  <button type="button" id="pickNoteMediaBtn" onclick="pickNoteMediaForNewNote()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
+                    <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    <span>+ Медиа</span>
+                  </button>
+                  <input type="file" id="noteMediaFileInput" accept="image/*,video/*" class="hidden" onchange="handleWebNoteMediaPicked(event)" />
+                  <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextClient()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
+                    <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
+                    <span>Форматировать</span>
+                  </button>
                 </div>
               </div>
-              <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition shrink-0">✕</button>
+
+              <!-- Превью прикрепленного медиафайла перед сохранением -->
+              <div id="newNoteMediaPreview" class="hidden relative rounded-xl border border-white/10 overflow-hidden bg-black/50 p-2">
+                <div class="flex items-center justify-between gap-2">
+                  <div id="newNoteMediaThumbBox" class="flex items-center gap-2.5 min-w-0">
+                    <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden"></div>
+                    <div class="min-w-0">
+                      <div id="newNoteMediaTitle" class="text-xs font-semibold text-white truncate">Медиафайл</div>
+                      <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400 truncate">Готов к сохранению</div>
+                    </div>
+                  </div>
+                  <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition shrink-0">✕</button>
+                </div>
+              </div>
+
+              <!-- Поле ввода текста -->
+              <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка (необязательно при фото/видео)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
+
+              <div class="flex items-center justify-end pt-0.5">
+                <button type="button" id="submitNoteBtn" onclick="submitNewExerciseNote()" class="py-1.5 px-4 rounded-xl accent-btn text-xs font-semibold">
+                  + Записать
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Поле ввода текста -->
-          <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка (необязательно при фото/видео)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
+          <!-- ВКЛАДКА 2: ИСТОРИЯ И ПРОГРЕССИЯ -->
+          <div id="exModalTabPane_progress" class="ex-modal-slide-panel">
+            <!-- Сводная верхняя плашка -->
+            <div class="grid grid-cols-3 gap-2 p-3 bg-zinc-900/60 border border-white/[0.06] rounded-2xl mb-3 text-center">
+              <div>
+                <div class="text-[9.5px] text-zinc-500 uppercase font-semibold tracking-wider">Рекорд (PR)</div>
+                <div id="exProgModalPR" class="text-sm font-bold text-white mono mt-0.5">0 кг</div>
+              </div>
+              <div>
+                <div class="text-[9.5px] text-zinc-500 uppercase font-semibold tracking-wider">Тренировок</div>
+                <div id="exProgModalTotal" class="text-sm font-bold text-white mono mt-0.5">0</div>
+              </div>
+              <div>
+                <div class="text-[9.5px] text-zinc-500 uppercase font-semibold tracking-wider">Динамика</div>
+                <div id="exProgModalDelta" class="text-sm font-bold text-emerald-400 mono mt-0.5">—</div>
+              </div>
+            </div>
 
-          <div class="flex items-center justify-end pt-0.5">
-            <button type="button" id="submitNoteBtn" onclick="submitNewExerciseNote()" class="py-1.5 px-4 rounded-xl accent-btn text-xs font-semibold">
-              + Записать
-            </button>
+            <!-- Лента тренировок -->
+            <div id="exProgressionListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5"></div>
           </div>
         </div>
-      </div>
-
-      <!-- ВКЛАДКА 2: ИСТОРИЯ И ПРОГРЕССИЯ -->
-      <div id="exModalTabPane_progress" class="hidden">
-        <!-- Сводная верхняя плашка -->
-        <div class="grid grid-cols-3 gap-2 p-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl mb-3 text-center">
-          <div>
-            <div class="text-[10px] text-zinc-500 uppercase font-semibold">Рекорд (PR)</div>
-            <div id="exProgModalPR" class="text-sm font-bold text-white mono mt-0.5">0 кг</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-zinc-500 uppercase font-semibold">Тренировок</div>
-            <div id="exProgModalTotal" class="text-sm font-bold text-white mono mt-0.5">0</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-zinc-500 uppercase font-semibold">Динамика</div>
-            <div id="exProgModalDelta" class="text-sm font-bold text-emerald-400 mono mt-0.5">—</div>
-          </div>
-        </div>
-
-        <!-- Лента тренировок -->
-        <div id="exProgressionListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5"></div>
       </div>
     </div>
   </div>
@@ -10129,6 +10163,11 @@
         const activeSettingBtn = settingsCont.querySelector("button.text-white");
         if (activeSettingBtn) updateSegmentedSlider(settingsCont, activeSettingBtn, true);
       }
+      const exModalNav = document.getElementById("exModalSubNav");
+      if (exModalNav && document.getElementById("exerciseNotesModal")?.classList.contains("open")) {
+        const activeExBtn = exModalNav.querySelector("button.text-white");
+        if (activeExBtn) updateSegmentedSlider(exModalNav, activeExBtn, true);
+      }
     }
     window.updateAllSegmentedSliders = updateAllSegmentedSliders;
 
@@ -17870,21 +17909,21 @@
 
         htmlCards += `
           <div class="coach-meal-card ${allDone ? 'all-done' : ''}" id="coachMealCard_${meal.id}">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2 min-w-0">
+            <div class="flex items-center justify-between mb-2 gap-2">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1">
                 <span class="w-1.5 h-3.5 rounded-full shrink-0" style="background: ${accent}"></span>
-                <span class="text-xs font-bold text-white tracking-wide uppercase truncate">${meal.title}</span>
+                <span class="text-xs font-bold text-white tracking-wide uppercase truncate min-w-0">${meal.title}</span>
                 ${slotMicroBadgeHtml}
               </div>
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 shrink-0">
                 <!-- Кнопки перемещения слота вверх/вниз -->
                 <div class="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg">
-                  <button type="button" onclick="moveMealSlot('${meal.id}', 'up')" ${!canMoveUp ? 'disabled class="px-1.5 py-0.5 text-zinc-600/50 text-xs opacity-40 cursor-default"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95 transition cursor-pointer"'}>↑</button>
-                  <button type="button" onclick="moveMealSlot('${meal.id}', 'down')" ${!canMoveDown ? 'disabled class="px-1.5 py-0.5 text-zinc-600/50 text-xs opacity-40 cursor-default"' : 'class="px-1.5 py-0.5 text-zinc-400 hover:text-white text-xs active:scale-95 transition cursor-pointer"'}>↓</button>
+                  <button type="button" onclick="moveMealSlot('${meal.id}', 'up')" ${!canMoveUp ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-75 cursor-default"' : 'class="px-1.5 py-0.5 text-zinc-300 hover:text-white text-xs active:scale-95 transition cursor-pointer"'}>↑</button>
+                  <button type="button" onclick="moveMealSlot('${meal.id}', 'down')" ${!canMoveDown ? 'disabled class="px-1.5 py-0.5 text-zinc-600 text-xs opacity-75 cursor-default"' : 'class="px-1.5 py-0.5 text-zinc-300 hover:text-white text-xs active:scale-95 transition cursor-pointer"'}>↓</button>
                 </div>
-                <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-zinc-400 text-xs active:scale-95 transition" title="Настройки приема">${pencilSvg}</button>
-                <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2 py-0.5 rounded-lg ${allDone ? 'bg-[var(--accent-cal)]/15 text-white border border-[var(--accent-cal)]/35 shadow-sm' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[10.5px] font-semibold active:scale-95 transition flex items-center gap-1">
-                  ${allDone ? '<span>✓ Прием съеден</span>' : '<span>Засчитать</span>'}
+                <button type="button" onclick="openEditMealSlotModal('${meal.id}')" class="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white text-xs active:scale-95 transition shrink-0" title="Настройки приема">${pencilSvg}</button>
+                <button type="button" onclick="markWholeMealCompleted('${meal.id}')" class="px-2.5 py-1 rounded-lg ${allDone ? 'bg-[var(--accent-cal)]/15 text-white border border-[var(--accent-cal)]/35 shadow-sm' : 'bg-white/[0.05] text-zinc-300 border border-white/10'} text-[11px] font-semibold active:scale-95 transition flex items-center gap-1 whitespace-nowrap shrink-0">
+                  ${allDone ? '<span>✓ Съедено</span>' : '<span>Засчитать</span>'}
                 </button>
               </div>
             </div>
@@ -22528,7 +22567,6 @@
         }
 
         const wLabel = (curW === 0 || curW === "0") ? "Свой вес" : `${curW || 0} кг`;
-        const setsBreakdown = getSetsBreakdownHtml(ex, targetS);
 
         let progressDot = "";
         if (bestToday && ex.prevWeight !== undefined) {
@@ -22545,7 +22583,10 @@
         const pastSession = progHistory.pastSession;
         let pastSummaryHtml = "";
         if (pastSession && pastSession.summaryText) {
-          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-0.5 truncate"><span class="text-zinc-500">Прошлая:</span> <span class="mono text-zinc-300 font-medium">${escapeHtml(pastSession.summaryText)}</span></div>`;
+          const deltaPart = progressDot ? `<span class="shrink-0">${progressDot}</span>` : "";
+          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-0.5 truncate flex items-center gap-1.5"><span class="text-zinc-500 shrink-0">Прошлая:</span> <span class="mono text-zinc-300 font-medium truncate">${escapeHtml(pastSession.summaryText)}</span>${deltaPart}</div>`;
+        } else if (progressDot) {
+          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1.5">${progressDot}</div>`;
         }
 
         const exNotes = getExerciseNotes(ex.name);
@@ -22571,9 +22612,6 @@
           : `${escapeHtml(rawName)}${allBadges}`;
 
         const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'notes')`;
-        const metaSecondRow = (setsBreakdown || progressDot)
-          ? `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-500">${setsBreakdown}${progressDot}</div>`
-          : "";
         const setsRowClass = targetS >= 5 ? 'gap-[2px] sets-row-tight' : (targetS === 4 ? 'gap-1 sets-row-compact' : 'gap-1.5');
 
         return `
@@ -22585,7 +22623,6 @@
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white mono font-bold">${wLabel} × ${curR}</strong></span>
               </div>
               ${pastSummaryHtml}
-              ${metaSecondRow}
             </div>
             <div class="flex items-center ${setsRowClass} shrink-0">${circlesHtml}</div>
           </div>
@@ -22696,6 +22733,7 @@
           submitBtn.disabled = false;
           submitBtn.classList.remove("opacity-50", "pointer-events-none");
         }
+        if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
         return;
       }
 
@@ -22719,6 +22757,7 @@
         submitBtn.disabled = false;
         submitBtn.classList.remove("opacity-50", "pointer-events-none");
       }
+      if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
     };
 
     window.clearNewNoteMedia = function() {
@@ -22783,6 +22822,7 @@
         submitBtn.disabled = true;
         submitBtn.classList.add("opacity-50", "pointer-events-none");
       }
+      if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
     };
 
     window.onNoteMediaPicked = function(data) {
@@ -23261,12 +23301,30 @@
             </p>
           </div>
         `;
+        if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
         return;
       }
       container.innerHTML = notes.map(n => renderSingleNoteCardHtml(n, exName)).join("");
+      if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
     };
 
     let currentExModalSubtab = "notes";
+
+    function updateExModalViewportHeight() {
+      const modal = document.getElementById("exerciseNotesModal");
+      if (!modal || !modal.classList.contains("open")) return;
+      const viewport = document.getElementById("exModalViewport");
+      if (!viewport) return;
+      const activePaneId = currentExModalSubtab === "progress" ? "exModalTabPane_progress" : "exModalTabPane_notes";
+      const activePane = document.getElementById(activePaneId);
+      if (activePane) {
+        const h = activePane.scrollHeight || activePane.offsetHeight;
+        if (h > 0) {
+          viewport.style.height = `${h}px`;
+        }
+      }
+    }
+    window.updateExModalViewportHeight = updateExModalViewportHeight;
 
     function switchExModalSubtab(tabKey, immediate = false) {
       currentExModalSubtab = tabKey;
@@ -23274,20 +23332,52 @@
       const progPane = document.getElementById("exModalTabPane_progress");
       const btnNotes = document.getElementById("exModalTabBtn_notes");
       const btnProg = document.getElementById("exModalTabBtn_progress");
+      const headerCatLabel = document.getElementById("exModalHeaderCategoryLabel");
+      const track = document.getElementById("exModalTrack");
 
       if (tabKey === "progress") {
-        if (notesPane) notesPane.classList.add("hidden");
-        if (progPane) progPane.classList.remove("hidden");
-        renderExerciseProgressionList(currentActiveNotesExName);
+        if (headerCatLabel) headerCatLabel.textContent = "Прогресс и веса";
+        if (btnProg) {
+          btnProg.classList.add("text-white", "font-bold");
+          btnProg.classList.remove("text-zinc-400");
+        }
+        if (btnNotes) {
+          btnNotes.classList.remove("text-white", "font-bold");
+          btnNotes.classList.add("text-zinc-400");
+        }
+        if (notesPane) notesPane.style.pointerEvents = "none";
+        if (progPane) {
+          progPane.style.pointerEvents = "auto";
+          renderExerciseProgressionList(currentActiveNotesExName);
+        }
+        if (track) {
+          track.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+          track.style.transform = "translate3d(-50%, 0, 0)";
+        }
       } else {
-        if (progPane) progPane.classList.add("hidden");
-        if (notesPane) notesPane.classList.remove("hidden");
+        if (headerCatLabel) headerCatLabel.textContent = "База заметок";
+        if (btnNotes) {
+          btnNotes.classList.add("text-white", "font-bold");
+          btnNotes.classList.remove("text-zinc-400");
+        }
+        if (btnProg) {
+          btnProg.classList.remove("text-white", "font-bold");
+          btnProg.classList.add("text-zinc-400");
+        }
+        if (progPane) progPane.style.pointerEvents = "none";
+        if (notesPane) notesPane.style.pointerEvents = "auto";
+        if (track) {
+          track.style.transition = immediate ? "none" : "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+          track.style.transform = "translate3d(0%, 0, 0)";
+        }
       }
 
       const activeBtn = (tabKey === "progress") ? btnProg : btnNotes;
       if (typeof updateSegmentedSlider === "function") {
         updateSegmentedSlider("exModalSubNav", activeBtn, immediate);
       }
+
+      updateExModalViewportHeight();
     }
     window.switchExModalSubtab = switchExModalSubtab;
 
@@ -23312,6 +23402,7 @@
             Нет записанных тренировок по этому упражнению
           </div>
         `;
+        if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
         return;
       }
 
@@ -23326,21 +23417,24 @@
         const safeNameArg = escapeHtml(exName).replace(/'/g, "\\'");
 
         return `
-          <div class="bg-zinc-900/70 border border-white/[0.07] rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3 flex items-center justify-between gap-3">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-xs font-bold text-white mono">${escapeHtml(s.dateFormatted)}</span>
-                <span class="text-[10px] text-zinc-500 mono">${escapeHtml(s.date)}</span>
+                <span class="text-xs font-semibold text-white">${escapeHtml(s.dateFormatted)}</span>
                 ${deltaBadge}
               </div>
-              <div class="text-xs text-zinc-200 mono font-medium">
+              <div class="text-xs text-zinc-300 mono font-medium">
                 ${escapeHtml(s.summaryText)}
               </div>
             </div>
-            <button type="button" onclick="deleteExerciseLogSession('${safeDateArg}', '${safeNameArg}')" class="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/15 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs active:scale-90 transition shrink-0" title="Удалить запись за этот день">✕</button>
+            <button type="button" onclick="deleteExerciseLogSession('${safeDateArg}', '${safeNameArg}')" class="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-red-500/15 text-zinc-500 hover:text-red-400 flex items-center justify-center text-xs active:scale-90 transition shrink-0" title="Удалить запись за этот день">✕</button>
           </div>
         `;
       }).join("");
+
+      if (typeof updateExModalViewportHeight === "function") {
+        updateExModalViewportHeight();
+      }
     }
     window.renderExerciseProgressionList = renderExerciseProgressionList;
 
@@ -23357,10 +23451,161 @@
       }
       saveState();
       renderExerciseProgressionList(exName);
+      if (typeof updateExModalViewportHeight === "function") {
+        updateExModalViewportHeight();
+      }
       if (typeof renderWorkoutAll === "function") renderWorkoutAll();
       showToast("Запись тренировки удалена");
     }
     window.deleteExerciseLogSession = deleteExerciseLogSession;
+
+    function initExerciseModalSwipe() {
+      const modal = document.getElementById("exerciseNotesModal");
+      const viewport = document.getElementById("exModalViewport");
+      const track = document.getElementById("exModalTrack");
+      if (!modal || !viewport || !track) return;
+      if (viewport.dataset.swipeBound === "1") return;
+      viewport.dataset.swipeBound = "1";
+
+      const panel = modal.querySelector(".sheet-panel") || viewport;
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let startTime = 0;
+      let isSwiping = false;
+      let directionDecided = false;
+      let cancelGesture = false;
+
+      panel.addEventListener("touchstart", (e) => {
+        if (e.touches.length !== 1) return;
+        const target = e.target;
+        if (target.closest("input, textarea, select, video, audio, .no-swipe, button")) {
+          cancelGesture = true;
+          return;
+        }
+
+        cancelGesture = false;
+        directionDecided = false;
+        isSwiping = false;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        currentX = startX;
+        startTime = Date.now();
+      }, { passive: true });
+
+      panel.addEventListener("touchmove", (e) => {
+        if (cancelGesture || e.touches.length !== 1) return;
+        currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        if (!directionDecided) {
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            directionDecided = true;
+            if (Math.abs(dx) > Math.abs(dy) * 1.15) {
+              isSwiping = true;
+            } else {
+              isSwiping = false;
+              cancelGesture = true;
+              return;
+            }
+          } else {
+            return;
+          }
+        }
+
+        if (isSwiping) {
+          if (e.cancelable) e.preventDefault();
+          track.style.transition = "none";
+          const width = viewport.offsetWidth || window.innerWidth;
+          const currentIdx = currentExModalSubtab === "progress" ? 1 : 0;
+          const basePercent = -(currentIdx * 50);
+          let deltaPercent = (dx / width) * 50;
+
+          // Пружинящее сопротивление на границах
+          if (currentIdx === 0 && dx > 0) {
+            deltaPercent = (dx * 0.18 / width) * 50;
+          } else if (currentIdx === 1 && dx < 0) {
+            deltaPercent = (dx * 0.18 / width) * 50;
+          }
+
+          let targetTranslate = basePercent + deltaPercent;
+          targetTranslate = Math.max(-56, Math.min(6, targetTranslate));
+          track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
+
+          // Синхронизация ползунка segmented-slider-pill в реальном времени
+          const nav = document.getElementById("exModalSubNav");
+          const pill = nav?.querySelector(".segmented-slider-pill");
+          const btnNotes = document.getElementById("exModalTabBtn_notes");
+          const btnProg = document.getElementById("exModalTabBtn_progress");
+          if (pill && btnNotes && btnProg) {
+            const dist = btnProg.offsetLeft - btnNotes.offsetLeft;
+            let progressFraction = currentIdx - (dx / width);
+            if (currentIdx === 0 && dx > 0) {
+              progressFraction = -(dx * 0.18 / width);
+            } else if (currentIdx === 1 && dx < 0) {
+              progressFraction = 1 - (dx * 0.18 / width);
+            }
+            progressFraction = Math.max(-0.12, Math.min(1.12, progressFraction));
+            const pillTargetX = btnNotes.offsetLeft + (progressFraction * dist);
+            pill.style.transition = "none";
+            pill.classList.add("is-liquid-moving");
+            pill.style.transform = `translate3d(${pillTargetX}px, 0, 0)`;
+            pill.style.width = btnNotes.offsetWidth + "px";
+          }
+
+          // Динамически подстраиваем высоту вьюпорта под соседнюю входящую вкладку
+          const notesEl = document.getElementById("exModalTabPane_notes");
+          const progEl = document.getElementById("exModalTabPane_progress");
+          if (notesEl && progEl) {
+            const h = Math.max(notesEl.scrollHeight || notesEl.offsetHeight, progEl.scrollHeight || progEl.offsetHeight);
+            if (h > 50) viewport.style.height = h + "px";
+          }
+        }
+      }, { passive: false });
+
+      const endHandler = () => {
+        const nav = document.getElementById("exModalSubNav");
+        const pill = nav?.querySelector(".segmented-slider-pill");
+        if (pill) {
+          pill.classList.remove("is-liquid-moving");
+          pill.style.transition = "";
+        }
+
+        if (cancelGesture || !isSwiping) {
+          isSwiping = false;
+          cancelGesture = false;
+          return;
+        }
+        isSwiping = false;
+        cancelGesture = false;
+
+        const dx = currentX - startX;
+        const dt = Date.now() - startTime;
+        const vx = dx / (dt || 1);
+        const width = viewport.offsetWidth || window.innerWidth;
+        const distanceThreshold = width * 0.18;
+        const currentIdx = currentExModalSubtab === "progress" ? 1 : 0;
+
+        let targetIdx = currentIdx;
+        if (dx < -distanceThreshold || (dx < -25 && vx < -0.28)) {
+          targetIdx = 1;
+        } else if (dx > distanceThreshold || (dx > 25 && vx > 0.28)) {
+          targetIdx = 0;
+        }
+
+        const targetTab = targetIdx === 1 ? "progress" : "notes";
+        switchExModalSubtab(targetTab, false);
+        if (targetIdx !== currentIdx && typeof triggerGymHaptic === "function") {
+          triggerGymHaptic();
+        }
+      };
+
+      panel.addEventListener("touchend", endHandler, { passive: true });
+      panel.addEventListener("touchcancel", endHandler, { passive: true });
+    }
+    window.initExerciseModalSwipe = initExerciseModalSwipe;
 
     let currentActiveNotesCtx = { exName: "", progId: null, exId: null };
     window._replaceExercisePresets = [];
@@ -23427,10 +23672,18 @@
       }
 
       renderExerciseNotesList(exName);
+      const startTab = initialTab || "notes";
+      if (startTab === "progress") {
+        renderExerciseProgressionList(exName);
+      }
+      switchExModalSubtab(startTab, true);
+
       if (modal) modal.classList.add("open");
+      initExerciseModalSwipe();
 
       requestAnimationFrame(() => {
-        switchExModalSubtab(initialTab || "notes", true);
+        switchExModalSubtab(startTab, true);
+        updateExModalViewportHeight();
       });
     };
 
@@ -25633,6 +25886,7 @@ ${knownPiecesContext}
     initBottomSheetGestures();
     initHorizontalViewSwipe();
     initSettingsTabsSwipe();
+    initExerciseModalSwipe();
     switchMainView("diet", true);
     requestAnimationFrame(() => {
       document.documentElement.classList.add("app-ready");
@@ -25643,6 +25897,7 @@ ${knownPiecesContext}
 
     window.addEventListener("resize", () => {
       if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
+      if (typeof updateExModalViewportHeight === "function") updateExModalViewportHeight();
     }, { passive: true });
 
     let _cachedModalOpenState = false;
@@ -25664,6 +25919,7 @@ ${knownPiecesContext}
       const modalObserver = new MutationObserver(() => {
         initBottomSheetGestures();
         initSettingsTabsSwipe();
+        initExerciseModalSwipe();
         checkModalVisibilityToNative();
       });
       modalObserver.observe(document.body, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
