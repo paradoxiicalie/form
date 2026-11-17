@@ -1434,6 +1434,12 @@
       <!-- Контейнер превью заметок и разминки к упражнению -->
       <div id="setLoggerNotesPreview" class="mb-3"></div>
 
+      <!-- Плашка ориентира прошлой тренировки -->
+      <div id="setLoggerPastBox" class="hidden bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs flex items-center justify-between mb-3">
+        <span class="text-zinc-400 flex items-center gap-1">Прошлая (<span id="setLoggerPastDate" class="text-zinc-300"></span>):</span>
+        <span id="setLoggerPastValues" class="mono font-semibold text-white truncate ml-2"></span>
+      </div>
+
       <div class="bg-zinc-900/70 border border-white/[0.06] rounded-2xl p-3.5 space-y-3 mb-4">
         <div>
           <div class="flex items-center justify-between mb-1.5">
@@ -1582,71 +1588,107 @@
         </div>
       </div>
 
-      <!-- Список заметок к упражнению в стиле GitHub alerts -->
-      <div id="exNotesListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3"></div>
+      <!-- Ахроматический переключатель [ ЗАМЕТКИ // ПРОГРЕСС ] в стиле Камеры iOS -->
+      <div id="exModalSubNav" class="segmented-slider-container no-swipe flex items-center gap-1 px-1 py-1 rounded-xl mb-3 relative w-full">
+        <div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
+        <button type="button" id="exModalTabBtn_notes" onclick="switchExModalSubtab('notes')" class="relative z-10 flex-1 py-1.5 text-xs font-semibold rounded-lg text-white font-bold transition-colors duration-200">
+          Заметки
+        </button>
+        <button type="button" id="exModalTabBtn_progress" onclick="switchExModalSubtab('progress')" class="relative z-10 flex-1 py-1.5 text-xs font-semibold rounded-lg text-zinc-400 hover:text-white transition-colors duration-200">
+          Прогресс
+        </button>
+      </div>
 
-      <!-- Форма создания новой заметки -->
-      <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5">
-        <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-          Новая запись
-        </div>
+      <!-- ВКЛАДКА 1: ЗАМЕТКИ (ТЕКУЩИЙ СПИСОК И ФОРМА) -->
+      <div id="exModalTabPane_notes">
+        <!-- Список заметок к упражнению в стиле GitHub alerts -->
+        <div id="exNotesListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3"></div>
 
-        <!-- Выбор категории -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[10px] mono">
-          <button type="button" onclick="selectNoteCategory('coach')" id="noteCatBtn_coach" class="note-cat-pill active active-coach px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="coach">
-            Совет тренера
-          </button>
-          <button type="button" onclick="selectNoteCategory('warmup')" id="noteCatBtn_warmup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="warmup">
-            Разминка
-          </button>
-          <button type="button" onclick="selectNoteCategory('technique')" id="noteCatBtn_technique" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="technique">
-            Техника
-          </button>
-          <button type="button" onclick="selectNoteCategory('setup')" id="noteCatBtn_setup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="setup">
-            Настройка
-          </button>
-          <button type="button" onclick="selectNoteCategory('general')" id="noteCatBtn_general" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="general">
-            Заметка
-          </button>
-        </div>
+        <!-- Форма создания новой заметки -->
+        <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+            Новая запись
+          </div>
 
-        <!-- Панель действий: Быстрое форматирование и Медиа -->
-        <div class="flex items-center justify-between gap-2 pt-0.5">
-          <div class="flex items-center gap-1.5 flex-nowrap">
-            <button type="button" id="pickNoteMediaBtn" onclick="pickNoteMediaForNewNote()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
-              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-              <span>+ Медиа</span>
+          <!-- Выбор категории -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[10px] mono">
+            <button type="button" onclick="selectNoteCategory('coach')" id="noteCatBtn_coach" class="note-cat-pill active active-coach px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="coach">
+              Совет тренера
             </button>
-            <input type="file" id="noteMediaFileInput" accept="image/*,video/*" class="hidden" onchange="handleWebNoteMediaPicked(event)" />
-            <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextClient()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
-              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
-              <span>Форматировать</span>
+            <button type="button" onclick="selectNoteCategory('warmup')" id="noteCatBtn_warmup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="warmup">
+              Разминка
+            </button>
+            <button type="button" onclick="selectNoteCategory('technique')" id="noteCatBtn_technique" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="technique">
+              Техника
+            </button>
+            <button type="button" onclick="selectNoteCategory('setup')" id="noteCatBtn_setup" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="setup">
+              Настройка
+            </button>
+            <button type="button" onclick="selectNoteCategory('general')" id="noteCatBtn_general" class="note-cat-pill px-2.5 py-1 rounded-lg border transition shrink-0" data-cat="general">
+              Заметка
             </button>
           </div>
-        </div>
 
-        <!-- Превью прикрепленного медиафайла перед сохранением -->
-        <div id="newNoteMediaPreview" class="hidden relative rounded-xl border border-white/10 overflow-hidden bg-black/50 p-2">
-          <div class="flex items-center justify-between gap-2">
-            <div id="newNoteMediaThumbBox" class="flex items-center gap-2.5 min-w-0">
-              <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden"></div>
-              <div class="min-w-0">
-                <div id="newNoteMediaTitle" class="text-xs font-semibold text-white truncate">Медиафайл</div>
-                <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400 truncate">Готов к сохранению</div>
-              </div>
+          <!-- Панель действий: Быстрое форматирование и Медиа -->
+          <div class="flex items-center justify-between gap-2 pt-0.5">
+            <div class="flex items-center gap-1.5 flex-nowrap">
+              <button type="button" id="pickNoteMediaBtn" onclick="pickNoteMediaForNewNote()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
+                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                <span>+ Медиа</span>
+              </button>
+              <input type="file" id="noteMediaFileInput" accept="image/*,video/*" class="hidden" onchange="handleWebNoteMediaPicked(event)" />
+              <button type="button" id="formatNoteBtn" onclick="formatNewNoteTextClient()" class="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-[11px] mono flex items-center gap-1.5 active:scale-95 transition whitespace-nowrap shrink-0">
+                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
+                <span>Форматировать</span>
+              </button>
             </div>
-            <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition shrink-0">✕</button>
+          </div>
+
+          <!-- Превью прикрепленного медиафайла перед сохранением -->
+          <div id="newNoteMediaPreview" class="hidden relative rounded-xl border border-white/10 overflow-hidden bg-black/50 p-2">
+            <div class="flex items-center justify-between gap-2">
+              <div id="newNoteMediaThumbBox" class="flex items-center gap-2.5 min-w-0">
+                <div id="newNoteMediaIcon" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden"></div>
+                <div class="min-w-0">
+                  <div id="newNoteMediaTitle" class="text-xs font-semibold text-white truncate">Медиафайл</div>
+                  <div id="newNoteMediaSub" class="text-[10px] mono text-zinc-400 truncate">Готов к сохранению</div>
+                </div>
+              </div>
+              <button type="button" onclick="clearNewNoteMedia()" class="w-6 h-6 rounded-full bg-white/10 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs transition shrink-0">✕</button>
+            </div>
+          </div>
+
+          <!-- Поле ввода текста -->
+          <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка (необязательно при фото/видео)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
+
+          <div class="flex items-center justify-end pt-0.5">
+            <button type="button" id="submitNoteBtn" onclick="submitNewExerciseNote()" class="py-1.5 px-4 rounded-xl accent-btn text-xs font-semibold">
+              + Записать
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ВКЛАДКА 2: ИСТОРИЯ И ПРОГРЕССИЯ -->
+      <div id="exModalTabPane_progress" class="hidden">
+        <!-- Сводная верхняя плашка -->
+        <div class="grid grid-cols-3 gap-2 p-3 bg-zinc-900/80 border border-white/[0.08] rounded-2xl mb-3 text-center">
+          <div>
+            <div class="text-[10px] text-zinc-500 uppercase font-semibold">Рекорд (PR)</div>
+            <div id="exProgModalPR" class="text-sm font-bold text-white mono mt-0.5">0 кг</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-zinc-500 uppercase font-semibold">Тренировок</div>
+            <div id="exProgModalTotal" class="text-sm font-bold text-white mono mt-0.5">0</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-zinc-500 uppercase font-semibold">Динамика</div>
+            <div id="exProgModalDelta" class="text-sm font-bold text-emerald-400 mono mt-0.5">—</div>
           </div>
         </div>
 
-        <!-- Поле ввода текста -->
-        <textarea id="newExNoteText" rows="2" placeholder="Короткая заметка, совет или разминка (необязательно при фото/видео)..." class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-white/30 resize-none font-mono"></textarea>
-
-        <div class="flex items-center justify-end pt-0.5">
-          <button type="button" id="submitNoteBtn" onclick="submitNewExerciseNote()" class="py-1.5 px-4 rounded-xl accent-btn text-xs font-semibold">
-            + Записать
-          </button>
-        </div>
+        <!-- Лента тренировок -->
+        <div id="exProgressionListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5"></div>
       </div>
     </div>
   </div>
@@ -10023,6 +10065,9 @@
       let height = Math.round((bRect.height > 0) ? bRect.height : activeBtn.offsetHeight);
 
       const containerId = container.id || null;
+      if (immediate && containerId && window._prevPillRects) {
+        delete window._prevPillRects[containerId];
+      }
       const prevRect = (containerId && window._prevPillRects) ? window._prevPillRects[containerId] : null;
 
       // Единая 360ms iOS-кривая с экспоненциальным торможением в ноль
@@ -18092,7 +18137,10 @@
       (template.meals || []).forEach(meal => {
         if (meal.hasVariants) {
           const vk = getMealActiveVariantKey(meal, progress);
-          updateSegmentedSlider("mealVariantsBar_" + meal.id, "mealVarBtn_" + meal.id + "_" + vk, false);
+          const barId = "mealVariantsBar_" + meal.id;
+          const btnId = "mealVarBtn_" + meal.id + "_" + vk;
+          const hasSavedRect = Boolean(window._prevPillRects && window._prevPillRects[barId]);
+          updateSegmentedSlider(barId, btnId, !hasSavedRect);
         }
       });
     }
@@ -22138,6 +22186,150 @@
       }
     }
 
+    function normalizeExerciseName(n) {
+      return String(n || "").trim().toLowerCase().replace(/ё/g, "е");
+    }
+
+    function formatShortDateRu(dateStr) {
+      if (!dateStr) return "";
+      const todayKey = (typeof getTodayKey === "function") ? getTodayKey() : new Date().toISOString().slice(0, 10);
+      if (dateStr === todayKey) return "Сегодня";
+      const parts = dateStr.split("-");
+      if (parts.length === 3) {
+        const months = ["янв", "февр", "март", "апр", "май", "июн", "июл", "авг", "сент", "окт", "нояб", "дек"];
+        const day = parseInt(parts[2], 10);
+        const mIdx = parseInt(parts[1], 10) - 1;
+        if (mIdx >= 0 && mIdx < 12) {
+          return `${day} ${months[mIdx]}`;
+        }
+      }
+      return dateStr;
+    }
+
+    function formatSetsSummaryString(sets) {
+      if (!Array.isArray(sets) || sets.length === 0) return "";
+      const groups = [];
+      sets.forEach(s => {
+        const w = Number(s.weight) || 0;
+        const r = Number(s.reps) || 0;
+        if (groups.length > 0 && groups[groups.length - 1].weight === w) {
+          groups[groups.length - 1].reps.push(r);
+        } else {
+          groups.push({ weight: w, reps: [r] });
+        }
+      });
+      return groups.map(g => {
+        const wLabel = g.weight === 0 ? "Свой вес" : `${g.weight} кг`;
+        return `${wLabel} × ${g.reps.join(", ")}`;
+      }).join(" · ");
+    }
+
+    function getExerciseProgressionHistory(exId, exName) {
+      const logs = Array.isArray(state?.workout?.logs) ? state.workout.logs : [];
+      const normTarget = normalizeExerciseName(exName);
+
+      const matchedLogs = logs.filter(l => {
+        if (exId && l.exId === exId) return true;
+        if (normTarget && normalizeExerciseName(l.exName) === normTarget) return true;
+        return false;
+      });
+
+      const byDate = new Map();
+      matchedLogs.forEach(l => {
+        const d = l.date;
+        if (!d) return;
+        if (!byDate.has(d)) byDate.set(d, []);
+        byDate.get(d).push(l);
+      });
+
+      const sortedDates = Array.from(byDate.keys()).sort((a, b) => b.localeCompare(a));
+      const todayKey = (typeof getTodayKey === "function") ? getTodayKey() : new Date().toISOString().slice(0, 10);
+
+      let maxPR = 0;
+      const sessions = sortedDates.map(date => {
+        const rawSets = byDate.get(date);
+        const bySetIndex = new Map();
+        rawSets.forEach((item, idx) => {
+          const sIdx = (item.setIndex !== undefined && item.setIndex !== null) ? Number(item.setIndex) : idx;
+          bySetIndex.set(sIdx, item);
+        });
+
+        const cleanSets = Array.from(bySetIndex.entries())
+          .sort((a, b) => a[0] - b[0])
+          .map(e => e[1]);
+
+        cleanSets.forEach(s => {
+          const w = Number(s.weight) || 0;
+          if (w > maxPR) maxPR = w;
+        });
+
+        let sessionMaxW = 0;
+        let sessionMaxR = 0;
+        cleanSets.forEach(s => {
+          const w = Number(s.weight) || 0;
+          const r = Number(s.reps) || 0;
+          if (w > sessionMaxW || (w === sessionMaxW && r > sessionMaxR)) {
+            sessionMaxW = w;
+            sessionMaxR = r;
+          }
+        });
+
+        const summaryText = formatSetsSummaryString(cleanSets);
+        const dateFormatted = formatShortDateRu(date);
+
+        return {
+          date,
+          dateFormatted,
+          sets: cleanSets,
+          summaryText,
+          maxWeight: sessionMaxW,
+          bestReps: sessionMaxR,
+          totalSets: cleanSets.length
+        };
+      });
+
+      for (let i = 0; i < sessions.length; i++) {
+        const cur = sessions[i];
+        const prev = sessions[i + 1] || null;
+        if (prev) {
+          const diffW = cur.maxWeight - prev.maxWeight;
+          const diffR = cur.bestReps - prev.bestReps;
+          if (diffW > 0) {
+            cur.deltaLabel = `+${diffW} кг ↑`;
+            cur.deltaType = "pos";
+          } else if (diffW < 0) {
+            cur.deltaLabel = `${diffW} кг ↓`;
+            cur.deltaType = "neg";
+          } else if (diffR > 0) {
+            cur.deltaLabel = `+${diffR} повт. ↑`;
+            cur.deltaType = "pos";
+          } else if (diffR < 0) {
+            cur.deltaLabel = `${diffR} повт. ↓`;
+            cur.deltaType = "neg";
+          } else {
+            cur.deltaLabel = "=";
+            cur.deltaType = "neutral";
+          }
+        } else {
+          cur.deltaLabel = "Старт";
+          cur.deltaType = "start";
+        }
+      }
+
+      const pastSession = sessions.find(s => s.date < todayKey) || null;
+      const todaySession = sessions.find(s => s.date === todayKey) || null;
+
+      return {
+        sessions,
+        pastSession,
+        todaySession,
+        prWeight: maxPR,
+        totalWorkouts: sessions.length,
+        lastDeltaLabel: sessions[0]?.deltaLabel || ""
+      };
+    }
+    window.getExerciseProgressionHistory = getExerciseProgressionHistory;
+
     window.openSetLoggerModal = function(progId, exId, setIdx) {
       const prog = state.workout.programs?.[progId];
       ensureProgramVariants(prog);
@@ -22171,6 +22363,21 @@
 
       if (typeof renderSetLoggerNotesPreview === "function") {
         renderSetLoggerNotesPreview(ex.name);
+      }
+
+      // Плашка ориентира прошлой тренировки
+      const history = getExerciseProgressionHistory(ex.id, ex.name);
+      const pastBox = document.getElementById("setLoggerPastBox");
+      const pastDateEl = document.getElementById("setLoggerPastDate");
+      const pastValEl = document.getElementById("setLoggerPastValues");
+      if (pastBox && pastDateEl && pastValEl) {
+        if (history.pastSession && history.pastSession.summaryText) {
+          pastDateEl.textContent = history.pastSession.dateFormatted;
+          pastValEl.textContent = history.pastSession.summaryText;
+          pastBox.classList.remove("hidden");
+        } else {
+          pastBox.classList.add("hidden");
+        }
       }
 
       document.getElementById("setLoggerModal").classList.add("open");
@@ -22334,6 +22541,13 @@
           }
         }
 
+        const progHistory = getExerciseProgressionHistory(ex.id, ex.name);
+        const pastSession = progHistory.pastSession;
+        let pastSummaryHtml = "";
+        if (pastSession && pastSession.summaryText) {
+          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-0.5 truncate"><span class="text-zinc-500">Прошлая:</span> <span class="mono text-zinc-300 font-medium">${escapeHtml(pastSession.summaryText)}</span></div>`;
+        }
+
         const exNotes = getExerciseNotes(ex.name);
         let notesBadge = "";
         if (exNotes.length > 0) {
@@ -22343,14 +22557,20 @@
           notesBadge = `<span class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.08] text-zinc-300 border border-white/10 leading-none"><span>${bLabel}</span><span class="mono text-[9.5px] text-zinc-400 font-bold">${exNotes.length}</span></span>`;
         }
 
+        const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
+        let progressBadge = "";
+        if (progHistory.totalWorkouts > 0) {
+          progressBadge = `<span onclick="event.stopPropagation(); openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'progress')" class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none active:scale-95 transition cursor-pointer"><span>Прогресс</span></span>`;
+        }
+
+        const allBadges = `${notesBadge}${progressBadge}`;
         const rawName = String(ex.name || "");
         const lastSpaceIdx = rawName.lastIndexOf(" ");
-        const titleWithBadgeHtml = (notesBadge && lastSpaceIdx > 0)
-          ? `${escapeHtml(rawName.slice(0, lastSpaceIdx))} <span class="whitespace-nowrap">${escapeHtml(rawName.slice(lastSpaceIdx + 1))}${notesBadge}</span>`
-          : `${escapeHtml(rawName)}${notesBadge}`;
+        const titleWithBadgeHtml = (allBadges && lastSpaceIdx > 0)
+          ? `${escapeHtml(rawName.slice(0, lastSpaceIdx))} <span class="whitespace-nowrap">${escapeHtml(rawName.slice(lastSpaceIdx + 1))}${allBadges}</span>`
+          : `${escapeHtml(rawName)}${allBadges}`;
 
-        const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
-        const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}')`;
+        const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'notes')`;
         const metaSecondRow = (setsBreakdown || progressDot)
           ? `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-500">${setsBreakdown}${progressDot}</div>`
           : "";
@@ -22364,6 +22584,7 @@
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white mono font-bold">${wLabel} × ${curR}</strong></span>
               </div>
+              ${pastSummaryHtml}
               ${metaSecondRow}
             </div>
             <div class="flex items-center ${setsRowClass} shrink-0">${circlesHtml}</div>
@@ -23045,10 +23266,106 @@
       container.innerHTML = notes.map(n => renderSingleNoteCardHtml(n, exName)).join("");
     };
 
+    let currentExModalSubtab = "notes";
+
+    function switchExModalSubtab(tabKey, immediate = false) {
+      currentExModalSubtab = tabKey;
+      const notesPane = document.getElementById("exModalTabPane_notes");
+      const progPane = document.getElementById("exModalTabPane_progress");
+      const btnNotes = document.getElementById("exModalTabBtn_notes");
+      const btnProg = document.getElementById("exModalTabBtn_progress");
+
+      if (tabKey === "progress") {
+        if (notesPane) notesPane.classList.add("hidden");
+        if (progPane) progPane.classList.remove("hidden");
+        renderExerciseProgressionList(currentActiveNotesExName);
+      } else {
+        if (progPane) progPane.classList.add("hidden");
+        if (notesPane) notesPane.classList.remove("hidden");
+      }
+
+      const activeBtn = (tabKey === "progress") ? btnProg : btnNotes;
+      if (typeof updateSegmentedSlider === "function") {
+        updateSegmentedSlider("exModalSubNav", activeBtn, immediate);
+      }
+    }
+    window.switchExModalSubtab = switchExModalSubtab;
+
+    function renderExerciseProgressionList(exName) {
+      const container = document.getElementById("exProgressionListContainer");
+      const prEl = document.getElementById("exProgModalPR");
+      const totalEl = document.getElementById("exProgModalTotal");
+      const deltaEl = document.getElementById("exProgModalDelta");
+      if (!container) return;
+
+      const hist = getExerciseProgressionHistory(currentActiveNotesCtx.exId, exName);
+      if (prEl) prEl.textContent = hist.prWeight === 0 ? "Свой вес" : `${hist.prWeight} кг`;
+      if (totalEl) totalEl.textContent = hist.totalWorkouts;
+      if (deltaEl) {
+        deltaEl.textContent = hist.sessions[0]?.deltaLabel || "—";
+        deltaEl.className = "text-sm font-bold mono mt-0.5 " + (hist.sessions[0]?.deltaType === "pos" ? "text-emerald-400" : (hist.sessions[0]?.deltaType === "neg" ? "text-red-400" : "text-zinc-300"));
+      }
+
+      if (hist.sessions.length === 0) {
+        container.innerHTML = `
+          <div class="py-8 text-center text-zinc-500 text-xs font-mono">
+            Нет записанных тренировок по этому упражнению
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = hist.sessions.map(s => {
+        let deltaBadge = "";
+        if (s.deltaLabel && s.deltaLabel !== "=" && s.deltaLabel !== "Старт") {
+          const isPos = s.deltaType === "pos";
+          deltaBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold mono ${isPos ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${escapeHtml(s.deltaLabel)}</span>`;
+        }
+
+        const safeDateArg = escapeHtml(s.date).replace(/'/g, "\\'");
+        const safeNameArg = escapeHtml(exName).replace(/'/g, "\\'");
+
+        return `
+          <div class="bg-zinc-900/70 border border-white/[0.07] rounded-xl p-3 flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-bold text-white mono">${escapeHtml(s.dateFormatted)}</span>
+                <span class="text-[10px] text-zinc-500 mono">${escapeHtml(s.date)}</span>
+                ${deltaBadge}
+              </div>
+              <div class="text-xs text-zinc-200 mono font-medium">
+                ${escapeHtml(s.summaryText)}
+              </div>
+            </div>
+            <button type="button" onclick="deleteExerciseLogSession('${safeDateArg}', '${safeNameArg}')" class="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/15 text-zinc-400 hover:text-red-400 flex items-center justify-center text-xs active:scale-90 transition shrink-0" title="Удалить запись за этот день">✕</button>
+          </div>
+        `;
+      }).join("");
+    }
+    window.renderExerciseProgressionList = renderExerciseProgressionList;
+
+    function deleteExerciseLogSession(dateStr, exName) {
+      if (!confirm(`Удалить подходы за ${dateStr}?`)) return;
+      const norm = normalizeExerciseName(exName);
+      if (Array.isArray(state?.workout?.logs)) {
+        state.workout.logs = state.workout.logs.filter(l => {
+          if (l.date !== dateStr) return true;
+          if (currentActiveNotesCtx.exId && l.exId === currentActiveNotesCtx.exId) return false;
+          if (norm && normalizeExerciseName(l.exName) === norm) return false;
+          return true;
+        });
+      }
+      saveState();
+      renderExerciseProgressionList(exName);
+      if (typeof renderWorkoutAll === "function") renderWorkoutAll();
+      showToast("Запись тренировки удалена");
+    }
+    window.deleteExerciseLogSession = deleteExerciseLogSession;
+
     let currentActiveNotesCtx = { exName: "", progId: null, exId: null };
     window._replaceExercisePresets = [];
 
-    window.openExerciseNotesModal = function(exName, progId = null, exId = null) {
+    window.openExerciseNotesModal = function(exName, progId = null, exId = null, initialTab = 'notes') {
       currentActiveNotesExName = exName;
       const modal = document.getElementById("exerciseNotesModal");
       const title = document.getElementById("exNotesModalTitle");
@@ -23111,6 +23428,10 @@
 
       renderExerciseNotesList(exName);
       if (modal) modal.classList.add("open");
+
+      requestAnimationFrame(() => {
+        switchExModalSubtab(initialTab || "notes", true);
+      });
     };
 
     window.autoDetectReplaceExerciseMuscle = function(name) {
