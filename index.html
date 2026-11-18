@@ -564,7 +564,7 @@
     #exModalTrack {
       display: flex;
       width: 200%;
-      align-items: flex-start;
+      align-items: stretch;
       will-change: transform;
       transform: translate3d(0, 0, 0);
       -webkit-transform: translate3d(0, 0, 0);
@@ -1632,12 +1632,12 @@
       <div id="exModalViewport">
         <div id="exModalTrack">
           <!-- ВКЛАДКА 1: ЗАМЕТКИ (ТЕКУЩИЙ СПИСОК И ФОРМА) -->
-          <div id="exModalTabPane_notes" class="ex-modal-slide-panel">
+          <div id="exModalTabPane_notes" class="ex-modal-slide-panel flex flex-col justify-between h-full">
             <!-- Список заметок к упражнению в стиле GitHub alerts -->
-            <div id="exNotesListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5 mb-3"></div>
+            <div id="exNotesListContainer" class="space-y-2 flex-1 min-h-0 overflow-y-auto pr-0.5 mb-3"></div>
 
             <!-- Форма создания новой заметки -->
-            <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5">
+            <div class="bg-zinc-900/80 border border-white/[0.08] rounded-2xl p-3 space-y-2.5 shrink-0">
               <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
                 Новая запись
               </div>
@@ -1702,9 +1702,9 @@
           </div>
 
           <!-- ВКЛАДКА 2: ИСТОРИЯ И ПРОГРЕССИЯ -->
-          <div id="exModalTabPane_progress" class="ex-modal-slide-panel">
+          <div id="exModalTabPane_progress" class="ex-modal-slide-panel flex flex-col h-full">
             <!-- Сводная верхняя плашка -->
-            <div class="grid grid-cols-3 gap-2 p-3 bg-zinc-900/60 border border-white/[0.06] rounded-2xl mb-3 text-center">
+            <div class="grid grid-cols-3 gap-2 p-3 bg-zinc-900/60 border border-white/[0.06] rounded-2xl mb-3 text-center shrink-0">
               <div>
                 <div class="text-[9.5px] text-zinc-500 uppercase font-semibold tracking-wider">Рекорд (PR)</div>
                 <div id="exProgModalPR" class="text-sm font-bold text-white mono mt-0.5">0 кг</div>
@@ -1720,7 +1720,7 @@
             </div>
 
             <!-- Лента тренировок -->
-            <div id="exProgressionListContainer" class="space-y-2 max-h-[46dvh] overflow-y-auto pr-0.5"></div>
+            <div id="exProgressionListContainer" class="space-y-2 flex-1 min-h-0 overflow-y-auto pr-0.5"></div>
           </div>
         </div>
       </div>
@@ -23315,13 +23315,34 @@
       if (!modal || !modal.classList.contains("open")) return;
       const viewport = document.getElementById("exModalViewport");
       if (!viewport) return;
-      const activePaneId = currentExModalSubtab === "progress" ? "exModalTabPane_progress" : "exModalTabPane_notes";
-      const activePane = document.getElementById(activePaneId);
-      if (activePane) {
-        const h = activePane.scrollHeight || activePane.offsetHeight;
-        if (h > 0) {
-          viewport.style.height = `${h}px`;
-        }
+      const notesPane = document.getElementById("exModalTabPane_notes");
+      const progPane = document.getElementById("exModalTabPane_progress");
+
+      // Измеряем высоту контента обеих вкладок, чтобы окно оставалось на одном стабильном уровне
+      let notesH = 0;
+      if (notesPane) {
+        const listEl = document.getElementById("exNotesListContainer");
+        const formEl = notesPane.querySelector(".bg-zinc-900\\/80") || notesPane.lastElementChild;
+        const listH = listEl ? (listEl.scrollHeight || 0) : 0;
+        const formH = formEl ? (formEl.offsetHeight || 240) : 240;
+        notesH = listH + formH + 20;
+      }
+
+      let progH = 0;
+      if (progPane) {
+        const progList = document.getElementById("exProgressionListContainer");
+        const summaryCard = progPane.firstElementChild;
+        const sH = summaryCard ? (summaryCard.offsetHeight || 75) : 75;
+        const lH = progList ? (progList.scrollHeight || 0) : 0;
+        progH = sH + lH + 20;
+      }
+
+      // Ограничение по экрану (не более 72dvh), стабильный уровень высоты между вкладками
+      const maxScreenH = Math.round(window.innerHeight * 0.72);
+      const targetH = Math.min(maxScreenH, Math.max(notesH, progH, 480));
+
+      if (targetH > 50) {
+        viewport.style.height = `${targetH}px`;
       }
     }
     window.updateExModalViewportHeight = updateExModalViewportHeight;
@@ -23554,14 +23575,6 @@
             pill.style.transform = `translate3d(${pillTargetX}px, 0, 0)`;
             pill.style.width = btnNotes.offsetWidth + "px";
           }
-
-          // Динамически подстраиваем высоту вьюпорта под соседнюю входящую вкладку
-          const notesEl = document.getElementById("exModalTabPane_notes");
-          const progEl = document.getElementById("exModalTabPane_progress");
-          if (notesEl && progEl) {
-            const h = Math.max(notesEl.scrollHeight || notesEl.offsetHeight, progEl.scrollHeight || progEl.offsetHeight);
-            if (h > 50) viewport.style.height = h + "px";
-          }
         }
       }, { passive: false });
 
@@ -23672,10 +23685,8 @@
       }
 
       renderExerciseNotesList(exName);
+      renderExerciseProgressionList(exName);
       const startTab = initialTab || "notes";
-      if (startTab === "progress") {
-        renderExerciseProgressionList(exName);
-      }
       switchExModalSubtab(startTab, true);
 
       if (modal) modal.classList.add("open");
