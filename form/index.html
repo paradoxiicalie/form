@@ -372,6 +372,17 @@
       padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 236px) !important;
     }
 
+    #restTimerFloatingBar {
+      left: 50%;
+      transform: translate3d(-50%, 0, 0);
+      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    body.toast-is-visible #restTimerFloatingBar {
+      transform: translate3d(-50%, -52px, 0) !important;
+    }
+
     html.is-ios-app #restTimerFloatingBar {
       bottom: calc(env(safe-area-inset-bottom, 20px) + 84px) !important;
     }
@@ -3801,7 +3812,7 @@
   </div>
 
   <!-- ПЛАВАЮЩИЙ УМНЫЙ ТАЙМЕР ОТДЫХА -->
-  <div id="restTimerFloatingBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50 pointer-events-auto">
+  <div id="restTimerFloatingBar" class="hidden fixed bottom-6 w-[92%] max-w-md z-50 pointer-events-auto">
     <div class="bg-zinc-950/95 border border-white/20 backdrop-blur-2xl rounded-[28px] p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] space-y-2.5">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -10091,13 +10102,27 @@
         }
       });
 
+      // Если контейнер свернут (например, внутри неактивной вкладки с height: 0) — не фиксируем ложный отрицательный top
+      const isDirectParent = (activeBtn.offsetParent === container);
+      if (isDirectParent && container.offsetHeight > 0 && activeBtn.offsetHeight > 0 && container.offsetHeight < activeBtn.offsetHeight - 2) {
+        return;
+      }
+
       const cRect = container.getBoundingClientRect();
       const bRect = activeBtn.getBoundingClientRect();
 
-      let left = Math.round((bRect.width > 0) ? (bRect.left - cRect.left) : activeBtn.offsetLeft);
-      let top = Math.round((bRect.height > 0) ? (bRect.top - cRect.top) : activeBtn.offsetTop);
-      let width = Math.round((bRect.width > 0) ? bRect.width : activeBtn.offsetWidth);
-      let height = Math.round((bRect.height > 0) ? bRect.height : activeBtn.offsetHeight);
+      let left = isDirectParent
+        ? Math.round(activeBtn.offsetLeft)
+        : Math.round((bRect.width > 0) ? (bRect.left - cRect.left + container.scrollLeft) : activeBtn.offsetLeft);
+      let top = isDirectParent
+        ? Math.max(0, Math.round(activeBtn.offsetTop))
+        : Math.max(0, Math.round((bRect.height > 0) ? (bRect.top - cRect.top) : activeBtn.offsetTop));
+      let width = isDirectParent && activeBtn.offsetWidth > 0
+        ? Math.round(activeBtn.offsetWidth)
+        : Math.round((bRect.width > 0) ? bRect.width : activeBtn.offsetWidth);
+      let height = isDirectParent && activeBtn.offsetHeight > 0
+        ? Math.round(activeBtn.offsetHeight)
+        : Math.round((bRect.height > 0) ? bRect.height : activeBtn.offsetHeight);
 
       const containerId = container.id || null;
       if (immediate && containerId && window._prevPillRects) {
@@ -10112,7 +10137,7 @@
         pill.style.transition = "none";
         pill.style.transform = `translate3d(${prevRect.x}px, 0, 0)`;
         pill.style.width = `${prevRect.width}px`;
-        pill.style.top = `${prevRect.y || top}px`;
+        pill.style.top = `${Math.max(0, prevRect.y || top)}px`;
         pill.style.height = `${prevRect.height || height}px`;
 
         void pill.offsetHeight; // Force reflow
@@ -10131,12 +10156,16 @@
       if (width <= 0) {
         requestAnimationFrame(() => {
           if (!container || !activeBtn) return;
+          const direct = (activeBtn.offsetParent === container);
+          if (direct && container.offsetHeight > 0 && activeBtn.offsetHeight > 0 && container.offsetHeight < activeBtn.offsetHeight - 2) {
+            return;
+          }
           const cR = container.getBoundingClientRect();
           const bR = activeBtn.getBoundingClientRect();
-          const l = Math.round((bR.width > 0) ? (bR.left - cR.left) : activeBtn.offsetLeft);
-          const t = Math.round((bR.height > 0) ? (bR.top - cR.top) : activeBtn.offsetTop);
-          const w = Math.round((bR.width > 0) ? bR.width : activeBtn.offsetWidth);
-          const h = Math.round((bR.height > 0) ? bR.height : activeBtn.offsetHeight);
+          const l = direct ? Math.round(activeBtn.offsetLeft) : Math.round((bR.width > 0) ? (bR.left - cR.left + container.scrollLeft) : activeBtn.offsetLeft);
+          const t = direct ? Math.max(0, Math.round(activeBtn.offsetTop)) : Math.max(0, Math.round((bR.height > 0) ? (bR.top - cR.top) : activeBtn.offsetTop));
+          const w = direct && activeBtn.offsetWidth > 0 ? Math.round(activeBtn.offsetWidth) : Math.round((bR.width > 0) ? bR.width : activeBtn.offsetWidth);
+          const h = direct && activeBtn.offsetHeight > 0 ? Math.round(activeBtn.offsetHeight) : Math.round((bR.height > 0) ? bR.height : activeBtn.offsetHeight);
           if (w > 0) {
             pill.style.transition = immediate ? "none" : springTransition;
             pill.style.transform = `translate3d(${l}px, 0, 0)`;
@@ -10168,6 +10197,11 @@
       if (exModalNav && document.getElementById("exerciseNotesModal")?.classList.contains("open")) {
         const activeExBtn = exModalNav.querySelector("button.text-white");
         if (activeExBtn) updateSegmentedSlider(exModalNav, activeExBtn, true);
+      }
+      const splitVarBar = document.getElementById("splitVariantPills");
+      if (splitVarBar && !splitVarBar.classList.contains("hidden") && currentMainView === "split") {
+        const activeVarBtn = splitVarBar.querySelector("button.is-active, button.text-white");
+        if (activeVarBtn) updateSegmentedSlider(splitVarBar, activeVarBtn, true);
       }
     }
     window.updateAllSegmentedSliders = updateAllSegmentedSliders;
@@ -10237,6 +10271,13 @@
         if (prevView !== "split") {
           window.scrollTo({ top: savedSplitScrollY, behavior: "instant" });
         }
+        requestAnimationFrame(() => {
+          const splitVarBar = document.getElementById("splitVariantPills");
+          if (splitVarBar && !splitVarBar.classList.contains("hidden")) {
+            const activeVarBtn = splitVarBar.querySelector("button.is-active, button.text-white");
+            if (activeVarBtn) updateSegmentedSlider(splitVarBar, activeVarBtn, true);
+          }
+        });
       } else {
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
@@ -20590,6 +20631,7 @@
       clearTimeout(window._toastTimer);
       box.classList.remove("opacity-100", "translate-y-0", "toast-visible");
       box.classList.add("opacity-0", "translate-y-3");
+      document.body.classList.remove("toast-is-visible");
     }
     window.dismissToast = dismissToast;
 
@@ -20599,26 +20641,16 @@
       const text = document.getElementById("toastMsg");
       if (!box || !dot || !text) return;
 
-      // Приоритет 1: если открыта любая модалка (sheet-backdrop.open) — всегда внизу модалки (+18px)
+      // Приоритет 1: если открыта любая модалка (sheet-backdrop.open) — внизу модалки (+18px), таймер за ней не сдвигаем
       const openModal = document.querySelector(".sheet-backdrop.open");
       if (openModal) {
         box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 18px)";
+        document.body.classList.remove("toast-is-visible");
       } else {
-        // Приоритет 2: если виден таймер отдыха — строго над таймером (+12px над верхней границей)
-        const timerBar = document.getElementById("restTimerFloatingBar");
-        const timerVisible = Boolean(timerBar && !timerBar.classList.contains("hidden") && timerBar.offsetHeight > 0);
-        if (timerVisible) {
-          const rect = timerBar.getBoundingClientRect();
-          if (rect.top > 0 && rect.top < window.innerHeight) {
-            const distFromBottom = Math.round(window.innerHeight - rect.top + 12);
-            box.style.bottom = `${distFromBottom}px`;
-          } else {
-            box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 226px)";
-          }
-        } else {
-          // Приоритет 3: обычный вид экрана — чистый зазор над нативным Liquid Glass баром
-          box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 76px)";
-        }
+        // Обычный вид экрана — тост всегда спокойно внизу над нативным баром;
+        // если открыт таймер отдыха, CSS body.toast-is-visible плавно приподнимает только окно таймера
+        box.style.bottom = "calc(env(safe-area-inset-bottom, 20px) + 76px)";
+        document.body.classList.add("toast-is-visible");
       }
 
       text.textContent = msg;
@@ -21165,10 +21197,11 @@
         >+ Вариант</button>
       `;
 
-      varBox.className = "segmented-slider-container no-swipe flex items-center gap-1.5 px-1 py-1.5 rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
+      varBox.className = "segmented-slider-container no-swipe shrink-0 flex items-center gap-1.5 px-1 py-1.5 rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
       varBox.innerHTML = `<div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>` + pillsHtml + addBtnHtml;
 
-      updateSegmentedSlider("splitVariantPills", "workoutVarBtn_" + activeProg.id + "_" + activeVk, false);
+      const hasPrevVarRect = !!(window._prevPillRects && window._prevPillRects["splitVariantPills"]);
+      updateSegmentedSlider("splitVariantPills", "workoutVarBtn_" + activeProg.id + "_" + activeVk, !hasPrevVarRect);
     };
 
     // 5. Полный и безопасный рендер вкладки «ТРЕНИ» (без фантомных кнопок шаблонов!)
@@ -22261,7 +22294,7 @@
         }
       });
       return groups.map(g => {
-        const wLabel = g.weight === 0 ? "Свой вес" : `${g.weight} кг`;
+        const wLabel = g.weight === 0 ? "Свой\u00A0вес" : `${g.weight}\u00A0кг`;
         return `${wLabel} × ${g.reps.join(", ")}`;
       }).join(" · ");
     }
@@ -22624,6 +22657,7 @@
 
         // Сравниваем лучший сегодняшний подход с лучшим подходом прошлой тренировки
         let progressDot = "";
+        let refBaseText = "";
         if (bestToday) {
           const hasPast = !!(pastSession && pastSession.totalSets > 0);
           const refW = hasPast ? pastSession.maxWeight : (ex.prevWeight !== undefined ? Number(ex.prevWeight) : undefined);
@@ -22632,16 +22666,32 @@
             const diffW = round1((Number(bestToday.weight) || 0) - (Number(refW) || 0));
             const diffR = (Number(bestToday.reps) || 0) - (Number(refR) || 0);
             if (diffW > 0) {
-              progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffW} кг ↑</span>`;
+              progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffW}\u00A0кг ↑</span>`;
             } else if (diffW === 0 && diffR > 0) {
-              progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffR} повт. ↑</span>`;
+              progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffR}\u00A0повт. ↑</span>`;
+            }
+            if (!hasPast && progressDot) {
+              const refWL = (refW === 0) ? "Свой\u00A0вес" : `${refW}\u00A0кг`;
+              refBaseText = `${refWL} × ${refR}`;
             }
           }
         }
 
-        let pastSummaryHtml = "";
-        if (pastSession && pastSession.summaryText) {
-          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-1 leading-snug break-words"><span class="text-zinc-500">Прошлая:</span> <span class="mono text-zinc-300 font-medium">${escapeHtml(pastSession.summaryText)}</span></div>`;
+        const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
+        const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'notes')`;
+        const openProgressCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'progress')`;
+
+        let bottomMetaStripHtml = "";
+        if ((pastSession && pastSession.summaryText) || progressDot) {
+          const leftMeta = (pastSession && pastSession.summaryText)
+            ? `<span class="text-zinc-500">Прошлая:</span> <span class="mono text-zinc-300 font-medium">${escapeHtml(pastSession.summaryText)}</span>`
+            : `<span class="text-zinc-500">База:</span> <span class="mono text-zinc-400 font-medium">${escapeHtml(refBaseText)}</span>`;
+          bottomMetaStripHtml = `
+            <div class="mt-2 flex items-center justify-between gap-2 text-[11px] text-zinc-400 cursor-pointer active:opacity-75 transition" onclick="${openProgressCall}">
+              <div class="min-w-0 flex-1 leading-snug">${leftMeta}</div>
+              ${progressDot}
+            </div>
+          `;
         }
 
         const exNotes = getExerciseNotes(ex.name);
@@ -22653,28 +22703,27 @@
           notesBadge = `<span class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.08] text-zinc-300 border border-white/10 leading-none"><span>${bLabel}</span><span class="mono text-[9.5px] text-zinc-400 font-bold">${exNotes.length}</span></span>`;
         }
 
-        const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
         const rawName = String(ex.name || "");
         const lastSpaceIdx = rawName.lastIndexOf(" ");
         const titleWithBadgeHtml = (notesBadge && lastSpaceIdx > 0)
           ? `${escapeHtml(rawName.slice(0, lastSpaceIdx))} <span class="whitespace-nowrap">${escapeHtml(rawName.slice(lastSpaceIdx + 1))}${notesBadge}</span>`
           : `${escapeHtml(rawName)}${notesBadge}`;
 
-        const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'notes')`;
         const setsRowClass = targetS >= 5 ? 'gap-[2px] sets-row-tight' : (targetS === 4 ? 'gap-1 sets-row-compact' : 'gap-1.5');
 
         return `
-          <div class="exercise-row py-3.5 pr-1 flex items-center justify-between gap-2.5" data-ex-id="${ex.id}">
-            <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
-              <div class="text-[14.5px] font-semibold text-white leading-snug">${titleWithBadgeHtml}</div>
-              <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-400">
-                <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
-                <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white mono font-bold">${wLabel} × ${curR}</strong></span>
-                ${progressDot}
+          <div class="exercise-row py-3.5 pr-1 flex flex-col" data-ex-id="${ex.id}">
+            <div class="flex items-center justify-between gap-2.5">
+              <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
+                <div class="text-[14.5px] font-semibold text-white leading-snug">${titleWithBadgeHtml}</div>
+                <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-400">
+                  <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
+                  <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white mono font-bold">${wLabel} × ${curR}</strong></span>
+                </div>
               </div>
-              ${pastSummaryHtml}
+              <div class="flex items-center ${setsRowClass} shrink-0">${circlesHtml}</div>
             </div>
-            <div class="flex items-center ${setsRowClass} shrink-0">${circlesHtml}</div>
+            ${bottomMetaStripHtml}
           </div>
         `;
       }).join("");
