@@ -75,16 +75,52 @@ try:
         pl = plistlib.loads(data)
         exp = pl.get('ExpirationDate')
         if exp:
-            exp_ts = int(exp.timestamp()) if hasattr(exp, 'timestamp') else 0
-            now_ts = int(datetime.datetime.now().timestamp())
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=datetime.timezone.utc)
+            exp_local = exp.astimezone()
+            exp_ts = int(exp_local.timestamp())
+            now_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
             rem_sec = max(0, exp_ts - now_ts)
-            exp_str = exp.strftime('%Y-%m-%d %H:%M')
+            exp_str = exp_local.strftime('%Y-%m-%d %H:%M')
             print(f'{exp_ts}|{rem_sec}|{exp_str}')
             sys.exit(0)
 except Exception:
     pass
 print('0|0|none')
 " 2>/dev/null || echo "0|0|none"
+}
+
+find_newest_profile() {
+    local bundle_suffix="$1"
+    local prof_dir="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+    [[ ! -d "$prof_dir" ]] && return
+    python3 -c "
+import os, glob, subprocess, plistlib, datetime, sys
+prof_dir = sys.argv[1]
+suffix = sys.argv[2]
+best_path = ''
+best_ts = -1
+for p in glob.glob(os.path.join(prof_dir, '*.mobileprovision')):
+    try:
+        res = subprocess.run(['security', 'cms', '-D', '-i', p], capture_output=True)
+        if res.returncode != 0 or not res.stdout:
+            continue
+        pl = plistlib.loads(res.stdout)
+        app_id = pl.get('Entitlements', {}).get('application-identifier', '')
+        if app_id.endswith('.' + suffix):
+            exp = pl.get('ExpirationDate')
+            if exp:
+                if exp.tzinfo is None:
+                    exp = exp.replace(tzinfo=datetime.timezone.utc)
+                ts = int(exp.timestamp())
+                if ts > best_ts:
+                    best_ts = ts
+                    best_path = p
+    except Exception:
+        pass
+if best_path:
+    print(best_path)
+" "$prof_dir" "$bundle_suffix" 2>/dev/null
 }
 
 show_status() {
@@ -104,15 +140,9 @@ show_status() {
         echo -e "Сопряжение: ${CLR_YELLOW}Ожидание сопряжения с iPhone...${CLR_RESET}"
     fi
 
-    # Ищем актуальный профиль form.app
+    # Ищем самый свежий профиль form.app
     local main_prov
-    main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | while read -r p; do
-        if security cms -D -i "$p" 2>/dev/null | grep -q "com.form.app.form<"; then
-            echo "$p"
-            break
-        fi
-    done)
-    [[ -z "$main_prov" ]] && main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | head -n 1)
+    main_prov=$(find_newest_profile "com.form.app.form")
 
     if [[ -n "$main_prov" && -f "$main_prov" ]]; then
         local prof_info
@@ -127,7 +157,7 @@ show_status() {
         if [[ $rem_sec -gt 0 ]]; then
             echo -e "Профиль Apple: ${CLR_GREEN}АКТИВЕН до $exp_str${CLR_RESET} (осталось: $rem_days дн. $rem_hours ч.)"
         else
-            echo -e "Профиль Apple: ${CLR_RED}ИСТЕК ($exp_str)${CLR_RESET}. Откройте Xcode -> Accounts для обновления!"
+            echo -e "Профиль Apple: ${CLR_RED}ИСТЕК ($exp_str)${CLR_RESET}. Запусти --force или открой Xcode -> Settings -> Accounts."
         fi
     else
         echo -e "Профиль Apple: ${CLR_YELLOW}Не найден в UserData/Provisioning Profiles${CLR_RESET}"
@@ -164,13 +194,20 @@ run_autoresign() {
     local now
     now=$(date +%s)
 
-    # 1. Проверяем тайминг (нужно ли обновлять прямо сейчас)
-    if [[ "$force_flag" != "--force" && -f "$STATE_FILE" ]]; then
+    # 1. Проверяем остаток жизни профиля и тайминг (продлеваем досрочно при <= 48ч, даже если --force был недавно)
+    local pre_main_prov
+    pre_main_prov=$(find_newest_profile "com.form.app.form")
+    local pre_info
+    pre_info=$(get_profile_info "$pre_main_prov")
+    local pre_rest="${pre_info#*|}"
+    local pre_rem_sec="${pre_rest%%|*}"
+
+    if [[ "$force_flag" != "--force" && -f "$STATE_FILE" && $pre_rem_sec -gt 172800 ]]; then
         local last_run
         last_run=$(cat "$STATE_FILE" 2>/dev/null)
         local elapsed=$((now - last_run))
         if [[ $elapsed -lt $MAX_AGE_SECONDS ]]; then
-            # Еще рано обновлять, тихо выходим
+            # Профиль свежий (>48ч) и недавно ставили, тихо выходим
             exit 0
         fi
     fi
@@ -213,15 +250,11 @@ run_autoresign() {
         cp -f "$PROJECT_DIR/index.html" "$PROJECT_DIR/form/index.html"
     fi
 
-    # 3. Проверяем остаток жизни текущего профиля form.app
+    # 3. Проверяем остаток жизни текущего профиля form.app и виджета
     local main_prov
-    main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | while read -r p; do
-        if security cms -D -i "$p" 2>/dev/null | grep -q "com.form.app.form<"; then
-            echo "$p"
-            break
-        fi
-    done)
-    [[ -z "$main_prov" ]] && main_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | head -n 1)
+    main_prov=$(find_newest_profile "com.form.app.form")
+    local widget_user_prov
+    widget_user_prov=$(find_newest_profile "com.form.app.form.FormWidget")
 
     local prof_info
     prof_info=$(get_profile_info "$main_prov")
@@ -231,15 +264,33 @@ run_autoresign() {
     local exp_str="${rest#*|}"
     local rem_hours=$((rem_sec / 3600))
     local rem_days=$((rem_sec / 86400))
+    local rem_hours_mod=$(((rem_sec % 86400) / 3600))
 
-    # Запрашиваем обновление у Apple через -allowProvisioningUpdates ТОЛЬКО если до конца профиля осталось <= 48 часов
-    # Это предотвращает частый спам серверов Apple и спасает от разлогина аккаунта в Xcode!
+    local w_pre_info
+    w_pre_info=$(get_profile_info "$widget_user_prov")
+    local w_pre_rest="${w_pre_info#*|}"
+    local w_pre_rem_sec="${w_pre_rest%%|*}"
+
+    # Запрашиваем обновление у Apple через -allowProvisioningUpdates при <= 48 часов до конца профиля.
+    # ВАЖНО: xcodebuild НЕ обновляет еще не истекший профиль, пока он лежит в Provisioning Profiles!
+    # Поэтому временно убираем истекающий профиль в backup, чтобы Xcode реально запросил свежий 7-дневный у Apple.
     local prov_flag=""
-    if [[ -z "$main_prov" || $rem_sec -le 172800 ]]; then
+    local prov_backup_dir="/tmp/form_prov_backup_$$"
+    local moved_provs=0
+    if [[ -z "$main_prov" || $rem_sec -le 172800 || -z "$widget_user_prov" || $w_pre_rem_sec -le 172800 ]]; then
         prov_flag="-allowProvisioningUpdates"
-        log_msg "⏰ До истечения профиля Apple осталось $rem_hours ч. (<= 48ч). Запрашиваем обновление профиля у Apple..."
+        log_msg "⏰ До истечения профиля Apple осталось $rem_hours ч. (<= 48ч). Запрашиваем свежий 7-дневный профиль у Apple..."
+        mkdir -p "$prov_backup_dir"
+        if [[ -n "$main_prov" && -f "$main_prov" && $rem_sec -le 172800 ]]; then
+            mv -f "$main_prov" "$prov_backup_dir/"
+            moved_provs=1
+        fi
+        if [[ -n "$widget_user_prov" && -f "$widget_user_prov" && $w_pre_rem_sec -le 172800 ]]; then
+            mv -f "$widget_user_prov" "$prov_backup_dir/"
+            moved_provs=1
+        fi
     else
-        log_msg "🛡️ Профиль Apple в норме (до $exp_str, осталось $rem_days дн. $rem_hours ч.). Сборка без запроса к Apple."
+        log_msg "🛡️ Профиль Apple в норме (до $exp_str, осталось $rem_days дн. $rem_hours_mod ч.). Сборка без запроса к Apple."
     fi
 
     # 4. Собираем проект
@@ -251,7 +302,25 @@ run_autoresign() {
          $prov_flag \
          build > "$build_log" 2>&1; then
         build_ok=0
-        log_msg "⚠️ xcodebuild завершился с кодом ошибки (возможно, истек профиль FormWidget). Проверяем fallback..."
+        log_msg "⚠️ xcodebuild завершился с кодом ошибки. Проверяем профили и fallback..."
+    fi
+
+    # Проверяем, выдал ли Apple свежий профиль; если нет (оффлайн / разлогин Xcode) — откатываем backup
+    local post_main_prov
+    post_main_prov=$(find_newest_profile "com.form.app.form")
+    local post_info
+    post_info=$(get_profile_info "$post_main_prov")
+    local post_rem_sec="${post_info#*|}"
+    post_rem_sec="${post_rem_sec%%|*}"
+
+    if [[ $moved_provs -eq 1 ]]; then
+        if [[ -z "$post_main_prov" || $post_rem_sec -le 0 ]]; then
+            log_msg "⚠️ Apple не выдал новый профиль (проверь интернет или сессию в Xcode -> Settings -> Accounts). Восстанавливаем резервную копию..."
+            cp -f "$prov_backup_dir"/*.mobileprovision "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles/" 2>/dev/null || true
+        else
+            log_msg "✨ Apple выдал свежий 7-дневный профиль!"
+        fi
+        rm -rf "$prov_backup_dir" 2>/dev/null || true
     fi
 
     # 5. Находим путь к собранному form.app
@@ -273,18 +342,11 @@ run_autoresign() {
     local widget_appex="$app_path/PlugIns/FormWidgetExtension.appex"
     if [[ -d "$widget_appex" ]]; then
         local widget_prov="$widget_appex/embedded.mobileprovision"
-        # Если в собранном .appex отсутствует embedded.mobileprovision, ищем свежий в профилях Xcode
-        if [[ ! -f "$widget_prov" ]]; then
-            local user_widget_prov
-            user_widget_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | while read -r p; do
-                if security cms -D -i "$p" 2>/dev/null | grep -q "com.form.app.form.FormWidget"; then
-                    echo "$p"
-                    break
-                fi
-            done)
-            if [[ -n "$user_widget_prov" && -f "$user_widget_prov" ]]; then
-                cp -f "$user_widget_prov" "$widget_prov"
-            fi
+        # Подкладываем самый свежий профиль виджета из Xcode, если он новее встроенного
+        local user_widget_prov
+        user_widget_prov=$(find_newest_profile "com.form.app.form.FormWidget")
+        if [[ -n "$user_widget_prov" && -f "$user_widget_prov" ]]; then
+            cp -f "$user_widget_prov" "$widget_prov"
         fi
 
         local widget_info
@@ -314,13 +376,11 @@ if data:
         fi
     fi
 
-    # Гарантируем наличие активного provisioning profile
-    if [[ ! -f "$app_path/embedded.mobileprovision" ]]; then
-        local user_prov
-        user_prov=$(find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.mobileprovision" 2>/dev/null | head -n 1)
-        if [[ -n "$user_prov" && -f "$user_prov" ]]; then
-            cp -f "$user_prov" "$app_path/embedded.mobileprovision"
-        fi
+    # Гарантируем наличие самого свежего активного provisioning profile для form.app
+    local latest_main_prov
+    latest_main_prov=$(find_newest_profile "com.form.app.form")
+    if [[ -n "$latest_main_prov" && -f "$latest_main_prov" ]]; then
+        cp -f "$latest_main_prov" "$app_path/embedded.mobileprovision"
     fi
 
     # Проверяем итоговый срок действия профиля перед установкой на устройство

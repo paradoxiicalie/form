@@ -365,7 +365,11 @@
     }
 
     html.is-ios-app .app-shell {
-      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 96px) !important;
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 112px) !important;
+    }
+
+    html.is-ios-app body.rest-timer-active .app-shell {
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 236px) !important;
     }
 
     html.is-ios-app #restTimerFloatingBar {
@@ -1465,9 +1469,9 @@
       <div id="setLoggerNotesPreview" class="mb-3"></div>
 
       <!-- Плашка ориентира прошлой тренировки -->
-      <div id="setLoggerPastBox" class="hidden bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs flex items-center justify-between mb-3">
-        <span class="text-zinc-400 flex items-center gap-1">Прошлая (<span id="setLoggerPastDate" class="text-zinc-300"></span>):</span>
-        <span id="setLoggerPastValues" class="mono font-semibold text-white truncate ml-2"></span>
+      <div id="setLoggerPastBox" class="hidden bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 mb-3">
+        <span class="text-zinc-400 flex items-center gap-1 shrink-0">Прошлая (<span id="setLoggerPastDate" class="text-zinc-300"></span>):</span>
+        <span id="setLoggerPastValues" class="mono font-semibold text-white leading-snug break-words"></span>
       </div>
 
       <div class="bg-zinc-900/70 border border-white/[0.06] rounded-2xl p-3.5 space-y-3 mb-4">
@@ -1478,7 +1482,7 @@
           </div>
           <div class="flex items-center gap-2">
             <button type="button" onclick="stepSetWeight(-2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">-2.5</button>
-            <input id="setWeightInput" type="number" step="0.5" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
+            <input id="setWeightInput" type="number" inputmode="decimal" step="0.5" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
             <button type="button" onclick="stepSetWeight(2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">+2.5</button>
           </div>
         </div>
@@ -1487,7 +1491,7 @@
           <label class="text-xs text-zinc-400 block mb-1.5">Повторения</label>
           <div class="flex items-center gap-2">
             <button type="button" onclick="stepSetReps(-1)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">-1</button>
-            <input id="setRepsInput" type="number" class="dark-field mono text-center text-lg font-bold text-white" />
+            <input id="setRepsInput" type="number" inputmode="numeric" class="dark-field mono text-center text-lg font-bold text-white" />
             <button type="button" onclick="stepSetReps(1)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">+1</button>
           </div>
         </div>
@@ -3814,17 +3818,14 @@
           <button type="button" onclick="stopRestTimer(true)" title="Сбросить отдых" class="text-[11px] mono font-bold px-2.5 py-1.5 rounded-xl bg-white/10 text-white hover:bg-red-500/20 hover:text-red-300 transition active:scale-95">✕</button>
         </div>
       </div>
-      <!-- Быстрые пресеты на 1 тап (до 7 минут) -->
-      <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-white/[0.08]">
-        <span class="text-[9px] mono uppercase tracking-wider text-zinc-500 mr-0.5 shrink-0">Пресеты:</span>
-        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
-          <button type="button" onclick="setRestTimerDirect(90)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">1:30</button>
-          <button type="button" onclick="setRestTimerDirect(120)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">2:00</button>
-          <button type="button" onclick="setRestTimerDirect(150)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">2:30</button>
-          <button type="button" onclick="setRestTimerDirect(240)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">4:00</button>
-          <button type="button" onclick="setRestTimerDirect(300)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">5:00</button>
-          <button type="button" onclick="setRestTimerDirect(420)" class="text-[10px] mono px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-zinc-300 hover:text-white active:scale-95">7:00</button>
-        </div>
+      <!-- Быстрые пресеты на 1 тап (равномерная сетка без обрезания 7:00) -->
+      <div class="grid grid-cols-6 gap-1 pt-2 border-t border-white/[0.08]">
+        <button type="button" onclick="setRestTimerDirect(90)" class="text-[10.5px] mono font-medium py-1 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition text-center">1:30</button>
+        <button type="button" onclick="setRestTimerDirect(120)" class="text-[10.5px] mono font-medium py-1 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition text-center">2:00</button>
+        <button type="button" onclick="setRestTimerDirect(150)" class="text-[10.5px] mono font-medium py-1 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition text-center">2:30</button>
+        <button type="button" onclick="setRestTimerDirect(240)" class="text-[10.5px] mono font-medium py-1 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition text-center">4:00</button>
+        <button type="button" onclick="setRestTimerDirect(300)" class="text-[10.5px] mono font-medium py-1 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition text-center">5:00</button>
+        <button type="button" onclick="setRestTimerDirect(420)" class="text-[10.5px] mono font-medium py-1 rounded-full bg-white/[0.04] hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white active:scale-95 transition text-center">7:00</button>
       </div>
       <div class="macro-mini-track">
         <div id="restTimerProgressTrack" class="h-full rounded-full transition-all duration-300" style="width: 100%; background: var(--accent-cal)"></div>
@@ -13923,6 +13924,7 @@
       const bar = document.getElementById("restTimerFloatingBar");
       if (!bar) return;
       if (bar.classList.contains("hidden")) bar.classList.remove("hidden");
+      document.body.classList.add("rest-timer-active");
 
       const countEl = document.getElementById("restTimerCountdown");
       const trackEl = document.getElementById("restTimerProgressTrack");
@@ -13935,7 +13937,7 @@
       }
       if (labelEl && state.activeRest) {
         const mLabel = MUSCLE_META[state.activeRest.muscle]?.label || "Отдых";
-        labelEl.textContent = `${mLabel} · ${state.activeRest.exName || 'Отдых'}`;
+        labelEl.textContent = state.activeRest.exName || mLabel;
       }
 
       const quickBtn = document.getElementById("quickRestBtn");
@@ -13956,6 +13958,7 @@
     function hideRestTimerUI() {
       const bar = document.getElementById("restTimerFloatingBar");
       if (bar) bar.classList.add("hidden");
+      document.body.classList.remove("rest-timer-active");
       const quickBtn = document.getElementById("quickRestBtn");
       const quickIcon = document.getElementById("quickRestBtnIcon");
       const quickLabel = document.getElementById("quickRestBtnLabel");
@@ -22379,18 +22382,22 @@
       activeSetEdit = { progId, exId, setIndex: setIdx };
       const existingSet = (ex.setsToday || [])[setIdx];
       const bestToday = getBestSetFromList(ex.setsToday);
+      const history = getExerciseProgressionHistory(ex.id, ex.name);
 
       const defaultW = (existingSet && existingSet.weight !== undefined)
         ? existingSet.weight
-        : ((ex.lastWeight !== undefined && ex.lastWeight !== null) ? ex.lastWeight : (bestToday ? bestToday.weight : 50));
+        : (bestToday ? bestToday.weight : ((ex.lastWeight !== undefined && ex.lastWeight !== null) ? ex.lastWeight : 50));
       const defaultR = (existingSet && existingSet.reps !== undefined)
         ? existingSet.reps
-        : (ex.lastReps || 10);
-      const prevWLabel = (ex.prevWeight === 0 || ex.prevWeight === "0") ? "Свой вес" : `${ex.prevWeight ?? ex.lastWeight}кг`;
-      const prevRLabel = ex.prevReps || ex.lastReps || 10;
+        : (bestToday ? bestToday.reps : (ex.lastReps || 10));
+
+      const hasPast = !!(history.pastSession && history.pastSession.totalSets > 0);
+      const refPrevW = hasPast ? history.pastSession.maxWeight : (ex.prevWeight ?? ex.lastWeight ?? 0);
+      const refPrevR = hasPast ? history.pastSession.bestReps : (ex.prevReps || ex.lastReps || 10);
+      const prevWLabel = (refPrevW === 0 || refPrevW === "0") ? "Свой вес" : `${refPrevW}кг`;
 
       document.getElementById("setLoggerBadge").textContent =
-        `ПОДХОД #${setIdx + 1} · ПРОШЛЫЙ РЕКОРД: ${prevWLabel} × ${prevRLabel}`;
+        `ПОДХОД #${setIdx + 1} · ПРОШЛЫЙ РЕКОРД: ${prevWLabel} × ${refPrevR}`;
       document.getElementById("setLoggerExName").textContent = ex.name;
       document.getElementById("setWeightInput").value = defaultW;
       document.getElementById("setRepsInput").value = defaultR;
@@ -22405,7 +22412,6 @@
       }
 
       // Плашка ориентира прошлой тренировки
-      const history = getExerciseProgressionHistory(ex.id, ex.name);
       const pastBox = document.getElementById("setLoggerPastBox");
       const pastDateEl = document.getElementById("setLoggerPastDate");
       const pastValEl = document.getElementById("setLoggerPastValues");
@@ -22437,10 +22443,10 @@
       if (!Array.isArray(ex.setsToday)) ex.setsToday = [];
       ex.setsToday[activeSetEdit.setIndex] = { weight: w, reps: r, date: todayKey };
 
-      ex.lastWeight = w;
-      ex.lastReps = r;
-
+      // Рабочий вес/повторения — лучший подход дня (макс. вес, затем макс. повторы), а не просевший последний подход
       const bestToday = getBestSetFromList(ex.setsToday) || { weight: w, reps: r };
+      ex.lastWeight = bestToday.weight;
+      ex.lastReps = bestToday.reps;
 
       if (!Array.isArray(state.workout.logs)) state.workout.logs = [];
       const existingLogIdx = state.workout.logs.findIndex(
@@ -22521,8 +22527,47 @@
       return tokens.join("");
     };
 
+    function healExerciseWorkingSetsFromLogs() {
+      if (!state?.workout || state.workout._workingSetHealedV1) return;
+      let changed = false;
+      Object.values(state.workout.programs || {}).forEach(prog => {
+        ensureProgramVariants(prog);
+        getAllProgramExerciseLists(prog).forEach(list => {
+          list.forEach(ex => {
+            if (!ex) return;
+            const bestToday = getBestSetFromList(ex.setsToday);
+            const hist = getExerciseProgressionHistory(ex.id, ex.name);
+            if (bestToday) {
+              if (ex.lastWeight !== bestToday.weight || ex.lastReps !== bestToday.reps) {
+                ex.lastWeight = bestToday.weight;
+                ex.lastReps = bestToday.reps;
+                changed = true;
+              }
+            } else if (hist.sessions.length > 0) {
+              const latest = hist.sessions[0];
+              if (ex.lastWeight !== latest.maxWeight || ex.lastReps !== latest.bestReps) {
+                ex.lastWeight = latest.maxWeight;
+                ex.lastReps = latest.bestReps;
+                changed = true;
+              }
+            }
+            if (hist.pastSession && hist.pastSession.totalSets > 0) {
+              if (ex.prevWeight !== hist.pastSession.maxWeight || ex.prevReps !== hist.pastSession.bestReps) {
+                ex.prevWeight = hist.pastSession.maxWeight;
+                ex.prevReps = hist.pastSession.bestReps;
+                changed = true;
+              }
+            }
+          });
+        });
+      });
+      state.workout._workingSetHealedV1 = true;
+      if (changed) saveState();
+    }
+
     const prevRenderWorkoutAll = window.renderWorkoutAll;
     window.renderWorkoutAll = function() {
+      healExerciseWorkingSetsFromLogs();
       if (prevRenderWorkoutAll) prevRenderWorkoutAll();
 
       const dow = Number.isInteger(Number(selectedWeekdayKey)) ? Number(selectedWeekdayKey) : new Date().getDay();
@@ -22539,12 +22584,21 @@
       exContainer.innerHTML = activeExercises.map(ex => {
         ensureExerciseBaseline(ex);
         const bestToday = getBestSetFromList(ex.setsToday);
-        const curW = (ex.lastWeight !== undefined && ex.lastWeight !== null) 
-          ? ex.lastWeight 
-          : (bestToday ? bestToday.weight : (ex.baseWeight || 0));
-        const curR = (ex.lastReps !== undefined && ex.lastReps !== null) 
-          ? ex.lastReps 
-          : (bestToday ? bestToday.reps : (ex.baseReps || 10));
+        const progHistory = getExerciseProgressionHistory(ex.id, ex.name);
+        const pastSession = progHistory.pastSession;
+
+        let curW, curR;
+        if (bestToday) {
+          curW = bestToday.weight;
+          curR = bestToday.reps;
+          if (ex.lastWeight !== curW || ex.lastReps !== curR) {
+            ex.lastWeight = curW;
+            ex.lastReps = curR;
+          }
+        } else {
+          curW = (ex.lastWeight !== undefined && ex.lastWeight !== null) ? ex.lastWeight : (ex.baseWeight || 0);
+          curR = (ex.lastReps !== undefined && ex.lastReps !== null) ? ex.lastReps : (ex.baseReps || 10);
+        }
 
         const targetS = Math.max(1, Number(ex.targetSets) || 3);
         const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
@@ -22568,25 +22622,26 @@
 
         const wLabel = (curW === 0 || curW === "0") ? "Свой вес" : `${curW || 0} кг`;
 
+        // Сравниваем лучший сегодняшний подход с лучшим подходом прошлой тренировки
         let progressDot = "";
-        if (bestToday && ex.prevWeight !== undefined) {
-          const diffW = round1((Number(bestToday.weight) || 0) - (Number(ex.prevWeight) || 0));
-          const diffR = (Number(bestToday.reps) || 0) - (Number(ex.prevReps) || 0);
-          if (diffW > 0) {
-            progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffW} кг ↑</span>`;
-          } else if (diffW === 0 && diffR > 0) {
-            progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffR} повт. ↑</span>`;
+        if (bestToday) {
+          const hasPast = !!(pastSession && pastSession.totalSets > 0);
+          const refW = hasPast ? pastSession.maxWeight : (ex.prevWeight !== undefined ? Number(ex.prevWeight) : undefined);
+          const refR = hasPast ? pastSession.bestReps : (ex.prevReps !== undefined ? Number(ex.prevReps) : undefined);
+          if (refW !== undefined && refR !== undefined) {
+            const diffW = round1((Number(bestToday.weight) || 0) - (Number(refW) || 0));
+            const diffR = (Number(bestToday.reps) || 0) - (Number(refR) || 0);
+            if (diffW > 0) {
+              progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffW} кг ↑</span>`;
+            } else if (diffW === 0 && diffR > 0) {
+              progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffR} повт. ↑</span>`;
+            }
           }
         }
 
-        const progHistory = getExerciseProgressionHistory(ex.id, ex.name);
-        const pastSession = progHistory.pastSession;
         let pastSummaryHtml = "";
         if (pastSession && pastSession.summaryText) {
-          const deltaPart = progressDot ? `<span class="shrink-0">${progressDot}</span>` : "";
-          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-0.5 truncate flex items-center gap-1.5"><span class="text-zinc-500 shrink-0">Прошлая:</span> <span class="mono text-zinc-300 font-medium truncate">${escapeHtml(pastSession.summaryText)}</span>${deltaPart}</div>`;
-        } else if (progressDot) {
-          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1.5">${progressDot}</div>`;
+          pastSummaryHtml = `<div class="text-[11px] text-zinc-400 mt-1 leading-snug break-words"><span class="text-zinc-500">Прошлая:</span> <span class="mono text-zinc-300 font-medium">${escapeHtml(pastSession.summaryText)}</span></div>`;
         }
 
         const exNotes = getExerciseNotes(ex.name);
@@ -22599,17 +22654,11 @@
         }
 
         const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
-        let progressBadge = "";
-        if (progHistory.totalWorkouts > 0) {
-          progressBadge = `<span onclick="event.stopPropagation(); openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'progress')" class="inline-flex items-center gap-1 align-middle ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none active:scale-95 transition cursor-pointer"><span>Прогресс</span></span>`;
-        }
-
-        const allBadges = `${notesBadge}${progressBadge}`;
         const rawName = String(ex.name || "");
         const lastSpaceIdx = rawName.lastIndexOf(" ");
-        const titleWithBadgeHtml = (allBadges && lastSpaceIdx > 0)
-          ? `${escapeHtml(rawName.slice(0, lastSpaceIdx))} <span class="whitespace-nowrap">${escapeHtml(rawName.slice(lastSpaceIdx + 1))}${allBadges}</span>`
-          : `${escapeHtml(rawName)}${allBadges}`;
+        const titleWithBadgeHtml = (notesBadge && lastSpaceIdx > 0)
+          ? `${escapeHtml(rawName.slice(0, lastSpaceIdx))} <span class="whitespace-nowrap">${escapeHtml(rawName.slice(lastSpaceIdx + 1))}${notesBadge}</span>`
+          : `${escapeHtml(rawName)}${notesBadge}`;
 
         const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'notes')`;
         const setsRowClass = targetS >= 5 ? 'gap-[2px] sets-row-tight' : (targetS === 4 ? 'gap-1 sets-row-compact' : 'gap-1.5');
@@ -22621,6 +22670,7 @@
               <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-400">
                 <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
                 <span class="whitespace-nowrap text-zinc-400">Рабочий: <strong class="text-white mono font-bold">${wLabel} × ${curR}</strong></span>
+                ${progressDot}
               </div>
               ${pastSummaryHtml}
             </div>
