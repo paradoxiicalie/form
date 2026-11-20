@@ -1976,17 +1976,19 @@
           ✓ Захвачен: <span id="barcodeDetectedCode"></span>
         </div>
 
-        <div id="scannerLoading" class="hidden absolute inset-0 bg-black/55 backdrop-blur-[4px] flex-col items-center justify-center p-4 z-40 transition-opacity">
-          <div class="bg-zinc-950/90 border border-white/15 rounded-2xl px-5 py-4 max-w-[280px] w-full shadow-2xl flex flex-col items-center gap-3 text-center backdrop-blur-xl">
-            <svg class="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" style="color: var(--accent-cal);">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="36" stroke-dashoffset="14" class="opacity-25" />
-              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-80"></path>
-            </svg>
-            <div id="scannerLoadingBarcodeWrap" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.07] border border-white/10 text-[11px] mono text-zinc-300">
+        <div id="scannerLoading" class="hidden absolute inset-0 bg-black/20 backdrop-blur-[2px] flex-col items-center justify-center p-4 z-40 transition-opacity">
+          <div class="bg-zinc-900/65 border border-white/[0.16] rounded-2xl px-4 py-2.5 max-w-[90%] shadow-[0_12px_32px_rgba(0,0,0,0.4)] inline-flex flex-col items-center gap-1.5 text-center backdrop-blur-2xl">
+            <div class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" style="color: var(--accent-cal);">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="36" stroke-dashoffset="14" class="opacity-25" />
+                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-90"></path>
+              </svg>
+              <span id="scannerLoadingText" class="text-xs font-medium text-white/95 leading-snug">Ищем продукт...</span>
+            </div>
+            <div id="scannerLoadingBarcodeWrap" class="hidden inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.08] border border-white/10 text-[10.5px] mono text-zinc-200">
               <span class="w-1.5 h-1.5 rounded-full" style="background: var(--accent-cal);"></span>
               <span id="scannerLoadingCode"></span>
             </div>
-            <span id="scannerLoadingText" class="text-xs font-medium text-zinc-200 leading-snug">Ищем штрихкод в базе...</span>
           </div>
         </div>
       </div>
@@ -2070,6 +2072,10 @@
               <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-90"></path>
             </svg>
           </button>
+        </div>
+        <div id="barcodeManualStatus" class="hidden mt-2 text-[11px] text-zinc-400 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style="background: var(--accent-cal);"></span>
+          <span id="barcodeManualStatusText" class="truncate">Ищем штрихкод...</span>
         </div>
       </div>
     </div>
@@ -12149,14 +12155,30 @@
     }
 
     const GEMINI_MODELS_CASCADE = [
+      "gemini-2.5-flash-lite",
       "gemini-2.5-flash",
       "gemini-2.0-flash",
-      "gemini-2.5-flash-lite",
       "gemini-3-flash-preview"
     ];
     let lastActiveGeminiModel = GEMINI_MODELS_CASCADE[0];
     let lastActiveKeyIndex = 1;
     let apiKeyVerifiedStatus = null; // null: не проверялся, true: в сети, false: ошибка
+
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } catch (err) {
+        if (err && err.name === "AbortError") {
+          throw new Error(`Таймаут сети (${Math.round(timeoutMs / 1000)}с)`);
+        }
+        throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    window.fetchWithTimeout = fetchWithTimeout;
 
     function getEffectiveGroqKey() {
       const gInput = document.getElementById("inputGroqApiKey");
@@ -12468,6 +12490,9 @@
     }
 
     async function saveApiKeyAndVerify() {
+      window._aiFastLane = null;
+      window._preferredGeminiModel = null;
+      window._preferredGeminiKeyIdx = null;
       const input = document.getElementById("inputApiKey");
       const val = input ? input.value.trim() : "";
       const allKeys = getAllApiKeys();
@@ -12877,7 +12902,7 @@
 
       try {
         const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanCode)}.json?fields=product_name,product_name_ru,nutriments,serving_size,quantity`;
-        const res = await fetch(url, { headers: { "User-Agent": "FormFitnessApp/1.0" } });
+        const res = await fetchWithTimeout(url, { headers: { "User-Agent": "FormFitnessApp/1.0" } }, 3800);
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
         if (data.status !== 1 || !data.product) {
@@ -12956,10 +12981,10 @@
       const cleanTerms = cleanSearchTermsForOFF(query) || query.trim();
       const q = encodeURIComponent(cleanTerms);
       
-      const fetchOFFEndpoint = async (baseUrl) => {
+      const fetchOFFEndpoint = async (baseUrl, timeoutMs = 3200) => {
         try {
           const url = `${baseUrl}?search_terms=${q}&search_simple=1&action=process&json=1&page_size=6&fields=product_name,product_name_ru,brands,nutriments,quantity,serving_size`;
-          const res = await fetch(url, { headers: { "Accept": "application/json" } });
+          const res = await fetchWithTimeout(url, { headers: { "Accept": "application/json" } }, timeoutMs);
           if (!res.ok) return null;
           const data = await res.json().catch(() => null);
           return Array.isArray(data?.products) ? data.products : null;
@@ -12983,10 +13008,8 @@
       };
 
       try {
-        let products = await fetchOFFEndpoint("https://ru.openfoodfacts.org/cgi/search.pl");
-        if (!products || products.length === 0) {
-          products = await fetchOFFEndpoint("https://world.openfoodfacts.org/cgi/search.pl");
-        }
+        // Быстрый запрос с жестким таймаутом 3.2с (без двойного 60-секундного ожидания)
+        const products = await fetchOFFEndpoint("https://ru.openfoodfacts.org/cgi/search.pl", 3200);
         if (!products || products.length === 0) return [];
 
         return products.map(p => {
@@ -13054,11 +13077,33 @@
       const btnSpinner = document.getElementById("btnLookupBarcodeSpinner");
       const btnText = document.getElementById("btnLookupBarcodeText");
       const btn = document.getElementById("btnLookupBarcodeManual");
+      const manualStatus = document.getElementById("barcodeManualStatus");
+      const manualStatusText = document.getElementById("barcodeManualStatusText");
+      const preview = document.getElementById("photoPreview");
+      const stream = document.getElementById("cameraStream");
+      const hasActiveMedia = Boolean(
+        (preview && !preview.classList.contains("hidden")) ||
+        (stream && !stream.classList.contains("hidden"))
+      );
 
       if (active) {
+        const useInlineOnly = Boolean(opts.manualOnly || !hasActiveMedia);
         if (loading) {
-          loading.classList.remove("hidden");
-          loading.classList.add("flex");
+          if (useInlineOnly) {
+            loading.classList.add("hidden");
+            loading.classList.remove("flex");
+          } else {
+            loading.classList.remove("hidden");
+            loading.classList.add("flex");
+          }
+        }
+        if (manualStatus) {
+          if (useInlineOnly) {
+            if (manualStatusText && opts.text) manualStatusText.textContent = opts.text;
+            manualStatus.classList.remove("hidden");
+          } else {
+            manualStatus.classList.add("hidden");
+          }
         }
         if (badge) {
           badge.classList.add("hidden");
@@ -13067,7 +13112,7 @@
           loadingText.textContent = opts.text;
         }
         if (barcodeWrap && barcodeCode) {
-          if (opts.barcode) {
+          if (opts.barcode && !useInlineOnly) {
             barcodeCode.textContent = opts.barcode;
             barcodeWrap.classList.remove("hidden");
           } else {
@@ -13084,6 +13129,7 @@
           loading.classList.add("hidden");
           loading.classList.remove("flex");
         }
+        if (manualStatus) manualStatus.classList.add("hidden");
         if (barcodeWrap) barcodeWrap.classList.add("hidden");
         if (btnSpinner && btnText) {
           btnSpinner.classList.add("hidden");
@@ -13231,8 +13277,9 @@
               "llama-3.1-8b-instant",
               "gemma2-9b-it"
             ];
-        if (window._cachedGroqModel && !candidateModels.includes(window._cachedGroqModel)) {
-          candidateModels.unshift(window._cachedGroqModel);
+        const cachedGroq = hasImage ? window._cachedGroqVisionModel : window._cachedGroqTextModel;
+        if (cachedGroq) {
+          candidateModels = [cachedGroq, ...candidateModels.filter(m => m !== cachedGroq)];
         }
       } else {
         candidateModels = hasImage
@@ -13242,6 +13289,7 @@
 
       let lastErr = null;
       let needDynamicLookup = false;
+      const altTimeoutMs = hasImage ? 14000 : 9000;
 
       for (let i = 0; i < candidateModels.length; i++) {
         const model = candidateModels[i];
@@ -13255,14 +13303,14 @@
             reqBody.response_format = { type: "json_object" };
           }
 
-          const res = await fetch(endpoint, {
+          const res = await fetchWithTimeout(endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${key}`
             },
             body: JSON.stringify(reqBody)
-          });
+          }, altTimeoutMs);
 
           if (res.status === 403) {
             throw new Error("Groq API заблокирован (403 Forbidden). Включите VPN или используйте зеркало");
@@ -13283,7 +13331,10 @@
           const resJson = await res.json();
           const content = resJson.choices?.[0]?.message?.content || "{}";
           window._lastUsedAlternativeModel = model;
-          if (isGroq) window._cachedGroqModel = model;
+          if (isGroq) {
+            if (hasImage) window._cachedGroqVisionModel = model;
+            else window._cachedGroqTextModel = model;
+          }
 
           return {
             candidates: [{
@@ -13375,16 +13426,53 @@
         throw new Error("Ключ не задан в настройках");
       }
 
+      const hasMediaPart = Boolean(payload?.contents?.[0]?.parts?.some(p => p.inlineData && p.inlineData.data));
+      const reqTimeoutMs = hasMediaPart ? 15000 : 9500;
+
+      // Fast-Lane: если Gemini недавно был недоступен/заблокирован, а Groq работал — сразу идем в Groq за 0мс
+      if (groqKey && window._aiFastLane && window._aiFastLane.provider === "groq" && Date.now() < window._aiFastLane.until) {
+        try {
+          const altData = await callAlternativeProvider(groqKey, payload);
+          apiKeyVerifiedStatus = true;
+          const altModel = window._lastUsedAlternativeModel || (groqKey.startsWith("gsk_") ? "Groq" : "OpenRouter");
+          lastActiveGeminiModel = altModel;
+          lastActiveKeyIndex = 1;
+          updateActiveModelBadge(altModel, 1, true);
+          syncKeyFieldUI();
+          return altData;
+        } catch (fastErr) {
+          window._aiFastLane = null;
+        }
+      }
+
       let rawBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || "").trim();
       rawBase = rawBase.replace(/\/+$/, "").replace(/\/v1beta\/?$/i, "").replace(/\/v1\/?$/i, "");
       const apiBase = rawBase || "https://generativelanguage.googleapis.com";
 
       let lastError = null;
       let hasLocationError = false;
+      let hasNetworkTimeout = false;
+
+      // Ставим последнюю успешно отработавшую модель Gemini первой в каскад
+      const orderedModels = window._preferredGeminiModel && GEMINI_MODELS_CASCADE.includes(window._preferredGeminiModel)
+        ? [window._preferredGeminiModel, ...GEMINI_MODELS_CASCADE.filter(m => m !== window._preferredGeminiModel)]
+        : GEMINI_MODELS_CASCADE;
 
       if (keys.length > 0) {
-        for (let m = 0; m < GEMINI_MODELS_CASCADE.length; m++) {
-          const model = GEMINI_MODELS_CASCADE[m];
+        for (let m = 0; m < orderedModels.length; m++) {
+          const model = orderedModels[m];
+
+          // Для Gemini 2.5 при JSON-ответе отключаем thinkingBudget (ускорение с ~12с до ~1.2с)
+          let modelPayload = payload;
+          if (/^gemini-2\.5/i.test(model) && payload?.generationConfig?.responseMimeType === "application/json" && !payload.generationConfig.thinkingConfig) {
+            modelPayload = {
+              ...payload,
+              generationConfig: {
+                ...payload.generationConfig,
+                thinkingConfig: { thinkingBudget: 0 }
+              }
+            };
+          }
 
           for (let k = 0; k < keys.length; k++) {
             const apiKey = keys[k];
@@ -13395,11 +13483,11 @@
               let data = null;
 
               try {
-                const res = await fetch(url, {
+                const res = await fetchWithTimeout(url, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(payload)
-                });
+                  body: JSON.stringify(modelPayload)
+                }, reqTimeoutMs);
                 data = await res.json().catch(() => ({}));
                 if (!res.ok) {
                   const errMsg = data?.error?.message || `HTTP ${res.status}`;
@@ -13408,23 +13496,26 @@
                     throw new Error("LOCATION_ERROR");
                   }
                   lastError = new Error(`[${model} · K#${keyNumber}] ${errMsg}`);
-                  await new Promise(r => setTimeout(r, 200));
                   continue;
                 }
               } catch (fetchErr) {
                 if (fetchErr.message === "LOCATION_ERROR" || /location is not supported|unsupported location/i.test(fetchErr.message)) {
                   hasLocationError = true;
-                  // Попытка нативного запроса через iOS URLSession (минуя WebKit sandbox)
                   try {
-                    data = await nativeFetchGemini(url, payload);
+                    data = await nativeFetchGemini(url, modelPayload);
                   } catch (nativeErr) {
                     throw new Error("Включите VPN или укажите Cloudflare шлюз в настройках API");
                   }
                 } else {
+                  if (/Таймаут сети|Load failed|Failed to fetch|NetworkError/i.test(fetchErr.message || "")) {
+                    hasNetworkTimeout = true;
+                  }
                   throw fetchErr;
                 }
               }
 
+              window._preferredGeminiModel = model;
+              window._aiFastLane = null;
               lastActiveGeminiModel = model;
               lastActiveKeyIndex = keyNumber;
               apiKeyVerifiedStatus = true;
@@ -13440,16 +13531,20 @@
                 break;
               }
               lastError = err;
+              if (hasNetworkTimeout) break;
             }
           }
-          if (hasLocationError) break;
+          if (hasLocationError || hasNetworkTimeout) break;
         }
       }
 
-      // Фоллбэк на альтернативный провайдер (Groq / OpenRouter) при геоблокировке или исчерпании квоты
+      // Фоллбэк на альтернативный провайдер (Groq / OpenRouter) при геоблокировке, таймауте или исчерпании квоты
       if (groqKey) {
         try {
           const altData = await callAlternativeProvider(groqKey, payload);
+          if (hasLocationError || hasNetworkTimeout) {
+            window._aiFastLane = { provider: "groq", until: Date.now() + 10 * 60 * 1000 };
+          }
           apiKeyVerifiedStatus = true;
           const altModel = window._lastUsedAlternativeModel || (groqKey.startsWith("gsk_") ? "Groq" : "OpenRouter");
           lastActiveGeminiModel = altModel;
@@ -16237,39 +16332,19 @@
       const localMatches = searchCombinedDatabase(querySnapshot, 12);
       renderModalSearchResultsList(modalType, localMatches, querySnapshot, true);
 
-      try {
-        const [aiRes, offRes] = await Promise.allSettled([
-          fetchAiRussianFoodSearch(querySnapshot),
-          searchOpenFoodFacts(querySnapshot)
-        ]);
+      let aiItems = [];
+      let offItems = [];
+      let pendingCount = 2;
 
-        // Проверка на актуальность запроса в инпуте после ответа сети
+      const renderMergedNow = (stillLoading) => {
         if ((document.getElementById(cfg.inputId)?.value || "").trim() !== querySnapshot) return;
-
-        const onlineMatches = [];
-        if (aiRes.status === "fulfilled" && Array.isArray(aiRes.value) && aiRes.value.length > 0) {
-          if (!Array.isArray(state.customHistory)) state.customHistory = [];
-          aiRes.value.forEach(r => {
-            if (hasInvalidZeroMacros(r)) return;
-            const rNorm = normalizeSearchText(r.name);
-            if (!state.customHistory.some(h => normalizeSearchText(h.name) === rNorm)) {
-              state.customHistory.push({ ...r, useCount: 0, lastUsedAt: 0 });
-            }
-          });
-          saveState();
-          onlineMatches.push(...aiRes.value);
-        }
-        if (offRes.status === "fulfilled" && Array.isArray(offRes.value) && offRes.value.length > 0) {
-          onlineMatches.push(...offRes.value.filter(x => !hasInvalidZeroMacros(x)));
-        }
-
         const merged = [];
         const seen = new Set();
         localMatches.filter(i => (i.useCount || 0) > 0).forEach(i => {
           const k = normalizeSearchText(i.name);
           if (k && !seen.has(k)) { seen.add(k); merged.push(i); }
         });
-        onlineMatches.forEach(i => {
+        [...aiItems, ...offItems].forEach(i => {
           const k = normalizeSearchText(i.name);
           if (k && !seen.has(k)) { seen.add(k); merged.push(i); }
         });
@@ -16280,17 +16355,42 @@
 
         const resContainer = document.getElementById(cfg.resultsId);
         if (!resContainer) return;
-        if (merged.length === 0) {
+        if (merged.length === 0 && !stillLoading) {
           window[cfg.matchesKey] = [];
           resContainer.innerHTML = `<div class="py-2 text-[11px] mono text-zinc-500 text-center">Ничего не найдено даже онлайн — добавьте «+ Создать свой продукт»</div>`;
           return;
         }
-        renderModalSearchResultsList(modalType, merged.slice(0, 18), querySnapshot, false);
-      } catch (err) {
-        if ((document.getElementById(cfg.inputId)?.value || "").trim() === querySnapshot) {
-          renderModalSearchResultsList(modalType, localMatches, querySnapshot, false);
+        renderModalSearchResultsList(modalType, merged.slice(0, 18), querySnapshot, stillLoading);
+      };
+
+      const onSourceDone = () => {
+        pendingCount = Math.max(0, pendingCount - 1);
+        renderMergedNow(pendingCount > 0 && aiItems.length === 0 && offItems.length === 0);
+      };
+
+      // Прогрессивный стрим: как только ИИ или OFF ответит — сразу рендерим, не ждем медленный источник!
+      const pAi = fetchAiRussianFoodSearch(querySnapshot).then(list => {
+        if (Array.isArray(list) && list.length > 0) {
+          const cleanList = list.filter(r => !hasInvalidZeroMacros(r));
+          if (!Array.isArray(state.customHistory)) state.customHistory = [];
+          cleanList.forEach(r => {
+            const rNorm = normalizeSearchText(r.name);
+            if (!state.customHistory.some(h => normalizeSearchText(h.name) === rNorm)) {
+              state.customHistory.push({ ...r, useCount: 0, lastUsedAt: 0 });
+            }
+          });
+          saveState();
+          aiItems = cleanList;
         }
-      }
+      }).catch(() => {}).finally(onSourceDone);
+
+      const pOff = searchOpenFoodFacts(querySnapshot).then(list => {
+        if (Array.isArray(list) && list.length > 0) {
+          offItems = list.filter(x => !hasInvalidZeroMacros(x));
+        }
+      }).catch(() => {}).finally(onSourceDone);
+
+      await Promise.allSettled([pAi, pOff]);
     }
 
     function runModalHybridFoodSearch(modalType, val, forceOnline = false) {
@@ -18970,42 +19070,36 @@
     }
     window.renderFatSecretSearchItemHTML = renderFatSecretSearchItemHTML;
 
+    window._onlineFoodSearchCache = window._onlineFoodSearchCache || {};
+
     async function fetchAiRussianFoodSearch(rawQuery) {
       const query = stripEmojis(rawQuery || "").trim();
       if (!query) return [];
 
-      const prompt = `Ты база данных продуктов и готовых блюд (в стиле FatSecret для рынка РФ).
-Пользователь ищет продукт или блюдо: "${query}".
+      const cacheKey = normalizeSearchText(query);
+      const cached = window._onlineFoodSearchCache[cacheKey];
+      if (cached && (Date.now() - cached.ts) < 10 * 60 * 1000 && Array.isArray(cached.items)) {
+        return cached.items;
+      }
 
-Сформируй 8-12 реалистичных, качественных вариантов для российского пользователя:
-- Обязательно разделяй продукты по популярным российским и региональным (Урал/Челябинск) брендам и сетям из РФ: Красная цена, Моя Цена, Global Village, Рестория, Зеленая линия, Маркет Перекрёсток, ВкусВилл, Самокат, Брест-Литовск, Савушкин Teos, Простоквашино, Домик в деревне, Село Зелёное, Экомилк, Чебаркульское молоко, Первый вкус, Здоровье из Предгорья, Талицкий, Агро-Альянс, Увелка, Макфа, Barilla, Петелинка, Индилайт, Мираторг, Harry's, Первый хлебокомбинат, Мэри, Dr. Korner, BombBar, DopDrops, Cybermass, Ehrmann High Protein, Exponenta.
-- Если это готовое блюдо (например "макароны с мясом", "плов", "борщ"): предложи домашние и магазинные варианты (ВкусВилл, Самокат, Перекрёсток).
-- Если продукт фирменный, обязательно укажи бренд отдельно в поле "brand" (например, "Самокат", "ВкусВилл", "Красная цена"), а чистое название в "name".
-- Строго рассчитай КБЖУ НА 100 ГРАММ ("cal", "p", "f", "c").
-- Укажи реалистичный стандартный вес разовой порции/упаковки/штуки в "unitWeight" (в граммах).
-
-Верни СТРОГО JSON-массив без какого-либо дополнительного текста или пояснений:
-[
-  {
-    "brand": "ВкусВилл",
-    "name": "Творог 5%",
-    "cal": 121,
-    "p": 17.0,
-    "f": 5.0,
-    "c": 2.5,
-    "unitWeight": 200
-  }
-]`;
+      const prompt = `База КБЖУ для РФ (FatSecret). Запрос: "${query}".
+Верни 6-8 точных вариантов (бренды РФ: ВкусВилл, Самокат, Перекрёсток, Простоквашино, Савушкин, Мираторг, Петелинка, BombBar, Красная цена и др., либо домашние блюда).
+КБЖУ строго на 100г, unitWeight — вес 1 порции/пачки/шт в граммах.
+СТРОГО JSON-массив:
+[{"brand":"ВкусВилл","name":"Творог 5%","cal":121,"p":17,"f":5,"c":2.5,"unitWeight":200}]`;
 
       try {
         const data = await callGemini3Flash({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" }
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 900
+          }
         });
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const list = extractJsonFromAiResponse(raw);
         if (Array.isArray(list)) {
-          return list.map(item => {
+          const parsedList = list.map(item => {
             const b = stripEmojis(item.brand || "").trim();
             const rawName = stripEmojis(item.name || "").trim();
             const fullName = (b && !rawName.toLowerCase().includes(b.toLowerCase())) ? `${b} ${rawName}` : rawName;
@@ -19022,6 +19116,10 @@
               lastUsedAt: 0
             };
           }).filter(item => item.name && item.cal > 0);
+          if (parsedList.length > 0) {
+            window._onlineFoodSearchCache[cacheKey] = { ts: Date.now(), items: parsedList };
+          }
+          return parsedList;
         }
       } catch (err) {
         console.warn("fetchAiRussianFoodSearch error:", err);
@@ -19300,75 +19398,88 @@
       if (!box || !list) return;
 
       box.classList.remove("hidden");
-      list.innerHTML = `
-        <div class="p-3 text-center text-xs mono text-zinc-400 flex items-center justify-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-[var(--accent-cal)] animate-ping"></span>
-          <span>Поиск «${escapeHtml(query)}» в базе и онлайн...</span>
-        </div>
-      `;
 
-      // 1. Быстрый локальный парсер (0мс, офлайн)
+      // 1. Быстрый локальный парсер (0мс, сразу показываем без ожидания сети!)
       const localMatches = searchCombinedDatabase(query, 20);
+      let aiItems = [];
+      let offItems = [];
+      let pendingCount = 2;
 
-      // 2. Параллельный запрос к AI и OpenFoodFacts
-      let onlineMatches = [];
-      try {
-        const [aiRes, offRes] = await Promise.allSettled([
-          fetchAiRussianFoodSearch(query),
-          searchOpenFoodFacts(query)
-        ]);
+      const renderProgressive = (stillLoading) => {
+        const curRaw = stripEmojis(document.getElementById("foodInput")?.value || "").trim();
+        if (curRaw !== raw) return;
 
-        if (aiRes.status === "fulfilled" && Array.isArray(aiRes.value) && aiRes.value.length > 0) {
+        const combined = [];
+        const seen = new Set();
+        localMatches.filter(i => (i.useCount || 0) > 0).forEach(i => {
+          const k = normalizeSearchText(i.name);
+          if (k && !seen.has(k)) { seen.add(k); combined.push(i); }
+        });
+        [...aiItems, ...offItems].forEach(i => {
+          const k = normalizeSearchText(i.name);
+          if (k && !seen.has(k)) { seen.add(k); combined.push(i); }
+        });
+        localMatches.filter(i => !(i.useCount > 0)).forEach(i => {
+          const k = normalizeSearchText(i.name);
+          if (k && !seen.has(k)) { seen.add(k); combined.push(i); }
+        });
+
+        if (combined.length === 0 && !stillLoading) {
+          list.innerHTML = `
+            <div class="p-3 text-center text-xs text-zinc-500 mono">
+              Ничего не найдено по запросу «${escapeHtml(query)}»
+            </div>
+            ${getSuggestFooterCreateBtnHTML("diary")}
+          `;
+          return;
+        }
+
+        window._currentMatches = combined;
+        if (combined.length > 0) {
+          renderLiveSuggestList(list, combined, explicitWeight, pieceCount, false);
+        } else {
+          list.innerHTML = "";
+        }
+        if (stillLoading) {
+          list.insertAdjacentHTML("beforeend", `
+            <div class="py-2 px-3 text-center text-[11px] mono text-zinc-400 flex items-center justify-center gap-2 border-t border-white/[0.06]">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent-cal)] animate-ping"></span>
+              <span>Ищем «${escapeHtml(query)}» онлайн...</span>
+            </div>
+          `);
+        }
+      };
+
+      // Сразу отображаем локальные совпадения (0мс)
+      renderProgressive(true);
+
+      const onSourceDone = () => {
+        pendingCount = Math.max(0, pendingCount - 1);
+        renderProgressive(pendingCount > 0 && aiItems.length === 0 && offItems.length === 0);
+      };
+
+      // 2. Прогрессивный стрим от ИИ и OpenFoodFacts (кто быстрее ответил — сразу на экран)
+      const pAi = fetchAiRussianFoodSearch(query).then(resList => {
+        if (Array.isArray(resList) && resList.length > 0) {
           if (!Array.isArray(state.customHistory)) state.customHistory = [];
-          aiRes.value.forEach(r => {
+          resList.forEach(r => {
             const rNorm = normalizeSearchText(r.name);
             if (!state.customHistory.some(h => normalizeSearchText(h.name) === rNorm)) {
               state.customHistory.push({ ...r, useCount: 0, lastUsedAt: 0 });
             }
           });
           saveState();
-          onlineMatches.push(...aiRes.value);
+          aiItems = resList;
         }
+      }).catch(() => {}).finally(onSourceDone);
 
-        if (offRes.status === "fulfilled" && Array.isArray(offRes.value) && offRes.value.length > 0) {
-          onlineMatches.push(...offRes.value);
+      const pOff = searchOpenFoodFacts(query).then(resList => {
+        if (Array.isArray(resList) && resList.length > 0) {
+          offItems = resList;
         }
-      } catch (err) {
-        console.warn("Online search err:", err);
-      }
+      }).catch(() => {}).finally(onSourceDone);
 
-      // 3. Формируем единый упорядоченный список
-      const combined = [];
-      const seen = new Set();
-
-      // Сначала реально употреблявшиеся (useCount > 0)
-      localMatches.filter(i => (i.useCount || 0) > 0).forEach(i => {
-        const k = normalizeSearchText(i.name);
-        if (!seen.has(k)) { seen.add(k); combined.push(i); }
-      });
-      // Затем результаты из онлайн (ИИ + OFF)
-      onlineMatches.forEach(i => {
-        const k = normalizeSearchText(i.name);
-        if (!seen.has(k)) { seen.add(k); combined.push(i); }
-      });
-      // Затем остальные локальные совпадения
-      localMatches.filter(i => !(i.useCount > 0)).forEach(i => {
-        const k = normalizeSearchText(i.name);
-        if (!seen.has(k)) { seen.add(k); combined.push(i); }
-      });
-
-      if (combined.length === 0) {
-        list.innerHTML = `
-          <div class="p-3 text-center text-xs text-zinc-500 mono">
-            Ничего не найдено по запросу «${escapeHtml(query)}»
-          </div>
-          ${getSuggestFooterCreateBtnHTML("diary")}
-        `;
-        return;
-      }
-
-      window._currentMatches = combined;
-      renderLiveSuggestList(list, combined, explicitWeight, pieceCount);
+      await Promise.allSettled([pAi, pOff]);
     }
 
     async function analyzeTextWithAI(textQuery, explicitWeight) {
@@ -19487,12 +19598,14 @@
           : "+ Добавить в Сегодня";
       }
       document.getElementById("scannerModal")?.classList.add("open");
+      setScannerLoadingState(false);
       setScannerMode(mode);
       clearScannerOverlay();
     }
 
     function closeScanner() {
       stopCamera();
+      setScannerLoadingState(false);
       document.getElementById("scannerModal")?.classList.remove("open");
     }
 
@@ -19748,6 +19861,26 @@
     }
 
     async function detectBarcodeMultiPass(dataUrl, imgEl) {
+      // Быстрый нативный аппаратный BarcodeDetector (15мс) если доступен в WebKit
+      if (typeof window.BarcodeDetector === "function" && imgEl) {
+        try {
+          const detector = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"] });
+          const detected = await detector.detect(imgEl);
+          if (Array.isArray(detected) && detected.length > 0 && detected[0].rawValue) {
+            const rawCode = String(detected[0].rawValue).replace(/\D/g, "");
+            if (isValidEANBarcode(rawCode)) {
+              const bb = detected[0].boundingBox;
+              const fullW = imgEl.naturalWidth || 800;
+              const fullH = imgEl.naturalHeight || 800;
+              return {
+                code: rawCode,
+                normBox: bb ? { x: bb.x / fullW, y: bb.y / fullH, w: bb.width / fullW, h: bb.height / fullH, isReal: true } : null
+              };
+            }
+          }
+        } catch (e) {}
+      }
+
       const fullW = imgEl.naturalWidth || 800;
       const fullH = imgEl.naturalHeight || 800;
 
@@ -19802,7 +19935,7 @@
       const preview = document.getElementById("photoPreview");
       const placeholder = document.getElementById("cameraPlaceholder");
       try {
-        const { dataUrl, imgElement } = await compressImageFile(file, 800, 0.78);
+        const { dataUrl, imgElement } = await compressImageFile(file, 768, 0.72);
         preview.src = dataUrl;
         preview.classList.remove("hidden");
         placeholder.classList.add("hidden");
@@ -19888,24 +20021,24 @@
         showToast("Введите штрихкод", true);
         return;
       }
-      setScannerLoadingState(true, { text: "Ищем штрихкод в базе...", barcode: code });
+      setScannerLoadingState(true, { text: "Ищем штрихкод в базе...", barcode: code, manualOnly: true });
       try {
-        await fetchProductByBarcode(code, false);
+        await fetchProductByBarcode(code, false, true);
       } finally {
         setScannerLoadingState(false);
       }
     }
 
-    async function fetchProductByBarcode(code, silentIfNotFound) {
+    async function fetchProductByBarcode(code, silentIfNotFound, manualOnly = false) {
       const cleanCode = String(code).replace(/\D/g, "");
       if (silentIfNotFound && !isValidEANBarcode(cleanCode)) {
         return false;
       }
-      setScannerLoadingState(true, { text: `Штрихкод ${cleanCode}: ищем в базе...`, barcode: cleanCode });
+      setScannerLoadingState(true, { text: `Штрихкод ${cleanCode}: ищем в базе...`, barcode: cleanCode, manualOnly });
       try {
         let item = await fetchProductByBarcodeOFF(cleanCode);
         if (item && (item.hasEmptyMacros || hasInvalidZeroMacros(item))) {
-          setScannerLoadingState(true, { text: `Определяем КБЖУ для «${item.name}» через ИИ...`, barcode: cleanCode });
+          setScannerLoadingState(true, { text: `Определяем КБЖУ для «${item.name}» через ИИ...`, barcode: cleanCode, manualOnly });
           const enriched = await enrichBarcodeProductWithGemini(item.name, cleanCode, window._lastScannerBase64 || null);
           item = enriched || null;
         }
@@ -25042,9 +25175,8 @@
 
           const barcodePromise = detectBarcodeMultiPass(dataUrl, imgElement);
           const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 1200));
-          const localBarcode = (scannerMode === "barcode")
-            ? await barcodePromise
-            : await Promise.race([barcodePromise, timeoutPromise]);
+          // Жесткий лимит 1.2с на Quagga в любом режиме, чтобы не зависать на изогнутых банках
+          const localBarcode = await Promise.race([barcodePromise, timeoutPromise]);
 
           if (localBarcode && localBarcode.code) {
             if (localBarcode.normBox && localBarcode.normBox.isReal) {
@@ -25183,7 +25315,25 @@ ${knownPiecesContext}
           }
           const bInput = document.getElementById("barcodeInput");
           if (bInput) bInput.value = cleanCode;
-          if (await fetchProductByBarcode(cleanCode, true)) return;
+
+          const aiAlreadyHasValidMacros = Boolean(parsed && parsed.name && !hasInvalidZeroMacros(parsed));
+          if (!aiAlreadyHasValidMacros) {
+            if (await fetchProductByBarcode(cleanCode, true)) return;
+          } else {
+            // ИИ уже считал название и КБЖУ с фото — не теряем время на лишний запрос в OFF, сразу кэшируем!
+            if (!state.barcodeCache) state.barcodeCache = {};
+            state.barcodeCache[cleanCode] = {
+              name: parsed.name,
+              cal100: Math.round(Number(parsed.cal100) || 0),
+              p100: round1(Number(parsed.p100) || 0),
+              f100: round1(Number(parsed.f100) || 0),
+              c100: round1(Number(parsed.c100) || 0),
+              weight: Math.round(Number(parsed.package_net_weight) || Number(parsed.weight) || 100),
+              barcode: cleanCode,
+              source: `Штрихкод ${cleanCode}`
+            };
+            saveState();
+          }
         }
 
         if (parsed && parsed.name) {
