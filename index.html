@@ -476,39 +476,61 @@
       width: 0px;
       transform: translate3d(0, 0, 0);
       border-radius: inherit;
-      transition: transform 360ms cubic-bezier(0.25, 1, 0.5, 1), width 360ms cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 380ms cubic-bezier(0.22, 1.06, 0.36, 1), width 380ms cubic-bezier(0.22, 1.06, 0.36, 1);
       pointer-events: none;
       z-index: 1;
       will-change: transform, width;
       overflow: visible;
     }
 
-    /* Чистый спокойный графит без цветного подмешивания и яркого спекуляра */
+    /* Apple Liquid Glass + мягкий неоновый кант активной темы */
     .liquid-glass-body {
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: rgba(255, 255, 255, 0.13) !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease, box-shadow 200ms ease;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.07) 58%, rgba(255, 255, 255, 0.11) 100%) !important;
+      border: 1px solid color-mix(in srgb, var(--accent-cal, #ffffff) 24%, rgba(255, 255, 255, 0.15)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+        0 3px 12px rgba(0, 0, 0, 0.32),
+        0 0 14px color-mix(in srgb, var(--accent-glow, transparent) 42%, transparent) !important;
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      transition: transform 340ms cubic-bezier(0.22, 1.12, 0.36, 1), background 200ms ease, border-color 220ms ease, box-shadow 220ms ease;
       will-change: transform;
       overflow: hidden;
     }
+    .liquid-glass-body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(110% 65% at 50% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 70%);
+      pointer-events: none;
+      opacity: 0.65;
+      transition: opacity 220ms ease;
+    }
 
-    /* Деликатная реакция в движении (.is-liquid-moving): легкое просветление графита */
+    /* Живое растяжение капли и усиление неонового преломления в движении (.is-liquid-moving) */
     .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.02);
-      background: rgba(255, 255, 255, 0.17) !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      transform: scaleX(1.055) scaleY(1.04);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.10) 55%, rgba(255, 255, 255, 0.15) 100%) !important;
+      border-color: color-mix(in srgb, var(--accent-cal, #ffffff) 48%, rgba(255, 255, 255, 0.26)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+        0 6px 18px rgba(0, 0, 0, 0.36),
+        0 0 22px color-mix(in srgb, var(--accent-glow, transparent) 72%, transparent) !important;
+    }
+    .segmented-slider-pill.is-liquid-moving .liquid-glass-body::after {
+      opacity: 0.95;
     }
 
     /* Безопасный scale внутри скролл-лент вариантов */
     [id^="mealVariantsBar_"] .segmented-slider-pill.is-liquid-moving .liquid-glass-body,
     #splitVariantPills .segmented-slider-pill.is-liquid-moving .liquid-glass-body {
-      transform: scale(1.015);
+      transform: scaleX(1.035) scaleY(1.025);
     }
 
     .segmented-slider-container.rounded-full .segmented-slider-pill,
@@ -519,7 +541,8 @@
     }
 
     html[data-ui-glow="off"] .liquid-glass-body {
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
     }
 
     /* Отключение свечения в матовом режиме */
@@ -1382,18 +1405,23 @@
         <div id="muscleVolumeGrid" class="grid grid-cols-2 gap-2"></div>
       </div>
 
-      <!-- Переключатель программ сплита + Назначение на день недели -->
-      <div class="mb-2 px-0.5">
-        <div class="flex items-center justify-between gap-2">
-          <!-- Левая сторона: заголовок дня + компактная кнопка таймера (сплоченная группа без пустоты) -->
-          <div class="flex items-center gap-2 min-w-0 flex-1 mr-1">
-            <h2 id="activeSplitDayTitle" class="text-[20px] font-bold tracking-tight text-white truncate leading-tight">День 1 · Жим</h2>
+      <!-- Живая шапка тренировочного дня + компактные контролы -->
+      <div class="mb-2.5 px-0.5">
+        <div class="flex items-start justify-between gap-2">
+          <!-- Левая сторона: название дня + живой прогресс текущей сессии -->
+          <div class="min-w-0 flex-1 pr-1">
+            <h2 id="activeSplitDayTitle" class="text-[22px] font-bold tracking-tight text-white truncate leading-tight">День 1 · Жим</h2>
+            <p id="activeWeekdayAssignLabel" class="text-xs text-zinc-400 mt-0.5 font-medium truncate">Понедельник</p>
+          </div>
+
+          <!-- Правая сторона: компактный таймер + селектор программы + кнопка действий ⋯ -->
+          <div class="flex items-center gap-1.5 shrink-0 pt-0.5">
             <button
               type="button"
               id="quickRestBtn"
               onclick="toggleOrStartRestTimer()"
-              title="Запустить таймер отдыха между подходами"
-              class="group px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-[11px] font-medium text-zinc-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-all shadow-sm"
+              title="Таймер отдыха между подходами"
+              class="group h-8 px-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] border border-white/10 text-[11px] font-medium text-zinc-300 flex items-center gap-1.5 shrink-0 active:scale-95 transition-all"
             >
               <span id="quickRestBtnIcon" class="flex items-center justify-center">
                 <svg class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1402,34 +1430,57 @@
                   <path d="M10 2h4"></path>
                 </svg>
               </span>
-              <span id="quickRestBtnLabel" class="font-medium tracking-tight">Таймер</span>
+              <span id="quickRestBtnLabel" class="hidden font-semibold mono tracking-tight"></span>
             </button>
-          </div>
 
-          <!-- Правая сторона: компактная плашка смены программы (например «День 2 ▾») -->
-          <div class="relative shrink-0 group">
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.05] border border-white/10 group-focus-within:border-white/30 text-xs font-semibold text-zinc-200">
-              <span id="weekdayAssignText" class="truncate max-w-[100px]">День 1</span>
-              <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+            <div class="relative shrink-0 group">
+              <div class="h-8 inline-flex items-center gap-1 px-2.5 rounded-xl bg-white/[0.05] border border-white/10 group-focus-within:border-white/30 text-xs font-semibold text-zinc-200">
+                <span id="weekdayAssignText" class="truncate max-w-[92px]">День 1</span>
+                <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <select
+                id="weekdayAssignSelect"
+                onchange="assignProgramToSelectedWeekday(this.value)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+              ></select>
             </div>
-            <select
-              id="weekdayAssignSelect"
-              onchange="assignProgramToSelectedWeekday(this.value)"
-              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
-            ></select>
+
+            <button
+              type="button"
+              id="btnToggleSplitDayActions"
+              onclick="toggleSplitDayActionsDrawer()"
+              title="Управление днем"
+              class="w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] border border-white/10 text-zinc-400 hover:text-white flex items-center justify-center active:scale-95 transition shrink-0"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.75"></circle>
+                <circle cx="12" cy="12" r="1.75"></circle>
+                <circle cx="19" cy="12" r="1.75"></circle>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <p id="activeWeekdayAssignLabel" class="text-xs text-zinc-400 mt-1 font-medium truncate">Понедельник</p>
+        <!-- Тонкая живая полоса прогресса сегодняшней тренировки -->
+        <div id="splitDayProgressWrap" class="mt-2.5 h-[3px] w-full rounded-full bg-white/[0.06] overflow-hidden hidden">
+          <div id="splitDayProgressFill" class="h-full rounded-full transition-all duration-500 ease-out" style="width: 0%; background: var(--accent-cal); box-shadow: 0 0 10px var(--accent-glow);"></div>
+        </div>
       </div>
 
-      <!-- Быстрые вкладки самих тренировочных программ -->
-      <div id="splitProgramPills" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2 no-scrollbar"></div>
+      <!-- Скрываемая панель действий дня (Переименовать / Отдых / Удалить — по тапу ⋯) -->
+      <div id="splitProgramPills" class="hidden flex items-center gap-1.5 overflow-x-auto pb-2 mb-1.5 no-scrollbar"></div>
 
-      <!-- Варианты тренировочного дня (А / Б / В...) -->
-      <div id="splitVariantPills" class="no-swipe flex items-center gap-1.5 overflow-x-auto pb-2 mb-1 no-scrollbar hidden"></div>
+      <!-- Строка вариантов тренировочного дня: компактный Liquid Glass слева + [+ Вариант] справа -->
+      <div id="splitVariantRow" class="hidden flex items-center justify-between gap-2 mb-2">
+        <div id="splitVariantPills" class="no-swipe shrink-0 flex items-center gap-1 overflow-x-auto no-scrollbar"></div>
+        <button
+          type="button"
+          id="btnAddWorkoutVariantRight"
+          class="shrink-0 h-8 px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-dashed border-white/15 text-[11px] font-medium text-zinc-400 hover:text-white active:scale-95 transition whitespace-nowrap"
+        >+ Вариант</button>
+      </div>
 
       <!-- Список упражнений выбранного дня (или карточка ОТДЫХА) -->
       <div id="workoutExercisesContainer" class="divide-y divide-white/[0.06] touch-pan-y"></div>
@@ -1943,10 +1994,11 @@
         <button type="button" onclick="closeScanner()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">✕</button>
       </div>
 
-      <div class="grid grid-cols-3 gap-1.5 bg-zinc-900 p-1 rounded-2xl border border-white/[0.06] mb-4">
-        <button type="button" id="tabModeAuto" onclick="setScannerMode('auto')" class="py-2 text-xs font-semibold rounded-xl bg-zinc-800 text-white transition">Авто (Всё)</button>
-        <button type="button" id="tabModeLabel" onclick="setScannerMode('label')" class="py-2 text-xs font-semibold rounded-xl text-zinc-400 transition">Банка / Состав</button>
-        <button type="button" id="tabModeBarcode" onclick="setScannerMode('barcode')" class="py-2 text-xs font-semibold rounded-xl text-zinc-400 transition">Штрихкод</button>
+      <div id="scannerModeNav" class="segmented-slider-container relative grid grid-cols-3 gap-1 p-1 rounded-2xl mb-4 overflow-visible w-full">
+        <div id="scannerModeSliderPill" class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>
+        <button type="button" id="tabModeAuto" onclick="setScannerMode('auto')" class="relative z-10 py-2 text-xs font-bold rounded-xl text-white transition-colors duration-200">Авто (Всё)</button>
+        <button type="button" id="tabModeLabel" onclick="setScannerMode('label')" class="relative z-10 py-2 text-xs font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Банка / Состав</button>
+        <button type="button" id="tabModeBarcode" onclick="setScannerMode('barcode')" class="relative z-10 py-2 text-xs font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200">Штрихкод</button>
       </div>
 
       <div id="scannerCameraContainer" class="relative w-full h-56 bg-black rounded-2xl overflow-hidden border border-white/10 mb-3 flex items-center justify-center">
@@ -10222,8 +10274,24 @@
       }
       const prevRect = (containerId && window._prevPillRects) ? window._prevPillRects[containerId] : null;
 
-      // Единая 360ms iOS-кривая с экспоненциальным торможением в ноль
-      const springTransition = "transform 360ms cubic-bezier(0.25, 1, 0.5, 1), width 360ms cubic-bezier(0.25, 1, 0.5, 1), top 0.2s ease, height 0.2s ease";
+      // Единая iOS Liquid Glass пружина
+      const springTransition = "transform 380ms cubic-bezier(0.22, 1.06, 0.36, 1), width 380ms cubic-bezier(0.22, 1.06, 0.36, 1), top 0.2s ease, height 0.2s ease";
+
+      const pulseLiquidPill = (targetPill, fromX, toX) => {
+        if (!targetPill || immediate) return;
+        if (Number.isFinite(fromX) && Math.abs(toX - fromX) <= 4) return;
+        if (targetPill._liquidMoveTimer) clearTimeout(targetPill._liquidMoveTimer);
+        targetPill.classList.add("is-liquid-moving");
+        targetPill._liquidMoveTimer = setTimeout(() => {
+          targetPill.classList.remove("is-liquid-moving");
+          targetPill._liquidMoveTimer = null;
+        }, 210);
+      };
+
+      const parseCurrentPillX = (targetPill) => {
+        const m = (targetPill.style.transform || "").match(/translate3d\(\s*(-?\d+(?:\.\d+)?)px/);
+        return m ? parseFloat(m[1]) : NaN;
+      };
 
       if (prevRect && !immediate && prevRect.width > 0) {
         pill.style.transition = "none";
@@ -10236,6 +10304,7 @@
         delete window._prevPillRects[containerId];
 
         requestAnimationFrame(() => {
+          pulseLiquidPill(pill, prevRect.x, left);
           pill.style.transition = springTransition;
           pill.style.transform = `translate3d(${left}px, 0, 0)`;
           pill.style.top = `${top}px`;
@@ -10259,6 +10328,8 @@
           const w = direct && activeBtn.offsetWidth > 0 ? Math.round(activeBtn.offsetWidth) : Math.round((bR.width > 0) ? bR.width : activeBtn.offsetWidth);
           const h = direct && activeBtn.offsetHeight > 0 ? Math.round(activeBtn.offsetHeight) : Math.round((bR.height > 0) ? bR.height : activeBtn.offsetHeight);
           if (w > 0) {
+            const oldX = parseCurrentPillX(pill);
+            pulseLiquidPill(pill, oldX, l);
             pill.style.transition = immediate ? "none" : springTransition;
             pill.style.transform = `translate3d(${l}px, 0, 0)`;
             pill.style.top = `${t}px`;
@@ -10269,6 +10340,8 @@
         return;
       }
 
+      const oldX = parseCurrentPillX(pill);
+      pulseLiquidPill(pill, oldX, left);
       pill.style.transition = immediate ? "none" : springTransition;
       pill.style.transform = `translate3d(${left}px, 0, 0)`;
       pill.style.top = `${top}px`;
@@ -10281,7 +10354,7 @@
       updateSegmentedSlider("mainSegmentedNav", (currentMainView === "split") ? "navTabSplit" : "navTabDiet", true);
       updateSegmentedSlider("dietSubSegmentedNav", (state?.dietViewMode === "diary") ? "dietModeDiaryBtn" : "dietModePlanBtn", true);
       const settingsCont = document.getElementById("settingsTabsContainer");
-      if (settingsCont) {
+      if (settingsCont && document.getElementById("settingsModal")?.classList.contains("open")) {
         const activeSettingBtn = settingsCont.querySelector("button.text-white");
         if (activeSettingBtn) updateSegmentedSlider(settingsCont, activeSettingBtn, true);
       }
@@ -10290,8 +10363,14 @@
         const activeExBtn = exModalNav.querySelector("button.text-white");
         if (activeExBtn) updateSegmentedSlider(exModalNav, activeExBtn, true);
       }
+      const scannerNav = document.getElementById("scannerModeNav");
+      if (scannerNav && document.getElementById("scannerModal")?.classList.contains("open")) {
+        const activeScanBtn = scannerNav.querySelector("button.text-white");
+        if (activeScanBtn) updateSegmentedSlider(scannerNav, activeScanBtn, true);
+      }
       const splitVarBar = document.getElementById("splitVariantPills");
-      if (splitVarBar && !splitVarBar.classList.contains("hidden") && currentMainView === "split") {
+      const splitVarRow = document.getElementById("splitVariantRow");
+      if (splitVarBar && (!splitVarRow || !splitVarRow.classList.contains("hidden")) && !splitVarBar.classList.contains("hidden") && currentMainView === "split") {
         const activeVarBtn = splitVarBar.querySelector("button.is-active, button.text-white");
         if (activeVarBtn) updateSegmentedSlider(splitVarBar, activeVarBtn, true);
       }
@@ -10333,8 +10412,11 @@
       const iconAddEx = document.getElementById("iconAddExTop");
       const track = document.getElementById("viewsTrack");
 
+      if (tabDiet) tabDiet.style.color = "";
+      if (tabSplit) tabSplit.style.color = "";
+
       if (track) {
-        track.style.transition = immediate ? "none" : "transform 360ms cubic-bezier(0.25, 1, 0.5, 1)";
+        track.style.transition = immediate ? "none" : "transform 360ms cubic-bezier(0.22, 1, 0.36, 1)";
         track.style.transform = (view === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
       }
 
@@ -10342,6 +10424,7 @@
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
         updateSegmentedSlider("mainSegmentedNav", "navTabSplit", immediate);
+        if (!immediate && prevView !== "split" && typeof haptic === "function") haptic("light");
 
         // Мягкий crossfade иконки в шапке (180ms)
         if (iconScan && iconAddEx) {
@@ -10374,6 +10457,7 @@
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
         updateSegmentedSlider("mainSegmentedNav", "navTabDiet", immediate);
+        if (!immediate && prevView !== "diet" && typeof haptic === "function") haptic("light");
 
         // Мягкий crossfade иконки в шапке (180ms)
         if (iconScan && iconAddEx) {
@@ -14166,13 +14250,14 @@
       const quickIcon = document.getElementById("quickRestBtnIcon");
       const quickLabel = document.getElementById("quickRestBtnLabel");
       if (quickBtn) {
-        quickBtn.classList.remove("bg-white/[0.06]", "border-white/10", "text-zinc-300");
+        quickBtn.classList.remove("bg-white/[0.05]", "bg-white/[0.06]", "border-white/10", "text-zinc-300");
         quickBtn.classList.add("bg-emerald-500/15", "border-emerald-500/40", "text-emerald-300", "shadow-[0_0_12px_rgba(16,185,129,0.25)]");
       }
       if (quickIcon && !quickIcon.querySelector(".animate-pulse")) {
         quickIcon.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>`;
       }
       if (quickLabel) {
+        quickLabel.classList.remove("hidden");
         quickLabel.textContent = formatMMSS(remaining);
       }
     }
@@ -14186,12 +14271,15 @@
       const quickLabel = document.getElementById("quickRestBtnLabel");
       if (quickBtn) {
         quickBtn.classList.remove("bg-emerald-500/15", "border-emerald-500/40", "text-emerald-300", "shadow-[0_0_12px_rgba(16,185,129,0.25)]");
-        quickBtn.classList.add("bg-white/[0.06]", "border-white/10", "text-zinc-300");
+        quickBtn.classList.add("bg-white/[0.05]", "border-white/10", "text-zinc-300");
       }
       if (quickIcon) {
         quickIcon.innerHTML = `<svg class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M10 2h4"></path></svg>`;
       }
-      if (quickLabel) quickLabel.textContent = "Таймер";
+      if (quickLabel) {
+        quickLabel.classList.add("hidden");
+        quickLabel.textContent = "";
+      }
     }
 
     function toggleOrStartRestTimer() {
@@ -15458,6 +15546,8 @@
       const subTrack = document.getElementById("dietSubTrack");
 
       if (btnPlan && btnDiary) {
+        btnPlan.style.color = "";
+        btnDiary.style.color = "";
         if (mode === "plan") {
           btnPlan.className = "relative z-10 px-3.5 py-1 rounded-lg text-xs font-bold tracking-wide transition-colors duration-200 text-white";
           btnDiary.className = "relative z-10 px-3.5 py-1 rounded-lg text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
@@ -15468,6 +15558,7 @@
           updateSegmentedSlider("dietSubSegmentedNav", "dietModeDiaryBtn", immediate);
         }
       }
+      if (!immediate && typeof haptic === "function") haptic("light");
 
       if (secPlan) secPlan.style.pointerEvents = (mode === "plan") ? "auto" : "none";
       if (secDiary) secDiary.style.pointerEvents = (mode === "diary") ? "auto" : "none";
@@ -19722,7 +19813,8 @@
       }
       document.getElementById("scannerModal")?.classList.add("open");
       setScannerLoadingState(false);
-      setScannerMode(mode);
+      setScannerMode(mode, true);
+      requestAnimationFrame(() => setScannerMode(scannerMode || mode, true));
       clearScannerOverlay();
     }
 
@@ -19732,15 +19824,21 @@
       document.getElementById("scannerModal")?.classList.remove("open");
     }
 
-    function setScannerMode(mode) {
+    function setScannerMode(mode, immediate = false) {
+      const prevMode = scannerMode;
       scannerMode = mode;
-      const tabs = { auto: "tabModeAuto", label: "tabModeLabel", barcode: "tabModeBarcode" };
-      Object.keys(tabs).forEach(k => {
-        const el = document.getElementById(tabs[k]);
-        if (el) el.className = (k === mode)
-          ? "py-2 text-xs font-semibold rounded-xl bg-zinc-800 text-white transition"
-          : "py-2 text-xs font-semibold rounded-xl text-zinc-400 transition";
+      const tabs = { auto: "tabModeAuto", label: "tabModeLabel", dish: "tabModeLabel", barcode: "tabModeBarcode" };
+      const activeId = tabs[mode] || "tabModeAuto";
+      ["tabModeAuto", "tabModeLabel", "tabModeBarcode"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = (id === activeId)
+          ? "relative z-10 py-2 text-xs font-bold rounded-xl text-white transition-colors duration-200"
+          : "relative z-10 py-2 text-xs font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200";
       });
+      if (typeof updateSegmentedSlider === "function") {
+        updateSegmentedSlider("scannerModeNav", activeId, immediate);
+      }
+      if (!immediate && prevMode !== mode && typeof haptic === "function") haptic("light");
     }
 
     function clearScannerOverlay() {
@@ -20623,6 +20721,7 @@
 
     function switchSettingsTab(tab, immediate = false) {
       if (!SETTINGS_TABS.includes(tab)) tab = "goals";
+      const prevTab = window.currentSettingsTab;
       window.currentSettingsTab = tab;
       const targetIndex = SETTINGS_TABS.indexOf(tab);
 
@@ -20633,6 +20732,7 @@
       SETTINGS_TABS.forEach(k => {
         const btn = document.getElementById(tabIds[k]);
         if (btn) {
+          btn.style.color = "";
           btn.className = (k === tab)
             ? "relative z-10 py-2 text-[11px] font-bold rounded-xl text-white transition-colors duration-200"
             : "relative z-10 py-2 text-[11px] font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200";
@@ -20643,6 +20743,7 @@
         }
       });
       updateSegmentedSlider("settingsTabsContainer", tabIds[tab], immediate);
+      if (!immediate && prevTab && prevTab !== tab && typeof haptic === "function") haptic("light");
 
       // Перемещаем трек карусели 1:1 как в TikTok / viewsTrack на главной
       const track = document.getElementById("settingsTrack");
@@ -21217,10 +21318,33 @@
       return Number.isInteger(parsed) && parsed >= 0 && parsed <= 6 ? parsed : new Date().getDay();
     }
 
+    window._splitDayActionsOpen = false;
+    function syncSplitDayActionsDrawerUI() {
+      const pillsBox = document.getElementById("splitProgramPills");
+      const toggleBtn = document.getElementById("btnToggleSplitDayActions");
+      const isOpen = !!window._splitDayActionsOpen;
+      if (pillsBox) pillsBox.classList.toggle("hidden", !isOpen);
+      if (toggleBtn) {
+        toggleBtn.classList.toggle("bg-white/[0.14]", isOpen);
+        toggleBtn.classList.toggle("border-white/30", isOpen);
+        toggleBtn.classList.toggle("text-white", isOpen);
+        toggleBtn.classList.toggle("bg-white/[0.05]", !isOpen);
+        toggleBtn.classList.toggle("border-white/10", !isOpen);
+        toggleBtn.classList.toggle("text-zinc-400", !isOpen);
+      }
+    }
+
+    window.toggleSplitDayActionsDrawer = function(forceState) {
+      window._splitDayActionsOpen = (typeof forceState === "boolean") ? forceState : !window._splitDayActionsOpen;
+      syncSplitDayActionsDrawerUI();
+      if (typeof haptic === "function") haptic("light");
+    };
+
     // Выбор дня недели в календаре ПН-ВС
     window.selectWeekdayInSplit = function(dayKey) {
       const parsed = Number(dayKey);
       selectedWeekdayKey = Number.isInteger(parsed) ? parsed : 0;
+      window._splitDayActionsOpen = false;
       cleanAndIsolatePrograms();
 
       const assigned = state.workout.weekSchedule?.[selectedWeekdayKey] || "rest";
@@ -21233,6 +21357,8 @@
     // Назначение программы или Отдыха через правый селектор
     window.assignProgramToSelectedWeekday = function(progOrRest) {
       const dow = getSafeDow();
+      const dayMeta = WEEKDAY_NAMES.find(d => d.key === dow) || WEEKDAY_NAMES[0];
+      window._splitDayActionsOpen = false;
       if (progOrRest === "__create_new__") {
         openDayManagerModal();
         return;
@@ -21241,7 +21367,7 @@
         state.workout.weekSchedule[dow] = "rest";
         saveState();
         renderWorkoutAll();
-        showToast("Поставлен день отдыха");
+        showToast(`${dayMeta.full} — день отдыха (программа сохранена в списке справа)`);
         return;
       }
 
@@ -21310,6 +21436,7 @@
       recalculateWeeklySetsFromPrograms();
       saveState();
       renderWorkoutAll();
+      if (typeof haptic === "function") haptic("selection");
     };
 
     window.addNewWorkoutDayVariant = function(progId) {
@@ -21415,9 +21542,12 @@
     };
 
     window.renderWorkoutVariantPills = function(activeProg) {
+      const varRow = document.getElementById("splitVariantRow");
       const varBox = document.getElementById("splitVariantPills");
+      const addRightBtn = document.getElementById("btnAddWorkoutVariantRight");
       if (!varBox) return;
       if (!activeProg) {
+        if (varRow) varRow.classList.add("hidden");
         varBox.classList.add("hidden");
         varBox.innerHTML = "";
         return;
@@ -21425,6 +21555,7 @@
       ensureProgramVariants(activeProg);
       const activeVk = getActiveProgramVariantKey(activeProg);
       const keys = Object.keys(activeProg.variants);
+      if (varRow) varRow.classList.remove("hidden");
       varBox.classList.remove("hidden");
 
       const editSvg = `<svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
@@ -21454,16 +21585,12 @@
         `;
       }).join("");
 
-      const addBtnHtml = `
-        <button
-          type="button"
-          onclick="addNewWorkoutDayVariant('${activeProg.id}')"
-          class="relative z-10 shrink-0 px-2 py-1 text-[11px] mono text-zinc-500 hover:text-white bg-white/[0.02] border border-dashed border-white/10 rounded-lg active:scale-95 transition"
-        >+ Вариант</button>
-      `;
+      if (addRightBtn) {
+        addRightBtn.onclick = () => addNewWorkoutDayVariant(activeProg.id);
+      }
 
-      varBox.className = "segmented-slider-container no-swipe shrink-0 flex items-center gap-1.5 px-1 py-1.5 rounded-xl mb-2 overflow-x-auto no-scrollbar relative";
-      varBox.innerHTML = `<div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>` + pillsHtml + addBtnHtml;
+      varBox.className = "segmented-slider-container no-swipe w-fit max-w-[calc(100%-96px)] flex items-center gap-1 px-1 py-1 rounded-xl overflow-x-auto no-scrollbar relative";
+      varBox.innerHTML = `<div class="segmented-slider-pill"><div class="liquid-glass-body"></div></div>` + pillsHtml;
 
       const hasPrevVarRect = !!(window._prevPillRects && window._prevPillRects["splitVariantPills"]);
       updateSegmentedSlider("splitVariantPills", "workoutVarBtn_" + activeProg.id + "_" + activeVk, !hasPrevVarRect);
@@ -21570,12 +21697,53 @@
         `;
       }
 
+      // 3b) Живой прогресс текущей тренировки + тонкая полоса прогресса под шапкой
+      let dayDoneSets = 0;
+      let dayTargetSets = 0;
+      if (activeProg) {
+        ensureProgramVariants(activeProg);
+        const dayExList = getActiveProgramExercises(activeProg);
+        dayExList.forEach(ex => {
+          const targetS = Math.max(1, Number(ex.targetSets) || 3);
+          const doneS = Math.min(targetS, (ex.setsToday || []).filter(Boolean).length);
+          dayTargetSets += targetS;
+          dayDoneSets += doneS;
+        });
+      }
+      const dayPct = dayTargetSets > 0 ? Math.min(100, Math.round((dayDoneSets / dayTargetSets) * 100)) : 0;
+
       const assignLabel = document.getElementById("activeWeekdayAssignLabel");
       if (assignLabel) {
-        assignLabel.textContent = activeProg ? dayMeta.full : `${dayMeta.full} · Отдых`;
+        if (!activeProg) {
+          assignLabel.innerHTML = `${escapeHtml(dayMeta.full)} <span class="text-zinc-600">·</span> День восстановления`;
+        } else if (dayTargetSets > 0 && dayDoneSets >= dayTargetSets) {
+          assignLabel.innerHTML = `<span class="text-emerald-400 font-semibold">✓ Выполнено ${dayDoneSets}/${dayTargetSets}</span> <span class="text-zinc-600">·</span> ${escapeHtml(dayMeta.full)}`;
+        } else if (dayTargetSets > 0) {
+          assignLabel.innerHTML = `${escapeHtml(dayMeta.full)} <span class="text-zinc-600">·</span> <span class="mono text-zinc-200 font-semibold">${dayDoneSets}/${dayTargetSets}</span> подх.`;
+        } else {
+          assignLabel.textContent = dayMeta.full;
+        }
       }
 
-      // 4) Панель действий под заголовком (никаких кнопок, которые сами переключают день на День 3!)
+      const dayProgWrap = document.getElementById("splitDayProgressWrap");
+      const dayProgFill = document.getElementById("splitDayProgressFill");
+      if (dayProgWrap && dayProgFill) {
+        if (activeProg && dayTargetSets > 0) {
+          dayProgWrap.classList.remove("hidden");
+          dayProgFill.style.width = `${dayPct}%`;
+          if (dayDoneSets >= dayTargetSets) {
+            dayProgFill.style.background = "#10b981";
+            dayProgFill.style.boxShadow = "0 0 10px rgba(16, 185, 129, 0.45)";
+          } else {
+            dayProgFill.style.background = "var(--accent-cal)";
+            dayProgFill.style.boxShadow = "0 0 10px var(--accent-glow)";
+          }
+        } else {
+          dayProgWrap.classList.add("hidden");
+        }
+      }
+
+      // 4) Скрываемая панель действий дня (раскрывается по кнопке ⋯ справа)
       const pillsBox = document.getElementById("splitProgramPills");
       if (pillsBox) {
         if (activeProg) {
@@ -21583,27 +21751,28 @@
             <button type="button" onclick="openDayManagerModal()" class="stack-pill shrink-0">
               <span>Переименовать</span>
             </button>
-            <button type="button" onclick="assignProgramToSelectedWeekday('rest')" class="stack-pill shrink-0">
-              <span>Сделать отдыхом</span>
-            </button>
-            <button type="button" onclick="requestDeleteProgram('${activeProg.id}')" class="stack-pill shrink-0" style="color:#f87171; border-color:rgba(248,113,113,0.3)">
-              <span>Удалить день</span>
+            <button type="button" onclick="assignProgramToSelectedWeekday('rest')" class="stack-pill shrink-0" title="Убирает тренировку только с ${escapeHtml(dayMeta.short)}, сама программа сохранится">
+              <span>Отдых на ${escapeHtml(dayMeta.short)}</span>
             </button>
             <button type="button" onclick="openDayManagerModal()" class="stack-pill shrink-0">
               <span>+ Новый день</span>
+            </button>
+            <button type="button" onclick="requestDeleteProgram('${activeProg.id}')" class="stack-pill shrink-0" style="color:#f87171; border-color:rgba(248,113,113,0.3)">
+              <span>Удалить программу</span>
             </button>
           `;
         } else {
           pillsBox.innerHTML = `
             <button type="button" onclick="openDayManagerModal()" class="stack-pill done shrink-0">
-              <span>+ Создать тренировку на ${dayMeta.short}</span>
+              <span>+ Создать тренировку на ${escapeHtml(dayMeta.short)}</span>
             </button>
             <button type="button" onclick="openDayManagerModal()" class="stack-pill shrink-0">
-              <span>Все дни (${allProgs.length})</span>
+              <span>Все программы (${allProgs.length})</span>
             </button>
           `;
         }
       }
+      syncSplitDayActionsDrawerUI();
 
       // 5) Полоса вариантов тренировочного дня + список упражнений или карточка ОТДЫХА
       renderWorkoutVariantPills(activeProg);
@@ -23712,6 +23881,7 @@
     window.updateExModalViewportHeight = updateExModalViewportHeight;
 
     function switchExModalSubtab(tabKey, immediate = false) {
+      const prevTab = currentExModalSubtab;
       currentExModalSubtab = tabKey;
       const notesPane = document.getElementById("exModalTabPane_notes");
       const progPane = document.getElementById("exModalTabPane_progress");
@@ -23719,6 +23889,9 @@
       const btnProg = document.getElementById("exModalTabBtn_progress");
       const headerCatLabel = document.getElementById("exModalHeaderCategoryLabel");
       const track = document.getElementById("exModalTrack");
+
+      if (btnNotes) btnNotes.style.color = "";
+      if (btnProg) btnProg.style.color = "";
 
       if (tabKey === "progress") {
         if (headerCatLabel) headerCatLabel.textContent = "Прогресс и веса";
@@ -23761,6 +23934,7 @@
       if (typeof updateSegmentedSlider === "function") {
         updateSegmentedSlider("exModalSubNav", activeBtn, immediate);
       }
+      if (!immediate && prevTab && prevTab !== tabKey && typeof haptic === "function") haptic("light");
 
       updateExModalViewportHeight();
     }
@@ -23934,10 +24108,14 @@
             }
             progressFraction = Math.max(-0.12, Math.min(1.12, progressFraction));
             const pillTargetX = btnNotes.offsetLeft + (progressFraction * dist);
+            const pillTargetW = btnNotes.offsetWidth + (btnProg.offsetWidth - btnNotes.offsetWidth) * Math.max(0, Math.min(1, progressFraction));
             pill.style.transition = "none";
             pill.classList.add("is-liquid-moving");
             pill.style.transform = `translate3d(${pillTargetX}px, 0, 0)`;
-            pill.style.width = btnNotes.offsetWidth + "px";
+            pill.style.width = `${pillTargetW}px`;
+            const clamped = Math.max(0, Math.min(1, progressFraction));
+            btnNotes.style.color = `rgba(255,255,255,${(1 - clamped * 0.42).toFixed(2)})`;
+            btnProg.style.color = `rgba(255,255,255,${(0.58 + clamped * 0.42).toFixed(2)})`;
           }
         }
       }, { passive: false });
@@ -23945,6 +24123,10 @@
       const endHandler = () => {
         const nav = document.getElementById("exModalSubNav");
         const pill = nav?.querySelector(".segmented-slider-pill");
+        const btnNotes = document.getElementById("exModalTabBtn_notes");
+        const btnProg = document.getElementById("exModalTabBtn_progress");
+        if (btnNotes) btnNotes.style.color = "";
+        if (btnProg) btnProg.style.color = "";
         if (pill) {
           pill.classList.remove("is-liquid-moving");
           pill.style.transition = "";
@@ -23974,9 +24156,6 @@
 
         const targetTab = targetIdx === 1 ? "progress" : "notes";
         switchExModalSubtab(targetTab, false);
-        if (targetIdx !== currentIdx && typeof triggerGymHaptic === "function") {
-          triggerGymHaptic();
-        }
       };
 
       panel.addEventListener("touchend", endHandler, { passive: true });
@@ -24670,15 +24849,21 @@
       }
     }
 
-    window.setScannerMode = function(mode) {
+    window.setScannerMode = function(mode, immediate = false) {
+      const prevMode = scannerMode;
       scannerMode = mode;
-      const map = { auto: "tabModeAuto", dish: "tabModeLabel", barcode: "tabModeBarcode" };
-      Object.keys(map).forEach(k => {
-        const el = document.getElementById(map[k]);
-        if (el) el.className = (k === mode)
-          ? "py-2 text-xs font-semibold rounded-xl bg-zinc-800 text-white transition"
-          : "py-2 text-xs font-semibold rounded-xl text-zinc-400 transition";
+      const map = { auto: "tabModeAuto", dish: "tabModeLabel", label: "tabModeLabel", barcode: "tabModeBarcode" };
+      const activeId = map[mode] || "tabModeAuto";
+      ["tabModeAuto", "tabModeLabel", "tabModeBarcode"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = (id === activeId)
+          ? "relative z-10 py-2 text-xs font-bold rounded-xl text-white transition-colors duration-200"
+          : "relative z-10 py-2 text-xs font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200";
       });
+      if (typeof updateSegmentedSlider === "function") {
+        updateSegmentedSlider("scannerModeNav", activeId, immediate);
+      }
+      if (!immediate && prevMode !== mode && typeof haptic === "function") haptic("light");
     };
 
     function setScannerBadgeText(label) {
@@ -25840,7 +26025,7 @@ ${knownPiecesContext}
         if (e.touches.length !== 1) return;
 
         startTarget = e.target;
-        if (startTarget.closest("#stackAndWeightStrip, #splitProgramPills, input, textarea, select, .no-swipe, [data-no-swipe], #mealFilterBar, .overflow-x-auto, .no-scrollbar, .meal-tabs-scroll, .quick-chips-scroll")) {
+        if (startTarget.closest("#stackAndWeightStrip, #splitProgramPills, #splitVariantRow, input, textarea, select, .no-swipe, [data-no-swipe], #mealFilterBar, .overflow-x-auto, .no-scrollbar, .meal-tabs-scroll, .quick-chips-scroll")) {
           cancelGesture = true;
           return;
         }
@@ -25949,6 +26134,8 @@ ${knownPiecesContext}
                 mainPill.style.transition = "none";
                 mainPill.style.transform = trX;
                 mainPill.style.width = trW;
+                btnDiet.style.color = `rgba(255,255,255,${(1 - ratio * 0.42).toFixed(2)})`;
+                btnSplit.style.color = `rgba(255,255,255,${(0.58 + ratio * 0.42).toFixed(2)})`;
               }
             }
 
@@ -25973,6 +26160,8 @@ ${knownPiecesContext}
               subPill.style.transition = "none";
               subPill.style.transform = sTrX;
               subPill.style.width = sTrW;
+              btnP.style.color = `rgba(255,255,255,${(1 - subRatio * 0.42).toFixed(2)})`;
+              btnD.style.color = `rgba(255,255,255,${(0.58 + subRatio * 0.42).toFixed(2)})`;
             }
 
             if (startingMainView === "split") {
@@ -26028,9 +26217,29 @@ ${knownPiecesContext}
       }, { passive: false });
 
       const endHandler = () => {
-        if (rafId) cancelAnimationFrame(rafId);
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+
+        // Если это был обычный тап или вертикальный скролл — не трогаем треки и пиллы!
+        if (cancelGesture || !isSwiping) {
+          isSwiping = false;
+          cancelGesture = false;
+          isScrollingVertically = false;
+          return;
+        }
+
         const mainPill = document.getElementById("mainNavSliderPill");
         const subPill = document.getElementById("dietSubSliderPill");
+        const btnDiet = document.getElementById("navTabDiet");
+        const btnSplit = document.getElementById("navTabSplit");
+        const btnP = document.getElementById("dietModePlanBtn");
+        const btnD = document.getElementById("dietModeDiaryBtn");
+        if (btnDiet) btnDiet.style.color = "";
+        if (btnSplit) btnSplit.style.color = "";
+        if (btnP) btnP.style.color = "";
+        if (btnD) btnD.style.color = "";
 
         // В момент touchend снимаем .is-liquid-moving для мягкого возврата scale по ходу торможения
         if (mainPill) {
@@ -26048,38 +26257,21 @@ ${knownPiecesContext}
         const dt = Math.max(1, Date.now() - startTime);
         const vx = Math.abs(dx) / dt;
         const width = viewport.offsetWidth || window.innerWidth || 390;
-        const distanceThreshold = width * 0.28;
-        const isFlick = Math.abs(dx) > 25 && vx > 0.35;
-        const isSwipeLeft = (dx < -distanceThreshold) || (dx < -25 && isFlick);
-        const isSwipeRight = (dx > distanceThreshold) || (dx > 25 && isFlick);
+        const distanceThreshold = width * 0.20;
+        const isFlick = Math.abs(dx) > 22 && vx > 0.28;
+        const isSwipeLeft = (dx < -distanceThreshold) || (dx < -22 && isFlick);
+        const isSwipeRight = (dx > distanceThreshold) || (dx > 22 && isFlick);
 
-        // Синхронная длительность доводки для экрана и линзы (240ms..360ms)
+        // Синхронная длительность доводки для экрана и линзы (220ms..360ms)
         const remaining = Math.max(0, width - Math.abs(dx));
-        const snapDuration = Math.round(Math.max(240, Math.min(360, (remaining / width) * 360)));
-        const snapBezier = "cubic-bezier(0.25, 1, 0.5, 1)";
+        const snapDuration = Math.round(Math.max(220, Math.min(360, (remaining / width) * 360)));
+        const snapBezier = "cubic-bezier(0.22, 1, 0.36, 1)";
         const snapTrackTransition = `transform ${snapDuration}ms ${snapBezier}`;
-        const snapPillTransition = `transform ${snapDuration}ms ${snapBezier}, width ${snapDuration}ms ${snapBezier}`;
+        const snapPillTransition = `transform ${snapDuration}ms cubic-bezier(0.22, 1.06, 0.36, 1), width ${snapDuration}ms cubic-bezier(0.22, 1.06, 0.36, 1)`;
 
         if (mainPill) mainPill.style.transition = snapPillTransition;
         if (subPill) subPill.style.transition = snapPillTransition;
 
-        if (cancelGesture || !isSwiping) {
-          isSwiping = false;
-          cancelGesture = false;
-          isScrollingVertically = false;
-          const dietSubTrack = document.getElementById("dietSubTrack");
-          if (track) {
-            track.style.transition = snapTrackTransition;
-            track.style.transform = (currentMainView === "split") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
-          }
-          if (dietSubTrack) {
-            dietSubTrack.style.transition = snapTrackTransition;
-            dietSubTrack.style.transform = (state.dietViewMode === "diary") ? "translate3d(-50%, 0, 0)" : "translate3d(0%, 0, 0)";
-          }
-          if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
-          scheduleLockInactiveTrackHeights(380);
-          return;
-        }
         isSwiping = false;
         cancelGesture = false;
         isScrollingVertically = false;
@@ -26090,8 +26282,7 @@ ${knownPiecesContext}
           // Из ТРЕНИ
           if (isSwipeRight) {
             switchMainView("diet");
-            switchDietViewMode("diary");
-            if (typeof haptic === "function") haptic("light");
+            switchDietViewMode("diary", true);
           } else {
             track.style.transition = snapTrackTransition;
             track.style.transform = "translate3d(-50%, 0, 0)";
@@ -26101,10 +26292,8 @@ ${knownPiecesContext}
           // Из ДНЕВНИКА
           if (isSwipeLeft) {
             switchMainView("split");
-            if (typeof haptic === "function") haptic("light");
           } else if (isSwipeRight) {
             switchDietViewMode("plan");
-            if (typeof haptic === "function") haptic("light");
           } else {
             track.style.transition = snapTrackTransition;
             track.style.transform = "translate3d(0%, 0, 0)";
@@ -26118,7 +26307,6 @@ ${knownPiecesContext}
           // Из ПЛАНА ТРЕНЕРА
           if (isSwipeLeft) {
             switchDietViewMode("diary");
-            if (typeof haptic === "function") haptic("light");
           } else {
             track.style.transition = snapTrackTransition;
             track.style.transform = "translate3d(0%, 0, 0)";
@@ -26131,10 +26319,6 @@ ${knownPiecesContext}
         }
 
         scheduleLockInactiveTrackHeights(380);
-
-        if (typeof updateAllSegmentedSliders === "function") {
-          requestAnimationFrame(updateAllSegmentedSliders);
-        }
       };
 
       viewport.addEventListener("touchend", endHandler, { passive: true });
@@ -26156,6 +26340,7 @@ ${knownPiecesContext}
       panel.dataset.swipeTrackAttached = "true";
 
       const tabsList = ["goals", "style", "push", "api"];
+      const tabBtnIds = ["setTabGoals", "setTabStyle", "setTabPush", "setTabApi"];
       const panelMap = { goals: "panelGoals", style: "panelStyle", push: "panelPush", api: "panelApi" };
       let startX = 0;
       let startY = 0;
@@ -26224,6 +26409,44 @@ ${knownPiecesContext}
           targetTranslate = Math.max(-82, Math.min(8, targetTranslate));
           track.style.transform = `translate3d(${targetTranslate}%, 0, 0)`;
 
+          // 1:1 Live следование Liquid Glass пилла по вкладкам настроек
+          const settingsNav = document.getElementById("settingsTabsContainer");
+          const settingsPill = settingsNav?.querySelector(".segmented-slider-pill");
+          const tabBtns = tabBtnIds.map(id => document.getElementById(id));
+          if (settingsPill && tabBtns.every(Boolean)) {
+            let progressIdx = currentIdx - (dx / width);
+            if (currentIdx === 0 && dx > 0) progressIdx = -(dx * 0.18 / width);
+            else if (currentIdx === 3 && dx < 0) progressIdx = 3 - (dx * 0.18 / width);
+            progressIdx = Math.max(-0.14, Math.min(3.14, progressIdx));
+
+            const clampedIdx = Math.max(0, Math.min(3, progressIdx));
+            const lowIdx = Math.floor(clampedIdx);
+            const highIdx = Math.min(3, Math.ceil(clampedIdx));
+            const frac = clampedIdx - lowIdx;
+
+            let pillX = tabBtns[lowIdx].offsetLeft + (tabBtns[highIdx].offsetLeft - tabBtns[lowIdx].offsetLeft) * frac;
+            if (progressIdx < 0) {
+              pillX = tabBtns[0].offsetLeft + progressIdx * (tabBtns[1].offsetLeft - tabBtns[0].offsetLeft);
+            } else if (progressIdx > 3) {
+              pillX = tabBtns[3].offsetLeft + (progressIdx - 3) * (tabBtns[3].offsetLeft - tabBtns[2].offsetLeft);
+            }
+            const pillW = tabBtns[lowIdx].offsetWidth + (tabBtns[highIdx].offsetWidth - tabBtns[lowIdx].offsetWidth) * frac;
+
+            if (settingsPill._liquidMoveTimer) {
+              clearTimeout(settingsPill._liquidMoveTimer);
+              settingsPill._liquidMoveTimer = null;
+            }
+            settingsPill.style.transition = "none";
+            settingsPill.classList.add("is-liquid-moving");
+            settingsPill.style.transform = `translate3d(${pillX}px, 0, 0)`;
+            settingsPill.style.width = `${pillW}px`;
+
+            tabBtns.forEach((b, i) => {
+              const proximity = Math.max(0, 1 - Math.abs(clampedIdx - i));
+              b.style.color = `rgba(255,255,255,${(0.56 + proximity * 0.44).toFixed(2)})`;
+            });
+          }
+
           // Динамически подстраиваем высоту вьюпорта под соседнюю входящую вкладку во время жеста
           const nextIdx = dx < 0 ? Math.min(3, currentIdx + 1) : Math.max(0, currentIdx - 1);
           const curEl = document.getElementById(panelMap[tabsList[currentIdx]]);
@@ -26236,6 +26459,19 @@ ${knownPiecesContext}
       }, { passive: false });
 
       const endHandler = () => {
+        const settingsNav = document.getElementById("settingsTabsContainer");
+        const settingsPill = settingsNav?.querySelector(".segmented-slider-pill");
+        tabBtnIds.forEach(id => {
+          const b = document.getElementById(id);
+          if (b) b.style.color = "";
+        });
+        if (settingsPill) {
+          if (settingsPill._liquidMoveTimer) clearTimeout(settingsPill._liquidMoveTimer);
+          settingsPill._liquidMoveTimer = null;
+          settingsPill.classList.remove("is-liquid-moving");
+          settingsPill.style.transition = "";
+        }
+
         if (cancelGesture || !isSwiping) {
           isSwiping = false;
           cancelGesture = false;
@@ -26265,9 +26501,6 @@ ${knownPiecesContext}
         }
 
         switchSettingsTab(tabsList[targetIdx]);
-        if (targetIdx !== currentIdx && typeof triggerGymHaptic === "function") {
-          triggerGymHaptic();
-        }
       };
 
       panel.addEventListener("touchend", endHandler, { passive: true });
