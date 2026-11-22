@@ -10471,7 +10471,11 @@
       } else {
         openScanner("auto");
       }
+      if (typeof window.checkModalVisibilityToNative === "function") {
+        window.checkModalVisibilityToNative();
+      }
     }
+    window.handleTopRightAction = handleTopRightAction;
 
     // =========================================================================
     // СТЕК ДОБАВОК (ONE-TAP STACK) И УТРЕННИЙ ВЕС
@@ -19788,7 +19792,11 @@
       setScannerMode(mode, true);
       requestAnimationFrame(() => setScannerMode(scannerMode || mode, true));
       clearScannerOverlay();
+      if (typeof window.checkModalVisibilityToNative === "function") {
+        window.checkModalVisibilityToNative();
+      }
     }
+    window.openScanner = openScanner;
 
     function closeScanner() {
       stopCamera();
@@ -21850,10 +21858,16 @@
       if (assigned === "rest" || !state.workout.programs?.[assigned]) {
         openDayManagerModal();
         showToast("Сначала назови и создай тренировочный день");
+        if (typeof window.checkModalVisibilityToNative === "function") {
+          window.checkModalVisibilityToNative();
+        }
         return;
       }
       activeProgramId = assigned;
       if (origOpenAddExerciseModal) origOpenAddExerciseModal();
+      if (typeof window.checkModalVisibilityToNative === "function") {
+        window.checkModalVisibilityToNative();
+      }
     };
 
     // 6. Модальное окно управления всеми днями

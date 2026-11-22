@@ -24,19 +24,84 @@ final class WebViewModel: ObservableObject {
     }()
     
     func navigate(to route: String) {
-        if currentView != route {
-            currentView = route
-        }
-        if let wv = webView {
-            wv.evaluateJavaScript("switchMainView('\(route)');", completionHandler: nil)
-        } else {
-            pendingRoute = route
+        DispatchQueue.main.async {
+            if self.currentView != route {
+                self.currentView = route
+            }
+            if let wv = self.webView {
+                let escapedRoute = route.replacingOccurrences(of: "'", with: "\\'")
+                wv.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)'); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)'); }") { _, error in
+                    if let error = error {
+                        print("[Form][NativeBar] navigate('\(route)') JS error: \(error.localizedDescription)")
+                    }
+                }
+            } else {
+                self.pendingRoute = route
+                print("[Form][NativeBar] navigate('\(route)') queued: webView is nil")
+            }
         }
     }
     
     func handleTopRightAction() {
-        if let wv = webView {
-            wv.evaluateJavaScript("if (typeof handleTopRightAction === 'function') { handleTopRightAction(); }", completionHandler: nil)
+        DispatchQueue.main.async {
+            guard let wv = self.webView else {
+                print("[Form][NativeBar] handleTopRightAction aborted: webView is nil")
+                return
+            }
+            let activeView = self.currentView
+            let js: String
+            if activeView == "split" {
+                js = """
+                (function() {
+                    try {
+                        if (typeof window.openAddExerciseModal === 'function') {
+                            window.openAddExerciseModal();
+                        } else if (typeof openAddExerciseModal === 'function') {
+                            openAddExerciseModal();
+                        } else if (typeof window.handleTopRightAction === 'function') {
+                            window.handleTopRightAction();
+                        } else {
+                            return 'MISSING_FN:openAddExerciseModal';
+                        }
+                        if (typeof window.checkModalVisibilityToNative === 'function') {
+                            window.checkModalVisibilityToNative();
+                        }
+                        return 'OK:split';
+                    } catch (e) {
+                        return 'JS_ERR:' + (e && e.message ? e.message : String(e));
+                    }
+                })();
+                """
+            } else {
+                js = """
+                (function() {
+                    try {
+                        if (typeof window.openScanner === 'function') {
+                            window.openScanner('auto');
+                        } else if (typeof openScanner === 'function') {
+                            openScanner('auto');
+                        } else if (typeof window.handleTopRightAction === 'function') {
+                            window.handleTopRightAction();
+                        } else {
+                            return 'MISSING_FN:openScanner';
+                        }
+                        if (typeof window.checkModalVisibilityToNative === 'function') {
+                            window.checkModalVisibilityToNative();
+                        }
+                        return 'OK:diet';
+                    } catch (e) {
+                        return 'JS_ERR:' + (e && e.message ? e.message : String(e));
+                    }
+                })();
+                """
+            }
+            wv.evaluateJavaScript(js) { result, error in
+                if let error = error {
+                    print("[Form][NativeBar] handleTopRightAction(\(activeView)) JS error: \(error.localizedDescription)")
+                } else if let status = result as? String, !status.hasPrefix("OK:") {
+                    print("[Form][NativeBar] handleTopRightAction(\(activeView)) warning: \(status)")
+                }
+            }
         }
     }
 }
@@ -563,7 +628,14 @@ struct WebView: UIViewRepresentable {
         return webView
     }
     
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        if WebViewModel.shared.webView !== uiView {
+            WebViewModel.shared.webView = uiView
+        }
+        if context.coordinator.currentWebView !== uiView {
+            context.coordinator.currentWebView = uiView
+        }
+    }
     
     class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler, PHPickerViewControllerDelegate {
         private let pedometer = CMPedometer()
@@ -1285,10 +1357,10 @@ struct NativeLiquidGlassBottomBar: View {
         GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
                 capsuleContent26
-                    .glassEffect(.regular.interactive(), in: Capsule())
+                    .glassEffect(.regular.interactive(), in: .capsule)
+                    .contentShape(Capsule())
                 
-                actionButton
-                    .glassEffect(.regular.interactive(), in: Circle())
+                actionButton26
             }
         }
         .padding(.horizontal, 16)
@@ -1303,13 +1375,9 @@ struct NativeLiquidGlassBottomBar: View {
                         .fill(.ultraThinMaterial)
                         .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
                 )
+                .contentShape(Capsule())
             
-            actionButton
-                .background(
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
-                )
+            actionButtonFallback
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 6)
@@ -1318,11 +1386,15 @@ struct NativeLiquidGlassBottomBar: View {
     @available(iOS 26.0, *)
     private var capsuleContent26: some View {
         let totalWidth: CGFloat = 196
-        let height: CGFloat = 54
+        let height: CGFloat = 56
         
-        return HStack(spacing: 0) {
-            tabItem26(title: "Рацион", icon: "fork.knife", key: "diet")
-            tabItem26(title: "Трени", icon: "dumbbell.fill", key: "split")
+        return ZStack {
+            Capsule()
+                .fill(Color.black.opacity(0.015))
+            HStack(spacing: 0) {
+                tabItem26(title: "Рацион", icon: "fork.knife", key: "diet")
+                tabItem26(title: "Трени", icon: "dumbbell.fill", key: "split")
+            }
         }
         .frame(width: totalWidth, height: height)
         .contentShape(Capsule())
@@ -1357,11 +1429,15 @@ struct NativeLiquidGlassBottomBar: View {
     
     private var capsuleContentFallback: some View {
         let totalWidth: CGFloat = 196
-        let height: CGFloat = 54
+        let height: CGFloat = 56
         
-        return HStack(spacing: 0) {
-            tabItemFallback(title: "Рацион", icon: "fork.knife", key: "diet")
-            tabItemFallback(title: "Трени", icon: "dumbbell.fill", key: "split")
+        return ZStack {
+            Capsule()
+                .fill(Color.black.opacity(0.015))
+            HStack(spacing: 0) {
+                tabItemFallback(title: "Рацион", icon: "fork.knife", key: "diet")
+                tabItemFallback(title: "Трени", icon: "dumbbell.fill", key: "split")
+            }
         }
         .frame(width: totalWidth, height: height)
         .contentShape(Capsule())
@@ -1405,18 +1481,55 @@ struct NativeLiquidGlassBottomBar: View {
             }
     }
     
-    private var actionButton: some View {
+    @available(iOS 26.0, *)
+    private var actionButton26: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             viewModel.handleTopRightAction()
         }) {
-            Image(systemName: viewModel.currentView == "diet" ? "viewfinder" : "plus")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(width: 54, height: 54)
-                .contentTransition(.symbolEffect(.replace))
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.015))
+                Image(systemName: viewModel.currentView == "diet" ? "viewfinder" : "plus")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .frame(width: 56, height: 56)
+            .contentShape(Circle())
+            .glassEffect(.regular.interactive(), in: .circle)
         }
         .buttonStyle(.plain)
+        .frame(width: 56, height: 56)
+        .contentShape(Circle())
+        .accessibilityLabel(viewModel.currentView == "diet" ? "Сканер продуктов" : "Добавить упражнение")
+    }
+    
+    private var actionButtonFallback: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            viewModel.handleTopRightAction()
+        }) {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.015))
+                Image(systemName: viewModel.currentView == "diet" ? "viewfinder" : "plus")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .frame(width: 56, height: 56)
+            .background(
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
+            )
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .frame(width: 56, height: 56)
+        .contentShape(Circle())
+        .accessibilityLabel(viewModel.currentView == "diet" ? "Сканер продуктов" : "Добавить упражнение")
     }
 }
 
@@ -1429,6 +1542,7 @@ struct ContentView: View {
             WebView().ignoresSafeArea(.container, edges: .vertical)
             
             NativeLiquidGlassBottomBar(viewModel: viewModel)
+                .zIndex(10)
                 .opacity(viewModel.isModalOpen ? 0 : 1)
                 .offset(y: viewModel.isModalOpen ? 100 : 0)
                 .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.isModalOpen)
