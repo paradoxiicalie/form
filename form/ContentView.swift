@@ -367,22 +367,130 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         return docs
     }
     
+    private static let diskBackupQueue = DispatchQueue(label: "com.form.diskbackup.serial", qos: .utility)
+
     static var diskBackupURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("form_state_backup.json")
     }
-    
-    static func saveDiskBackup(jsonString: String) {
-        guard !jsonString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              let data = jsonString.data(using: .utf8) else { return }
-        try? data.write(to: diskBackupURL, options: .atomic)
+
+    static func jsJSONLiteral(from object: Any) -> String? {
+        guard JSONSerialization.isValidJSONObject(object),
+              let data = try? JSONSerialization.data(withJSONObject: object, options: []),
+              var json = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        json = json
+            .replacingOccurrences(of: "\u{2028}", with: "\\u2028")
+            .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
+        return json
     }
-    
+
+    static func jsStringLiteral(_ raw: String) -> String {
+        if let encodedArray = jsJSONLiteral(from: [raw]), encodedArray.count >= 2 {
+            let start = encodedArray.index(after: encodedArray.startIndex)
+            let end = encodedArray.index(before: encodedArray.endIndex)
+            return String(encodedArray[start..<end])
+        }
+        return "\"\""
+    }
+
+    @discardableResult
+    static func writeDiskBackupSync(_ jsonString: String) -> Bool {
+        let trimmed = jsonString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let data = trimmed.data(using: .utf8),
+              (try? JSONSerialization.jsonObject(with: data)) != nil else { return false }
+        do {
+            try data.write(to: diskBackupURL, options: .atomic)
+            guard FileManager.default.fileExists(atPath: diskBackupURL.path) else { return false }
+            if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+                if d.object(forKey: "formNativeBackupJSON") != nil {
+                    d.removeObject(forKey: "formNativeBackupJSON")
+                }
+                if d.object(forKey: "nativeStateJson") != nil {
+                    d.removeObject(forKey: "nativeStateJson")
+                }
+            }
+            return true
+        } catch {
+            print("[Form][Backup] writeDiskBackupSync error: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    static func saveDiskBackup(jsonString: String) {
+        let copy = jsonString
+        diskBackupQueue.async {
+            _ = writeDiskBackupSync(copy)
+        }
+    }
+
     static func loadDiskBackup() -> String? {
         guard FileManager.default.fileExists(atPath: diskBackupURL.path),
               let data = try? Data(contentsOf: diskBackupURL),
               let str = String(data: data, encoding: .utf8),
               !str.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return str
+    }
+
+    private static func inspectBackupCandidate(_ jsonString: String?) -> (valid: Bool, updatedAt: Double?, score: Int) {
+        guard let raw = jsonString?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty,
+              let data = raw.data(using: .utf8),
+              let dict = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            return (false, nil, 0)
+        }
+        let updatedAt = (dict["updatedAt"] as? NSNumber)?.doubleValue
+        var score = 0
+        if let todayItems = dict["todayItems"] as? [Any] { score += todayItems.count }
+        if let history = dict["history"] as? [String: Any] { score += history.count * 5 }
+        if let customHistory = dict["customHistory"] as? [Any] { score += customHistory.count }
+        if let weightLogs = dict["weightLogs"] as? [Any] { score += weightLogs.count * 3 }
+        if let workout = dict["workout"] as? [String: Any] {
+            if let logs = workout["logs"] as? [Any] { score += logs.count * 2 }
+            if let notes = workout["exerciseNotes"] as? [String: Any] { score += notes.count * 10 }
+        }
+        return (true, updatedAt, score)
+    }
+
+    static func resolveBestNativeBackup() -> String? {
+        let sharedDefaults = UserDefaults(suiteName: "group.com.macro.shared")
+        let defaultsStr = sharedDefaults?.string(forKey: "nativeStateJson") ?? sharedDefaults?.string(forKey: "formNativeBackupJSON")
+        let diskStr = diskBackupQueue.sync { loadDiskBackup() }
+
+        let diskInfo = inspectBackupCandidate(diskStr)
+        let defaultsInfo = inspectBackupCandidate(defaultsStr)
+
+        var chosen: String? = nil
+        if diskInfo.valid && !defaultsInfo.valid {
+            chosen = diskStr
+        } else if !diskInfo.valid && defaultsInfo.valid {
+            chosen = defaultsStr
+        } else if diskInfo.valid && defaultsInfo.valid {
+            if let dTs = diskInfo.updatedAt, let uTs = defaultsInfo.updatedAt {
+                chosen = (dTs >= uTs) ? diskStr : defaultsStr
+            } else if diskInfo.updatedAt != nil {
+                chosen = diskStr
+            } else if defaultsInfo.updatedAt != nil {
+                chosen = defaultsStr
+            } else {
+                chosen = (diskInfo.score >= defaultsInfo.score) ? diskStr : defaultsStr
+            }
+        }
+
+        if let winner = chosen,
+           let rawDef = defaultsStr, !rawDef.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let needsDiskWrite = (winner != diskStr)
+            diskBackupQueue.sync {
+                if needsDiskWrite || !FileManager.default.fileExists(atPath: diskBackupURL.path) {
+                    _ = writeDiskBackupSync(winner)
+                } else {
+                    sharedDefaults?.removeObject(forKey: "formNativeBackupJSON")
+                    sharedDefaults?.removeObject(forKey: "nativeStateJson")
+                }
+            }
+        }
+        return chosen
     }
     
     static var documentsDirectory: URL {
@@ -434,14 +542,25 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     static func cleanupOrphanedMediaFiles(activeFileNames: Set<String>) {
-        // Не выполняем очистку, если передан пустой набор без явного подтверждения
+        // Не удаляем свежие (<10 мин) или временные raw-файлы, чтобы не задеть активный импорт/транскодинг
         let normalized = Set(activeFileNames.map { extractMediaFileName(from: $0) }.filter { !$0.isEmpty })
         let dir = notesMediaDirectory
         guard let files = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return }
+        let now = Date()
+        let protectionWindowSeconds: TimeInterval = 600
         for file in files {
-            guard !file.hasPrefix(".") else { continue }
+            guard !file.hasPrefix("."), !file.hasPrefix("raw_") else { continue }
             if !normalized.contains(file) {
                 let fileURL = dir.appendingPathComponent(file)
+                if let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path) {
+                    let modDate = (attrs[.modificationDate] as? Date) ?? (attrs[.creationDate] as? Date)
+                    if let d = modDate, now.timeIntervalSince(d) < protectionWindowSeconds {
+                        continue
+                    }
+                    if let cDate = attrs[.creationDate] as? Date, now.timeIntervalSince(cDate) < protectionWindowSeconds {
+                        continue
+                    }
+                }
                 try? FileManager.default.removeItem(at: fileURL)
             }
         }
@@ -578,29 +697,20 @@ struct WebView: UIViewRepresentable {
         
         let sharedDefaults = UserDefaults(suiteName: "group.com.macro.shared")
         let savedKey = sharedDefaults?.string(forKey: "nativeApiKey") ?? ""
-        var savedState = sharedDefaults?.string(forKey: "nativeStateJson") ?? sharedDefaults?.string(forKey: "formNativeBackupJSON") ?? ""
-        if savedState.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            savedState = FormMediaSchemeHandler.loadDiskBackup() ?? ""
-        }
-        
-        let escapedKey = savedKey
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\n", with: "")
-        
-        let trimmedState = savedState.trimmingCharacters(in: .whitespacesAndNewlines)
-        let stateLiteral: String
-        if !trimmedState.isEmpty,
-           let data = trimmedState.data(using: .utf8),
-           (try? JSONSerialization.jsonObject(with: data)) != nil {
-            stateLiteral = trimmedState
-        } else {
-            stateLiteral = "null"
-        }
+        let savedState = FormMediaSchemeHandler.resolveBestNativeBackup() ?? ""
+        let keyLiteral = FormMediaSchemeHandler.jsStringLiteral(savedKey)
+        let stateJsonStringLiteral = savedState.isEmpty ? "null" : FormMediaSchemeHandler.jsStringLiteral(savedState)
 
         let preloadJS = """
-        window.__NATIVE_API_KEY__ = "\(escapedKey)";
-        window.__NATIVE_STATE__ = \(stateLiteral);
+        window.__NATIVE_API_KEY__ = \(keyLiteral);
+        (function() {
+            try {
+                var raw = \(stateJsonStringLiteral);
+                window.__NATIVE_STATE__ = (typeof raw === 'string' && raw) ? JSON.parse(raw) : null;
+            } catch (e) {
+                window.__NATIVE_STATE__ = null;
+            }
+        })();
         """
         let userScript = WKUserScript(source: preloadJS, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         config.userContentController.addUserScript(userScript)
@@ -737,19 +847,17 @@ struct WebView: UIViewRepresentable {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 self.syncStepsSilently(webView: webView)
             }
-            // Восстанавливаем базу из нативного бэкапа без задержек, если localStorage пуст
-            if let d = UserDefaults(suiteName: "group.com.macro.shared"),
-               let json = d.string(forKey: "formNativeBackupJSON") ?? FormMediaSchemeHandler.loadDiskBackup(), !json.isEmpty {
-                let escaped = json
-                    .replacingOccurrences(of: "\\", with: "\\\\")
-                    .replacingOccurrences(of: "`", with: "\\`")
+            // Восстанавливаем базу из нативного бэкапа без задержек, если localStorage и первичная загрузка пусты
+            if let json = FormMediaSchemeHandler.resolveBestNativeBackup(), !json.isEmpty {
+                let jsonStringLiteral = FormMediaSchemeHandler.jsStringLiteral(json)
                 webView.evaluateJavaScript("""
                     (function(){
+                        if (window._stateLoadedFromStorage) { return; }
                         var KEYS = ['macro_minimal_ios_v9','macro_minimal_ios_v8','macro_minimal_ios_v7'];
                         var hasData = KEYS.some(function(k){ var v = localStorage.getItem(k); return v && v.length > 50; });
                         if (!hasData) {
                             try {
-                                var json = `\(escaped)`;
+                                var json = \(jsonStringLiteral);
                                 localStorage.setItem(KEYS[0], json);
                                 if (typeof loadState === 'function') { loadState(); }
                                 if (typeof renderAll === 'function') { renderAll(); }
@@ -882,11 +990,6 @@ struct WebView: UIViewRepresentable {
                 let jsonString = (dict["json"] as? String) ?? (dict["data"] as? String) ?? (dict["stateJson"] as? String) ?? ""
                 if !jsonString.isEmpty {
                     FormMediaSchemeHandler.saveDiskBackup(jsonString: jsonString)
-                    if let d = UserDefaults(suiteName: "group.com.macro.shared") {
-                        d.set(jsonString, forKey: "formNativeBackupJSON")
-                        d.set(jsonString, forKey: "nativeStateJson")
-                        d.synchronize()
-                    }
                 }
                 return
             }
@@ -926,19 +1029,13 @@ struct WebView: UIViewRepresentable {
             if action == "syncFullBackup" {
                 if let jsonString = dict["data"] as? String, !jsonString.isEmpty {
                     FormMediaSchemeHandler.saveDiskBackup(jsonString: jsonString)
-                    if let d = UserDefaults(suiteName: "group.com.macro.shared") {
-                        d.set(jsonString, forKey: "formNativeBackupJSON")
-                        d.synchronize()
-                    }
                 }
                 return
             }
             guard let d = UserDefaults(suiteName: "group.com.macro.shared") else { return }
             if let apiKey = dict["apiKey"] as? String { d.set(apiKey, forKey: "nativeApiKey") }
             if let stateJson = dict["stateJson"] as? String, !stateJson.isEmpty {
-                d.set(stateJson, forKey: "nativeStateJson")
-                d.set(stateJson, forKey: "formNativeBackupJSON")
-                d.synchronize()
+                FormMediaSchemeHandler.saveDiskBackup(jsonString: stateJson)
             }
             if let calHex = dict["calHex"] as? String {
                 d.set(calHex, forKey: "calHex")
@@ -1148,13 +1245,12 @@ struct WebView: UIViewRepresentable {
                 let errString = error?.localizedDescription ?? ""
 
                 DispatchQueue.main.async {
-                    let escapedResp = respDataString
-                        .replacingOccurrences(of: "\\", with: "\\\\")
-                        .replacingOccurrences(of: "`", with: "\\`")
-                    let escapedErr = errString.replacingOccurrences(of: "'", with: "\\'")
+                    let reqIdLit = FormMediaSchemeHandler.jsStringLiteral(reqId)
+                    let respLit = FormMediaSchemeHandler.jsStringLiteral(respDataString)
+                    let errLit = errString.isEmpty ? "null" : FormMediaSchemeHandler.jsStringLiteral(errString)
                     let js = """
                     if (typeof window.onNativeFetchGeminiResult === 'function') {
-                        window.onNativeFetchGeminiResult('\(reqId)', \(statusCode), `\(escapedResp)`, \(errString.isEmpty ? "null" : "'\(escapedErr)'"));
+                        window.onNativeFetchGeminiResult(\(reqIdLit), \(statusCode), \(respLit), \(errLit));
                     }
                     """
                     webView?.evaluateJavaScript(js, completionHandler: nil)
@@ -1162,12 +1258,18 @@ struct WebView: UIViewRepresentable {
             }.resume()
         }
 
+        private func emitNoteMediaJS(functionName: String, payload: [String: Any], webView: WKWebView?) {
+            guard let jsonPayload = FormMediaSchemeHandler.jsJSONLiteral(from: payload) else { return }
+            let js = "if (typeof window.\(functionName) === 'function') { window.\(functionName)(\(jsonPayload)); }"
+            DispatchQueue.main.async {
+                webView?.evaluateJavaScript(js, completionHandler: nil)
+            }
+        }
+
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             picker.dismiss(animated: true)
             guard let provider = results.first?.itemProvider else {
-                DispatchQueue.main.async {
-                    self.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaPicked === 'function') { window.onNoteMediaPicked({ cancelled: true }); }", completionHandler: nil)
-                }
+                emitNoteMediaJS(functionName: "onNoteMediaPicked", payload: ["cancelled": true], webView: self.currentWebView)
                 return
             }
 
@@ -1175,27 +1277,36 @@ struct WebView: UIViewRepresentable {
             let exName = self.pendingExName
             let uuid = UUID().uuidString
             let mediaDir = FormMediaSchemeHandler.notesMediaDirectory
+            let tmpDir = FileManager.default.temporaryDirectory
             let isVideo = provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier)
 
-            DispatchQueue.main.async {
-                self.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaLoading === 'function') { window.onNoteMediaLoading({ type: '\(isVideo ? "video" : "photo")', exName: '\(exName)' }); }", completionHandler: nil)
-            }
+            emitNoteMediaJS(
+                functionName: "onNoteMediaLoading",
+                payload: ["type": isVideo ? "video" : "photo", "exName": exName],
+                webView: self.currentWebView
+            )
 
             if isVideo {
                 provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { [weak self] tempUrl, error in
                     guard let tempUrl = tempUrl, error == nil else {
-                        DispatchQueue.main.async {
-                            self?.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaPicked === 'function') { window.onNoteMediaPicked({ error: 'Не удалось загрузить видео' }); }", completionHandler: nil)
-                        }
+                        self?.emitNoteMediaJS(
+                            functionName: "onNoteMediaPicked",
+                            payload: ["error": "Не удалось загрузить видео"],
+                            webView: self?.currentWebView
+                        )
                         return
                     }
 
-                    let rawTemp = mediaDir.appendingPathComponent("raw_\(uuid).mov")
+                    let rawTemp = tmpDir.appendingPathComponent("raw_\(uuid).mov")
+                    let tempVideoOut = tmpDir.appendingPathComponent("video_tmp_\(uuid).mp4")
                     let videoDst = mediaDir.appendingPathComponent("video_\(uuid).mp4")
+                    let tempAudioOut = tmpDir.appendingPathComponent("audio_tmp_\(uuid).m4a")
                     let audioDst = mediaDir.appendingPathComponent("audio_\(uuid).m4a")
                     let thumbDst = mediaDir.appendingPathComponent("thumb_\(uuid).jpg")
 
                     try? FileManager.default.removeItem(at: rawTemp)
+                    try? FileManager.default.removeItem(at: tempVideoOut)
+                    try? FileManager.default.removeItem(at: tempAudioOut)
                     try? FileManager.default.copyItem(at: tempUrl, to: rawTemp)
 
                     let asset = AVURLAsset(url: rawTemp)
@@ -1207,97 +1318,84 @@ struct WebView: UIViewRepresentable {
                     if let imageRef = try? gen.copyCGImage(at: time, actualTime: nil) {
                         let thumbImg = UIImage(cgImage: imageRef)
                         if let thumbData = thumbImg.jpegData(compressionQuality: 0.75) {
-                            try? thumbData.write(to: thumbDst)
+                            try? thumbData.write(to: thumbDst, options: .atomic)
                         }
                     }
 
-                    // Аппаратное транскодирование в оптимизированный 720p H.264 с fast-start moov атомом
+                    let publishAndExtractAudio: () -> Void = { [weak self] in
+                        let durValue = duration.isNaN ? 0.0 : duration
+                        var pickedPayload: [String: Any] = [
+                            "success": true,
+                            "noteId": noteId,
+                            "exName": exName,
+                            "type": "video",
+                            "url": "form-media://video_\(uuid).mp4",
+                            "audioUrl": NSNull(),
+                            "thumbUrl": FileManager.default.fileExists(atPath: thumbDst.path) ? "form-media://thumb_\(uuid).jpg" : NSNull(),
+                            "duration": durValue
+                        ]
+                        self?.emitNoteMediaJS(functionName: "onNoteMediaPicked", payload: pickedPayload, webView: self?.currentWebView)
+
+                        let transAsset = AVURLAsset(url: videoDst)
+                        if let exportAudio = AVAssetExportSession(asset: transAsset, presetName: AVAssetExportPresetAppleM4A) {
+                            exportAudio.outputURL = tempAudioOut
+                            exportAudio.outputFileType = .m4a
+                            exportAudio.exportAsynchronously { [weak self] in
+                                if exportAudio.status == .completed,
+                                   FileManager.default.fileExists(atPath: tempAudioOut.path) {
+                                    try? FileManager.default.removeItem(at: audioDst)
+                                    do {
+                                        try FileManager.default.moveItem(at: tempAudioOut, to: audioDst)
+                                        self?.emitNoteMediaJS(
+                                            functionName: "onNoteAudioExtracted",
+                                            payload: [
+                                                "noteId": noteId,
+                                                "videoUrl": "form-media://video_\(uuid).mp4",
+                                                "audioUrl": "form-media://audio_\(uuid).m4a"
+                                            ],
+                                            webView: self?.currentWebView
+                                        )
+                                    } catch {
+                                        try? FileManager.default.removeItem(at: tempAudioOut)
+                                    }
+                                } else {
+                                    try? FileManager.default.removeItem(at: tempAudioOut)
+                                }
+                            }
+                        }
+                    }
+
+                    // Аппаратное транскодирование в temporaryDirectory -> перенос готового файла в NotesMedia
                     try? FileManager.default.removeItem(at: videoDst)
                     if let exportVideo = AVAssetExportSession(asset: asset, presetName: AVAssetExportPreset1280x720) {
-                        exportVideo.outputURL = videoDst
+                        exportVideo.outputURL = tempVideoOut
                         exportVideo.outputFileType = .mp4
                         exportVideo.shouldOptimizeForNetworkUse = true
-                        exportVideo.exportAsynchronously { [weak self] in
-                            let success = exportVideo.status == .completed
-                            if !success {
+                        exportVideo.exportAsynchronously {
+                            let success = exportVideo.status == .completed && FileManager.default.fileExists(atPath: tempVideoOut.path)
+                            if success {
+                                try? FileManager.default.moveItem(at: tempVideoOut, to: videoDst)
+                            } else {
+                                try? FileManager.default.removeItem(at: tempVideoOut)
                                 try? FileManager.default.copyItem(at: rawTemp, to: videoDst)
                             }
                             try? FileManager.default.removeItem(at: rawTemp)
-
-                            DispatchQueue.main.async {
-                                let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
-                                let durValue = duration.isNaN ? 0.0 : duration
-                                let js = """
-                                if (typeof window.onNoteMediaPicked === 'function') {
-                                    window.onNoteMediaPicked({
-                                        success: true,
-                                        noteId: '\(noteId)',
-                                        exName: '\(exName)',
-                                        type: 'video',
-                                        url: 'form-media://video_\(uuid).mp4',
-                                        audioUrl: null,
-                                        thumbUrl: \(thumbParam),
-                                        duration: \(durValue)
-                                    });
-                                }
-                                """
-                                self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
-                            }
-
-                            // Фоновое извлечение аудиодорожки .m4a
-                            let transAsset = AVURLAsset(url: videoDst)
-                            if let exportAudio = AVAssetExportSession(asset: transAsset, presetName: AVAssetExportPresetAppleM4A) {
-                                try? FileManager.default.removeItem(at: audioDst)
-                                exportAudio.outputURL = audioDst
-                                exportAudio.outputFileType = .m4a
-                                exportAudio.exportAsynchronously { [weak self] in
-                                    if exportAudio.status == .completed {
-                                        DispatchQueue.main.async {
-                                            let updateJs = """
-                                            if (typeof window.onNoteAudioExtracted === 'function') {
-                                                window.onNoteAudioExtracted({
-                                                    noteId: '\(noteId)',
-                                                    videoUrl: 'form-media://video_\(uuid).mp4',
-                                                    audioUrl: 'form-media://audio_\(uuid).m4a'
-                                                });
-                                            }
-                                            """
-                                            self?.currentWebView?.evaluateJavaScript(updateJs, completionHandler: nil)
-                                        }
-                                    }
-                                }
-                            }
+                            publishAndExtractAudio()
                         }
                     } else {
                         try? FileManager.default.copyItem(at: rawTemp, to: videoDst)
                         try? FileManager.default.removeItem(at: rawTemp)
-                        DispatchQueue.main.async {
-                            let thumbParam = FileManager.default.fileExists(atPath: thumbDst.path) ? "'form-media://thumb_\(uuid).jpg'" : "null"
-                            let durValue = duration.isNaN ? 0.0 : duration
-                            let js = """
-                            if (typeof window.onNoteMediaPicked === 'function') {
-                                window.onNoteMediaPicked({
-                                    success: true,
-                                    noteId: '\(noteId)',
-                                    exName: '\(exName)',
-                                    type: 'video',
-                                    url: 'form-media://video_\(uuid).mp4',
-                                    audioUrl: null,
-                                    thumbUrl: \(thumbParam),
-                                    duration: \(durValue)
-                                });
-                            }
-                            """
-                            self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
-                        }
+                        publishAndExtractAudio()
                     }
                 }
             } else if provider.canLoadObject(ofClass: UIImage.self) {
                 provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
                     guard let image = object as? UIImage, error == nil else {
-                        DispatchQueue.main.async {
-                            self?.currentWebView?.evaluateJavaScript("if (typeof window.onNoteMediaPicked === 'function') { window.onNoteMediaPicked({ error: 'Не удалось загрузить фото' }); }", completionHandler: nil)
-                        }
+                        self?.emitNoteMediaJS(
+                            functionName: "onNoteMediaPicked",
+                            payload: ["error": "Не удалось загрузить фото"],
+                            webView: self?.currentWebView
+                        )
                         return
                     }
 
@@ -1316,24 +1414,21 @@ struct WebView: UIViewRepresentable {
 
                     let photoDst = mediaDir.appendingPathComponent("photo_\(uuid).jpg")
                     if let jpegData = finalImg.jpegData(compressionQuality: 0.85) {
-                        try? jpegData.write(to: photoDst)
+                        try? jpegData.write(to: photoDst, options: .atomic)
                     }
 
-                    DispatchQueue.main.async {
-                        let js = """
-                        if (typeof window.onNoteMediaPicked === 'function') {
-                            window.onNoteMediaPicked({
-                                success: true,
-                                noteId: '\(noteId)',
-                                exName: '\(exName)',
-                                type: 'photo',
-                                url: 'form-media://photo_\(uuid).jpg',
-                                thumbUrl: 'form-media://photo_\(uuid).jpg'
-                            });
-                        }
-                        """
-                        self?.currentWebView?.evaluateJavaScript(js, completionHandler: nil)
-                    }
+                    self?.emitNoteMediaJS(
+                        functionName: "onNoteMediaPicked",
+                        payload: [
+                            "success": true,
+                            "noteId": noteId,
+                            "exName": exName,
+                            "type": "photo",
+                            "url": "form-media://photo_\(uuid).jpg",
+                            "thumbUrl": "form-media://photo_\(uuid).jpg"
+                        ],
+                        webView: self?.currentWebView
+                    )
                 }
             }
         }

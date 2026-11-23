@@ -17975,18 +17975,68 @@
     }
     window.ensureMealSlotTargetMacros = ensureMealSlotTargetMacros;
 
+    function scoreStateRichness(candidate) {
+      if (!candidate || typeof candidate !== "object") return 0;
+      let score = 0;
+      if (Array.isArray(candidate.todayItems)) score += candidate.todayItems.length;
+      if (candidate.history && typeof candidate.history === "object") score += Object.keys(candidate.history).length * 5;
+      if (Array.isArray(candidate.customHistory)) score += candidate.customHistory.length;
+      if (Array.isArray(candidate.weightLogs)) score += candidate.weightLogs.length * 3;
+      if (candidate.workout && typeof candidate.workout === "object") {
+        if (Array.isArray(candidate.workout.logs)) score += candidate.workout.logs.length * 2;
+        if (candidate.workout.exerciseNotes && typeof candidate.workout.exerciseNotes === "object") {
+          score += Object.keys(candidate.workout.exerciseNotes).length * 10;
+        }
+      }
+      return score;
+    }
+
+    function pickNewerState(nativeCandidate, storageCandidate) {
+      const hasNative = Boolean(nativeCandidate && typeof nativeCandidate === "object");
+      const hasStorage = Boolean(storageCandidate && typeof storageCandidate === "object");
+      if (hasNative && !hasStorage) return nativeCandidate;
+      if (!hasNative && hasStorage) return storageCandidate;
+      if (!hasNative && !hasStorage) return null;
+
+      const nTs = Number(nativeCandidate.updatedAt);
+      const sTs = Number(storageCandidate.updatedAt);
+      const nValidTs = Number.isFinite(nTs) && nTs > 0;
+      const sValidTs = Number.isFinite(sTs) && sTs > 0;
+
+      if (nValidTs && sValidTs) {
+        return nTs >= sTs ? nativeCandidate : storageCandidate;
+      }
+      if (nValidTs && !sValidTs) return nativeCandidate;
+      if (!nValidTs && sValidTs) return storageCandidate;
+
+      return scoreStateRichness(nativeCandidate) >= scoreStateRichness(storageCandidate)
+        ? nativeCandidate
+        : storageCandidate;
+    }
+
     function loadState() {
+      const hasNativeBridge = Boolean(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
+      window._isNativeAppEnv = hasNativeBridge;
+      window._stateLoadedFromStorage = false;
       try {
-        if (window.__NATIVE_STATE__ && typeof window.__NATIVE_STATE__ === "object") {
-          state = Object.assign({}, state, window.__NATIVE_STATE__);
-        } else {
+        const nativeCandidate = (window.__NATIVE_STATE__ && typeof window.__NATIVE_STATE__ === "object")
+          ? window.__NATIVE_STATE__
+          : null;
+        window.__NATIVE_STATE__ = null;
+
+        let storageCandidate = null;
+        try {
           const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("macro_minimal_ios_v8") || localStorage.getItem("macro_minimal_ios_v7");
           if (raw) {
             const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === "object") {
-              state = Object.assign({}, state, parsed);
-            }
+            if (parsed && typeof parsed === "object") storageCandidate = parsed;
           }
+        } catch (e) {}
+
+        const chosenState = pickNewerState(nativeCandidate, storageCandidate);
+        if (chosenState) {
+          state = Object.assign({}, state, chosenState);
+          window._stateLoadedFromStorage = true;
         }
         if (!state.goalCalcMode) state.goalCalcMode = "auto";
         if (!state.dietViewMode) state.dietViewMode = "plan";
@@ -18199,7 +18249,7 @@
       } catch (e) {}
 
       // Проверка на веб-окружение (GitHub Pages / браузер вне нативного iOS WKWebView)
-      const isNativeEnv = !!(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
+      const isNativeEnv = Boolean(window._isNativeAppEnv || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
       if (!isNativeEnv) {
         // Одноразовая очистка устаревших тестовых данных в веб-версии (на GitHub Pages)
         const isPurged = localStorage.getItem("form_web_purged_v2") === "1";
@@ -18285,13 +18335,26 @@
 
     let _saveStateTimeout = null;
 
+    let _lastQuotaToastAt = 0;
+
     function flushSaveState() {
       if (_saveStateTimeout) {
         clearTimeout(_saveStateTimeout);
         _saveStateTimeout = null;
       }
+      let jsonStr = "";
       try {
-        const jsonStr = JSON.stringify(state);
+        state.updatedAt = Date.now();
+        jsonStr = JSON.stringify(state);
+      } catch (e) {
+        if (typeof showToast === "function") showToast("Ошибка сериализации данных", true);
+        return;
+      }
+
+      const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
+      let localStorageQuotaHit = false;
+
+      try {
         localStorage.setItem(STORAGE_KEY, jsonStr);
         if (Array.isArray(state.backupApiKeys)) {
           localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(state.backupApiKeys));
@@ -18301,10 +18364,28 @@
         } else {
           localStorage.removeItem("form_gemini_proxy");
         }
-        // Нативный бэкап всей базы в Documents и UserDefaults через Swift-мост
-        const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
-        bridge?.postMessage({ action: "backupStateToDisk", json: jsonStr, data: jsonStr });
-      } catch (e) {}
+      } catch (e) {
+        localStorageQuotaHit = true;
+        const now = Date.now();
+        if (now - _lastQuotaToastAt > 5000 && typeof showToast === "function") {
+          _lastQuotaToastAt = now;
+          showToast(
+            bridge
+              ? "Память WebView заполнена — данные сохранены на диск iPhone"
+              : "Память браузера переполнена — сделайте экспорт и удалите лишние фото",
+            true
+          );
+        }
+      }
+
+      // Нативный бэкап в Documents/form_state_backup.json вызывается независимо от квоты localStorage
+      if (bridge) {
+        try {
+          bridge.postMessage({ action: "backupStateToDisk", json: jsonStr });
+        } catch (e) {}
+      } else if (!localStorageQuotaHit) {
+        // Web-only: saved cleanly
+      }
       syncNativeWidget();
     }
     window.flushSaveState = flushSaveState;
@@ -18351,12 +18432,19 @@
 
     function extractActiveNoteMediaFiles(exerciseNotes) {
       const activeMediaFiles = [];
-      if (!exerciseNotes || typeof exerciseNotes !== "object") return activeMediaFiles;
       const pushUrl = u => {
         if (typeof u !== "string" || !u || u.startsWith("data:") || u.startsWith("blob:")) return;
         const norm = normalizeNoteMediaUrl(u);
         if (norm) activeMediaFiles.push(norm);
       };
+      if (typeof pendingNoteMedia === "object" && pendingNoteMedia) {
+        pushUrl(pendingNoteMedia.url);
+        pushUrl(pendingNoteMedia.audioUrl);
+        pushUrl(pendingNoteMedia.thumbUrl);
+      }
+      if (!exerciseNotes || typeof exerciseNotes !== "object") {
+        return Array.from(new Set(activeMediaFiles));
+      }
       Object.values(exerciseNotes).forEach(entry => {
         if (!entry) return;
         const notesList = Array.isArray(entry) ? entry : [entry];
@@ -18386,10 +18474,12 @@
     function scheduleMediaGarbageCollection() {
       setTimeout(() => {
         try {
+          if (!window._stateLoadedFromStorage || window._mediaPickInFlight) return;
           if (!state || !state.workout || typeof state.workout.exerciseNotes !== "object" || !state.workout.exerciseNotes) {
             return;
           }
           const activeMediaFiles = extractActiveNoteMediaFiles(state.workout.exerciseNotes);
+          if (activeMediaFiles.length === 0) return;
           const bridge = window.webkit?.messageHandlers?.iosBridge || window.webkit?.messageHandlers?.widgetBridge;
           bridge?.postMessage({ action: "cleanupOrphanedMedia", activeMediaFiles: activeMediaFiles, confirmed: true });
         } catch (e) {}
@@ -18470,8 +18560,7 @@
           stackDone: stackDone,
           stackTotal: stackTotal,
           restTimerEndDate: (state.activeRest && state.activeRest.endTime > Date.now()) ? state.activeRest.endTime : 0,
-          apiKey: typeof getEffectiveApiKey === "function" ? getEffectiveApiKey() : "",
-          stateJson: JSON.stringify(state)
+          apiKey: typeof getEffectiveApiKey === "function" ? getEffectiveApiKey() : ""
         };
 
         if (window.webkit?.messageHandlers?.widgetBridge) {
@@ -26670,8 +26759,9 @@
         }
       }
       if (icon) {
-        if (pendingNoteMedia.thumbUrl) {
-          icon.innerHTML = `<img src="${pendingNoteMedia.thumbUrl}" class="w-full h-full object-cover rounded-lg" />`;
+        const previewThumb = pendingNoteMedia.thumbUrl || (pendingNoteMedia.type === "photo" ? pendingNoteMedia.url : null);
+        if (previewThumb) {
+          icon.innerHTML = `<img src="${previewThumb}" class="w-full h-full object-cover rounded-lg" />`;
         } else {
           icon.innerHTML = `<span class="text-[10px] mono text-zinc-400 font-bold">${pendingNoteMedia.type === "video" ? "VID" : "IMG"}</span>`;
         }
@@ -26693,6 +26783,7 @@
 
     window.pickNoteMediaForNewNote = function() {
       if (window.webkit?.messageHandlers?.widgetBridge) {
+        window._mediaPickInFlight = true;
         window.webkit.messageHandlers.widgetBridge.postMessage({
           action: "pickNoteMedia",
           noteId: "note_" + Date.now(),
@@ -26703,29 +26794,91 @@
       }
     };
 
+    function compressWebNoteImage(file) {
+      return new Promise((resolve, reject) => {
+        const objUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            URL.revokeObjectURL(objUrl);
+            const maxDim = 1024;
+            let w = img.naturalWidth || img.width || 800;
+            let h = img.naturalHeight || img.height || 800;
+            if (Math.max(w, h) > maxDim) {
+              const ratio = maxDim / Math.max(w, h);
+              w = Math.max(1, Math.round(w * ratio));
+              h = Math.max(1, Math.round(h * ratio));
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) { reject(new Error("Canvas unavailable")); return; }
+            ctx.drawImage(img, 0, 0, w, h);
+
+            let quality = 0.78;
+            let dataUrl = canvas.toDataURL("image/jpeg", quality);
+            const maxDataUrlLen = 405000; // ~300 KB binary
+            while (dataUrl.length > maxDataUrlLen && quality > 0.42) {
+              quality = Math.max(0.4, quality - 0.14);
+              dataUrl = canvas.toDataURL("image/jpeg", quality);
+            }
+            if (dataUrl.length > 560000) {
+              const s2 = Math.round(w * 0.75);
+              const h2 = Math.round(h * 0.75);
+              canvas.width = Math.max(1, s2);
+              canvas.height = Math.max(1, h2);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+            }
+            resolve(dataUrl);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objUrl);
+          reject(new Error("Не удалось декодировать фото"));
+        };
+        img.src = objUrl;
+      });
+    }
+
     window.handleWebNoteMediaPicked = function(e) {
       const file = e.target.files?.[0];
       if (!file) return;
+      const resetInput = () => { if (e.target) e.target.value = ""; };
       const isVideo = file.type.startsWith("video/");
       const isImage = file.type.startsWith("image/");
-      if (!isVideo && !isImage) {
-        showToast("Выберите фото или видео", true);
+      if (isVideo) {
+        resetInput();
+        showToast("Видео в заметках доступно только в приложении iPhone (ограничение памяти браузера)", true);
         return;
       }
-      window.onNoteMediaLoading?.({ type: isVideo ? "video" : "photo" });
-      const reader = new FileReader();
-      reader.onload = () => {
-        window.onNoteMediaPicked({
-          success: true,
-          type: isVideo ? "video" : "photo",
-          url: reader.result,
-          thumbUrl: reader.result
-        });
-      };
-      reader.readAsDataURL(file);
+      if (!isImage) {
+        resetInput();
+        showToast("Выберите фото", true);
+        return;
+      }
+      window._mediaPickInFlight = true;
+      window.onNoteMediaLoading?.({ type: "photo" });
+      compressWebNoteImage(file)
+        .then(compressedDataUrl => {
+          window.onNoteMediaPicked({
+            success: true,
+            type: "photo",
+            url: compressedDataUrl,
+            thumbUrl: null
+          });
+        })
+        .catch(() => {
+          window.onNoteMediaPicked({ error: "Не удалось сжать фото для сохранения" });
+        })
+        .finally(resetInput);
     };
 
     window.onNoteMediaLoading = function(info) {
+      window._mediaPickInFlight = true;
       if (window._pendingReattachNoteCtx) {
         showToast(info?.type === "video" ? "Обработка видео..." : "Обработка фото...");
         return;
@@ -26750,6 +26903,7 @@
     };
 
     window.onNoteMediaPicked = function(data) {
+      window._mediaPickInFlight = false;
       const submitBtn = document.getElementById("submitNoteBtn");
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -29374,11 +29528,13 @@ ${knownPiecesContext}
       });
       const wrap = document.getElementById("backupImportWrap"), area = document.getElementById("backupJsonArea");
       if (wrap && area) { wrap.classList.remove("hidden"); area.value = jsonStr; }
+      const hasNativeMedia = (typeof extractActiveNoteMediaFiles === "function") && extractActiveNoteMediaFiles(state.workout?.exerciseNotes).length > 0;
+      const mediaNote = hasNativeMedia ? " (фото/видео заметки остаются локально на iPhone)" : "";
       try {
-        if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(jsonStr); showToast("Копия базы скопирована в буфер"); return; }
+        if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(jsonStr); showToast("Копия базы скопирована в буфер" + mediaNote); return; }
       } catch (e) {}
       if (area) { area.select(); document.execCommand("copy"); }
-      showToast("Код базы готов в поле ниже");
+      showToast("Код базы готов в поле ниже" + mediaNote);
     };
 
     window.toggleBackupImportArea = function() {
@@ -29388,37 +29544,143 @@ ${knownPiecesContext}
     window.importFullDatabaseFromText = function() {
       const raw = document.getElementById("backupJsonArea")?.value.trim();
       if (!raw) { showToast("Вставьте JSON-код в поле", true); return; }
+
+      let parsed = null;
       try {
-        const parsed = JSON.parse(raw);
-        if (parsed.apiKey) {
-          window.__NATIVE_API_KEY__ = parsed.apiKey;
-          try { localStorage.setItem(KEY_STORAGE, parsed.apiKey); } catch (e) {}
-        }
-        if (parsed.apiProxy) {
-          state.apiProxy = parsed.apiProxy;
-          try { localStorage.setItem("form_gemini_proxy", parsed.apiProxy); } catch (e) {}
-        }
-        if (Array.isArray(parsed.backupApiKeys)) {
-          state.backupApiKeys = parsed.backupApiKeys.slice();
-          try { localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(state.backupApiKeys)); } catch (e) {}
-        }
-        const newState = parsed.state || parsed;
-        if (newState && newState.targets) {
-          state = Object.assign({}, state, newState);
-          if (Array.isArray(newState.backupApiKeys)) {
-            state.backupApiKeys = newState.backupApiKeys.slice();
-          }
-          applyTheme(state.themeId || "monolith", true);
-          saveState(); renderAll();
-          if (currentMainView === "split") renderWorkoutAll();
-          if (typeof renderBackupKeysUI === "function") renderBackupKeysUI();
-          syncKeyFieldUI();
-          document.getElementById("backupImportWrap")?.classList.add("hidden");
-          showToast("База успешно восстановлена");
-        }
+        parsed = JSON.parse(raw);
       } catch (e) {
-        showToast("Ошибка чтения JSON-кода", true);
+        showToast("Неверный формат JSON резервной копии", true);
+        return;
       }
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        showToast("Неверная структура файла резервной копии", true);
+        return;
+      }
+
+      const rawState = (parsed.state && typeof parsed.state === "object" && !Array.isArray(parsed.state))
+        ? parsed.state
+        : parsed;
+
+      if (!rawState || typeof rawState !== "object" || !rawState.targets || typeof rawState.targets !== "object" || !(Number(rawState.targets.cal) > 0)) {
+        showToast("В копии отсутствуют валидные данные профиля (targets)", true);
+        return;
+      }
+
+      // Собираем безопасное состояние без мутации активного state до полной проверки
+      const nextState = Object.assign({}, JSON.parse(JSON.stringify(state)), rawState);
+      if (!Array.isArray(nextState.todayItems)) nextState.todayItems = [];
+      if (!nextState.history || typeof nextState.history !== "object") nextState.history = {};
+      if (!Array.isArray(nextState.customHistory)) nextState.customHistory = [];
+      if (!Array.isArray(nextState.weightLogs)) nextState.weightLogs = [];
+      if (!nextState.dailyMealPlanProgress || typeof nextState.dailyMealPlanProgress !== "object") nextState.dailyMealPlanProgress = {};
+      if (!nextState.foodCache || typeof nextState.foodCache !== "object") nextState.foodCache = {};
+      if (!nextState.barcodeCache || typeof nextState.barcodeCache !== "object") nextState.barcodeCache = {};
+      if (!Array.isArray(nextState.supplements)) nextState.supplements = DEFAULT_SUPPLEMENTS.slice();
+      if (!nextState.supplementsTakenToday || typeof nextState.supplementsTakenToday !== "object") nextState.supplementsTakenToday = {};
+      if (!nextState.workout || typeof nextState.workout !== "object" || !nextState.workout.programs || typeof nextState.workout.programs !== "object") {
+        nextState.workout = {
+          lastMondayKey: typeof getMondayKey === "function" ? getMondayKey() : "",
+          weekSchedule: { 1: "d1", 2: "d2", 3: "rest", 4: "d3", 5: "rest", 6: "rest", 0: "rest" },
+          programs: JSON.parse(JSON.stringify(DEFAULT_SPLIT_PROGRAMS)),
+          weeklySetsByMuscle: { chest: 0, back: 0, legs: 0, arms: 0, core: 0 },
+          logs: [],
+          exerciseNotes: {}
+        };
+      }
+      if (!Array.isArray(nextState.workout.logs)) nextState.workout.logs = [];
+      if (!nextState.workout.exerciseNotes || typeof nextState.workout.exerciseNotes !== "object") nextState.workout.exerciseNotes = {};
+
+      // Синхронизация и очистка API-ключей / прокси только после успешной валидации
+      const topApiKey = (typeof parsed.apiKey === "string") ? parsed.apiKey.trim() : "";
+      if (topApiKey) {
+        window.__NATIVE_API_KEY__ = topApiKey;
+        try { localStorage.setItem(KEY_STORAGE, topApiKey); } catch (e) {}
+      }
+
+      const nextProxy = (typeof parsed.apiProxy === "string")
+        ? parsed.apiProxy.trim()
+        : (typeof nextState.apiProxy === "string" ? nextState.apiProxy.trim() : "");
+      nextState.apiProxy = nextProxy;
+      try {
+        if (nextProxy) localStorage.setItem("form_gemini_proxy", nextProxy);
+        else localStorage.removeItem("form_gemini_proxy");
+      } catch (e) {}
+
+      const nextGroq = (typeof nextState.groqApiKey === "string") ? nextState.groqApiKey.trim() : "";
+      nextState.groqApiKey = nextGroq;
+      try {
+        if (nextGroq) localStorage.setItem("form_groq_api_key", nextGroq);
+        else localStorage.removeItem("form_groq_api_key");
+      } catch (e) {}
+
+      const nextBase = (typeof nextState.customGeminiBaseUrl === "string") ? nextState.customGeminiBaseUrl.trim() : "";
+      nextState.customGeminiBaseUrl = nextBase;
+      try {
+        if (nextBase) localStorage.setItem("form_gemini_base_url", nextBase);
+        else localStorage.removeItem("form_gemini_base_url");
+      } catch (e) {}
+
+      if (Array.isArray(parsed.backupApiKeys)) {
+        nextState.backupApiKeys = parsed.backupApiKeys.slice();
+      } else if (!Array.isArray(nextState.backupApiKeys)) {
+        nextState.backupApiKeys = [];
+      }
+      try {
+        localStorage.setItem("macro_gemini_backup_keys", JSON.stringify(nextState.backupApiKeys));
+      } catch (e) {}
+
+      state = nextState;
+      window.__NATIVE_STATE__ = null;
+
+      // Обязательные миграции: связывание вариантов сплита, изоляция дней, квоты слотов и пути медиа
+      if (typeof ensureAllWorkoutProgramVariants === "function") ensureAllWorkoutProgramVariants();
+      if (typeof cleanAndIsolatePrograms === "function") cleanAndIsolatePrograms();
+      if (state.mealPlanTemplate && Array.isArray(state.mealPlanTemplate.meals)) {
+        if (typeof ensureMealSlotTargetMacros === "function") ensureMealSlotTargetMacros(state.mealPlanTemplate);
+        try {
+          localStorage.setItem("form_coach_plan_backup", JSON.stringify(state.mealPlanTemplate));
+        } catch (e) {}
+      } else {
+        try { localStorage.removeItem("form_coach_plan_backup"); } catch (e) {}
+      }
+
+      if (typeof normalizeNoteMediaUrl === "function" && state.workout?.exerciseNotes) {
+        Object.keys(state.workout.exerciseNotes).forEach(exKey => {
+          const notesArr = state.workout.exerciseNotes[exKey];
+          const list = Array.isArray(notesArr) ? notesArr : (notesArr ? [notesArr] : []);
+          list.forEach(note => {
+            if (!note || typeof note !== "object") return;
+            if (note.media && typeof note.media === "object") {
+              ["url", "audioUrl", "thumbUrl"].forEach(f => {
+                if (typeof note.media[f] === "string" && note.media[f]) note.media[f] = normalizeNoteMediaUrl(note.media[f]);
+              });
+            }
+            ["mediaUrl", "videoUrl", "audioUrl"].forEach(f => {
+              if (typeof note[f] === "string" && note[f]) note[f] = normalizeNoteMediaUrl(note[f]);
+            });
+          });
+        });
+      }
+
+      const dow = new Date().getDay();
+      const todayAssigned = state.workout?.weekSchedule?.[dow];
+      const progIds = Object.keys(state.workout?.programs || {});
+      if (todayAssigned && todayAssigned !== "rest" && state.workout?.programs?.[todayAssigned]) {
+        activeProgramId = todayAssigned;
+      } else if (progIds.length > 0 && !state.workout?.programs?.[activeProgramId]) {
+        activeProgramId = progIds[0];
+      }
+
+      state.updatedAt = Date.now();
+      applyTheme(state.themeId || "monolith", true);
+      saveState(true);
+      renderAll();
+      if (typeof renderWorkoutAll === "function") renderWorkoutAll();
+      if (typeof renderBackupKeysUI === "function") renderBackupKeysUI();
+      syncKeyFieldUI();
+      document.getElementById("backupImportWrap")?.classList.add("hidden");
+      showToast("База успешно восстановлена");
     };
 
     stripEmojisInNode(document.body);
