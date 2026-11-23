@@ -1516,7 +1516,7 @@
           </div>
           <div class="flex items-center gap-2">
             <button type="button" onclick="stepSetWeight(-2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">-2.5</button>
-            <input id="setWeightInput" type="number" inputmode="decimal" step="0.5" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
+            <input id="setWeightInput" type="text" inputmode="decimal" autocomplete="off" class="dark-field mono text-center text-lg font-bold" style="color: var(--accent-cal)" />
             <button type="button" onclick="stepSetWeight(2.5)" class="w-12 h-11 rounded-2xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition">+2.5</button>
           </div>
         </div>
@@ -1618,7 +1618,7 @@
               <label class="text-[11px] text-zinc-400 truncate">Стартовый вес</label>
               <button type="button" id="btnNewExBodyweight" onclick="setNewExBodyweight()" class="text-[10px] mono px-1.5 py-0.5 rounded border border-transparent bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 shrink-0 transition">Свой вес</button>
             </div>
-            <input id="newExWeight" type="number" step="0.5" value="0" placeholder="0" oninput="syncNewExBodyweightUI()" class="dark-field mono text-center" />
+            <input id="newExWeight" type="text" inputmode="decimal" autocomplete="off" value="0" placeholder="0" oninput="syncNewExBodyweightUI()" class="dark-field mono text-center" />
           </div>
           <div>
             <label class="text-[11px] text-zinc-400 block mb-1">Целевые повторения</label>
@@ -1870,7 +1870,7 @@
               <label class="text-[11px] text-zinc-400 truncate">Рабочий вес</label>
               <button type="button" onclick="setReplaceExBodyweight()" class="text-[10px] mono px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-300 shrink-0">Свой вес</button>
             </div>
-            <input id="replaceExWeightInput" type="number" step="0.5" value="0" class="dark-field mono text-center" />
+            <input id="replaceExWeightInput" type="text" inputmode="decimal" autocomplete="off" value="0" class="dark-field mono text-center" />
           </div>
           <div>
             <label class="text-[11px] text-zinc-400 block mb-1">Повторения</label>
@@ -3732,6 +3732,31 @@
           Отмена
         </button>
         <button type="button" onclick="confirmDeleteProgram()" class="py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs border border-red-500/30 active:scale-95 transition shadow-lg shadow-red-950/40">
+          Да, удалить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ПОДТВЕРЖДЕНИЕ ДЕЙСТВИЙ В ТРЕНИРОВКАХ (БЕЗ window.confirm) -->
+  <div id="workoutConfirmActionModal" class="sheet-backdrop z-[160]" onclick="if(event.target===this) closeWorkoutActionConfirm()">
+    <div class="sheet-panel text-center max-w-sm mx-auto">
+      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+      <div class="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/25 flex items-center justify-center mx-auto mb-3 text-red-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+          <path d="M10 11v6M14 11v6"></path>
+          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"></path>
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-white mb-1.5" id="workoutConfirmActionTitle">Подтвердите действие</h3>
+      <p class="text-xs text-zinc-400 mb-5 leading-relaxed" id="workoutConfirmActionMessage"></p>
+      <div class="grid grid-cols-2 gap-2.5">
+        <button type="button" onclick="closeWorkoutActionConfirm()" class="py-3 rounded-2xl bg-white/[0.08] hover:bg-white/15 text-zinc-300 font-semibold text-xs border border-white/10 active:scale-95 transition">
+          Отмена
+        </button>
+        <button type="button" id="workoutConfirmActionBtn" onclick="confirmWorkoutAction()" class="py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs border border-red-500/30 active:scale-95 transition shadow-lg shadow-red-950/40">
           Да, удалить
         </button>
       </div>
@@ -14307,10 +14332,65 @@
     }
     window.setActiveProgramExercises = setActiveProgramExercises;
 
+    function roundWeight(val) {
+      const num = Number(val);
+      if (!Number.isFinite(num)) return 0;
+      const r = Math.round(num * 100) / 100;
+      return r === 0 ? 0 : r;
+    }
+    window.roundWeight = roundWeight;
+
+    function parseWeightInput(raw) {
+      if (raw === null || raw === undefined) return 0;
+      const cleaned = String(raw).trim().replace(/\s+/g, "").replace(",", ".");
+      if (!cleaned) return 0;
+      const num = parseFloat(cleaned);
+      if (!Number.isFinite(num) || num <= 0) return 0;
+      return roundWeight(num);
+    }
+    window.parseWeightInput = parseWeightInput;
+
+    function normalizeExerciseName(n) {
+      return String(n || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
+    }
+    window.normalizeExerciseName = normalizeExerciseName;
+
+    let pendingWorkoutConfirmCb = null;
+
+    function openWorkoutActionConfirm(opts = {}) {
+      const modal = document.getElementById("workoutConfirmActionModal");
+      const titleEl = document.getElementById("workoutConfirmActionTitle");
+      const msgEl = document.getElementById("workoutConfirmActionMessage");
+      const btnEl = document.getElementById("workoutConfirmActionBtn");
+      if (!modal) {
+        if (typeof opts.onConfirm === "function") opts.onConfirm();
+        return;
+      }
+      pendingWorkoutConfirmCb = (typeof opts.onConfirm === "function") ? opts.onConfirm : null;
+      if (titleEl) titleEl.textContent = opts.title || "Подтвердите действие";
+      if (msgEl) msgEl.textContent = opts.message || "";
+      if (btnEl) btnEl.textContent = opts.confirmLabel || "Подтвердить";
+      modal.classList.add("open");
+    }
+    window.openWorkoutActionConfirm = openWorkoutActionConfirm;
+
+    function closeWorkoutActionConfirm() {
+      pendingWorkoutConfirmCb = null;
+      document.getElementById("workoutConfirmActionModal")?.classList.remove("open");
+    }
+    window.closeWorkoutActionConfirm = closeWorkoutActionConfirm;
+
+    function confirmWorkoutAction() {
+      const cb = pendingWorkoutConfirmCb;
+      closeWorkoutActionConfirm();
+      if (typeof cb === "function") cb();
+    }
+    window.confirmWorkoutAction = confirmWorkoutAction;
+
     function syncExerciseProgressionAcrossVariants(prog, sourceEx) {
       if (!prog || !sourceEx || !sourceEx.name) return;
       ensureProgramVariants(prog);
-      const normName = String(sourceEx.name).trim().toLowerCase();
+      const normName = normalizeExerciseName(sourceEx.name);
       if (!normName) return;
       const activeVk = prog.activeVariant;
       Object.keys(prog.variants || {}).forEach(vk => {
@@ -14318,7 +14398,7 @@
         const list = prog.variants[vk]?.exercises || [];
         list.forEach(peerEx => {
           if (!peerEx || peerEx === sourceEx) return;
-          if (String(peerEx.name || "").trim().toLowerCase() !== normName) return;
+          if (normalizeExerciseName(peerEx.name) !== normName) return;
           if (sourceEx.lastWeight !== undefined) peerEx.lastWeight = sourceEx.lastWeight;
           if (sourceEx.lastReps !== undefined) peerEx.lastReps = sourceEx.lastReps;
           if (sourceEx.baseWeight !== undefined) peerEx.baseWeight = sourceEx.baseWeight;
@@ -14355,11 +14435,14 @@
       ensureAllWorkoutProgramVariants();
       const totals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
       Object.values(state.workout.programs || {}).forEach(prog => {
-        getActiveProgramExercises(prog).forEach(ex => {
-          const doneCount = (ex.setsToday || []).filter(Boolean).length;
-          const m = ex.muscle || "chest";
-          if (totals[m] !== undefined) totals[m] += doneCount;
-          else totals[m] = doneCount;
+        getAllProgramExerciseLists(prog).forEach(list => {
+          (list || []).forEach(ex => {
+            const targetS = Math.max(1, Number(ex.targetSets) || 3);
+            const doneCount = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
+            const m = ex.muscle || "chest";
+            if (totals[m] !== undefined) totals[m] += doneCount;
+            else totals[m] = doneCount;
+          });
         });
       });
       state.workout.weeklySetsByMuscle = totals;
@@ -14564,7 +14647,7 @@
             const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
             return `
               <div class="exercise-row py-3.5 flex items-center justify-between gap-3" data-ex-id="${ex.id}">
-                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
+                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" data-ex-name="${escapeHtml(ex.name)}" onclick="openExerciseNotesModal(this.dataset.exName)">
                   <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
                     <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
@@ -14624,7 +14707,9 @@
 
     function stepSetWeight(delta) {
       const inp = document.getElementById("setWeightInput");
-      inp.value = Math.max(0, round1((parseFloat(inp.value) || 0) + delta));
+      if (!inp) return;
+      const cur = parseWeightInput(inp.value);
+      inp.value = roundWeight(Math.max(0, cur + delta));
     }
 
     function stepSetReps(delta) {
@@ -14634,20 +14719,68 @@
 
     function changeExTargetSets(delta) {
       const prog = state.workout.programs?.[activeSetEdit.progId];
+      if (typeof ensureProgramVariants === "function") ensureProgramVariants(prog);
       const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex) return;
-      ex.targetSets = Math.max(1, Math.min(8, (Number(ex.targetSets) || 3) + delta));
+      const nextTarget = Math.max(1, Math.min(8, (Number(ex.targetSets) || 3) + delta));
+      ex.targetSets = nextTarget;
+
+      if (Array.isArray(ex.setsToday) && ex.setsToday.length > nextTarget) {
+        const removedSlots = ex.setsToday.slice(nextTarget);
+        ex.setsToday = ex.setsToday.slice(0, nextTarget);
+        if (Array.isArray(state.workout?.logs)) {
+          const normName = normalizeExerciseName(ex.name);
+          const removedDates = new Set(
+            removedSlots.filter(Boolean).map(s => s.date || getTodayKey())
+          );
+          removedDates.add(getTodayKey());
+          state.workout.logs = state.workout.logs.filter(l => {
+            if (!l || l.setIndex === undefined || l.setIndex === null) return true;
+            if (Number(l.setIndex) < nextTarget) return true;
+            if (!removedDates.has(l.date)) return true;
+            if (l.exId === ex.id) return false;
+            if (normName && normalizeExerciseName(l.exName) === normName) return false;
+            return true;
+          });
+        }
+        const bestRemaining = (typeof getBestSetFromList === "function") ? getBestSetFromList(ex.setsToday) : null;
+        if (bestRemaining) {
+          ex.lastWeight = bestRemaining.weight;
+          ex.lastReps = bestRemaining.reps;
+        } else if (ex.prevWeight !== undefined) {
+          ex.lastWeight = ex.prevWeight;
+          ex.lastReps = ex.prevReps || 10;
+        }
+        syncExerciseProgressionAcrossVariants(prog, ex);
+      }
+
+      if (activeSetEdit.setIndex >= nextTarget) {
+        activeSetEdit.setIndex = nextTarget - 1;
+        const badgeEl = document.getElementById("setLoggerBadge");
+        const uncheckBtn = document.getElementById("btnUncheckSet");
+        const existingSlot = Array.isArray(ex.setsToday) ? ex.setsToday[activeSetEdit.setIndex] : null;
+        if (badgeEl && typeof badgeEl.textContent === "string") {
+          badgeEl.textContent = badgeEl.textContent.replace(/ПОДХОД\s+#\d+/i, `ПОДХОД #${activeSetEdit.setIndex + 1}`);
+        }
+        if (uncheckBtn) {
+          if (existingSlot) uncheckBtn.classList.remove("hidden");
+          else uncheckBtn.classList.add("hidden");
+        }
+      }
+
       document.getElementById("setExTotalSetsLabel").textContent = ex.targetSets;
+      if (typeof recalculateWeeklySetsFromPrograms === "function") recalculateWeeklySetsFromPrograms();
       saveState();
       renderWorkoutAll();
     }
 
     function confirmSetCompleted() {
       const prog = state.workout.programs?.[activeSetEdit.progId];
-      const ex = (prog?.exercises || []).find(e => e.id === activeSetEdit.exId);
+      if (typeof ensureProgramVariants === "function") ensureProgramVariants(prog);
+      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex) return;
 
-      const w = Math.max(0, parseFloat(document.getElementById("setWeightInput").value) || 0);
+      const w = parseWeightInput(document.getElementById("setWeightInput").value);
       const r = Math.max(1, parseInt(document.getElementById("setRepsInput").value, 10) || 10);
 
       if (!Array.isArray(ex.setsToday)) ex.setsToday = [];
@@ -14662,10 +14795,11 @@
         exId: ex.id,
         exName: ex.name,
         muscle: ex.muscle,
+        setIndex: activeSetEdit.setIndex,
         weight: w,
         reps: r
       });
-      if (state.workout.logs.length > 300) state.workout.logs.shift();
+      if (state.workout.logs.length > 3000) state.workout.logs = state.workout.logs.slice(-3000);
 
       saveState();
       renderWorkoutAll();
@@ -14679,10 +14813,21 @@
 
     function uncheckCurrentSet() {
       const prog = state.workout.programs?.[activeSetEdit.progId];
-      const ex = (prog?.exercises || []).find(e => e.id === activeSetEdit.exId);
+      if (typeof ensureProgramVariants === "function") ensureProgramVariants(prog);
+      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex || !Array.isArray(ex.setsToday)) return;
 
+      const removedSet = ex.setsToday[activeSetEdit.setIndex];
+      const targetDate = (removedSet && removedSet.date) ? removedSet.date : getTodayKey();
+      const normExName = normalizeExerciseName(ex.name);
       ex.setsToday[activeSetEdit.setIndex] = null;
+
+      if (Array.isArray(state.workout.logs)) {
+        state.workout.logs = state.workout.logs.filter(
+          l => !(l.date === targetDate && (l.exId === ex.id || (normExName && normalizeExerciseName(l.exName) === normExName)) && Number(l.setIndex) === Number(activeSetEdit.setIndex))
+        );
+      }
+
       saveState();
       renderWorkoutAll();
       closeSetLoggerModal();
@@ -14956,7 +15101,7 @@
       const inp = document.getElementById("newExWeight");
       const btn = document.getElementById("btnNewExBodyweight");
       if (!inp || !btn) return;
-      const raw = String(inp.value ?? "").trim();
+      const raw = String(inp.value ?? "").trim().replace(/\s+/g, "").replace(",", ".");
       const num = parseFloat(raw);
       const isBw = raw !== "" && !isNaN(num) && num === 0;
       if (isBw) {
@@ -15038,7 +15183,7 @@
       const muscle = document.getElementById("newExMuscle").value || "chest";
       const targetSets = Math.max(1, Math.min(8, parseInt(document.getElementById("newExSets").value, 10) || 3));
       const wVal = document.getElementById("newExWeight").value.trim();
-      const lastWeight = wVal === "" ? 0 : Math.max(0, parseFloat(wVal) || 0);
+      const lastWeight = wVal === "" ? 0 : parseWeightInput(wVal);
       const lastReps = Math.max(1, parseInt(document.getElementById("newExReps").value, 10) || 10);
 
       const prog = state.workout.programs[activeProgramId];
@@ -15064,16 +15209,27 @@
     }
 
     function resetCurrentWeekSetsConfirm() {
-      Object.values(state.workout.programs || {}).forEach(prog => {
-        ensureProgramVariants(prog);
-        getAllProgramExerciseLists(prog).forEach(list => {
-          list.forEach(ex => { ex.setsToday = []; });
-        });
+      openWorkoutActionConfirm({
+        title: "Обнулить подходы недели?",
+        message: "Все выполненные за текущую неделю кружочки подходов и счётчики объёма будут сброшены. История тренировок (логи прогрессии) сохранится.",
+        confirmLabel: "Да, обнулить",
+        onConfirm: () => {
+          Object.values(state.workout.programs || {}).forEach(prog => {
+            ensureProgramVariants(prog);
+            getAllProgramExerciseLists(prog).forEach(list => {
+              list.forEach(ex => { ex.setsToday = []; });
+            });
+          });
+          if (typeof recalculateWeeklySetsFromPrograms === "function") {
+            recalculateWeeklySetsFromPrograms();
+          } else {
+            state.workout.weeklySetsByMuscle = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
+          }
+          saveState();
+          renderWorkoutAll();
+          showToast("Недельные подходы обнулены");
+        }
       });
-      state.workout.weeklySetsByMuscle = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
-      saveState();
-      renderWorkoutAll();
-      showToast("Недельные подходы обнулены");
     }
 
     // Сводка прогрессии за 14 дней
@@ -15094,7 +15250,7 @@
         ensureProgramVariants(p);
         getAllProgramExerciseLists(p).forEach(list => {
           list.forEach(ex => {
-            const key = `${p.id}::${(ex.name || "").trim().toLowerCase()}`;
+            const key = `${p.id}::${normalizeExerciseName(ex.name)}`;
             if (!seenProgNames.has(key)) {
               seenProgNames.add(key);
               allExercises.push({ ...ex, progTitle: p.short });
@@ -15111,7 +15267,7 @@
         if (exLogs.length >= 2) {
           const first = exLogs[0];
           const last = exLogs[exLogs.length - 1];
-          const diffW = round1(last.weight - first.weight);
+          const diffW = roundWeight((Number(last.weight) || 0) - (Number(first.weight) || 0));
           const diffR = last.reps - first.reps;
 
           if (diffW > 0) {
@@ -25077,6 +25233,7 @@
       if (!document.hidden) {
         checkDayRollover();
         checkWorkoutWeekRollover();
+        if (typeof renderWorkoutAll === "function") renderWorkoutAll();
         if (state.activeRest) tickRestTimer();
         checkNativeStepsOnStartup(true);
       }
@@ -25132,6 +25289,34 @@
     }
 
     // 4. Изоляция программ по дням недели + очистка битых ссылок
+    function cloneWorkoutProgramWithFreshIds(srcProg, newId) {
+      const copy = JSON.parse(JSON.stringify(srcProg));
+      copy.id = newId;
+      const stamp = Date.now().toString(36);
+      let seq = 0;
+      const refreshList = (list) => (Array.isArray(list) ? list : []).map(ex => {
+        if (!ex || typeof ex !== "object") return ex;
+        seq += 1;
+        return {
+          ...ex,
+          id: `ex_${stamp}_${seq}_${Math.random().toString(36).slice(2, 6)}`,
+          setsToday: []
+        };
+      });
+      if (copy.variants && typeof copy.variants === "object") {
+        Object.keys(copy.variants).forEach(vk => {
+          if (copy.variants[vk] && Array.isArray(copy.variants[vk].exercises)) {
+            copy.variants[vk].exercises = refreshList(copy.variants[vk].exercises);
+          }
+        });
+      } else {
+        copy.exercises = refreshList(copy.exercises);
+      }
+      ensureProgramVariants(copy);
+      return copy;
+    }
+    window.cloneWorkoutProgramWithFreshIds = cloneWorkoutProgramWithFreshIds;
+
     function cleanAndIsolatePrograms() {
       if (!state.workout) state.workout = {};
       if (!state.workout.weekSchedule) {
@@ -25153,9 +25338,7 @@
         }
         if (seen.has(assigned)) {
           const cloneId = "d_" + dow + "_" + Math.random().toString(36).slice(2, 6);
-          state.workout.programs[cloneId] = JSON.parse(JSON.stringify(prog));
-          state.workout.programs[cloneId].id = cloneId;
-          ensureProgramVariants(state.workout.programs[cloneId]);
+          state.workout.programs[cloneId] = cloneWorkoutProgramWithFreshIds(prog, cloneId);
           state.workout.weekSchedule[dow] = cloneId;
           seen.add(cloneId);
         } else {
@@ -25188,6 +25371,10 @@
       const dow = getSafeDow();
       const dayMeta = WEEKDAY_NAMES.find(d => d.key === dow) || WEEKDAY_NAMES[0];
       if (progOrRest === "__create_new__") {
+        const assignSel = document.getElementById("weekdayAssignSelect");
+        if (assignSel) {
+          assignSel.value = state.workout.weekSchedule?.[dow] || "rest";
+        }
         openDayManagerModal();
         return;
       }
@@ -25213,9 +25400,7 @@
 
       if (usedElsewhere) {
         const cloneId = "d_" + dow + "_" + Date.now();
-        state.workout.programs[cloneId] = JSON.parse(JSON.stringify(src));
-        state.workout.programs[cloneId].id = cloneId;
-        ensureProgramVariants(state.workout.programs[cloneId]);
+        state.workout.programs[cloneId] = cloneWorkoutProgramWithFreshIds(src, cloneId);
         state.workout.weekSchedule[dow] = cloneId;
         activeProgramId = cloneId;
       } else {
@@ -25357,16 +25542,31 @@
       }
       const vk = activeVariantModalCtx.variantKey;
       const oldTitle = prog.variants[vk]?.title || vk;
-      delete prog.variants[vk];
-      const remainingKeys = Object.keys(prog.variants);
-      const fallbackKey = remainingKeys.includes("A") ? "A" : remainingKeys[0];
-      prog.activeVariant = fallbackKey;
-      prog.exercises = prog.variants[fallbackKey].exercises;
-      recalculateWeeklySetsFromPrograms();
-      saveState();
-      renderWorkoutAll();
-      closeWorkoutVariantModal();
-      showToast(`Удален вариант «${oldTitle}»`);
+      const ctxProgId = activeVariantModalCtx.progId;
+      openWorkoutActionConfirm({
+        title: "Удалить вариант сплита?",
+        message: `Вариант «${oldTitle}» и все его упражнения будут удалены из дня «${prog.title || prog.short || "Тренировка"}».`,
+        confirmLabel: "Да, удалить",
+        onConfirm: () => {
+          const targetProg = state.workout?.programs?.[ctxProgId];
+          if (!targetProg) return;
+          ensureProgramVariants(targetProg);
+          if (Object.keys(targetProg.variants).length <= 1) {
+            showToast("Нельзя удалить единственный вариант", true);
+            return;
+          }
+          delete targetProg.variants[vk];
+          const remainingKeys = Object.keys(targetProg.variants);
+          const fallbackKey = remainingKeys.includes("A") ? "A" : remainingKeys[0];
+          targetProg.activeVariant = fallbackKey;
+          targetProg.exercises = targetProg.variants[fallbackKey].exercises;
+          recalculateWeeklySetsFromPrograms();
+          saveState();
+          renderWorkoutAll();
+          closeWorkoutVariantModal();
+          showToast(`Удален вариант «${oldTitle}»`);
+        }
+      });
     };
 
     window.renderWorkoutVariantPills = function(activeProg) {
@@ -25657,7 +25857,7 @@
             const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
             return `
               <div class="exercise-row py-3.5 flex items-center justify-between gap-3" data-ex-id="${ex.id}">
-                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')">
+                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" data-ex-name="${escapeHtml(ex.name)}" onclick="openExerciseNotesModal(this.dataset.exName)">
                   <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
                     <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
@@ -25852,10 +26052,17 @@
 
       document.getElementById("newDayShortInput").value = "";
       document.getElementById("newDayTitleInput").value = "";
+      const assignSelOpen = document.getElementById("weekdayAssignSelect");
+      if (assignSelOpen) assignSelOpen.value = assigned !== "rest" && activeProg ? activeProg.id : "rest";
       document.getElementById("dayManagerModal")?.classList.add("open");
     };
 
     window.closeDayManagerModal = function() {
+      const dow = getSafeDow();
+      const assignSelClose = document.getElementById("weekdayAssignSelect");
+      if (assignSelClose) {
+        assignSelClose.value = state.workout?.weekSchedule?.[dow] || "rest";
+      }
       document.getElementById("dayManagerModal")?.classList.remove("open");
     };
 
@@ -26534,8 +26741,9 @@
     }
 
     function normalizeExerciseName(n) {
-      return String(n || "").trim().toLowerCase().replace(/ё/g, "е");
+      return String(n || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
     }
+    window.normalizeExerciseName = normalizeExerciseName;
 
     function formatShortDateRu(dateStr) {
       if (!dateStr) return "";
@@ -26639,7 +26847,7 @@
         const cur = sessions[i];
         const prev = sessions[i + 1] || null;
         if (prev) {
-          const diffW = cur.maxWeight - prev.maxWeight;
+          const diffW = roundWeight((Number(cur.maxWeight) || 0) - (Number(prev.maxWeight) || 0));
           const diffR = cur.bestReps - prev.bestReps;
           if (diffW > 0) {
             cur.deltaLabel = `+${diffW} кг ↑`;
@@ -26740,10 +26948,10 @@
       if (!ex) return;
 
       ensureExerciseBaseline(ex);
-      const wRaw = parseFloat(document.getElementById("setWeightInput").value);
-      const w = isNaN(wRaw) ? 0 : Math.max(0, wRaw);
+      const w = parseWeightInput(document.getElementById("setWeightInput").value);
       const r = Math.max(1, parseInt(document.getElementById("setRepsInput").value, 10) || 10);
       const todayKey = getTodayKey();
+      const normExName = normalizeExerciseName(ex.name);
 
       if (!Array.isArray(ex.setsToday)) ex.setsToday = [];
       ex.setsToday[activeSetEdit.setIndex] = { weight: w, reps: r, date: todayKey };
@@ -26755,7 +26963,7 @@
 
       if (!Array.isArray(state.workout.logs)) state.workout.logs = [];
       const existingLogIdx = state.workout.logs.findIndex(
-        l => l.date === todayKey && (l.exId === ex.id || l.exName === ex.name) && l.setIndex === activeSetEdit.setIndex
+        l => l.date === todayKey && (l.exId === ex.id || (normExName && normalizeExerciseName(l.exName) === normExName)) && Number(l.setIndex) === Number(activeSetEdit.setIndex)
       );
       const logEntry = {
         date: todayKey, exId: ex.id, exName: ex.name, muscle: ex.muscle,
@@ -26763,7 +26971,7 @@
       };
       if (existingLogIdx >= 0) state.workout.logs[existingLogIdx] = logEntry;
       else state.workout.logs.push(logEntry);
-      if (state.workout.logs.length > 400) state.workout.logs.shift();
+      if (state.workout.logs.length > 3000) state.workout.logs = state.workout.logs.slice(-3000);
 
       syncExerciseProgressionAcrossVariants(prog, ex);
       saveState();
@@ -26783,12 +26991,14 @@
       const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
       if (!ex || !Array.isArray(ex.setsToday)) return;
 
-      const todayKey = getTodayKey();
+      const removedSet = ex.setsToday[activeSetEdit.setIndex];
+      const targetDate = (removedSet && removedSet.date) ? removedSet.date : getTodayKey();
+      const normExName = normalizeExerciseName(ex.name);
       ex.setsToday[activeSetEdit.setIndex] = null;
 
       if (Array.isArray(state.workout.logs)) {
         state.workout.logs = state.workout.logs.filter(
-          l => !(l.date === todayKey && (l.exId === ex.id || l.exName === ex.name) && l.setIndex === activeSetEdit.setIndex)
+          l => !(l.date === targetDate && (l.exId === ex.id || (normExName && normalizeExerciseName(l.exName) === normExName)) && Number(l.setIndex) === Number(activeSetEdit.setIndex))
         );
       }
 
@@ -26935,7 +27145,7 @@
           const refW = hasPast ? pastSession.maxWeight : (ex.prevWeight !== undefined ? Number(ex.prevWeight) : undefined);
           const refR = hasPast ? pastSession.bestReps : (ex.prevReps !== undefined ? Number(ex.prevReps) : undefined);
           if (refW !== undefined && refR !== undefined) {
-            const diffW = round1((Number(bestToday.weight) || 0) - (Number(refW) || 0));
+            const diffW = roundWeight((Number(bestToday.weight) || 0) - (Number(refW) || 0));
             const diffR = (Number(bestToday.reps) || 0) - (Number(refR) || 0);
             if (diffW > 0) {
               progressDot = `<span class="inline-flex items-center text-[10px] font-bold mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 leading-none">+${diffW}\u00A0кг ↑</span>`;
@@ -26949,9 +27159,9 @@
           }
         }
 
-        const safeNameArg = escapeHtml(ex.name).replace(/'/g, "\\'");
-        const openNotesCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'notes')`;
-        const openProgressCall = `openExerciseNotesModal('${safeNameArg}', '${activeProg.id}', '${ex.id}', 'progress')`;
+        const safeExNameAttr = escapeHtml(ex.name);
+        const safeProgIdAttr = escapeHtml(activeProg.id);
+        const safeExIdAttr = escapeHtml(ex.id);
 
         let bottomMetaStripHtml = "";
         if ((pastSession && pastSession.summaryText) || progressDot) {
@@ -26959,7 +27169,7 @@
             ? `<span class="text-zinc-500">Прошлая:</span> <span class="mono text-zinc-300 font-medium">${escapeHtml(pastSession.summaryText)}</span>`
             : `<span class="text-zinc-500">База:</span> <span class="mono text-zinc-400 font-medium">${escapeHtml(refBaseText)}</span>`;
           bottomMetaStripHtml = `
-            <div class="mt-2 flex items-center justify-between gap-2 text-[11px] text-zinc-400 cursor-pointer active:opacity-75 transition" onclick="${openProgressCall}">
+            <div class="mt-2 flex items-center justify-between gap-2 text-[11px] text-zinc-400 cursor-pointer active:opacity-75 transition" data-ex-name="${safeExNameAttr}" data-prog-id="${safeProgIdAttr}" data-ex-id="${safeExIdAttr}" data-tab="progress" onclick="openExerciseNotesModal(this.dataset.exName, this.dataset.progId, this.dataset.exId, this.dataset.tab)">
               <div class="min-w-0 flex-1 leading-snug">${leftMeta}</div>
               ${progressDot}
             </div>
@@ -26984,9 +27194,9 @@
         const setsRowClass = targetS >= 5 ? 'gap-[2px] sets-row-tight' : (targetS === 4 ? 'gap-1 sets-row-compact' : 'gap-1.5');
 
         return `
-          <div class="exercise-row py-3.5 pr-1 flex flex-col" data-ex-id="${ex.id}">
+          <div class="exercise-row py-3.5 pr-1 flex flex-col" data-ex-id="${safeExIdAttr}">
             <div class="flex items-center justify-between gap-2.5">
-              <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="${openNotesCall}">
+              <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" data-ex-name="${safeExNameAttr}" data-prog-id="${safeProgIdAttr}" data-ex-id="${safeExIdAttr}" data-tab="notes" onclick="openExerciseNotesModal(this.dataset.exName, this.dataset.progId, this.dataset.exId, this.dataset.tab)">
                 <div class="text-[14.5px] font-semibold text-white leading-snug">${titleWithBadgeHtml}</div>
                 <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[11px] text-zinc-400">
                   <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mColor}; background:${mBg}">${mMeta.label}</span>
@@ -27011,7 +27221,7 @@
     let selectedNoteCategory = "coach";
 
     window.getExerciseNoteKey = function(name) {
-      return (name || "").trim().toLowerCase();
+      return normalizeExerciseName(name);
     };
 
     window.getExerciseNotes = function(name) {
@@ -27020,7 +27230,25 @@
         state.workout.exerciseNotes = {};
       }
       const key = getExerciseNoteKey(name);
-      return Array.isArray(state.workout.exerciseNotes[key]) ? state.workout.exerciseNotes[key] : [];
+      if (!key) return [];
+      const notesMap = state.workout.exerciseNotes;
+      const matchingKeys = Object.keys(notesMap).filter(k => normalizeExerciseName(k) === key);
+      if (matchingKeys.length > 0 && (matchingKeys.length > 1 || matchingKeys[0] !== key)) {
+        const merged = [];
+        const seenIds = new Set();
+        matchingKeys.forEach(k => {
+          const arr = Array.isArray(notesMap[k]) ? notesMap[k] : [];
+          arr.forEach(item => {
+            if (item && (!item.id || !seenIds.has(item.id))) {
+              if (item.id) seenIds.add(item.id);
+              merged.push(item);
+            }
+          });
+          if (k !== key) delete notesMap[k];
+        });
+        notesMap[key] = merged;
+      }
+      return Array.isArray(notesMap[key]) ? notesMap[key] : [];
     };
 
     window.parseWarmupSets = function(text) {
@@ -27449,8 +27677,9 @@
       vid.classList.add("hidden");
       const wrap = document.getElementById("noteVideoWrap_" + noteId) || vid.parentElement;
       if (!wrap || wrap.querySelector(".video-error-fallback")) return;
-      const safeUrl = escapeHtml(url || "").replace(/'/g, "\\'");
-      const safeEx = escapeHtml(exName || currentActiveNotesExName || "").replace(/'/g, "\\'");
+      const safeNoteId = escapeHtml(noteId || "");
+      const safeUrlAttr = escapeHtml(url || "");
+      const safeExAttr = escapeHtml(exName || currentActiveNotesExName || "");
       const fb = document.createElement("div");
       fb.className = "video-error-fallback flex flex-col items-center justify-center p-4 bg-zinc-900/90 border border-red-500/30 rounded-xl text-center space-y-2";
       fb.innerHTML = `
@@ -27460,10 +27689,10 @@
         </div>
         <p class="text-[10px] text-zinc-400 font-mono leading-snug">Локальный файл видео не найден на устройстве</p>
         <div class="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
-          <button type="button" onclick="reattachNoteVideoFromGallery('${noteId}', '${safeEx}')" class="px-3 py-1.5 rounded-lg accent-btn text-[10px] mono font-semibold transition active:scale-95">
+          <button type="button" data-note-id="${safeNoteId}" data-ex-name="${safeExAttr}" onclick="reattachNoteVideoFromGallery(this.dataset.noteId, this.dataset.exName)" class="px-3 py-1.5 rounded-lg accent-btn text-[10px] mono font-semibold transition active:scale-95">
             Выбрать видео заново из галереи
           </button>
-          <button type="button" onclick="retryNoteVideo('${noteId}', '${safeUrl}')" class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] mono text-white font-semibold transition active:scale-95">
+          <button type="button" data-note-id="${safeNoteId}" data-media-url="${safeUrlAttr}" onclick="retryNoteVideo(this.dataset.noteId, this.dataset.mediaUrl)" class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-[10px] mono text-white font-semibold transition active:scale-95">
             Повторить
           </button>
         </div>
@@ -27581,22 +27810,25 @@
       }
 
       let mediaHtml = "";
+      const safeExAttr = escapeHtml(exName || "");
       if (note.media) {
+        const safeNoteIdAttr = escapeHtml(note.id || "");
+        const safeMediaUrlAttr = escapeHtml(note.media.url || "");
         if (note.media.type === "video") {
           mediaHtml = `
             <div class="mt-2 space-y-1.5">
               <div id="noteVideoWrap_${note.id}" class="relative rounded-xl overflow-hidden bg-black border border-white/10">
-                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" onplay="onNoteVideoPlay(this, '${note.id}')" onerror="handleNoteVideoError(this, '${escapeHtml(note.media.url)}', '${note.id}', '${escapeHtml(exName || '').replace(/'/g, "\\'")}')"></video>
+                <video playsinline webkit-playsinline muted loop preload="metadata" controls class="w-full max-h-48 object-cover bg-black" src="${note.media.url}" poster="${note.media.thumbUrl || ''}" data-note-id="${safeNoteIdAttr}" data-media-url="${safeMediaUrlAttr}" data-ex-name="${safeExAttr}" onplay="onNoteVideoPlay(this, this.dataset.noteId)" onerror="handleNoteVideoError(this, this.dataset.mediaUrl, this.dataset.noteId, this.dataset.exName)"></video>
               </div>
               ${note.media.audioUrl ? `
                 <div class="flex items-center justify-between pt-0.5">
-                  <button type="button" onclick="toggleNoteAudioOnly('${note.id}')" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] mono text-sky-300 flex items-center gap-1.5 transition active:scale-95">
+                  <button type="button" data-note-id="${safeNoteIdAttr}" onclick="toggleNoteAudioOnly(this.dataset.noteId)" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] mono text-sky-300 flex items-center gap-1.5 transition active:scale-95">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                     <span id="noteAudioBtnText_${note.id}">Слушать аудио</span>
                   </button>
                 </div>
                 <div id="noteAudioOnlyWrap_${note.id}" class="hidden p-2 rounded-xl bg-black/60 border border-white/10">
-                  <audio controls class="w-full h-8" src="${note.media.audioUrl}" onplay="onNoteAudioPlay(this, '${note.id}')"></audio>
+                  <audio controls class="w-full h-8" src="${note.media.audioUrl}" data-note-id="${safeNoteIdAttr}" onplay="onNoteAudioPlay(this, this.dataset.noteId)"></audio>
                 </div>
               ` : ""}
             </div>
@@ -27608,7 +27840,7 @@
                 <img src="${note.media.url}" alt="Настройка" class="w-full max-h-48 object-cover" />
               </div>
               <div class="flex items-center justify-between pt-0.5">
-                <button type="button" onclick="analyzeEquipmentSetup('${note.id}', '${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.media.url}')" class="px-2 py-0.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[10px] mono text-purple-300 flex items-center gap-1.5 transition active:scale-95">
+                <button type="button" data-note-id="${safeNoteIdAttr}" data-ex-name="${safeExAttr}" data-media-url="${safeMediaUrlAttr}" onclick="analyzeEquipmentSetup(this.dataset.noteId, this.dataset.exName, this.dataset.mediaUrl)" class="px-2 py-0.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[10px] mono text-purple-300 flex items-center gap-1.5 transition active:scale-95">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                   <span>Анализ настройки</span>
                 </button>
@@ -27634,7 +27866,7 @@
               </span>
               <span class="text-zinc-500 text-[9px]">${escapeHtml(note.date || "")}</span>
             </div>
-            <button type="button" onclick="deleteExNote('${escapeHtml(exName).replace(/'/g, "\\'")}', '${note.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-1.5 py-0.5 rounded transition">
+            <button type="button" data-ex-name="${safeExAttr}" data-note-id="${escapeHtml(note.id || "")}" onclick="deleteExNote(this.dataset.exName, this.dataset.noteId)" class="text-zinc-500 hover:text-red-400 text-xs px-1.5 py-0.5 rounded transition">
               ✕
             </button>
           </div>
@@ -27647,11 +27879,9 @@
 
     window.addExerciseNote = function(name, category, text, media) {
       if (!name || ((!text || !text.trim()) && !media)) return;
-      if (!state.workout) state.workout = {};
-      if (!state.workout.exerciseNotes || typeof state.workout.exerciseNotes !== "object") {
-        state.workout.exerciseNotes = {};
-      }
+      getExerciseNotes(name);
       const key = getExerciseNoteKey(name);
+      if (!key) return;
       if (!Array.isArray(state.workout.exerciseNotes[key])) {
         state.workout.exerciseNotes[key] = [];
       }
@@ -27685,10 +27915,10 @@
     };
 
     window.deleteExNote = function(name, noteId) {
-      if (!state.workout?.exerciseNotes) return;
+      const existing = getExerciseNotes(name);
       const key = getExerciseNoteKey(name);
-      if (!Array.isArray(state.workout.exerciseNotes[key])) return;
-      
+      if (!key || !Array.isArray(state.workout?.exerciseNotes?.[key]) || existing.length === 0) return;
+
       const targetNote = state.workout.exerciseNotes[key].find(n => n.id === noteId);
       if (targetNote && targetNote.media) {
         const files = [targetNote.media.url, targetNote.media.audioUrl, targetNote.media.thumbUrl].filter(Boolean);
@@ -27701,6 +27931,9 @@
       }
 
       state.workout.exerciseNotes[key] = state.workout.exerciseNotes[key].filter(n => n.id !== noteId);
+      if (state.workout.exerciseNotes[key].length === 0) {
+        delete state.workout.exerciseNotes[key];
+      }
       saveState();
 
       renderExerciseNotesList(name);
@@ -27851,7 +28084,9 @@
       if (!container) return;
 
       const hist = getExerciseProgressionHistory(currentActiveNotesCtx.exId, exName);
-      if (prEl) prEl.textContent = hist.prWeight === 0 ? "Свой вес" : `${hist.prWeight} кг`;
+      if (prEl) {
+        prEl.textContent = hist.totalWorkouts === 0 ? "—" : (hist.prWeight === 0 ? "Свой вес" : `${hist.prWeight} кг`);
+      }
       if (totalEl) totalEl.textContent = hist.totalWorkouts;
       if (deltaEl) {
         deltaEl.textContent = hist.sessions[0]?.deltaLabel || "—";
@@ -27868,6 +28103,7 @@
         return;
       }
 
+      const safeNameAttr = escapeHtml(exName || "");
       container.innerHTML = hist.sessions.map(s => {
         let deltaBadge = "";
         if (s.deltaLabel && s.deltaLabel !== "=" && s.deltaLabel !== "Старт") {
@@ -27875,8 +28111,7 @@
           deltaBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold mono ${isPos ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${escapeHtml(s.deltaLabel)}</span>`;
         }
 
-        const safeDateArg = escapeHtml(s.date).replace(/'/g, "\\'");
-        const safeNameArg = escapeHtml(exName).replace(/'/g, "\\'");
+        const safeDateAttr = escapeHtml(s.date || "");
 
         return `
           <div class="bg-zinc-900/60 border border-white/[0.06] rounded-2xl p-3 flex items-center justify-between gap-3">
@@ -27889,7 +28124,7 @@
                 ${escapeHtml(s.summaryText)}
               </div>
             </div>
-            <button type="button" onclick="deleteExerciseLogSession('${safeDateArg}', '${safeNameArg}')" class="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-red-500/15 text-zinc-500 hover:text-red-400 flex items-center justify-center text-xs active:scale-90 transition shrink-0" title="Удалить запись за этот день">✕</button>
+            <button type="button" data-log-date="${safeDateAttr}" data-ex-name="${safeNameAttr}" onclick="deleteExerciseLogSession(this.dataset.logDate, this.dataset.exName)" class="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-red-500/15 text-zinc-500 hover:text-red-400 flex items-center justify-center text-xs active:scale-90 transition shrink-0" title="Удалить запись за этот день">✕</button>
           </div>
         `;
       }).join("");
@@ -27901,23 +28136,77 @@
     window.renderExerciseProgressionList = renderExerciseProgressionList;
 
     function deleteExerciseLogSession(dateStr, exName) {
-      if (!confirm(`Удалить подходы за ${dateStr}?`)) return;
+      const targetExId = currentActiveNotesCtx.exId || null;
       const norm = normalizeExerciseName(exName);
-      if (Array.isArray(state?.workout?.logs)) {
-        state.workout.logs = state.workout.logs.filter(l => {
-          if (l.date !== dateStr) return true;
-          if (currentActiveNotesCtx.exId && l.exId === currentActiveNotesCtx.exId) return false;
-          if (norm && normalizeExerciseName(l.exName) === norm) return false;
-          return true;
-        });
-      }
-      saveState();
-      renderExerciseProgressionList(exName);
-      if (typeof updateExModalViewportHeight === "function") {
-        updateExModalViewportHeight();
-      }
-      if (typeof renderWorkoutAll === "function") renderWorkoutAll();
-      showToast("Запись тренировки удалена");
+      openWorkoutActionConfirm({
+        title: "Удалить подходы за день?",
+        message: `Записанные подходы для «${exName}» за ${dateStr} будут удалены из истории и счётчика недели.`,
+        confirmLabel: "Да, удалить",
+        onConfirm: () => {
+          if (Array.isArray(state?.workout?.logs)) {
+            state.workout.logs = state.workout.logs.filter(l => {
+              if (l.date !== dateStr) return true;
+              if (targetExId && l.exId === targetExId) return false;
+              if (norm && normalizeExerciseName(l.exName) === norm) return false;
+              return true;
+            });
+          }
+
+          Object.values(state?.workout?.programs || {}).forEach(prog => {
+            ensureProgramVariants(prog);
+            getAllProgramExerciseLists(prog).forEach(list => {
+              (list || []).forEach(ex => {
+                if (!ex) return;
+                const matchesEx = (targetExId && ex.id === targetExId) || (norm && normalizeExerciseName(ex.name) === norm);
+                if (!matchesEx) return;
+
+                if (Array.isArray(ex.setsToday)) {
+                  ex.setsToday = ex.setsToday.map(s => (s && s.date === dateStr) ? null : s);
+                  if (ex.setsToday.every(s => !s)) ex.setsToday = [];
+                }
+
+                const hist = getExerciseProgressionHistory(ex.id, ex.name);
+                const bestToday = getBestSetFromList(ex.setsToday);
+                if (bestToday) {
+                  ex.lastWeight = bestToday.weight;
+                  ex.lastReps = bestToday.reps;
+                } else if (hist.sessions.length > 0) {
+                  ex.lastWeight = hist.sessions[0].maxWeight;
+                  ex.lastReps = hist.sessions[0].bestReps;
+                } else if (ex.baseWeight !== undefined) {
+                  ex.lastWeight = ex.baseWeight;
+                  ex.lastReps = ex.baseReps || 10;
+                }
+
+                if (hist.pastSession && hist.pastSession.totalSets > 0) {
+                  ex.prevWeight = hist.pastSession.maxWeight;
+                  ex.prevReps = hist.pastSession.bestReps;
+                } else if (hist.sessions.length > 1) {
+                  ex.prevWeight = hist.sessions[1].maxWeight;
+                  ex.prevReps = hist.sessions[1].bestReps;
+                } else if (ex.baseWeight !== undefined) {
+                  ex.prevWeight = ex.baseWeight;
+                  ex.prevReps = ex.baseReps || 10;
+                }
+              });
+            });
+          });
+
+          if (typeof recalculateWeeklySetsFromPrograms === "function") {
+            recalculateWeeklySetsFromPrograms();
+          }
+          saveState();
+          renderExerciseProgressionList(exName);
+          if (typeof updateExModalViewportHeight === "function") {
+            updateExModalViewportHeight();
+          }
+          if (typeof renderWorkoutAll === "function") renderWorkoutAll();
+          if (document.getElementById("progressionModal")?.classList.contains("open") && typeof renderProgressionContent === "function") {
+            renderProgressionContent();
+          }
+          showToast("Запись тренировки удалена");
+        }
+      });
     }
     window.deleteExerciseLogSession = deleteExerciseLogSession;
 
@@ -28080,12 +28369,13 @@
       let resolvedProgId = progId;
       let resolvedExId = exId;
       const targetProg = resolvedProgId ? state.workout?.programs?.[resolvedProgId] : state.workout?.programs?.[activeProgramId];
+      const normTarget = normalizeExerciseName(exName);
       if (targetProg) {
         ensureProgramVariants(targetProg);
         const list = getActiveProgramExercises(targetProg);
         const matched = resolvedExId
           ? list.find(e => e.id === resolvedExId)
-          : list.find(e => (e.name || "").trim().toLowerCase() === (exName || "").trim().toLowerCase());
+          : list.find(e => normalizeExerciseName(e.name) === normTarget);
         if (matched) {
           resolvedProgId = targetProg.id;
           resolvedExId = matched.id;
@@ -28101,12 +28391,11 @@
       }
 
       let muscle = "chest";
-      const normExName = (exName || "").trim().toLowerCase();
       Object.values(state.workout?.programs || {}).forEach(p => {
         ensureProgramVariants(p);
         getAllProgramExerciseLists(p).forEach(list => {
           list.forEach(e => {
-            if ((e.name || "").trim().toLowerCase() === normExName && e.muscle) {
+            if (normalizeExerciseName(e.name) === normTarget && e.muscle) {
               muscle = e.muscle;
             }
           });
@@ -28203,7 +28492,7 @@
     window.collectExerciseCatalog = function(options = {}) {
       const normFn = (typeof normalizeExerciseName === "function")
         ? normalizeExerciseName
-        : (s) => String(s || "").trim().toLowerCase().replace(/ё/g, "е");
+        : (s) => String(s || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
 
       const excludeNorm = options.excludeNorm ? normFn(options.excludeNorm) : "";
       const currentDayNorms = options.currentDayNorms instanceof Set ? options.currentDayNorms : new Set();
@@ -28265,6 +28554,8 @@
 
       Object.keys(state.workout?.exerciseNotes || {}).forEach(nKey => {
         if (!isValidHumanExerciseKey(nKey)) return;
+        const arr = state.workout.exerciseNotes[nKey];
+        if (!Array.isArray(arr) || arr.length === 0) return;
         const cleanKey = String(nKey || "").trim();
         const normKey = normFn(cleanKey);
         if (!normKey || (excludeNorm && normKey === excludeNorm) || presetsMap.has(normKey)) return;
@@ -28305,7 +28596,9 @@
       }
       sec.classList.remove("hidden");
 
-      const normQ = String(query || "").trim().toLowerCase().replace(/ё/g, "е");
+      const normQ = (typeof normalizeExerciseName === "function")
+        ? normalizeExerciseName(query)
+        : String(query || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
       const filtered = normQ
         ? full.filter(item => {
             const mLabel = (MUSCLE_META[item.muscle]?.label || "").toLowerCase();
@@ -28356,7 +28649,7 @@
     window.initAddExerciseModalCatalog = function(prog, primaryMuscle) {
       const normFn = (typeof normalizeExerciseName === "function")
         ? normalizeExerciseName
-        : (s) => String(s || "").trim().toLowerCase().replace(/ё/g, "е");
+        : (s) => String(s || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
 
       const currentDayNorms = new Set();
       if (prog) {
@@ -28433,7 +28726,7 @@
     window.onNewExNameInput = function(val) {
       const normFn = (typeof normalizeExerciseName === "function")
         ? normalizeExerciseName
-        : (s) => String(s || "").trim().toLowerCase().replace(/ё/g, "е");
+        : (s) => String(s || "").trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
       const typedNorm = normFn(val);
       if (window._selectedAddExNorm && typedNorm !== window._selectedAddExNorm) {
         window._selectedAddExNorm = null;
@@ -28532,7 +28825,7 @@
       const muscle = document.getElementById("replaceExMuscleSelect")?.value || "chest";
       const targetSets = Math.max(1, Math.min(8, parseInt(document.getElementById("replaceExSetsInput")?.value, 10) || 3));
       const wRaw = String(document.getElementById("replaceExWeightInput")?.value ?? "").trim();
-      const lastWeight = wRaw === "" ? 0 : Math.max(0, parseFloat(wRaw) || 0);
+      const lastWeight = wRaw === "" ? 0 : parseWeightInput(wRaw);
       const lastReps = Math.max(1, parseInt(document.getElementById("replaceExRepsInput")?.value, 10) || 10);
 
       const newEx = {
@@ -28605,7 +28898,8 @@
         box.innerHTML = `
           <button
             type="button"
-            onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\'")}')"
+            data-ex-name="${escapeHtml(exName || "")}"
+            onclick="openExerciseNotesModal(this.dataset.exName)"
             class="w-full py-2 px-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.05] text-[11px] mono text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition"
           >
             <span>+ Заметка / Совет тренера / Разминка</span>
@@ -28684,7 +28978,7 @@
           if (!hasMeaningfulText && !mediaSnippet) return "";
 
           return `
-            <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\'")}')">
+            <div class="rounded-xl border ${meta.border} ${meta.bg} ${meta.borderLeft} p-2 cursor-pointer active:opacity-80 transition" data-ex-name="${escapeHtml(exName || "")}" onclick="openExerciseNotesModal(this.dataset.exName)">
               <div class="flex items-center justify-between text-[10px] font-bold mono ${meta.badge.split(' ')[1] || 'text-sky-300'} uppercase tracking-wider mb-0.5">
                 <span>${meta.title}</span>
                 <span class="text-zinc-500 text-[9px]">${escapeHtml(n.date || "")}</span>
@@ -28704,7 +28998,8 @@
             <span class="text-zinc-500">Заметок в базе: ${notes.length}</span>
             <button
               type="button"
-              onclick="openExerciseNotesModal('${escapeHtml(exName).replace(/'/g, "\'")}')"
+              data-ex-name="${escapeHtml(exName || "")}"
+              onclick="openExerciseNotesModal(this.dataset.exName)"
               class="text-zinc-400 hover:text-white underline flex items-center gap-1"
             >
               <span>База заметок (${notes.length}) →</span>
@@ -28760,13 +29055,14 @@
         getAllProgramExerciseLists(p).forEach(list => {
           list.forEach(ex => {
             ensureExerciseBaseline(ex);
-            const key = ex.name.trim().toLowerCase();
+            const key = normalizeExerciseName(ex.name);
+            if (!key) return;
             if (!uniqueExercisesMap.has(key)) {
               uniqueExercisesMap.set(key, { ...ex, progTitle: p.short });
             } else {
               const existing = uniqueExercisesMap.get(key);
-              const curDone = (ex.setsToday || []).filter(Boolean).length;
-              const oldDone = (existing.setsToday || []).filter(Boolean).length;
+              const curDone = (ex.setsToday || []).filter(s => s && s.date === todayKey).length;
+              const oldDone = (existing.setsToday || []).filter(s => s && s.date === todayKey).length;
               if (curDone > oldDone) uniqueExercisesMap.set(key, { ...ex, progTitle: p.short });
             }
           });
@@ -28784,10 +29080,10 @@
             const mColor = mMeta.color || mMeta.colorVar || "var(--accent-cal)";
             const mBg = mMeta.bg || "rgba(255,255,255,0.08)";
 
-            const normName = ex.name.trim().toLowerCase();
+            const normName = normalizeExerciseName(ex.name);
             const exLogs = logs.filter(l =>
               l.date >= cutoffKey &&
-              (l.exId === ex.id || (l.exName && l.exName.trim().toLowerCase() === normName))
+              (l.exId === ex.id || (l.exName && normalizeExerciseName(l.exName) === normName))
             );
 
             const bestByDate = {};
@@ -28797,7 +29093,7 @@
               }
             });
 
-            const doneTodaySets = (ex.setsToday || []).filter(Boolean);
+            const doneTodaySets = (ex.setsToday || []).filter(s => s && s.date === todayKey);
             const bestToday = getBestSetFromList(doneTodaySets);
             if (bestToday) {
               if (!bestByDate[todayKey] || isSetBetter(bestToday, bestByDate[todayKey])) {
@@ -28829,7 +29125,7 @@
             `;
 
             if (totalSets14d > 0) {
-              const diffW = round1((Number(curW) || 0) - (Number(refW) || 0));
+              const diffW = roundWeight((Number(curW) || 0) - (Number(refW) || 0));
               const diffR = (Number(curR) || 0) - (Number(refR) || 0);
 
               if (diffW > 0) {
@@ -28864,7 +29160,8 @@
 
             return `
               <div
-                onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')"
+                data-ex-name="${escapeHtml(ex.name || "")}"
+                onclick="openExerciseNotesModal(this.dataset.exName)"
                 class="bg-zinc-900/75 border border-white/[0.07] hover:border-white/20 active:scale-[0.99] transition cursor-pointer rounded-2xl p-3.5 flex items-center justify-between gap-2.5"
                 style="border-left: 3px solid ${mColor}"
               >
@@ -28923,7 +29220,8 @@
                   </div>
                   <button
                     type="button"
-                    onclick="openExerciseNotesModal('${escapeHtml(ex.name).replace(/'/g, "\\'")}')"
+                    data-ex-name="${escapeHtml(ex.name || "")}"
+                    onclick="openExerciseNotesModal(this.dataset.exName)"
                     class="py-1 px-2.5 rounded-lg border border-white/15 bg-white/[0.04] hover:bg-white/10 active:scale-95 text-[10px] font-mono text-zinc-300 transition shrink-0"
                   >
                     + Заметка / Разминка
@@ -30061,7 +30359,7 @@ ${knownPiecesContext}
   
   <script id="formDynamicVolumeFix">
   (function() {
-    // Пересчитываем и выполненные подходы, и плановую сумму подходов строго по активным дням недели (ПН-ВС)
+    // Пересчитываем и выполненные подходы (по всем вариантам программы), и плановую сумму подходов (по активному варианту) строго по активным дням недели (ПН-ВС)
     window.recalculateWeeklySetsFromPrograms = function() {
       const doneTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
       const plannedTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
@@ -30076,21 +30374,25 @@ ${knownPiecesContext}
         const prog = programs[progId];
         if (!prog) return;
         ensureProgramVariants(prog);
+
         const activeExList = getActiveProgramExercises(prog);
-
-        const isNewProgForDone = !seenDoneProgs.has(progId);
-        if (isNewProgForDone) seenDoneProgs.add(progId);
-
         activeExList.forEach(ex => {
-          const m = (ex.muscle && doneTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
+          const m = (ex.muscle && plannedTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
           const targetS = Math.max(1, Number(ex.targetSets) || 3);
-          const doneS = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
-
           plannedTotals[m] += targetS;
-          if (isNewProgForDone) {
-            doneTotals[m] += doneS;
-          }
         });
+
+        if (!seenDoneProgs.has(progId)) {
+          seenDoneProgs.add(progId);
+          getAllProgramExerciseLists(prog).forEach(list => {
+            (list || []).forEach(ex => {
+              const m = (ex.muscle && doneTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
+              const targetS = Math.max(1, Number(ex.targetSets) || 3);
+              const doneS = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
+              doneTotals[m] += doneS;
+            });
+          });
+        }
       });
 
       // Обновляем целевые лимиты в MUSCLE_META реальной суммой твоих подходов из расписания
@@ -30133,6 +30435,7 @@ ${knownPiecesContext}
         editModal: () => typeof closeEditModal === "function" && closeEditModal(),
         targetEditorModal: () => typeof closeTargetEditorModal === "function" && closeTargetEditorModal(),
         confirmDeleteDayModal: () => typeof closeConfirmDeleteDayModal === "function" && closeConfirmDeleteDayModal(),
+        workoutConfirmActionModal: () => typeof closeWorkoutActionConfirm === "function" && closeWorkoutActionConfirm(),
         dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal(),
         exerciseNotesModal: () => typeof closeExerciseNotesModal === "function" && closeExerciseNotesModal(),
         workoutVariantModal: () => typeof closeWorkoutVariantModal === "function" && closeWorkoutVariantModal(),
