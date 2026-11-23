@@ -7,6 +7,8 @@ import UIKit
 final class RestActivityManager {
     static let shared = RestActivityManager()
 
+    private var lifecycleTask: Task<Void, Never>?
+    private var operationGeneration: UInt64 = 0
     private var autoStopTask: Task<Void, Never>?
     private var bgTask: UIBackgroundTaskIdentifier = .invalid
     private var silentPlayer: AVAudioPlayer?
@@ -22,93 +24,139 @@ final class RestActivityManager {
         }
     }
 
+    private func runOnMain(_ work: @escaping () -> Void) {
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.async(execute: work)
+        }
+    }
+
     func startActivity(
         seconds: Double,
+        totalSeconds: Double? = nil,
         exerciseName: String,
         themeCalHex: String = "#D62828",
         onDisabled: (() -> Void)? = nil
     ) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            onDisabled?()
-            return
-        }
-
-        autoStopTask?.cancel()
-        endBackgroundTask()
-        stopSilentAudioKeepAlive()
-
-        let duration = max(1.0, seconds)
-        let now = Date()
-        let end = now.addingTimeInterval(duration)
-        let cleanName = exerciseName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? "РАБОЧИЙ ПОДХОД"
-            : exerciseName
-
-        // Держим процесс активным в фоне без влияния на Spotify / Apple Music
-        startSilentAudioKeepAlive()
-        bgTask = UIApplication.shared.beginBackgroundTask(withName: "FormRestTimerAutoStop") { [weak self] in
-            self?.cleanupExpiredActivities()
-            self?.endBackgroundTask()
-        }
-
-        Task { @MainActor in
-            for activity in Activity<RestActivityAttributes>.activities {
-                await activity.end(nil, dismissalPolicy: .immediate)
+        runOnMain { [weak self] in
+            guard let self = self else { return }
+            guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+                onDisabled?()
+                return
             }
 
-            let attributes = RestActivityAttributes(workoutTitle: "FORM // SYSTEM")
-            let state = RestActivityAttributes.ContentState(
-                startDate: now,
-                endDate: end,
-                exerciseName: cleanName,
-                themeCalHex: themeCalHex
-            )
+            self.autoStopTask?.cancel()
+            self.operationGeneration &+= 1
+            let myGen = self.operationGeneration
 
-            do {
-                let content = ActivityContent(state: state, staleDate: end)
-                _ = try Activity<RestActivityAttributes>.request(
-                    attributes: attributes,
-                    content: content,
-                    pushType: nil
+            let duration = max(1.0, seconds)
+            let now = Date()
+            let end = now.addingTimeInterval(duration)
+            let total = max(duration, totalSeconds ?? duration)
+            let start = end.addingTimeInterval(-total)
+            let cleanName = exerciseName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? "РАБОЧИЙ ПОДХОД"
+                : exerciseName
+
+            // Держим процесс активным в фоне без влияния на Spotify / Apple Music
+            if self.silentPlayer == nil || self.silentPlayer?.isPlaying == false {
+                self.startSilentAudioKeepAlive()
+            }
+            if self.bgTask == .invalid {
+                self.bgTask = UIApplication.shared.beginBackgroundTask(withName: "FormRestTimerAutoStop") { [weak self] in
+                    self?.cleanupExpiredActivities()
+                    self?.endBackgroundTask()
+                }
+            }
+
+            let previousTask = self.lifecycleTask
+            self.lifecycleTask = Task { @MainActor [weak self] in
+                _ = await previousTask?.result
+                guard let self = self, !Task.isCancelled, self.operationGeneration == myGen else { return }
+
+                let state = RestActivityAttributes.ContentState(
+                    startDate: start,
+                    endDate: end,
+                    exerciseName: cleanName,
+                    themeCalHex: themeCalHex
                 )
-            } catch {
-                print("Ошибка запуска Live Activity: \(error.localizedDescription)")
-            }
-        }
+                let content = ActivityContent(state: state, staleDate: end)
 
-        // Ровно на 0:00 переводим активность в состояние "ОТДЫХ ОКОНЧЕН"
-        // и закрываем Dynamic Island (dismissalPolicy: .default убирает с острова,
-        // но оставляет красивый экран завершения на экране блокировки как на скриншоте 3)
-        autoStopTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
-            guard !Task.isCancelled else { return }
-            for activity in Activity<RestActivityAttributes>.activities {
-                await activity.end(nil, dismissalPolicy: .immediate)
+                let existing = Activity<RestActivityAttributes>.activities
+                if let primary = existing.first(where: { $0.activityState == .active || $0.activityState == .stale }) ?? existing.first {
+                    for extra in existing where extra.id != primary.id {
+                        await extra.end(nil, dismissalPolicy: .immediate)
+                    }
+                    if primary.activityState == .active || primary.activityState == .stale {
+                        await primary.update(content)
+                        return
+                    } else {
+                        await primary.end(nil, dismissalPolicy: .immediate)
+                    }
+                }
+
+                let attributes = RestActivityAttributes(workoutTitle: "FORM // SYSTEM")
+                do {
+                    _ = try Activity<RestActivityAttributes>.request(
+                        attributes: attributes,
+                        content: content,
+                        pushType: nil
+                    )
+                } catch {
+                    print("Ошибка запуска Live Activity: \(error.localizedDescription)")
+                }
             }
-            self?.stopSilentAudioKeepAlive()
-            self?.endBackgroundTask()
+
+            // На 0:00 корректно закрываем Dynamic Island и освобождаем keep-alive ресурсы
+            self.autoStopTask = Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64((duration + 0.5) * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                self?.stopActivity()
+            }
         }
     }
 
     func stopActivity() {
-        autoStopTask?.cancel()
-        autoStopTask = nil
-        stopSilentAudioKeepAlive()
-        endBackgroundTask()
+        runOnMain { [weak self] in
+            guard let self = self else { return }
+            self.autoStopTask?.cancel()
+            self.autoStopTask = nil
+            self.operationGeneration &+= 1
+            let myGen = self.operationGeneration
+            self.stopSilentAudioKeepAlive()
+            self.endBackgroundTask()
 
-        Task { @MainActor in
-            for activity in Activity<RestActivityAttributes>.activities {
-                await activity.end(nil, dismissalPolicy: .immediate)
+            let previousTask = self.lifecycleTask
+            self.lifecycleTask = Task { @MainActor [weak self] in
+                _ = await previousTask?.result
+                guard let self = self, self.operationGeneration == myGen else { return }
+                for activity in Activity<RestActivityAttributes>.activities {
+                    await activity.end(nil, dismissalPolicy: .immediate)
+                }
             }
         }
     }
 
     func cleanupExpiredActivities() {
-        let now = Date()
-        Task { @MainActor in
-            for activity in Activity<RestActivityAttributes>.activities {
-                if activity.content.state.endDate <= now {
-                    await activity.end(nil, dismissalPolicy: .immediate)
+        runOnMain { [weak self] in
+            guard let self = self else { return }
+            let now = Date()
+            let previousTask = self.lifecycleTask
+            self.lifecycleTask = Task { @MainActor [weak self] in
+                _ = await previousTask?.result
+                guard let self = self else { return }
+                var hasActiveRemaining = false
+                for activity in Activity<RestActivityAttributes>.activities {
+                    if activity.content.state.endDate <= now {
+                        await activity.end(nil, dismissalPolicy: .immediate)
+                    } else if activity.activityState == .active {
+                        hasActiveRemaining = true
+                    }
+                }
+                if !hasActiveRemaining && self.autoStopTask == nil {
+                    self.stopSilentAudioKeepAlive()
+                    self.endBackgroundTask()
                 }
             }
         }

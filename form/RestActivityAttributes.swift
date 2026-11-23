@@ -48,6 +48,7 @@ struct StopRestTimerIntent: LiveActivityIntent {
         WidgetCenter.shared.reloadAllTimelines()
 
         await MainActor.run {
+            RestActivityManager.shared.stopActivity()
             NotificationCenter.default.post(
                 name: Notification.Name("FormStopRestTimerExternally"),
                 object: nil

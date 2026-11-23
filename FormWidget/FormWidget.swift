@@ -68,7 +68,37 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<MacroEntry>) -> Void) {
         let entry = loadFromSharedDefaults()
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
-        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+        var entries = [entry]
+        let nowMs = entry.date.timeIntervalSince1970 * 1000.0
+        if entry.restTimerEndDate > nowMs {
+            let restEnd = Date(timeIntervalSince1970: entry.restTimerEndDate / 1000.0)
+            let expiredEntry = MacroEntry(
+                date: restEnd,
+                calHex: entry.calHex,
+                pHex: entry.pHex,
+                cHex: entry.cHex,
+                fHex: entry.fHex,
+                cal: entry.cal,
+                targetCal: entry.targetCal,
+                p: entry.p,
+                targetP: entry.targetP,
+                f: entry.f,
+                targetF: entry.targetF,
+                c: entry.c,
+                targetC: entry.targetC,
+                splitTitle: entry.splitTitle,
+                isRestDay: entry.isRestDay,
+                setsDone: entry.setsDone,
+                setsTarget: entry.setsTarget,
+                weekBadges: entry.weekBadges,
+                currentWeight: entry.currentWeight,
+                stackDone: entry.stackDone,
+                stackTotal: entry.stackTotal,
+                restTimerEndDate: 0.0
+            )
+            entries.append(expiredEntry)
+        }
+        completion(Timeline(entries: entries, policy: .after(nextUpdate)))
     }
     
     private func loadFromSharedDefaults() -> MacroEntry {
@@ -311,7 +341,7 @@ struct MacroWidgetEntryView: View {
                     }
 
                     // 4. Нижняя строка: если идет отдых между подходами — ЖИВОЙ ТАЙМЕР, иначе программа и подходы
-                    let nowMs = Date().timeIntervalSince1970 * 1000.0
+                    let nowMs = max(Date().timeIntervalSince1970, entry.date.timeIntervalSince1970) * 1000.0
                     let isRestActive = entry.restTimerEndDate > nowMs
                     
                     if isRestActive {

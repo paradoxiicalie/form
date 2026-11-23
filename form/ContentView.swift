@@ -15,30 +15,42 @@ final class WebViewModel: ObservableObject {
     static let shared = WebViewModel()
     weak var webView: WKWebView?
     var pendingRoute: String?
+    var isPageLoaded: Bool = false
     
     @Published var currentView: String = "diet"
     @Published var isModalOpen: Bool = false
     @Published var accentHex: String = {
         let d = UserDefaults(suiteName: "group.com.macro.shared")
-        return d?.string(forKey: "calHex") ?? "#D62828"
+        return d?.string(forKey: "barAccentHex") ?? d?.string(forKey: "calHex") ?? "#D62828"
     }()
     
-    func navigate(to route: String) {
-        DispatchQueue.main.async {
+    func navigate(to route: String, animated: Bool = true) {
+        let performNavigation = {
             if self.currentView != route {
-                self.currentView = route
+                if animated {
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                        self.currentView = route
+                    }
+                } else {
+                    self.currentView = route
+                }
             }
-            if let wv = self.webView {
+            if self.isPageLoaded, let wv = self.webView {
                 let escapedRoute = route.replacingOccurrences(of: "'", with: "\\'")
-                wv.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)'); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)'); }") { _, error in
+                wv.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)', false, true); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)', false, true); }") { _, error in
                     if let error = error {
                         print("[Form][NativeBar] navigate('\(route)') JS error: \(error.localizedDescription)")
                     }
                 }
             } else {
                 self.pendingRoute = route
-                print("[Form][NativeBar] navigate('\(route)') queued: webView is nil")
+                print("[Form][NativeBar] navigate('\(route)') queued: waiting for page load")
             }
+        }
+        if Thread.isMainThread {
+            performNavigation()
+        } else {
+            DispatchQueue.main.async(execute: performNavigation)
         }
     }
     
@@ -142,7 +154,9 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     ) {
         if notification.request.identifier == "form_rest_timer" {
             if #available(iOS 16.2, *) {
-                RestActivityManager.shared.stopActivity()
+                DispatchQueue.main.async {
+                    RestActivityManager.shared.stopActivity()
+                }
             }
         }
         if #available(iOS 14.0, *) {
@@ -159,7 +173,9 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     ) {
         if response.notification.request.identifier == "form_rest_timer" {
             if #available(iOS 16.2, *) {
-                RestActivityManager.shared.stopActivity()
+                DispatchQueue.main.async {
+                    RestActivityManager.shared.stopActivity()
+                }
             }
         }
         completionHandler()
@@ -683,8 +699,25 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 }
 
+private final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
+    weak var delegate: WKScriptMessageHandler?
+    init(delegate: WKScriptMessageHandler) {
+        self.delegate = delegate
+        super.init()
+    }
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        delegate?.userContentController(userContentController, didReceive: message)
+    }
+}
+
 struct WebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
+    
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        uiView.configuration.userContentController.removeScriptMessageHandler(forName: "widgetBridge")
+        uiView.configuration.userContentController.removeScriptMessageHandler(forName: "iosBridge")
+        coordinator.stopMonitoring()
+    }
     
     func makeUIView(context: Context) -> WKWebView {
         let center = UNUserNotificationCenter.current()
@@ -695,14 +728,34 @@ struct WebView: UIViewRepresentable {
         config.mediaTypesRequiringUserActionForPlayback = []
         config.setURLSchemeHandler(FormMediaSchemeHandler(), forURLScheme: "form-media")
         
+        WebViewModel.shared.isPageLoaded = false
+        WebViewModel.shared.isModalOpen = false
+        let initialRoute = WebViewModel.shared.pendingRoute ?? WebViewModel.shared.currentView
+        WebViewModel.shared.pendingRoute = nil
+        if WebViewModel.shared.currentView != initialRoute {
+            WebViewModel.shared.currentView = initialRoute
+        }
+        let initialRouteLiteral = FormMediaSchemeHandler.jsStringLiteral(initialRoute)
+
         let sharedDefaults = UserDefaults(suiteName: "group.com.macro.shared")
         let savedKey = sharedDefaults?.string(forKey: "nativeApiKey") ?? ""
+        let stoppedExternally = sharedDefaults?.bool(forKey: "restTimerStoppedExternally") ?? false
+        if stoppedExternally {
+            sharedDefaults?.set(false, forKey: "restTimerStoppedExternally")
+            sharedDefaults?.set(0.0, forKey: "restTimerEndDate")
+            sharedDefaults?.synchronize()
+            if #available(iOS 16.2, *) {
+                RestActivityManager.shared.stopActivity()
+            }
+        }
         let savedState = FormMediaSchemeHandler.resolveBestNativeBackup() ?? ""
         let keyLiteral = FormMediaSchemeHandler.jsStringLiteral(savedKey)
         let stateJsonStringLiteral = savedState.isEmpty ? "null" : FormMediaSchemeHandler.jsStringLiteral(savedState)
 
         let preloadJS = """
         window.__NATIVE_API_KEY__ = \(keyLiteral);
+        window.__INITIAL_ROUTE__ = \(initialRouteLiteral);
+        window.__REST_TIMER_STOPPED_EXTERNALLY__ = \(stoppedExternally ? "true" : "false");
         (function() {
             try {
                 var raw = \(stateJsonStringLiteral);
@@ -714,8 +767,9 @@ struct WebView: UIViewRepresentable {
         """
         let userScript = WKUserScript(source: preloadJS, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         config.userContentController.addUserScript(userScript)
-        config.userContentController.add(context.coordinator, name: "widgetBridge")
-        config.userContentController.add(context.coordinator, name: "iosBridge")
+        let weakBridge = WeakScriptMessageHandler(delegate: context.coordinator)
+        config.userContentController.add(weakBridge, name: "widgetBridge")
+        config.userContentController.add(weakBridge, name: "iosBridge")
         
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.uiDelegate = context.coordinator
@@ -754,6 +808,15 @@ struct WebView: UIViewRepresentable {
         var pendingExName: String = ""
         private var notificationTokens: [NSObjectProtocol] = []
         
+        private static let stopRestTimerJS = """
+            if (typeof stopRestTimer === 'function') { stopRestTimer(true); }
+            if (typeof closeRestTimer === 'function') { closeRestTimer(); }
+            if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
+            var bar = document.getElementById('restTimerFloatingBar');
+            if (bar) { bar.classList.add('hidden'); }
+            if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
+        """
+        
         override init() {
             super.init()
             NotificationCenter.default.addObserver(
@@ -767,31 +830,36 @@ struct WebView: UIViewRepresentable {
         func setupNotificationObservers(webView: WKWebView) {
             removeNotificationObservers()
             
-            let t1 = NotificationCenter.default.addObserver(forName: Notification.Name("FormStopRestTimerExternally"), object: nil, queue: .main) { [weak webView] _ in
-                webView?.evaluateJavaScript("""
-                    if (typeof stopRestTimer === 'function') { stopRestTimer(); }
-                    if (typeof closeRestTimer === 'function') { closeRestTimer(); }
-                    if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
-                    var bar = document.getElementById('restTimerFloatingBar');
-                    if (bar) { bar.classList.add('hidden'); }
-                    if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
-                """, completionHandler: nil)
+            let t1 = NotificationCenter.default.addObserver(forName: Notification.Name("FormStopRestTimerExternally"), object: nil, queue: .main) { [weak webView, weak self] _ in
+                self?.cancelRestNotification()
+                if #available(iOS 16.2, *) {
+                    RestActivityManager.shared.stopActivity()
+                }
+                if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+                    d.set(0.0, forKey: "restTimerEndDate")
+                    if WebViewModel.shared.isPageLoaded {
+                        d.set(false, forKey: "restTimerStoppedExternally")
+                    }
+                    d.synchronize()
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
+                guard WebViewModel.shared.isPageLoaded else { return }
+                webView?.evaluateJavaScript(Self.stopRestTimerJS, completionHandler: nil)
             }
             
-            let t2 = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak webView] _ in
-                if let d = UserDefaults(suiteName: "group.com.macro.shared"),
-                   d.bool(forKey: "restTimerStoppedExternally") {
-                    d.set(false, forKey: "restTimerStoppedExternally")
-                    d.synchronize()
-                    webView?.evaluateJavaScript("""
-                        if (typeof stopRestTimer === 'function') { stopRestTimer(); }
-                        if (typeof closeRestTimer === 'function') { closeRestTimer(); }
-                        if (typeof cancelRestTimer === 'function') { cancelRestTimer(); }
-                        var bar = document.getElementById('restTimerFloatingBar');
-                        if (bar) { bar.classList.add('hidden'); }
-                        if (typeof window.onRestTimerStopped === 'function') { window.onRestTimerStopped(); }
-                    """, completionHandler: nil)
+            let t2 = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak webView, weak self] _ in
+                guard WebViewModel.shared.isPageLoaded,
+                      let d = UserDefaults(suiteName: "group.com.macro.shared"),
+                      d.bool(forKey: "restTimerStoppedExternally") else { return }
+                d.set(false, forKey: "restTimerStoppedExternally")
+                d.set(0.0, forKey: "restTimerEndDate")
+                d.synchronize()
+                self?.cancelRestNotification()
+                if #available(iOS 16.2, *) {
+                    RestActivityManager.shared.stopActivity()
                 }
+                WidgetCenter.shared.reloadAllTimelines()
+                webView?.evaluateJavaScript(Self.stopRestTimerJS, completionHandler: nil)
             }
             notificationTokens = [t1, t2]
         }
@@ -803,9 +871,14 @@ struct WebView: UIViewRepresentable {
             notificationTokens.removeAll()
         }
         
-        deinit {
+        func stopMonitoring() {
+            pedometer.stopUpdates()
             NotificationCenter.default.removeObserver(self)
             removeNotificationObservers()
+        }
+        
+        deinit {
+            stopMonitoring()
         }
         
         @objc private func handleWillEnterForeground() {
@@ -838,11 +911,26 @@ struct WebView: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             self.currentWebView = webView
+            WebViewModel.shared.isPageLoaded = true
+            WebViewModel.shared.isModalOpen = false
             if let route = WebViewModel.shared.pendingRoute {
                 WebViewModel.shared.pendingRoute = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    webView.evaluateJavaScript("switchMainView('\(route)');", completionHandler: nil)
+                let escapedRoute = route.replacingOccurrences(of: "'", with: "\\'")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    webView.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)', true, true); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)', true, true); }", completionHandler: nil)
                 }
+            }
+            if let d = UserDefaults(suiteName: "group.com.macro.shared"),
+               d.bool(forKey: "restTimerStoppedExternally") {
+                d.set(false, forKey: "restTimerStoppedExternally")
+                d.set(0.0, forKey: "restTimerEndDate")
+                d.synchronize()
+                cancelRestNotification()
+                if #available(iOS 16.2, *) {
+                    RestActivityManager.shared.stopActivity()
+                }
+                WidgetCenter.shared.reloadAllTimelines()
+                webView.evaluateJavaScript(Self.stopRestTimerJS, completionHandler: nil)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 self.syncStepsSilently(webView: webView)
@@ -898,6 +986,7 @@ struct WebView: UIViewRepresentable {
             }
             if action == "themeAccentUpdated" {
                 if let hex = dict["calHex"] as? String ?? dict["hex"] as? String, !hex.isEmpty {
+                    UserDefaults(suiteName: "group.com.macro.shared")?.set(hex, forKey: "barAccentHex")
                     DispatchQueue.main.async {
                         if WebViewModel.shared.accentHex != hex {
                             WebViewModel.shared.accentHex = hex
@@ -941,12 +1030,25 @@ struct WebView: UIViewRepresentable {
             }
             if action == "startRestNotification" {
                 let seconds = dict["seconds"] as? Double ?? 180.0
+                let totalSeconds = dict["totalSeconds"] as? Double ?? seconds
                 let text = dict["text"] as? String ?? "Отдых окончен! Время подхода."
                 let exName = dict["exerciseName"] as? String ?? "Подход"
                 let themeCalHex = dict["themeCalHex"] as? String ?? "#D62828"
                 scheduleRestNotification(seconds: seconds, text: text)
+                if let d = UserDefaults(suiteName: "group.com.macro.shared") {
+                    let endMs = Date().addingTimeInterval(max(1.0, seconds)).timeIntervalSince1970 * 1000.0
+                    d.set(endMs, forKey: "restTimerEndDate")
+                    d.set(false, forKey: "restTimerStoppedExternally")
+                    d.synchronize()
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
                 let wv = message.webView
-                RestActivityManager.shared.startActivity(seconds: seconds, exerciseName: exName, themeCalHex: themeCalHex) {
+                RestActivityManager.shared.startActivity(
+                    seconds: seconds,
+                    totalSeconds: totalSeconds,
+                    exerciseName: exName,
+                    themeCalHex: themeCalHex
+                ) {
                     DispatchQueue.main.async {
                         wv?.evaluateJavaScript("if (typeof showToast === 'function') { showToast('Включите «Эфир активности» для form в Настройках iPhone', true); }", completionHandler: nil)
                     }
@@ -1039,9 +1141,13 @@ struct WebView: UIViewRepresentable {
             }
             if let calHex = dict["calHex"] as? String {
                 d.set(calHex, forKey: "calHex")
+            }
+            let barAccent = (dict["accentHex"] as? String) ?? (dict["calHex"] as? String)
+            if let barAccent = barAccent, !barAccent.isEmpty {
+                d.set(barAccent, forKey: "barAccentHex")
                 DispatchQueue.main.async {
-                    if WebViewModel.shared.accentHex != calHex {
-                        WebViewModel.shared.accentHex = calHex
+                    if WebViewModel.shared.accentHex != barAccent {
+                        WebViewModel.shared.accentHex = barAccent
                     }
                 }
             }
@@ -1566,12 +1672,11 @@ struct NativeLiquidGlassBottomBar: View {
     private func capsuleDragGesture(totalWidth: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
+                guard value.location.y >= -24 && value.location.y <= 80 else { return }
                 let target = value.location.x < (totalWidth / 2.0) ? "diet" : "split"
                 if viewModel.currentView != target {
                     UISelectionFeedbackGenerator().selectionChanged()
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-                        viewModel.navigate(to: target)
-                    }
+                    viewModel.navigate(to: target)
                 }
             }
     }
@@ -1636,13 +1741,17 @@ struct ContentView: View {
             Color(red: 0.03, green: 0.03, blue: 0.04).ignoresSafeArea()
             WebView().ignoresSafeArea(.container, edges: .vertical)
             
-            NativeLiquidGlassBottomBar(viewModel: viewModel)
-                .zIndex(10)
-                .opacity(viewModel.isModalOpen ? 0 : 1)
-                .offset(y: viewModel.isModalOpen ? 100 : 0)
-                .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.isModalOpen)
-                .allowsHitTesting(!viewModel.isModalOpen)
-                .ignoresSafeArea(.keyboard, edges: .bottom)
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                    .allowsHitTesting(false)
+                NativeLiquidGlassBottomBar(viewModel: viewModel)
+                    .opacity(viewModel.isModalOpen ? 0 : 1)
+                    .offset(y: viewModel.isModalOpen ? 100 : 0)
+                    .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.isModalOpen)
+                    .allowsHitTesting(!viewModel.isModalOpen)
+            }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .zIndex(10)
         }
         .preferredColorScheme(.dark)
         .onOpenURL { url in

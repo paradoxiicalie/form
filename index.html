@@ -13616,7 +13616,7 @@
     // =========================================================================
     // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ «РАЦИОН» И «СПЛИТ»
     // =========================================================================
-    function switchMainView(view, immediate = false) {
+    function switchMainView(view, immediate = false, fromNative = false) {
       if (currentMainView === view && !immediate) {
         updateSegmentedSlider("mainSegmentedNav", (view === "split") ? "navTabSplit" : "navTabDiet", false);
         const trk = document.getElementById("viewsTrack");
@@ -13632,7 +13632,7 @@
       else if (prevView === "split") savedSplitScrollY = window.scrollY || 0;
 
       currentMainView = view;
-      if (window.webkit?.messageHandlers?.iosBridge) {
+      if (!fromNative && window.webkit?.messageHandlers?.iosBridge) {
         window.webkit.messageHandlers.iosBridge.postMessage({
           action: "mainViewChanged",
           view: view
@@ -13660,7 +13660,7 @@
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
         updateSegmentedSlider("mainSegmentedNav", "navTabSplit", immediate);
-        if (!immediate && prevView !== "split" && typeof haptic === "function") haptic("light");
+        if (!immediate && !fromNative && prevView !== "split" && typeof haptic === "function") haptic("light");
 
         // Мягкий crossfade иконки в шапке (180ms)
         if (iconScan && iconAddEx) {
@@ -13693,7 +13693,7 @@
         if (tabDiet) tabDiet.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-200 text-white";
         if (tabSplit) tabSplit.className = "relative z-10 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors duration-200 text-zinc-400 hover:text-zinc-200";
         updateSegmentedSlider("mainSegmentedNav", "navTabDiet", immediate);
-        if (!immediate && prevView !== "diet" && typeof haptic === "function") haptic("light");
+        if (!immediate && !fromNative && prevView !== "diet" && typeof haptic === "function") haptic("light");
 
         // Мягкий crossfade иконки в шапке (180ms)
         if (iconScan && iconAddEx) {
@@ -17441,6 +17441,7 @@
           window.webkit.messageHandlers.widgetBridge.postMessage({
             action: "startRestNotification",
             seconds: seconds,
+            totalSeconds: seconds,
             text: restMsg,
             exerciseName: exName || "Упражнение",
             themeCalHex: activeTheme.accent || activeTheme.cal || "#D62828"
@@ -17476,8 +17477,16 @@
       if (restTimerInterval) clearInterval(restTimerInterval);
       const active = state.activeRest;
       state.activeRest = null;
-      saveState();
+      saveState(true);
       hideRestTimerUI();
+
+      if (window.webkit?.messageHandlers?.widgetBridge) {
+        try {
+          window.webkit.messageHandlers.widgetBridge.postMessage({
+            action: "cancelRestNotification"
+          });
+        } catch (e) {}
+      }
 
       // Звуковой сигнал веб-аудио издаем только если таймер завершился прямо сейчас
       // (а не если пользователь вернулся в приложение спустя время после окончания)
@@ -17500,6 +17509,7 @@
       state.activeRest.totalSeconds = Math.max(state.activeRest.totalSeconds + deltaSeconds, 30);
       saveState();
       tickRestTimer();
+      if (!state.activeRest) return;
 
       const remaining = Math.max(1, Math.ceil((state.activeRest.endTime - Date.now()) / 1000));
       if (window.webkit?.messageHandlers?.widgetBridge) {
@@ -17508,6 +17518,7 @@
           window.webkit.messageHandlers.widgetBridge.postMessage({
             action: "startRestNotification",
             seconds: remaining,
+            totalSeconds: state.activeRest.totalSeconds,
             text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle),
             exerciseName: state.activeRest.exName || "Отдых",
             themeCalHex: activeTheme.accent || activeTheme.cal || "#D62828"
@@ -17525,6 +17536,7 @@
       state.activeRest.endTime = Date.now() + seconds * 1000;
       saveState();
       tickRestTimer();
+      if (!state.activeRest) return;
 
       if (window.webkit?.messageHandlers?.widgetBridge) {
         try {
@@ -17532,6 +17544,7 @@
           window.webkit.messageHandlers.widgetBridge.postMessage({
             action: "startRestNotification",
             seconds: seconds,
+            totalSeconds: state.activeRest.totalSeconds,
             text: state.activeRest.message || getRandomRestMessage(state.activeRest.muscle),
             exerciseName: state.activeRest.exName || "Отдых",
             themeCalHex: activeTheme.accent || activeTheme.cal || "#D62828"
@@ -17543,7 +17556,7 @@
     function stopRestTimer(cancelled) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       state.activeRest = null;
-      saveState();
+      saveState(true);
       hideRestTimerUI();
 
       if (window.webkit?.messageHandlers?.widgetBridge) {
@@ -18239,6 +18252,13 @@
         } else if (!state.restTimerSettings.customPrompt) {
           state.restTimerSettings.customPrompt = "Сергей Духота, суровый зальный тренер, маты через слово, жестко подорвать жопу с лавки, никаких оправданий, штанга ждет";
         }
+        if (window.__REST_TIMER_STOPPED_EXTERNALLY__) {
+          window.__REST_TIMER_STOPPED_EXTERNALLY__ = false;
+          if (state.activeRest) {
+            state.activeRest = null;
+            saveState(true);
+          }
+        }
         if (state.activeRest && state.activeRest.endTime > Date.now()) {
           if (restTimerInterval) clearInterval(restTimerInterval);
           restTimerInterval = setInterval(tickRestTimer, 500);
@@ -18539,6 +18559,7 @@
         const payload = {
           action: "syncData",
           themeId: state.themeId || "monolith",
+          accentHex: activeTheme.accent || activeTheme.cal || "#D62828",
           calHex: activeTheme.cal || "#E6DFD3",
           pHex: activeTheme.p || "#9CA3AF",
           cHex: activeTheme.c || "#C2593F",
@@ -30400,7 +30421,8 @@ ${knownPiecesContext}
     initHorizontalViewSwipe();
     initSettingsTabsSwipe();
     initExerciseModalSwipe();
-    switchMainView("diet", true);
+    const initialBootRoute = (window.__INITIAL_ROUTE__ === "split" || window.__INITIAL_ROUTE__ === "diet") ? window.__INITIAL_ROUTE__ : "diet";
+    switchMainView(initialBootRoute, true, true);
     requestAnimationFrame(() => {
       document.documentElement.classList.add("app-ready");
       if (typeof updateAllSegmentedSliders === "function") updateAllSegmentedSliders();
