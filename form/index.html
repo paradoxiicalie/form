@@ -2961,106 +2961,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА: НАСТРОЙКА И РУЧНОЙ ВВОД ЦЕЛЕЙ КБЖУ -->
-  <div id="targetEditorModal" class="sheet-backdrop" onclick="if(event.target===this) closeTargetEditorModal()">
-    <div class="sheet-panel max-w-md mx-auto">
-      <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <span class="text-[10px] uppercase tracking-wider font-semibold mono" style="color: var(--accent-cal)">Управление целями</span>
-          <h3 class="text-base font-bold text-white mt-0.5">Суточная норма КБЖУ</h3>
-        </div>
-        <button type="button" onclick="closeTargetEditorModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 active:scale-95 transition">✕</button>
-      </div>
-
-      <!-- Переключатель режима: Авто / Своя норма -->
-      <div class="grid grid-cols-2 gap-1.5 p-1 bg-zinc-950/80 border border-white/10 rounded-xl mb-4">
-        <button type="button" id="btnTargetTabAuto" onclick="selectTargetEditorMode('auto')" class="py-2 rounded-lg text-xs font-semibold transition text-center">
-          Авто (Миффлин)
-        </button>
-        <button type="button" id="btnTargetTabManual" onclick="selectTargetEditorMode('manual')" class="py-2 rounded-lg text-xs font-semibold transition text-center">
-          Своя норма
-        </button>
-      </div>
-
-      <!-- Блок Своя норма (Ручной ввод) -->
-      <div id="targetManualBox" class="space-y-3 mb-4">
-        <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-3">
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs text-zinc-300 font-semibold">Калории (ккал)</label>
-            <span class="text-[10.5px] text-zinc-500 mono">базовая цель</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button type="button" onclick="stepManualTarget('cal', -100)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">-100</button>
-            <input id="inputManualCal" type="number" oninput="updateManualPreview()" class="dark-field mono text-center text-lg font-bold" style="color: var(--macro-cal, var(--accent-cal))" />
-            <button type="button" onclick="stepManualTarget('cal', 100)" class="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white font-bold mono text-xs active:scale-95 transition shrink-0">+100</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-          <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-2.5">
-            <div class="text-[10px] uppercase font-semibold text-zinc-400 mb-1" style="color: var(--accent-p)">Белок (г)</div>
-            <div class="flex items-center gap-1 mb-1">
-              <button type="button" onclick="stepManualTarget('p', -5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">-</button>
-              <input id="inputManualP" type="number" oninput="updateManualPreview()" class="w-full bg-black/40 border border-white/10 rounded-lg text-center font-bold mono text-sm text-white py-1" />
-              <button type="button" onclick="stepManualTarget('p', 5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">+</button>
-            </div>
-            <div id="manualKcalP" class="text-[9.5px] text-zinc-500 text-center mono">0 ккал</div>
-          </div>
-
-          <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-2.5">
-            <div class="text-[10px] uppercase font-semibold text-zinc-400 mb-1" style="color: var(--accent-f)">Жиры (г)</div>
-            <div class="flex items-center gap-1 mb-1">
-              <button type="button" onclick="stepManualTarget('f', -5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">-</button>
-              <input id="inputManualF" type="number" oninput="updateManualPreview()" class="w-full bg-black/40 border border-white/10 rounded-lg text-center font-bold mono text-sm text-white py-1" />
-              <button type="button" onclick="stepManualTarget('f', 5)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">+</button>
-            </div>
-            <div id="manualKcalF" class="text-[9.5px] text-zinc-500 text-center mono">0 ккал</div>
-          </div>
-
-          <div class="bg-zinc-900/70 border border-white/[0.08] rounded-xl p-2.5">
-            <div class="text-[10px] uppercase font-semibold text-zinc-400 mb-1" style="color: var(--accent-c)">Угли (г)</div>
-            <div class="flex items-center gap-1 mb-1">
-              <button type="button" onclick="stepManualTarget('c', -10)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">-</button>
-              <input id="inputManualC" type="number" oninput="updateManualPreview()" class="w-full bg-black/40 border border-white/10 rounded-lg text-center font-bold mono text-sm text-white py-1" />
-              <button type="button" onclick="stepManualTarget('c', 10)" class="w-7 h-7 rounded-lg bg-white/[0.06] text-white mono text-xs active:scale-95 shrink-0">+</button>
-            </div>
-            <div id="manualKcalC" class="text-[9.5px] text-zinc-500 text-center mono">0 ккал</div>
-          </div>
-        </div>
-
-        <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
-          <span class="text-zinc-400">Сумма БЖУ:</span>
-          <span id="manualMacroSumPreview" class="mono font-bold text-white">0 ккал</span>
-          <button type="button" onclick="balanceManualCarbs()" class="text-[10px] px-2.5 py-1 rounded bg-white/10 hover:bg-white/15 text-zinc-300 font-mono active:scale-95 transition">
-            Выровнять У
-          </button>
-        </div>
-      </div>
-
-      <!-- Блок Авторасчет -->
-      <div id="targetAutoBox" class="hidden space-y-3 mb-4">
-        <div class="p-3.5 bg-zinc-900/70 border border-white/[0.08] rounded-xl text-xs space-y-2">
-          <div class="text-zinc-300">
-            Калории и БЖУ рассчитываются автоматически на основе параметров тела (Миффлин — Сан-Жеор) и режима цели (набор / сушка / поддержка).
-          </div>
-          <div id="targetAutoSummaryText" class="p-2.5 rounded-lg bg-black/50 mono text-[11px] text-zinc-300">
-            Расчет...
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <button type="button" onclick="closeTargetEditorModal()" class="w-1/3 py-3 rounded-xl bg-white/[0.06] text-zinc-300 font-semibold text-xs border border-white/10 active:scale-95 transition">
-          Отмена
-        </button>
-        <button type="button" onclick="saveTargetEditorModal()" class="flex-1 py-3 rounded-xl accent-btn text-xs font-semibold active:scale-95 transition">
-          Сохранить норму
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- МОДАЛКА: БЫСТРЫЙ ВВОД КАЛОРИЙ (FATSECRET QUICK ADD) -->
   <div id="quickCalorieModal" class="sheet-backdrop" onclick="if(event.target===this) closeQuickCalorieModal()">
     <div class="sheet-panel">
@@ -4189,31 +4089,6 @@
 
     const RU_STOP_WORDS = new Set(["с", "со", "в", "во", "и", "на", "по", "из", "изо", "под", "ко", "к", "от", "до", "для", "без", "о", "об", "при", "у", "гр", "г", "кг", "мл", "л", "шт", "g", "kg", "ml"]);
     window.RU_STOP_WORDS = RU_STOP_WORDS;
-
-    function extractJsonFromAiResponse(raw) {
-      if (!raw || typeof raw !== "string") return null;
-      let str = raw.trim();
-      str = str.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-      try {
-        return JSON.parse(str);
-      } catch (e) {}
-      const firstBrace = str.indexOf('{');
-      const lastBrace = str.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace > firstBrace) {
-        try {
-          return JSON.parse(str.slice(firstBrace, lastBrace + 1));
-        } catch (e) {}
-      }
-      const firstBracket = str.indexOf('[');
-      const lastBracket = str.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket > firstBracket) {
-        try {
-          return JSON.parse(str.slice(firstBracket, lastBracket + 1));
-        } catch (e) {}
-      }
-      return null;
-    }
-    window.extractJsonFromAiResponse = extractJsonFromAiResponse;
 
     function stemRu(word) {
       if (!word || typeof word !== "string") return "";
@@ -13780,39 +13655,6 @@
     // =========================================================================
     // СТЕК ДОБАВОК (ONE-TAP STACK) И УТРЕННИЙ ВЕС
     // =========================================================================
-    function renderStackAndWeightStrip() {
-      const strip = document.getElementById("stackAndWeightStrip");
-      if (!strip) return;
-
-      const latestW = getLatestBodyWeight();
-      const sups = state.supplements || [];
-      const taken = state.supplementsTakenToday || {};
-
-      const weightPill = `
-        <button type="button" onclick="openMetabolismModal()" class="stack-pill done shrink-0">
-          <span>${latestW ? latestW + ' кг' : 'Внести вес'}</span>
-        </button>
-      `;
-
-      const suppPills = sups.map(s => {
-        const isDone = !!taken[s.id];
-        return `
-          <button type="button" onclick="toggleSupplementToday('${s.id}')" class="stack-pill ${isDone ? 'done' : ''} shrink-0">
-            <span class="mono">${isDone ? '✓' : '○'}</span>
-            <span>${escapeHtml(s.name)}</span>
-          </button>
-        `;
-      }).join("");
-
-      const configBtn = `
-        <button type="button" onclick="openStackConfigModal()" class="stack-pill shrink-0" title="Настроить стек добавок">
-          <span>+ Стек</span>
-        </button>
-      `;
-
-      strip.innerHTML = weightPill + suppPills + configBtn;
-    }
-
     function toggleSupplementToday(suppId) {
       checkDayRollover();
       const supp = (state.supplements || []).find(s => s.id === suppId);
@@ -14433,264 +14275,57 @@
 
     function recalculateWeeklySetsFromPrograms() {
       ensureAllWorkoutProgramVariants();
-      const totals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
-      Object.values(state.workout.programs || {}).forEach(prog => {
-        getAllProgramExerciseLists(prog).forEach(list => {
-          (list || []).forEach(ex => {
-            const targetS = Math.max(1, Number(ex.targetSets) || 3);
-            const doneCount = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
-            const m = ex.muscle || "chest";
-            if (totals[m] !== undefined) totals[m] += doneCount;
-            else totals[m] = doneCount;
-          });
+      const doneTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
+      const plannedTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
+
+      const schedule = state.workout?.weekSchedule || {};
+      const programs = state.workout?.programs || {};
+
+      const seenDoneProgs = new Set();
+      [1, 2, 3, 4, 5, 6, 0].forEach(dow => {
+        const progId = schedule[dow];
+        if (!progId || progId === "rest") return;
+        const prog = programs[progId];
+        if (!prog) return;
+        ensureProgramVariants(prog);
+
+        const activeExList = getActiveProgramExercises(prog);
+        activeExList.forEach(ex => {
+          const m = (ex.muscle && plannedTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
+          const targetS = Math.max(1, Number(ex.targetSets) || 3);
+          plannedTotals[m] += targetS;
         });
+
+        if (!seenDoneProgs.has(progId)) {
+          seenDoneProgs.add(progId);
+          getAllProgramExerciseLists(prog).forEach(list => {
+            (list || []).forEach(ex => {
+              const m = (ex.muscle && doneTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
+              const targetS = Math.max(1, Number(ex.targetSets) || 3);
+              const doneS = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
+              doneTotals[m] += doneS;
+            });
+          });
+        }
       });
-      state.workout.weeklySetsByMuscle = totals;
-      return totals;
-    }
 
-    function selectWeekdayInSplit(dayKey) {
-      selectedWeekdayKey = dayKey;
-      const assigned = state.workout.weekSchedule?.[dayKey] || "rest";
-      if (assigned !== "rest" && state.workout.programs[assigned]) {
-        activeProgramId = assigned;
+      if (typeof MUSCLE_META === "object") {
+        Object.keys(MUSCLE_META).forEach(mKey => {
+          if (plannedTotals[mKey] !== undefined) {
+            MUSCLE_META[mKey].target = plannedTotals[mKey];
+          }
+        });
       }
-      renderWorkoutAll();
-    }
 
-    function assignProgramToSelectedWeekday(progOrRest) {
-      if (!state.workout.weekSchedule) state.workout.weekSchedule = {};
-      state.workout.weekSchedule[selectedWeekdayKey] = progOrRest;
-      if (progOrRest !== "rest") {
-        activeProgramId = progOrRest;
-      }
-      saveState();
-      renderWorkoutAll();
-      showToast("Расписание дня обновлено");
+      state.workout.weeklySetsByMuscle = doneTotals;
+      state.workout.weeklyTargetByMuscle = plannedTotals;
+      return doneTotals;
     }
+    window.recalculateWeeklySetsFromPrograms = recalculateWeeklySetsFromPrograms;
 
     function selectSplitProgramDirect(progId) {
       activeProgramId = progId;
       renderWorkoutAll();
-    }
-
-    function renderWorkoutAll() {
-      checkWorkoutWeekRollover();
-      const totals = recalculateWeeklySetsFromPrograms();
-
-      // 1. Рендерим полоску ПН - ВС
-      const weekBar = document.getElementById("weekScheduleBar");
-      const todayJsDay = new Date().getDay();
-      if (weekBar) {
-        weekBar.innerHTML = WEEKDAY_NAMES.map(w => {
-          const assigned = state.workout.weekSchedule?.[w.key] || "rest";
-          const isRest = assigned === "rest";
-          const isSelected = w.key === selectedWeekdayKey;
-          const isToday = w.key === todayJsDay;
-          const progShort = isRest ? "ОТД" : (state.workout.programs?.[assigned]?.short || "ТРЕН");
-
-          return `
-            <button
-              type="button"
-              onclick="selectWeekdayInSplit(${w.key})"
-              class="py-2 px-1 rounded-2xl border text-center transition flex flex-col items-center justify-center ${
-                isSelected
-                  ? 'border-white/60 bg-white/[0.11]'
-                  : 'border-white/[0.06] bg-white/[0.02]'
-              }"
-            >
-              <span class="text-[10px] font-bold mono ${isToday ? 'text-white' : 'text-zinc-400'}">${w.short}</span>
-              <span class="text-[9px] mono mt-1 px-2 py-0.5 rounded-full ${
-                isRest ? 'text-zinc-500 bg-white/[0.03]' : 'font-bold text-white bg-white/[0.08]'
-              }" style="${!isRest && isSelected ? 'color:var(--accent-cal)' : ''}">${progShort}</span>
-            </button>
-          `;
-        }).join("");
-      }
-
-      // 2. Рендерим карточку недельного объема подходов
-      const sumDone = Object.values(totals).reduce((a, b) => a + (Number(b) || 0), 0);
-      const sumTarget = Object.values(MUSCLE_META).reduce((a, m) => a + ((m.target !== undefined && m.target !== null) ? Number(m.target) : 12), 0);
-      document.getElementById("totalSetsWeek").textContent = sumDone;
-      document.getElementById("totalSetsTarget").textContent = sumTarget;
-
-      const muscleGrid = document.getElementById("muscleVolumeGrid");
-      if (muscleGrid) {
-        const keys = Object.keys(MUSCLE_META);
-        muscleGrid.innerHTML = keys.map((mKey, idx) => {
-          const meta = MUSCLE_META[mKey];
-          const done = totals[mKey] || 0;
-          const targetSets = (meta.target !== undefined && meta.target !== null) ? Number(meta.target) : 0;
-          const pct = targetSets > 0 ? Math.min(100, Math.max(0, Math.round((done / targetSets) * 100))) : 0;
-          const isOddLast = (idx === keys.length - 1) && (keys.length % 2 === 1);
-          return `
-            <div class="bg-white/[0.03] border border-white/[0.07] rounded-2xl px-3.5 py-2.5 ${isOddLast ? 'col-span-2' : ''}">
-              <div class="flex items-center justify-between text-[11px] mb-1">
-                <span class="text-zinc-300 font-semibold flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:${meta.color}"></span>
-                  <span>${meta.label}</span>
-                </span>
-                <span class="mono font-bold text-white">${done}<span class="text-zinc-500 font-normal">/${targetSets}</span></span>
-              </div>
-              <div class="macro-mini-track">
-                <div class="h-full rounded-full transition-all duration-300" style="width:${pct}%; background:${meta.color}"></div>
-              </div>
-            </div>
-          `;
-        }).join("");
-      }
-
-      // 3. Селектор назначения на выбранный день недели
-      const dayMeta = WEEKDAY_NAMES.find(d => d.key === selectedWeekdayKey) || WEEKDAY_NAMES[0];
-      const assignedForDay = state.workout.weekSchedule?.[selectedWeekdayKey] || "rest";
-      const assignSelect = document.getElementById("weekdayAssignSelect");
-      const assignText = document.getElementById("weekdayAssignText");
-      if (assignText) {
-        if (assignedForDay === "rest") {
-          assignText.textContent = "Отдых";
-        } else {
-          const prog = state.workout.programs?.[assignedForDay];
-          if (prog) {
-            const title = (prog.title || "").trim();
-            const short = (prog.short || "").trim();
-            assignText.textContent = (prog.short || prog.title || "Сменить").trim();
-          } else {
-            assignText.textContent = "Отдых";
-          }
-        }
-      }
-      if (assignSelect) {
-        const progOptions = Object.values(state.workout.programs || {}).map(p => {
-          const title = (p.title || "").trim();
-          const short = (p.short || "").trim();
-          const display = title.startsWith(short) ? title : (short ? `${short} · ${title}` : title);
-          return `<option value="${p.id}" ${assignedForDay === p.id ? 'selected' : ''}>${escapeHtml(display)}</option>`;
-        }).join("");
-        assignSelect.innerHTML = `
-          <option value="rest" ${assignedForDay === 'rest' ? 'selected' : ''}>Отдых (ОТД)</option>
-          ${progOptions}
-          <option value="__create_new__">+ Создать день...</option>
-        `;
-      }
-
-      const assignLabel = document.getElementById("activeWeekdayAssignLabel");
-      if (assignLabel) {
-        assignLabel.textContent = assignedForDay === "rest" ? `${dayMeta.full} · Отдых` : dayMeta.full;
-      }
-
-      // 4. Капсулы быстрого переключения программ Д1-Д4
-      const pillsBox = document.getElementById("splitProgramPills");
-      if (pillsBox) {
-        pillsBox.innerHTML = Object.values(state.workout.programs || {}).map(p => {
-          const isAct = p.id === activeProgramId && assignedForDay !== "rest";
-          return `
-            <button
-              type="button"
-              onclick="selectSplitProgramDirect('${p.id}')"
-              class="stack-pill ${isAct ? 'done' : ''} shrink-0"
-            >
-              <span>${escapeHtml(p.title)}</span>
-            </button>
-          `;
-        }).join("");
-      }
-
-      // 5. Список упражнений или экран ОТДЫХА
-      const exContainer = document.getElementById("workoutExercisesContainer");
-      const titleEl = document.getElementById("activeSplitDayTitle");
-
-      if (assignedForDay === "rest") {
-        titleEl.textContent = `${dayMeta.short} · День отдыха`;
-        const currentProg = state.workout.programs[activeProgramId] || Object.values(state.workout.programs)[0];
-        exContainer.innerHTML = `
-          <div class="py-7 text-center space-y-3">
-            <div class="text-sm font-bold text-white uppercase tracking-wider mono">ВОССТАНОВЛЕНИЕ // ЦНС И МЫШЦЫ</div>
-            <p class="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
-              По расписанию на ${dayMeta.full.toLowerCase()} стоит отдых. Закрой норму по белку и креатину.
-            </p>
-            <button
-              type="button"
-              onclick="assignProgramToSelectedWeekday('${currentProg.id}')"
-              class="px-4 py-2 rounded-xl bg-white/10 text-xs font-semibold text-white active:scale-95 transition"
-            >
-              Поставить тренировку на этот день
-            </button>
-          </div>
-        `;
-      } else {
-        const prog = state.workout.programs[activeProgramId] || state.workout.programs[assignedForDay];
-        titleEl.textContent = prog ? prog.title : "Тренировка";
-        const exList = prog?.exercises || [];
-
-        if (exList.length === 0) {
-          exContainer.innerHTML = `<div class="py-6 text-center text-xs text-zinc-500">Нет упражнений. Нажми «+» в правом верхнем углу.</div>`;
-        } else {
-          exContainer.innerHTML = exList.map(ex => {
-            const targetS = Math.max(1, Number(ex.targetSets) || 3);
-            const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
-            let circlesHtml = "";
-            for (let idx = 0; idx < targetS; idx++) {
-              const setObj = (ex.setsToday || [])[idx];
-              const isDone = !!setObj;
-              circlesHtml += `
-                <button
-                  type="button"
-                  onclick="openSetLoggerModal('${prog.id}', '${ex.id}', ${idx})"
-                  class="set-dot ${isDone ? 'completed' : ''}"
-                  title="Подход ${idx + 1}"
-                >
-                  ${isDone ? '✓' : (idx + 1)}
-                </button>
-              `;
-            }
-
-            const wLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight || 0} кг`;
-            return `
-              <div class="exercise-row py-3.5 flex items-center justify-between gap-3" data-ex-id="${ex.id}">
-                <div class="min-w-0 flex-1 cursor-pointer active:opacity-75 transition" data-ex-name="${escapeHtml(ex.name)}" onclick="openExerciseNotesModal(this.dataset.exName)">
-                  <div class="text-[15px] font-semibold text-zinc-100 truncate">${escapeHtml(ex.name)}</div>
-                  <div class="flex items-center gap-1.5 mt-1 text-[11px] mono text-zinc-400 min-w-0">
-                    <span class="px-2 py-0.5 rounded-full text-[9.5px] font-semibold tracking-wide whitespace-nowrap shrink-0 leading-none" style="color:${mMeta.color}; background:${mMeta.bg}">${mMeta.label}</span>
-                    <span class="whitespace-nowrap truncate">Рабочий: <strong class="text-white">${wLabel} × ${ex.lastReps || 10}</strong></span>
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                  ${circlesHtml}
-                </div>
-              </div>
-            `;
-          }).join("");
-          attachExerciseSwipeDelete(exContainer, prog.id);
-        }
-      }
-
-      syncNativeWidget();
-    }
-
-    function openSetLoggerModal(progId, exId, setIdx) {
-      const prog = state.workout.programs?.[progId];
-      const ex = (prog?.exercises || []).find(e => e.id === exId);
-      if (!ex) return;
-
-      activeSetEdit = { progId, exId, setIndex: setIdx };
-      const existingSet = (ex.setsToday || [])[setIdx];
-
-      document.getElementById("setLoggerBadge").textContent = `Рабочий подход #${setIdx + 1}`;
-      document.getElementById("setLoggerExName").textContent = ex.name;
-      const defaultWeight = (ex.lastWeight !== undefined && ex.lastWeight !== null) ? ex.lastWeight : 0;
-      document.getElementById("setWeightInput").value = existingSet ? existingSet.weight : defaultWeight;
-      document.getElementById("setRepsInput").value = existingSet ? existingSet.reps : (ex.lastReps || 10);
-      document.getElementById("setExTotalSetsLabel").textContent = ex.targetSets || 3;
-
-      const uncheckBtn = document.getElementById("btnUncheckSet");
-      if (existingSet) uncheckBtn.classList.remove("hidden");
-      else uncheckBtn.classList.add("hidden");
-
-      if (typeof renderSetLoggerNotesPreview === "function") {
-        renderSetLoggerNotesPreview(ex.name);
-      }
-
-      document.getElementById("setLoggerModal").classList.add("open");
     }
 
     function closeSetLoggerModal() {
@@ -14774,83 +14409,8 @@
       renderWorkoutAll();
     }
 
-    function confirmSetCompleted() {
-      const prog = state.workout.programs?.[activeSetEdit.progId];
-      if (typeof ensureProgramVariants === "function") ensureProgramVariants(prog);
-      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
-      if (!ex) return;
-
-      const w = parseWeightInput(document.getElementById("setWeightInput").value);
-      const r = Math.max(1, parseInt(document.getElementById("setRepsInput").value, 10) || 10);
-
-      if (!Array.isArray(ex.setsToday)) ex.setsToday = [];
-      ex.setsToday[activeSetEdit.setIndex] = { weight: w, reps: r, date: getTodayKey() };
-      ex.lastWeight = w;
-      ex.lastReps = r;
-
-      // Записываем в 14-дневный лог прогрессии
-      if (!Array.isArray(state.workout.logs)) state.workout.logs = [];
-      state.workout.logs.push({
-        date: getTodayKey(),
-        exId: ex.id,
-        exName: ex.name,
-        muscle: ex.muscle,
-        setIndex: activeSetEdit.setIndex,
-        weight: w,
-        reps: r
-      });
-      if (state.workout.logs.length > 3000) state.workout.logs = state.workout.logs.slice(-3000);
-
-      saveState();
-      renderWorkoutAll();
-      closeSetLoggerModal();
-      const wLabel = w === 0 ? "Свой вес" : `${w}кг`;
-      showToast(`✓ Подход #${activeSetEdit.setIndex + 1}: ${wLabel} × ${r} записан!`);
-      if (typeof handleSetCompletedRestTimer === "function") {
-        handleSetCompletedRestTimer(ex.name, ex.muscle);
-      }
-    }
-
-    function uncheckCurrentSet() {
-      const prog = state.workout.programs?.[activeSetEdit.progId];
-      if (typeof ensureProgramVariants === "function") ensureProgramVariants(prog);
-      const ex = getActiveProgramExercises(prog).find(e => e.id === activeSetEdit.exId);
-      if (!ex || !Array.isArray(ex.setsToday)) return;
-
-      const removedSet = ex.setsToday[activeSetEdit.setIndex];
-      const targetDate = (removedSet && removedSet.date) ? removedSet.date : getTodayKey();
-      const normExName = normalizeExerciseName(ex.name);
-      ex.setsToday[activeSetEdit.setIndex] = null;
-
-      if (Array.isArray(state.workout.logs)) {
-        state.workout.logs = state.workout.logs.filter(
-          l => !(l.date === targetDate && (l.exId === ex.id || (normExName && normalizeExerciseName(l.exName) === normExName)) && Number(l.setIndex) === Number(activeSetEdit.setIndex))
-        );
-      }
-
-      saveState();
-      renderWorkoutAll();
-      closeSetLoggerModal();
-      showToast("Подход снят");
-    }
-
     let lastDeletedExercise = null;
     let undoDeleteTimer = null;
-
-    function deleteExerciseFromSplit() {
-      const prog = state.workout.programs?.[activeSetEdit.progId];
-      if (!prog) return;
-      const vk = getActiveProgramVariantKey(prog);
-      const exList = getActiveProgramExercises(prog);
-      const idx = exList.findIndex(e => e.id === activeSetEdit.exId);
-      if (idx === -1) return;
-      lastDeletedExercise = { progId: activeSetEdit.progId, variantKey: vk, ex: JSON.parse(JSON.stringify(exList[idx])), idx };
-      setActiveProgramExercises(prog, exList.filter(e => e.id !== activeSetEdit.exId));
-      saveState();
-      renderWorkoutAll();
-      closeSetLoggerModal();
-      showUndoExerciseToast();
-    }
 
     function deleteExerciseFromSplitById(progId, exId) {
       const prog = state.workout.programs?.[progId];
@@ -15036,7 +14596,6 @@
             if (!thresholdReached) {
               thresholdReached = true;
               if (typeof haptic === "function") haptic("selection");
-              else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("selection");
             }
             if (svg) svg.style.transform = "scale(1.25) rotate(-6deg)";
             deleteBtn.style.background = "#b91c1c";
@@ -15060,7 +14619,6 @@
           if (dx <= DELETE_THRESHOLD) {
             // Достигли дистанции удаления: анимация улетания и схлопывание
             if (typeof haptic === "function") haptic("medium");
-            else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
 
             row.style.transform = "translate3d(-100%,0,0)";
             deleteBtn.style.transform = "translate3d(0,0,0)";
@@ -15099,7 +14657,6 @@
         deleteBtn.addEventListener("click", e => {
           e.stopPropagation();
           if (typeof haptic === "function") haptic("medium");
-          else if (window.webkit?.messageHandlers?.haptic) window.webkit.messageHandlers.haptic.postMessage("medium");
           row.style.transition = "transform 0.24s cubic-bezier(0.18, 0.9, 0.28, 1)";
           row.style.transform = "translate3d(-100%,0,0)";
           setTimeout(() => {
@@ -15246,67 +14803,6 @@
           showToast("Недельные подходы обнулены");
         }
       });
-    }
-
-    // Сводка прогрессии за 14 дней
-    function openProgressionModal() {
-      const modal = document.getElementById("progressionModal");
-      if (modal) modal.classList.add("open");
-
-      const container = document.getElementById("progressionListContainer");
-      const logs = state.workout?.logs || [];
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 14);
-      const cutoffKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
-
-      // Собираем все упражнения из сплита (из всех вариантов без дублей по нормализованному имени)
-      const allExercises = [];
-      const seenProgNames = new Set();
-      Object.values(state.workout.programs || {}).forEach(p => {
-        ensureProgramVariants(p);
-        getAllProgramExerciseLists(p).forEach(list => {
-          list.forEach(ex => {
-            const key = `${p.id}::${normalizeExerciseName(ex.name)}`;
-            if (!seenProgNames.has(key)) {
-              seenProgNames.add(key);
-              allExercises.push({ ...ex, progTitle: p.short });
-            }
-          });
-        });
-      });
-
-      container.innerHTML = allExercises.map(ex => {
-        const exLogs = logs.filter(l => l.exId === ex.id && l.date >= cutoffKey);
-        const wBaseLabel = (ex.lastWeight === 0 || ex.lastWeight === "0") ? "Свой вес" : `${ex.lastWeight}кг`;
-        let statusBadge = `<span class="text-[10px] mono px-2 py-0.5 rounded bg-white/5 text-zinc-400">База: ${wBaseLabel} × ${ex.lastReps}</span>`;
-
-        if (exLogs.length >= 2) {
-          const first = exLogs[0];
-          const last = exLogs[exLogs.length - 1];
-          const diffW = roundWeight((Number(last.weight) || 0) - (Number(first.weight) || 0));
-          const diffR = last.reps - first.reps;
-
-          if (diffW > 0) {
-            statusBadge = `<span class="text-[10px] mono font-bold px-2 py-0.5 rounded accent-btn">+${diffW} кг ↑</span>`;
-          } else if (diffW === 0 && diffR > 0) {
-            statusBadge = `<span class="text-[10px] mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">+${diffR} повт. ↑</span>`;
-          } else if (diffW === 0 && diffR === 0) {
-            statusBadge = `<span class="text-[10px] mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">Плато (14 дн.)</span>`;
-          }
-        }
-
-        return `
-          <div class="bg-zinc-900/75 border border-white/[0.07] rounded-2xl p-3.5 flex items-center justify-between gap-2">
-            <div class="min-w-0">
-              <div class="text-xs font-bold text-white truncate">${escapeHtml(ex.name)}</div>
-              <div class="text-[11px] text-zinc-400 mono mt-0.5">
-                Текущий рабочий: <strong class="text-white">${wBaseLabel} × ${ex.lastReps}</strong> · подходов за 14д: ${exLogs.length}
-              </div>
-            </div>
-            <div class="shrink-0">${statusBadge}</div>
-          </div>
-        `;
-      }).join("");
     }
 
     function closeProgressionModal() {
@@ -16550,9 +16046,11 @@
         if (cleanCode) {
           if (!state.barcodeCache) state.barcodeCache = {};
           state.barcodeCache[cleanCode] = enriched;
+          if (typeof trimCacheToLimit === "function") trimCacheToLimit(state.barcodeCache, 500);
         }
         if (!state.foodCache) state.foodCache = {};
         state.foodCache[finalName.toLowerCase()] = enriched;
+        if (typeof trimCacheToLimit === "function") trimCacheToLimit(state.foodCache, 500);
         saveState();
         return enriched;
       } catch (e) {
@@ -16630,8 +16128,10 @@
 
         if (!state.barcodeCache) state.barcodeCache = {};
         state.barcodeCache[cleanCode] = entry;
+        trimCacheToLimit(state.barcodeCache, 500);
         if (!state.foodCache) state.foodCache = {};
         state.foodCache[name.toLowerCase()] = entry;
+        trimCacheToLimit(state.foodCache, 500);
         saveState();
         return entry;
       } catch (err) {
@@ -17546,29 +17046,6 @@
       return pool;
     };
 
-    async function generateAiPushPool() {
-      showToast("Генерируем новые фразы через ИИ...");
-      try {
-        const prompt = `Придумай 10 коротких, хлестких, ироничных напоминаний записать еду и КБЖУ для парня, который качается и любит дарк-минимализм. Без смайлов, до 85 символов. Верни строго JSON массив строк: ["фраза 1", "фраза 2"]`;
-        const data = await callGemini3Flash({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-        const arr = JSON.parse(cleanJsonString(raw));
-        if (Array.isArray(arr) && arr.length >= 4) {
-          state.push.messages = arr.concat(DEFAULT_PUSH_MESSAGES.slice(0, 6));
-          rollRandomPushPreview();
-          savePushSettings(false);
-          showToast("База пушей обновлена свежими фразами!");
-        } else {
-          generateOfflinePushPool();
-        }
-      } catch (e) {
-        generateOfflinePushPool();
-      }
-    }
-
     // =========================================================================
     // УМНЫЙ ЗАЛЬНЫЙ ТАЙМЕР ОТДЫХА МЕЖДУ ПОДХОДАМИ
     // =========================================================================
@@ -18311,6 +17788,17 @@
         : storageCandidate;
     }
 
+    function trimCacheToLimit(cacheObj, maxEntries = 500) {
+      if (!cacheObj || typeof cacheObj !== "object") return;
+      const keys = Object.keys(cacheObj);
+      if (keys.length <= maxEntries) return;
+      const excess = keys.length - maxEntries;
+      for (let i = 0; i < excess; i++) {
+        delete cacheObj[keys[i]];
+      }
+    }
+    window.trimCacheToLimit = trimCacheToLimit;
+
     function loadState() {
       const hasNativeBridge = Boolean(window.__NATIVE_STATE__ || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
       window._isNativeAppEnv = hasNativeBridge;
@@ -18401,9 +17889,9 @@
             }
           });
         }
-        // Защита и восстановление: если калораж был сбит спамом до неадекватных <= 1500 ккал на наборе массы
+        // Защита и восстановление: если калораж был сбит спамом до неадекватных <= 1500 ккал на наборе массы (только в auto-режиме)
         const hasExistingWeight = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight));
-        if (hasExistingWeight && state.targets && Number(state.targets.cal) <= 1500) {
+        if (state.goalCalcMode === "auto" && hasExistingWeight && state.targets && Number(state.targets.cal) <= 1500) {
           const latestW = hasExistingWeight;
           const h = (state.body && Number(state.body.height)) || 175;
           const a = (state.body && Number(state.body.age)) || 20;
@@ -18447,8 +17935,16 @@
           const rawProxy = localStorage.getItem("form_gemini_proxy");
           if (rawProxy && !state.apiProxy) state.apiProxy = rawProxy;
         } catch (e) {}
-        if (typeof state.customGeminiBaseUrl !== "string") state.customGeminiBaseUrl = localStorage.getItem("form_gemini_base_url") || "";
-        if (typeof state.groqApiKey !== "string") state.groqApiKey = localStorage.getItem("form_groq_api_key") || "";
+        try {
+          if (typeof state.customGeminiBaseUrl !== "string") state.customGeminiBaseUrl = localStorage.getItem("form_gemini_base_url") || "";
+        } catch (e) {
+          if (typeof state.customGeminiBaseUrl !== "string") state.customGeminiBaseUrl = "";
+        }
+        try {
+          if (typeof state.groqApiKey !== "string") state.groqApiKey = localStorage.getItem("form_groq_api_key") || "";
+        } catch (e) {
+          if (typeof state.groqApiKey !== "string") state.groqApiKey = "";
+        }
         if (!state.barcodeCache || typeof state.barcodeCache !== "object") state.barcodeCache = {};
         if (!state.foodCache || typeof state.foodCache !== "object") state.foodCache = {};
         if (!state.dailySteps || typeof state.dailySteps !== "object") {
@@ -18521,6 +18017,8 @@
             if (hasInvalidZeroMacros(state.foodCache[k])) delete state.foodCache[k];
           });
         }
+        trimCacheToLimit(state.barcodeCache, 500);
+        trimCacheToLimit(state.foodCache, 500);
         if (Array.isArray(state.customHistory)) {
           const bootLocalDbMap = new Map();
           (LOCAL_DB || []).forEach(dbItem => {
@@ -18562,7 +18060,10 @@
       const isNativeEnv = Boolean(window._isNativeAppEnv || window.webkit?.messageHandlers?.widgetBridge || window.webkit?.messageHandlers?.iosBridge);
       if (!isNativeEnv) {
         // Одноразовая очистка устаревших тестовых данных в веб-версии (на GitHub Pages)
-        const isPurged = localStorage.getItem("form_web_purged_v2") === "1";
+        let isPurged = false;
+        try {
+          isPurged = localStorage.getItem("form_web_purged_v2") === "1";
+        } catch (e) {}
         if (!isPurged) {
           const hasLegacyCoachPlan = state.mealPlanTemplate?.meals?.some(m => 
             (m.items || []).some(i => i.id === "b_b1" || i.id === "d1_lavash" || i.id === "d2_tvorog" || i.id === "b_a1") ||
@@ -18573,7 +18074,7 @@
             state.mealPlanTemplate = JSON.parse(JSON.stringify(DEFAULT_MEAL_PLAN_TEMPLATE));
           }
 
-          const hasLegacyWorkout = state.workout?.programs?.d1?.exercises?.some(ex => ex.id === "ex_bench" || ex.lastWeight === 80);
+          const hasLegacyWorkout = state.workout?.programs?.d1?.exercises?.some(ex => ex.id === "ex_bench");
           if (hasLegacyWorkout) {
             state.workout = {
               lastMondayKey: getMondayKey(),
@@ -18586,7 +18087,7 @@
             ensureAllWorkoutProgramVariants();
           }
 
-          const hasLegacyBody = (state.body?.weight === 70) || (state.targets?.cal === 2979) || (state.weightLogs?.some(l => l.weight === 70));
+          const hasLegacyBody = state.targets?.cal === 2979;
           if (hasLegacyBody) {
             state.body = { sex: "male", weight: null, height: null, age: null, activity: 1.55, goalMode: 1.12 };
             state.targets = { cal: 2000, p: 140, f: 65, c: 215 };
@@ -18600,7 +18101,9 @@
               localStorage.removeItem("macro_minimal_ios_v7");
             } catch (e) {}
           }
-          localStorage.setItem("form_web_purged_v2", "1");
+          try {
+            localStorage.setItem("form_web_purged_v2", "1");
+          } catch (e) {}
           saveState(true);
         }
       }
@@ -18998,22 +18501,6 @@
       }
     }
 
-    function toggleStepBurnCompensation() {
-      if (!state.dailySteps || typeof state.dailySteps !== "object") {
-        state.dailySteps = { count: 0, date: getTodayKey(), autoAddTarget: false, source: "manual" };
-      }
-      state.dailySteps.autoAddTarget = !state.dailySteps.autoAddTarget;
-      saveState();
-      renderAll();
-      syncNativeWidget();
-      const burn = calcStepBurn(state.dailySteps.count);
-      if (state.dailySteps.autoAddTarget) {
-        showToast(`✓ Расход шагов (+${burn} ккал) добавлен в суточный калораж`);
-      } else {
-        showToast(`✓ Суточный калораж вернулся к базовой норме`);
-      }
-    }
-
     function requestNativeStepsSync() {
       if (window.webkit?.messageHandlers?.widgetBridge) {
         window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps", silent: false });
@@ -19057,155 +18544,6 @@
         window.webkit.messageHandlers.widgetBridge.postMessage({ action: "fetchMotionSteps", silent: Boolean(silent) });
       }
     }
-
-    // =========================================================================
-    // БЫСТРЫЙ РУЧНОЙ ВВОД И НАСТРОЙКА ЦЕЛЕЙ КБЖУ (СВОЯ НОРМА)
-    // =========================================================================
-    function openTargetEditorModal() {
-      const modal = document.getElementById("targetEditorModal");
-      if (!modal) return;
-
-      const mode = state.goalCalcMode === "manual" ? "manual" : "auto";
-      selectTargetEditorMode(mode);
-
-      const cal = Number(state.targets?.cal) || 2800;
-      const p = Number(state.targets?.p) || 140;
-      const f = Number(state.targets?.f) || 65;
-      const c = Number(state.targets?.c) || 215;
-
-      const inCal = document.getElementById("inputManualCal");
-      const inP = document.getElementById("inputManualP");
-      const inF = document.getElementById("inputManualF");
-      const inC = document.getElementById("inputManualC");
-
-      if (inCal) inCal.value = cal;
-      if (inP) inP.value = p;
-      if (inF) inF.value = f;
-      if (inC) inC.value = c;
-
-      updateManualPreview();
-      modal.classList.add("open");
-    }
-
-    function closeTargetEditorModal() {
-      document.getElementById("targetEditorModal")?.classList.remove("open");
-    }
-
-    function selectTargetEditorMode(mode) {
-      const isAuto = mode === "auto";
-      const btnAuto = document.getElementById("btnTargetTabAuto");
-      const btnManual = document.getElementById("btnTargetTabManual");
-      const autoBox = document.getElementById("targetAutoBox");
-      const manualBox = document.getElementById("targetManualBox");
-
-      if (btnAuto) {
-        btnAuto.className = isAuto
-          ? "py-2 rounded-lg text-xs font-bold transition text-center bg-white/10 text-white shadow-sm border border-white/10"
-          : "py-2 rounded-lg text-xs font-semibold transition text-center text-zinc-400 hover:text-white";
-      }
-      if (btnManual) {
-        btnManual.className = !isAuto
-          ? "py-2 rounded-lg text-xs font-bold transition text-center bg-white/10 text-white shadow-sm border border-white/10"
-          : "py-2 rounded-lg text-xs font-semibold transition text-center text-zinc-400 hover:text-white";
-      }
-
-      if (autoBox) autoBox.classList.toggle("hidden", !isAuto);
-      if (manualBox) manualBox.classList.toggle("hidden", isAuto);
-
-      if (isAuto) {
-        const latestW = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
-        const formula = getBodyFormulaBaseline(latestW);
-        const summaryEl = document.getElementById("targetAutoSummaryText");
-        if (summaryEl) {
-          summaryEl.innerHTML = `
-            Вес: <strong class="text-white mono">${latestW} кг</strong> · BMR: <strong class="text-white mono">${Math.round(formula.bmr)} ккал</strong><br>
-            TDEE: <strong class="text-white mono">${Math.round(formula.tdee)} ккал</strong> → Цель: <strong class="text-white mono">${formula.targetCal} ккал</strong><br>
-            Б: <strong class="text-white mono">${formula.p}г</strong> · Ж: <strong class="text-white mono">${formula.f}г</strong> · У: <strong class="text-white mono">${formula.c}г</strong>
-          `;
-        }
-      }
-    }
-
-    function stepManualTarget(field, delta) {
-      const map = {
-        cal: document.getElementById("inputManualCal"),
-        p: document.getElementById("inputManualP"),
-        f: document.getElementById("inputManualF"),
-        c: document.getElementById("inputManualC")
-      };
-      const input = map[field];
-      if (!input) return;
-      const current = Number(input.value) || 0;
-      const minVal = field === "cal" ? 800 : 10;
-      input.value = Math.max(minVal, current + delta);
-      updateManualPreview();
-    }
-
-    function updateManualPreview() {
-      const cal = Number(document.getElementById("inputManualCal")?.value) || 0;
-      const p = Number(document.getElementById("inputManualP")?.value) || 0;
-      const f = Number(document.getElementById("inputManualF")?.value) || 0;
-      const c = Number(document.getElementById("inputManualC")?.value) || 0;
-
-      const kP = p * 4;
-      const kF = f * 9;
-      const kC = c * 4;
-      const sumKcal = kP + kF + kC;
-
-      const elKP = document.getElementById("manualKcalP");
-      const elKF = document.getElementById("manualKcalF");
-      const elKC = document.getElementById("manualKcalC");
-      const elSum = document.getElementById("manualMacroSumPreview");
-
-      if (elKP) elKP.textContent = `${kP} ккал`;
-      if (elKF) elKF.textContent = `${kF} ккал`;
-      if (elKC) elKC.textContent = `${kC} ккал`;
-      if (elSum) {
-        const diff = cal - sumKcal;
-        elSum.textContent = `${sumKcal} ккал (${diff >= 0 ? "разница " + diff : "перебор " + Math.abs(diff)})`;
-        elSum.style.color = Math.abs(diff) <= 30 ? "var(--accent-cal)" : "var(--accent-c)";
-      }
-    }
-
-    function balanceManualCarbs() {
-      const cal = Number(document.getElementById("inputManualCal")?.value) || 0;
-      const p = Number(document.getElementById("inputManualP")?.value) || 0;
-      const f = Number(document.getElementById("inputManualF")?.value) || 0;
-      const rem = cal - (p * 4) - (f * 9);
-      const c = Math.max(20, Math.round(rem / 4));
-      const elC = document.getElementById("inputManualC");
-      if (elC) {
-        elC.value = c;
-        updateManualPreview();
-        showToast(`✓ Углеводы сбалансированы: ${c}г`);
-      }
-    }
-
-    function saveTargetEditorModal() {
-      const isAuto = !document.getElementById("targetAutoBox")?.classList.contains("hidden");
-      if (isAuto) {
-        state.goalCalcMode = "auto";
-        const latestW = (Array.isArray(state.weightLogs) && state.weightLogs.length > 0 && Number(state.weightLogs[state.weightLogs.length - 1].weight)) || (state.body && Number(state.body.weight)) || 72.1;
-        const formula = getBodyFormulaBaseline(latestW);
-        state.targets = { cal: formula.targetCal, p: formula.p, f: formula.f, c: formula.c };
-        showToast(`✓ Включен авторасчет: ${formula.targetCal} ккал`);
-      } else {
-        state.goalCalcMode = "manual";
-        const cal = Math.max(800, Number(document.getElementById("inputManualCal")?.value) || 2800);
-        const p = Math.max(20, Number(document.getElementById("inputManualP")?.value) || 140);
-        const f = Math.max(15, Number(document.getElementById("inputManualF")?.value) || 65);
-        const c = Math.max(20, Number(document.getElementById("inputManualC")?.value) || 215);
-        state.targets = { cal, p, f, c };
-        state.manualTargets = { cal, p, f, c };
-        showToast(`✓ Своя норма сохранена: ${cal} ккал`);
-      }
-
-      saveState();
-      renderAll();
-      syncNativeWidget();
-      closeTargetEditorModal();
-    }
-
 
     // =========================================================================
     // ИНТЕРАКТИВНЫЙ МОДУЛЬ «ПЛАН ПИТАНИЯ (РАЦИОН ТРЕНЕРА)»
@@ -19707,7 +19045,6 @@
         state.todayItems = state.todayItems.filter(item => item.planItemId !== itemId);
       }
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("Продукт удален из приема на сегодня");
     }
@@ -19797,7 +19134,6 @@
         if (typeof showToast === "function") showToast("✓ Засчитано: " + item.name);
       }
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof haptic === "function") haptic("selection");
     }
@@ -19862,7 +19198,6 @@
         if (typeof showToast === "function") showToast("✓ Прием засчитан: " + meal.title);
       }
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof haptic === "function") haptic("medium");
     }
@@ -20002,7 +19337,6 @@
       syncUpdatedPlanItemInTodayItems(ctx.itemId, ctx.standardWeight, baseItem);
       saveState();
       closeQuickWeightModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast(`Сброшено к норме: ${ctx.standardWeight}г`);
       if (typeof haptic === "function") haptic("light");
@@ -20074,7 +19408,6 @@
 
       saveState();
       closeQuickWeightModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast(`Вес обновлен: ${newW}г`);
       if (typeof haptic === "function") haptic("light");
@@ -20094,7 +19427,6 @@
       if (itemId === "pw_whey") setWheySupplementTaken(false);
 
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("Позиция пропущена на сегодня");
     }
@@ -20106,7 +19438,6 @@
         delete progress.skippedItems[itemId];
       }
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("Позиция возвращена в план");
     }
@@ -20144,7 +19475,6 @@
       recalcMealSlotQuotaFromTemplate(meal);
 
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("Продукт удален из плана");
     }
@@ -20586,7 +19916,6 @@
       if (document.getElementById("editMealSlotModal")?.classList.contains("open") && pendingEditSlotCtx?.mealId === mealId) {
         renderEditMealSlotProductsList(mealId);
       }
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       return newProd;
     }
@@ -20643,7 +19972,6 @@
 
       saveState();
       closeAddMealSlotModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("✓ Добавлен слот: " + title);
     }
@@ -21035,7 +20363,6 @@
       recalcMealSlotQuotaFromTemplate(meal);
       saveState();
       renderEditMealSlotProductsList(mealId);
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast(`Вес в шаблоне обновлен: ${w}г`);
     }
@@ -21071,7 +20398,6 @@
       const q = computeMandatorySlotQuota(activeItems);
       meal.slotTargetMacros = q;
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") {
         showToast(`Квота приема зафиксирована: ${q.cal} ккал (Б ${q.p} / Ж ${q.f} / У ${q.c})`);
@@ -21117,7 +20443,6 @@
 
       saveState();
       closeEditMealSlotModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("✓ Параметры слота сохранены");
     }
@@ -21133,7 +20458,6 @@
 
       saveState();
       closeEditMealSlotModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("Слот «" + title + "» удален");
     }
@@ -21216,7 +20540,6 @@
       }
       saveState();
       closeMealPlanSettingsModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("✓ Загружен: " + (preset.name || preset.title || "План питания"));
     }
@@ -21260,7 +20583,6 @@
       syncUpdatedPlanItemInTodayItems(donorId, newW, item);
 
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") {
         showToast(`Скомпенсировано: ${item.name} (${newW}г)`);
@@ -21397,7 +20719,6 @@
       }
 
       saveState();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") {
         showToast(`Добавлено: ${donorProfile.name} (${finalW}г)`);
@@ -22626,7 +21947,6 @@
       if (document.getElementById("editMealSlotModal")?.classList.contains("open") && pendingEditSlotCtx?.mealId === mealId) {
         renderEditMealSlotProductsList(mealId);
       }
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") {
         showToast(updatedTemplate ? "✓ Заменено в постоянном шаблоне" : "✓ Замена применена на сегодня");
@@ -22651,7 +21971,6 @@
       }
       saveState();
       closeMealPlanOverrideModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("Позиция сброшена к плану");
     }
@@ -22710,7 +22029,6 @@
 
       saveState();
       closeMealPlanSettingsModal();
-      renderCoachMealPlan();
       if (typeof renderAll === "function") renderAll();
       if (typeof showToast === "function") showToast("✓ Нормы плана обновлены!");
     }
@@ -22775,17 +22093,6 @@
         pctBadge.textContent = `Профицит +${Math.abs(diff)} ккал`;
         pctBadge.style.color = "var(--accent-c)";
         statusDot.style.backgroundColor = "var(--accent-c)";
-      }
-
-      const targetModeBadge = document.getElementById("dietTargetModeBadge");
-      if (targetModeBadge) {
-        if (state.goalCalcMode === "manual") {
-          targetModeBadge.textContent = "Своя норма";
-          targetModeBadge.parentElement.className = "ml-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/15 border border-white/20 text-[10px] mono text-white font-semibold active:scale-95 transition";
-        } else {
-          targetModeBadge.textContent = "Авто";
-          targetModeBadge.parentElement.className = "ml-1 px-2 py-0.5 rounded-md bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-[10px] mono text-zinc-400 font-semibold active:scale-95 transition";
-        }
       }
 
       // Процент выполнения суточной нормы БЖУ
@@ -23654,76 +22961,6 @@
       await Promise.allSettled([pAi, pOff]);
     }
 
-    async function analyzeTextWithAI(textQuery, explicitWeight) {
-      const spinner = document.getElementById("aiInlineSpinner");
-      if (spinner) {
-        spinner.classList.remove("hidden");
-        spinner.classList.add("flex");
-      }
-
-      const normQuery = stripEmojis(String(textQuery || "")).trim();
-      const cached = getAiCache(normQuery);
-      if (cached && cached.name) {
-        addFoodEntryFrom100g({
-          name: stripEmojis(cached.name),
-          cal100: Number(cached.cal100) || 150,
-          p100: Number(cached.p100) || 8,
-          f100: Number(cached.f100) || 6,
-          c100: Number(cached.c100) || 15,
-          weight: explicitWeight || Number(cached.weight) || 100,
-          source: "Кэш"
-        });
-        if (spinner) {
-          spinner.classList.add("hidden");
-          spinner.classList.remove("flex");
-        }
-        showToast(`Добавлено из кэша (${cached.name})`);
-        return;
-      }
-
-      const prompt = `Продукт: "${textQuery}". Верни строго JSON объект без лишнего текста и без эмодзи: {"name":"Название","weight":число_г,"cal100":число,"p100":число,"f100":число,"c100":число}. Для бутербродов и готовых блюд рассчитай суммарно КБЖУ на 100г и вес порции.`;
-      try {
-        const data = await callGemini3Flash({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const extracted = extractJsonFromAiResponse(rawText);
-        const normalized = normalizeFoodItemFromAi(extracted, textQuery, explicitWeight);
-        if (normalized && normalized.name) {
-          normalized.name = stripEmojis(normalized.name);
-          setAiCache(normQuery, normalized);
-          addFoodEntryFrom100g(normalized);
-          showToast(`Добавлено: ${normalized.name}`);
-          return;
-        }
-        throw new Error("Неверный ответ AI");
-      } catch (err) {
-        const fallback = parseFoodLocally(textQuery, explicitWeight);
-        if (fallback) {
-          if (Array.isArray(fallback.matched) && fallback.matched.length > 0) {
-            fallback.matched.forEach(item => addFoodEntryFrom100g(item));
-          } else {
-            addFoodEntryFrom100g(fallback);
-          }
-          showToast(`Добавлено: ${fallback.name}`);
-          return;
-        }
-        const est = estimateFoodFallback(textQuery, explicitWeight);
-        if (est) {
-          addFoodEntryFrom100g(est);
-          showToast(`Добавлено (оценка КБЖУ): ${est.name}`);
-          return;
-        }
-        showToast(err.message && err.message.includes("VPN") ? err.message : `Ошибка: ${String(err.message || "").slice(0, 45)}`, true);
-      } finally {
-        if (spinner) {
-          spinner.classList.add("hidden");
-          spinner.classList.remove("flex");
-        }
-      }
-    }
-
     function applyScannedProductToPlanModal(product) {
       const target = window._scannerTargetCtx;
       if (!target || !product) return false;
@@ -23790,23 +23027,6 @@
       document.getElementById("scannerModal")?.classList.remove("open");
     }
 
-    function setScannerMode(mode, immediate = false) {
-      const prevMode = scannerMode;
-      scannerMode = mode;
-      const tabs = { auto: "tabModeAuto", label: "tabModeLabel", dish: "tabModeLabel", barcode: "tabModeBarcode" };
-      const activeId = tabs[mode] || "tabModeAuto";
-      ["tabModeAuto", "tabModeLabel", "tabModeBarcode"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.className = (id === activeId)
-          ? "relative z-10 py-2 text-xs font-bold rounded-xl text-white transition-colors duration-200"
-          : "relative z-10 py-2 text-xs font-semibold rounded-xl text-zinc-400 hover:text-zinc-200 transition-colors duration-200";
-      });
-      if (typeof updateSegmentedSlider === "function") {
-        updateSegmentedSlider("scannerModeNav", activeId, immediate);
-      }
-      if (!immediate && prevMode !== mode && typeof haptic === "function") haptic("light");
-    }
-
     function clearScannerOverlay() {
       const canvas = document.getElementById("scannerOverlayCanvas");
       if (canvas) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
@@ -23830,62 +23050,6 @@
     }
     window.getRenderedMediaRect = getRenderedMediaRect;
 
-    function drawHighlightedRegion(normBox, codeText) {
-      const canvas = document.getElementById("scannerOverlayCanvas");
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width || 320;
-      canvas.height = rect.height || 224;
-
-      const mediaRect = getRenderedMediaRect(canvas);
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const accent = getActiveThemeObject().cal;
-
-      const x = mediaRect.x + Math.max(0.03, Math.min(0.85, normBox.x)) * mediaRect.w;
-      const y = mediaRect.y + Math.max(0.05, Math.min(0.85, normBox.y)) * mediaRect.h;
-      const w = Math.max(80, Math.min(mediaRect.w - (x - mediaRect.x) - 6, normBox.w * mediaRect.w));
-      const h = Math.max(42, Math.min(mediaRect.h - (y - mediaRect.y) - 6, normBox.h * mediaRect.h));
-
-      ctx.save();
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = 3;
-      ctx.shadowColor = accent;
-      ctx.shadowBlur = 14;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 10); else ctx.rect(x, y, w, h);
-      ctx.fill(); ctx.stroke();
-      ctx.restore();
-
-      if (codeText) {
-        document.getElementById("barcodeDetectedCode").textContent = codeText;
-        document.getElementById("barcodeDetectedBadge")?.classList.remove("hidden");
-        document.getElementById("barcodeInput").value = codeText;
-      }
-    }
-
-    function showScannedCard(product) {
-      if (typeof window.showScannedCard === "function" && window.showScannedCard !== showScannedCard) {
-        return window.showScannedCard(product);
-      }
-      pendingScannedProduct = product;
-      document.getElementById("scannedResSource").textContent = product.source || "Скан";
-      document.getElementById("scannedResName").textContent = product.name;
-      document.getElementById("scannedResWeightInput").value = Math.round(product.weight || 100);
-      recalcScannedCard();
-      document.getElementById("scannedResultCard")?.classList.remove("hidden");
-    }
-
-    function stepScannedWeight(delta) {
-      if (typeof window.stepScannedWeight === "function" && window.stepScannedWeight !== stepScannedWeight) {
-        return window.stepScannedWeight(delta);
-      }
-      const inp = document.getElementById("scannedResWeightInput");
-      inp.value = Math.max(5, (Number(inp.value) || 100) + delta);
-      recalcScannedCard();
-    }
-
     function recalcScannedCard() {
       if (!pendingScannedProduct) return;
       const inp = document.getElementById("scannedResWeightInput");
@@ -23906,70 +23070,6 @@
       document.getElementById("scannedResP").textContent = round1(pendingScannedProduct.p100 * ratio);
       document.getElementById("scannedResF").textContent = round1(pendingScannedProduct.f100 * ratio);
       document.getElementById("scannedResC").textContent = round1(pendingScannedProduct.c100 * ratio);
-    }
-
-    function confirmScannedProduct() {
-      if (typeof window.confirmScannedProduct === "function" && window.confirmScannedProduct !== confirmScannedProduct) {
-        return window.confirmScannedProduct();
-      }
-      if (!pendingScannedProduct) return;
-      const prod = pendingScannedProduct;
-      pendingScannedProduct = null;
-      window.pendingScannedProduct = null;
-      addFoodEntryFrom100g(prod);
-      document.getElementById("scannedResultCard")?.classList.add("hidden");
-      closeScanner();
-    }
-
-    async function handleLiveCameraAction() {
-      const video = document.getElementById("cameraStream");
-      const btnText = document.getElementById("liveCamBtnText");
-      const stopBtn = document.getElementById("stopCamBtn");
-      const placeholder = document.getElementById("cameraPlaceholder");
-      const preview = document.getElementById("photoPreview");
-
-      if (videoStream) {
-        if (!video.videoWidth) return;
-        const c = document.createElement("canvas");
-        const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
-        c.width = Math.round(video.videoWidth * scale);
-        c.height = Math.round(video.videoHeight * scale);
-        c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
-        const dataUrl = c.toDataURL("image/jpeg", 0.78);
-        stopCamera();
-        preview.src = dataUrl;
-        preview.classList.remove("hidden");
-        placeholder.classList.add("hidden");
-        await processCapturedDataUrl(dataUrl);
-        return;
-      }
-
-      const camSeq = (window._cameraStartSeq = (window._cameraStartSeq || 0) + 1);
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false
-        });
-        const isModalOpen = Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
-        if (!isModalOpen || camSeq !== window._cameraStartSeq) {
-          try { if (stream && stream.getTracks) stream.getTracks().forEach(t => t.stop()); } catch (e) {}
-          return;
-        }
-        videoStream = stream;
-        video.srcObject = videoStream;
-        await video.play();
-        if (!document.getElementById("scannerModal")?.classList.contains("open") || camSeq !== window._cameraStartSeq) {
-          forceStopScannerCamera();
-          return;
-        }
-        video.classList.remove("hidden");
-        preview.classList.add("hidden");
-        placeholder.classList.add("hidden");
-        btnText.textContent = "Снять кадр";
-        stopBtn.classList.remove("hidden");
-      } catch (err) {
-        showToast("Откройте камеру через кнопку «Сделать фото / Файл»", true);
-      }
     }
 
     function stopLiveBarcodeLoop() {
@@ -24011,41 +23111,6 @@
 
     function stopCamera() {
       forceStopScannerCamera();
-    }
-
-    function compressImageFile(file, maxSide = 800, quality = 0.78) {
-      if (typeof window.compressImageFile === "function" && window.compressImageFile !== compressImageFile) {
-        return window.compressImageFile(file, maxSide, quality);
-      }
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error("Ошибка чтения файла"));
-        reader.onload = () => {
-          const img = new Image();
-          img.onerror = () => reject(new Error("Ошибка загрузки изображения"));
-          img.onload = () => {
-            try {
-              let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-              if (w > maxSide || h > maxSide) {
-                if (w > h) { h = Math.round((h * maxSide) / w); w = maxSide; }
-                else { w = Math.round((w * maxSide) / h); h = maxSide; }
-              }
-              const canvas = document.createElement("canvas");
-              canvas.width = w; canvas.height = h;
-              canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-              const compUrl = canvas.toDataURL("image/jpeg", quality);
-              const outImg = new Image();
-              outImg.onload = () => resolve({ dataUrl: compUrl, imgElement: outImg });
-              outImg.onerror = () => reject(new Error("Ошибка декодирования изображения"));
-              outImg.src = compUrl;
-            } catch (err) {
-              reject(err);
-            }
-          };
-          img.src = reader.result;
-        };
-        reader.readAsDataURL(file);
-      });
     }
 
     function detectWithQuaggaPass(srcDataUrl, patchSize) {
@@ -24165,95 +23230,6 @@
         showToast("Не удалось обработать снимок", true);
       } finally {
         event.target.value = "";
-      }
-    }
-
-    async function processCapturedDataUrl(dataUrl, optionalImgEl) {
-      if (typeof window.processCapturedDataUrl === "function" && window.processCapturedDataUrl !== processCapturedDataUrl) {
-        return await window.processCapturedDataUrl(dataUrl, optionalImgEl);
-      }
-      const reqToken = (window._scannerReqToken = (window._scannerReqToken || 0) + 1);
-      const isScanStillValid = () => reqToken === window._scannerReqToken && Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
-      setScannerLoadingState(true, { text: "Сканируем штрихкод..." });
-      try {
-        window._lastScannerBase64 = dataUrl;
-        let imgElement = optionalImgEl || await new Promise((res, rej) => {
-          const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
-        });
-        if (!isScanStillValid()) return;
-        const base64Data = dataUrl.split(",")[1];
-        setScannerLoadingState(true, { text: "Сканируем штрихкод..." });
-        const localBarcode = await detectBarcodeMultiPass(dataUrl, imgElement);
-        if (!isScanStillValid()) return;
-        if (localBarcode && localBarcode.code) {
-          drawHighlightedRegion(localBarcode.normBox, localBarcode.code);
-          setScannerLoadingState(true, { text: `Штрихкод ${localBarcode.code}: ищем КБЖУ...`, barcode: localBarcode.code });
-          const found = await fetchProductByBarcode(localBarcode.code, true);
-          if (!isScanStillValid() || found) return;
-        }
-        setScannerLoadingState(true, { text: "Экспресс-чтение этикетки через ИИ..." });
-        await analyzeImageWithGemini(base64Data, "image/jpeg", reqToken);
-      } catch (err) {
-        if (isScanStillValid()) showToast("Ошибка обработки кадра", true);
-      } finally {
-        if (reqToken === window._scannerReqToken) setScannerLoadingState(false);
-      }
-    }
-
-    async function analyzeImageWithGemini(base64Data, mimeType, callerReqToken = null) {
-      if (typeof window.analyzeImageWithGemini === "function" && window.analyzeImageWithGemini !== analyzeImageWithGemini) {
-        return await window.analyzeImageWithGemini(base64Data, mimeType, callerReqToken);
-      }
-      const reqToken = (callerReqToken !== null && callerReqToken !== undefined)
-        ? callerReqToken
-        : (window._scannerReqToken = (window._scannerReqToken || 0) + 1);
-      const isScanStillValid = () => reqToken === window._scannerReqToken && Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
-      const prompt = `Считай с фото штрихкод (13 цифр в "barcode" и координаты [ymin,xmin,ymax,xmax] 0..1000 в "barcode_box") и КБЖУ на 100г. Строго JSON: {"name":"Название","weight":число_г,"cal100":число,"p100":число,"f100":число,"c100":число,"source":"Этикетка","barcode":"","barcode_box":[0,0,0,0]}`;
-      try {
-        const data = await callGemini3Flash({
-          contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType || "image/jpeg", data: base64Data } }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        if (!isScanStillValid()) return;
-        const parsed = JSON.parse(cleanJsonString(data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}"));
-        const cleanCode = parsed?.barcode ? String(parsed.barcode).replace(/\D/g, "") : "";
-        let normBox = { x: 0.16, y: 0.36, w: 0.68, h: 0.25 };
-        if (Array.isArray(parsed?.barcode_box) && parsed.barcode_box.length === 4) {
-          const [ymin, xmin, ymax, xmax] = parsed.barcode_box.map(Number);
-          if (ymax > ymin && xmax > xmin) normBox = { x: xmin / 1000, y: ymin / 1000, w: (xmax - xmin) / 1000, h: (ymax - ymin) / 1000 };
-        }
-        if (cleanCode && isValidEANBarcode(cleanCode)) {
-          drawHighlightedRegion(normBox, cleanCode);
-          const foundByCode = await fetchProductByBarcode(cleanCode, true);
-          if (!isScanStillValid() || foundByCode) return;
-        } else {
-          drawHighlightedRegion(normBox, "");
-        }
-        if (!isScanStillValid()) return;
-        if (parsed && parsed.name) {
-          parsed.name = stripEmojis(parsed.name);
-          const numMacro = (v, fb) => {
-            const n = Number(v);
-            return (v !== null && v !== undefined && v !== "" && Number.isFinite(n) && n >= 0) ? n : fb;
-          };
-          showScannedCard({
-            name: parsed.name,
-            cal100: numMacro(parsed.cal100, 120),
-            p100: numMacro(parsed.p100, 0),
-            f100: numMacro(parsed.f100, 0),
-            c100: numMacro(parsed.c100, 0),
-            weight: Number(parsed.weight) || 150,
-            source: cleanCode ? `Штрихкод ${cleanCode}` : (parsed.source || "Скан")
-          });
-          showToast(`Распознано: ${parsed.name}`);
-        }
-      } catch (err) {
-        const errMsg = String(err.message || "");
-        if (errMsg.includes("VPN") || errMsg.includes("шлюз")) {
-          showToast(errMsg, true);
-        } else {
-          showToast(`Ошибка распознавания: ${errMsg.slice(0, 50)}`, true);
-        }
       }
     }
 
@@ -24691,7 +23667,6 @@
       }
       saveState();
       renderAll();
-      if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
       closeEditModal();
     }
 
@@ -25108,7 +24083,6 @@
       }
       saveState();
       renderAll();
-      if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
       closeSettings();
       showToast("Список за сегодня очищен");
     }
@@ -25213,6 +24187,7 @@
       }
       return null;
     }
+    window.extractJsonFromAiResponse = extractJsonFromAiResponse;
 
     function normalizeFoodItemFromAi(rawObj, fallbackName, explicitWeight) {
       if (!rawObj) return null;
@@ -25384,22 +24359,7 @@
   
   <script id="formUpgradePatchV10">
   (function() {
-    // 1. Стили шапки, карточки Умного Веса и полей в Пушах
-    // Dynamic styles consolidated into static <head> style
-
-    function fitPushTextareas() {
-      document.querySelectorAll("#panelPush textarea").forEach(ta => {
-        ta.style.height = "auto";
-        ta.style.height = Math.max(76, ta.scrollHeight + 4) + "px";
-        if (!ta._boundAutoResize) {
-          ta._boundAutoResize = true;
-          ta.addEventListener("input", function() {
-            this.style.height = "auto";
-            this.style.height = Math.max(76, this.scrollHeight + 4) + "px";
-          });
-        }
-      });
-    }
+    // 1. Карточка Умного Веса и название вкладки Трени
 
     // 2. Переименовываем вкладку «СПЛИТ» -> «ТРЕНИ»
     const splitTabBtn = document.getElementById("navTabSplit");
@@ -25963,7 +24923,7 @@
               </button>
             </div>
           `;
-        } else {
+        } else if (!window._hasEnhancedWorkoutRenderer) {
           exContainer.innerHTML = exList.map(ex => {
             const targetS = Math.max(1, Number(ex.targetSets) || 3);
             const mMeta = MUSCLE_META[ex.muscle] || MUSCLE_META.chest;
@@ -26324,18 +25284,11 @@
       }
     };
 
-    const origSwitchSettingsTab = window.switchSettingsTab;
-    window.switchSettingsTab = function(tab, immediate) {
-      if (origSwitchSettingsTab) origSwitchSettingsTab(tab, immediate);
-      if (tab === "push") setTimeout(fitPushTextareas, 30);
-    };
-
     // 8. Плавные свайпы и шторки инициализируются в formSmoothTransitionsPatch
 
     cleanAndIsolatePrograms();
     renderAll();
     if (currentMainView === "split") renderWorkoutAll();
-    setTimeout(fitPushTextareas, 100);
   })();
   </script>
   
@@ -26794,7 +25747,6 @@
         state._macrosMigrationV4 = true;
         saveState();
         if (touched) {
-          if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
           if (typeof renderAll === "function") renderAll();
         }
       } catch (e) {}
@@ -26821,11 +25773,27 @@
     const EMOJI_PATTERN = /(?:⚖️|⚖|📷|📹|✨|🥫|▥|🔔|🎲|⚡|👁️|👁|🗑️|🗑|✎|↺)/g;
     function stripEmojisInNode(root) {
       if (!root) return;
+      if (root.nodeType === 3) {
+        const parentEl = root.parentElement;
+        const pTag = parentEl && parentEl.tagName;
+        if (pTag === "SCRIPT" || pTag === "STYLE" || pTag === "SVG") return;
+        if (parentEl && parentEl.closest && parentEl.closest("#restTimerFloatingBar, svg, script, style")) return;
+        if (EMOJI_PATTERN.test(root.nodeValue)) {
+          root.nodeValue = root.nodeValue.replace(EMOJI_PATTERN, "").replace(/^\s+/, "");
+        }
+        return;
+      }
+      if (root.nodeType !== 1) return;
+      const tag = root.tagName;
+      if (tag === "SCRIPT" || tag === "STYLE" || tag === "SVG" || root.id === "restTimerFloatingBar") return;
+      if (root.closest && root.closest("#restTimerFloatingBar, svg, script, style")) return;
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
       let node;
       while ((node = walker.nextNode())) {
-        const parentTag = node.parentNode && node.parentNode.tagName;
-        if (parentTag === "SCRIPT" || parentTag === "STYLE") continue;
+        const parentEl = node.parentElement;
+        const parentTag = parentEl && parentEl.tagName;
+        if (parentTag === "SCRIPT" || parentTag === "STYLE" || parentTag === "SVG") continue;
+        if (parentEl && parentEl.closest && parentEl.closest("#restTimerFloatingBar, svg, script, style")) continue;
         if (EMOJI_PATTERN.test(node.nodeValue)) {
           node.nodeValue = node.nodeValue.replace(EMOJI_PATTERN, "").replace(/^\s+/, "");
         }
@@ -27207,6 +26175,7 @@
       if (changed) saveState();
     }
 
+    window._hasEnhancedWorkoutRenderer = true;
     const prevRenderWorkoutAll = window.renderWorkoutAll;
     window.renderWorkoutAll = function() {
       healExerciseWorkingSetsFromLogs();
@@ -30255,6 +29224,7 @@ ${knownPiecesContext}
               barcode: cleanCode,
               source: `Штрихкод ${cleanCode}`
             };
+            if (typeof trimCacheToLimit === "function") trimCacheToLimit(state.barcodeCache, 500);
             saveState();
           }
         }
@@ -30518,7 +29488,16 @@ ${knownPiecesContext}
     };
 
     stripEmojisInNode(document.body);
-    const observer = new MutationObserver(() => stripEmojisInNode(document.body));
+    const observer = new MutationObserver((mutations) => {
+      for (let i = 0; i < mutations.length; i++) {
+        const m = mutations[i];
+        if (!m.addedNodes || m.addedNodes.length === 0) continue;
+        if (m.target && m.target.closest && m.target.closest("#restTimerFloatingBar, svg")) continue;
+        for (let j = 0; j < m.addedNodes.length; j++) {
+          stripEmojisInNode(m.addedNodes[j]);
+        }
+      }
+    });
     observer.observe(document.body, { childList: true, subtree: true });
 
     if (currentMainView === "split") renderWorkoutAll();
@@ -30527,59 +29506,9 @@ ${knownPiecesContext}
   
   <script id="formDynamicVolumeFix">
   (function() {
-    // Пересчитываем и выполненные подходы (по всем вариантам программы), и плановую сумму подходов (по активному варианту) строго по активным дням недели (ПН-ВС)
-    window.recalculateWeeklySetsFromPrograms = function() {
-      const doneTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
-      const plannedTotals = { chest: 0, back: 0, legs: 0, arms: 0, core: 0 };
-
-      const schedule = state.workout?.weekSchedule || {};
-      const programs = state.workout?.programs || {};
-
-      const seenDoneProgs = new Set();
-      [1, 2, 3, 4, 5, 6, 0].forEach(dow => {
-        const progId = schedule[dow];
-        if (!progId || progId === "rest") return;
-        const prog = programs[progId];
-        if (!prog) return;
-        ensureProgramVariants(prog);
-
-        const activeExList = getActiveProgramExercises(prog);
-        activeExList.forEach(ex => {
-          const m = (ex.muscle && plannedTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
-          const targetS = Math.max(1, Number(ex.targetSets) || 3);
-          plannedTotals[m] += targetS;
-        });
-
-        if (!seenDoneProgs.has(progId)) {
-          seenDoneProgs.add(progId);
-          getAllProgramExerciseLists(prog).forEach(list => {
-            (list || []).forEach(ex => {
-              const m = (ex.muscle && doneTotals[ex.muscle] !== undefined) ? ex.muscle : "chest";
-              const targetS = Math.max(1, Number(ex.targetSets) || 3);
-              const doneS = (ex.setsToday || []).slice(0, targetS).filter(Boolean).length;
-              doneTotals[m] += doneS;
-            });
-          });
-        }
-      });
-
-      // Обновляем целевые лимиты в MUSCLE_META реальной суммой твоих подходов из расписания
-      if (typeof MUSCLE_META === "object") {
-        Object.keys(MUSCLE_META).forEach(mKey => {
-          if (plannedTotals[mKey] !== undefined) {
-            MUSCLE_META[mKey].target = plannedTotals[mKey];
-          }
-        });
-      }
-
-      state.workout.weeklySetsByMuscle = doneTotals;
-      state.workout.weeklyTargetByMuscle = plannedTotals;
-      return doneTotals;
-    };
-
-    // Синхронизация виджета
+    // Синхронизация виджета и пересчет объема активных дней недели
     if (typeof syncNativeWidget === "function") syncNativeWidget();
-    recalculateWeeklySetsFromPrograms();
+    if (typeof recalculateWeeklySetsFromPrograms === "function") recalculateWeeklySetsFromPrograms();
     if (typeof renderWorkoutAll === "function") renderWorkoutAll();
   })();
   </script>
@@ -30601,7 +29530,6 @@ ${knownPiecesContext}
         settingsModal: () => typeof closeSettings === "function" && closeSettings(),
         formulaModal: () => typeof closeFormulaModal === "function" && closeFormulaModal(),
         editModal: () => typeof closeEditModal === "function" && closeEditModal(),
-        targetEditorModal: () => typeof closeTargetEditorModal === "function" && closeTargetEditorModal(),
         confirmDeleteDayModal: () => typeof closeConfirmDeleteDayModal === "function" && closeConfirmDeleteDayModal(),
         workoutConfirmActionModal: () => typeof closeWorkoutActionConfirm === "function" && closeWorkoutActionConfirm(),
         dayManagerModal: () => typeof closeDayManagerModal === "function" && closeDayManagerModal(),
@@ -31076,8 +30004,6 @@ ${knownPiecesContext}
         scheduleLockInactiveTrackHeights(380);
       };
 
-      viewport.addEventListener("touchend", endHandler, { passive: true });
-      viewport.addEventListener("touchcancel", endHandler, { passive: true });
       window.addEventListener("touchend", endHandler, { passive: true });
       window.addEventListener("touchcancel", endHandler, { passive: true });
     }
@@ -31297,14 +30223,40 @@ ${knownPiecesContext}
     window.checkModalVisibilityToNative = checkModalVisibilityToNative;
 
     try {
-      const modalObserver = new MutationObserver(() => {
-        initBottomSheetGestures();
-        initSettingsTabsSwipe();
-        initExerciseModalSwipe();
-        checkModalVisibilityToNative();
+      const hasBackdropInNode = (node) => {
+        if (!node || node.nodeType !== 1) return false;
+        if (node.classList?.contains("sheet-backdrop")) return true;
+        return Boolean(node.querySelector && node.querySelector(".sheet-backdrop"));
+      };
+      const modalObserver = new MutationObserver((mutations) => {
+        let shouldReinit = false;
+        let shouldCheckVisibility = false;
+        for (let i = 0; i < mutations.length; i++) {
+          const m = mutations[i];
+          if (m.type === "attributes") {
+            if (m.target && m.target.classList && m.target.classList.contains("sheet-backdrop")) {
+              shouldCheckVisibility = true;
+            }
+          } else if (m.type === "childList" && m.addedNodes && m.addedNodes.length > 0) {
+            for (let j = 0; j < m.addedNodes.length; j++) {
+              if (hasBackdropInNode(m.addedNodes[j])) {
+                shouldReinit = true;
+                shouldCheckVisibility = true;
+                break;
+              }
+            }
+          }
+        }
+        if (shouldReinit) {
+          initBottomSheetGestures();
+          initSettingsTabsSwipe();
+          initExerciseModalSwipe();
+        }
+        if (shouldCheckVisibility) {
+          checkModalVisibilityToNative();
+        }
       });
       modalObserver.observe(document.body, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
-      document.addEventListener("click", () => setTimeout(checkModalVisibilityToNative, 20));
     } catch (e) {}
   })();
   </script>

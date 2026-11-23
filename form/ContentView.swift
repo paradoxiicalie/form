@@ -582,6 +582,25 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
         }
     }
 
+    private func deliverMediaResponse(for urlSchemeTask: WKURLSchemeTask, url: URL, statusCode: Int, headers: [String: String], data: Data) {
+        DispatchQueue.main.async {
+            if self.isTaskActive(urlSchemeTask) {
+                if let response = HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: "HTTP/1.1", headerFields: headers) {
+                    urlSchemeTask.didReceive(response)
+                    if self.isTaskActive(urlSchemeTask) {
+                        urlSchemeTask.didReceive(data)
+                    }
+                    if self.isTaskActive(urlSchemeTask) {
+                        urlSchemeTask.didFinish()
+                    }
+                } else {
+                    urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 500, userInfo: nil))
+                }
+            }
+            self.unregisterTask(urlSchemeTask)
+        }
+    }
+
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         registerTask(urlSchemeTask)
         
@@ -593,105 +612,95 @@ class FormMediaSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         
-        let fileName = Self.extractMediaFileName(from: url)
-        guard let fileURL = Self.resolveMediaFileURL(rawUrlOrName: fileName),
-              let attr = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
-              let fileSize = attr[.size] as? UInt64, fileSize > 0 else {
-            if isTaskActive(urlSchemeTask) {
-                let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Access-Control-Allow-Origin": "*"])
-                if let resp = resp {
-                    urlSchemeTask.didReceive(resp)
-                }
-                urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 404, userInfo: [NSLocalizedDescriptionKey: "File not found"]))
-            }
-            unregisterTask(urlSchemeTask)
-            return
-        }
+        let rangeHeader = urlSchemeTask.request.value(forHTTPHeaderField: "Range")
         
-        let ext = fileURL.pathExtension.lowercased()
-        let mimeType: String
-        switch ext {
-        case "mp4", "m4v", "mov": mimeType = "video/mp4"
-        case "m4a", "aac": mimeType = "audio/mp4"
-        case "mp3": mimeType = "audio/mpeg"
-        case "jpg", "jpeg": mimeType = "image/jpeg"
-        case "png": mimeType = "image/png"
-        case "webp": mimeType = "image/webp"
-        default: mimeType = "application/octet-stream"
-        }
-        
-        let totalSize = Int(fileSize)
-        
-        guard let fileHandle = try? FileHandle(forReadingFrom: fileURL) else {
-            if isTaskActive(urlSchemeTask) {
-                urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 500, userInfo: nil))
-            }
-            unregisterTask(urlSchemeTask)
-            return
-        }
-        defer { try? fileHandle.close() }
-        
-        // Поддержка HTTP Range через FileHandle: читаем ровно запрошенный чанк без выгрузки гигабайтов в RAM
-        if let rangeHeader = urlSchemeTask.request.value(forHTTPHeaderField: "Range"),
-           rangeHeader.hasPrefix("bytes=") {
-            let spec = String(rangeHeader.dropFirst(6))
-            let parts = spec.split(separator: "-", omittingEmptySubsequences: false)
-            var start = 0
-            var end = totalSize - 1
-            if let first = parts.first, let s = Int(first) {
-                start = max(0, min(s, totalSize - 1))
-            }
-            if parts.count > 1, !parts[1].isEmpty, let e = Int(parts[1]) {
-                end = max(start, min(e, totalSize - 1))
-            }
-            // Ограничиваем максимальный размер чанка до 1 МБ для плавной подгрузки и моментальной паузы без лагов звука
-            let maxChunk = 1024 * 1024 // 1 MB
-            if (end - start + 1) > maxChunk {
-                end = start + maxChunk - 1
-            }
-            let lengthToRead = end - start + 1
-            try? fileHandle.seek(toOffset: UInt64(start))
-            let subData = fileHandle.readData(ofLength: lengthToRead)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self, self.isTaskActive(urlSchemeTask) else { return }
             
+            let fileName = Self.extractMediaFileName(from: url)
+            guard let fileURL = Self.resolveMediaFileURL(rawUrlOrName: fileName),
+                  let attr = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+                  let fileSize = attr[.size] as? UInt64, fileSize > 0 else {
+                DispatchQueue.main.async {
+                    if self.isTaskActive(urlSchemeTask) {
+                        let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Access-Control-Allow-Origin": "*"])
+                        if let resp = resp {
+                            urlSchemeTask.didReceive(resp)
+                        }
+                        urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 404, userInfo: [NSLocalizedDescriptionKey: "File not found"]))
+                    }
+                    self.unregisterTask(urlSchemeTask)
+                }
+                return
+            }
+            
+            let ext = fileURL.pathExtension.lowercased()
+            let mimeType: String
+            switch ext {
+            case "mp4", "m4v", "mov": mimeType = "video/mp4"
+            case "m4a", "aac": mimeType = "audio/mp4"
+            case "mp3": mimeType = "audio/mpeg"
+            case "jpg", "jpeg": mimeType = "image/jpeg"
+            case "png": mimeType = "image/png"
+            case "webp": mimeType = "image/webp"
+            default: mimeType = "application/octet-stream"
+            }
+            
+            let totalSize = Int(fileSize)
+            
+            guard let fileHandle = try? FileHandle(forReadingFrom: fileURL) else {
+                DispatchQueue.main.async {
+                    if self.isTaskActive(urlSchemeTask) {
+                        urlSchemeTask.didFailWithError(NSError(domain: "FormMedia", code: 500, userInfo: nil))
+                    }
+                    self.unregisterTask(urlSchemeTask)
+                }
+                return
+            }
+            defer { try? fileHandle.close() }
+            
+            // Поддержка HTTP Range через FileHandle: читаем ровно запрошенный чанк без выгрузки гигабайтов в RAM
+            if let rangeHeader = rangeHeader,
+               rangeHeader.hasPrefix("bytes=") {
+                let spec = String(rangeHeader.dropFirst(6))
+                let parts = spec.split(separator: "-", omittingEmptySubsequences: false)
+                var start = 0
+                var end = totalSize - 1
+                if let first = parts.first, let s = Int(first) {
+                    start = max(0, min(s, totalSize - 1))
+                }
+                if parts.count > 1, !parts[1].isEmpty, let e = Int(parts[1]) {
+                    end = max(start, min(e, totalSize - 1))
+                }
+                // Ограничиваем максимальный размер чанка до 1 МБ для плавной подгрузки и моментальной паузы без лагов звука
+                let maxChunk = 1024 * 1024 // 1 MB
+                if (end - start + 1) > maxChunk {
+                    end = start + maxChunk - 1
+                }
+                let lengthToRead = end - start + 1
+                try? fileHandle.seek(toOffset: UInt64(start))
+                let subData = fileHandle.readData(ofLength: lengthToRead)
+                
+                let headers: [String: String] = [
+                    "Content-Type": mimeType,
+                    "Content-Length": "\(subData.count)",
+                    "Content-Range": "bytes \(start)-\(end)/\(totalSize)",
+                    "Accept-Ranges": "bytes",
+                    "Access-Control-Allow-Origin": "*"
+                ]
+                self.deliverMediaResponse(for: urlSchemeTask, url: url, statusCode: 206, headers: headers, data: subData)
+                return
+            }
+            
+            let data = fileHandle.readDataToEndOfFile()
             let headers: [String: String] = [
                 "Content-Type": mimeType,
-                "Content-Length": "\(subData.count)",
-                "Content-Range": "bytes \(start)-\(end)/\(totalSize)",
+                "Content-Length": "\(totalSize)",
                 "Accept-Ranges": "bytes",
                 "Access-Control-Allow-Origin": "*"
             ]
-            if isTaskActive(urlSchemeTask),
-               let response = HTTPURLResponse(url: url, statusCode: 206, httpVersion: "HTTP/1.1", headerFields: headers) {
-                urlSchemeTask.didReceive(response)
-                if isTaskActive(urlSchemeTask) {
-                    urlSchemeTask.didReceive(subData)
-                }
-                if isTaskActive(urlSchemeTask) {
-                    urlSchemeTask.didFinish()
-                }
-                unregisterTask(urlSchemeTask)
-                return
-            }
+            self.deliverMediaResponse(for: urlSchemeTask, url: url, statusCode: 200, headers: headers, data: data)
         }
-        
-        let data = fileHandle.readDataToEndOfFile()
-        let headers: [String: String] = [
-            "Content-Type": mimeType,
-            "Content-Length": "\(totalSize)",
-            "Accept-Ranges": "bytes",
-            "Access-Control-Allow-Origin": "*"
-        ]
-        if isTaskActive(urlSchemeTask),
-           let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) {
-            urlSchemeTask.didReceive(response)
-            if isTaskActive(urlSchemeTask) {
-                urlSchemeTask.didReceive(data)
-            }
-            if isTaskActive(urlSchemeTask) {
-                urlSchemeTask.didFinish()
-            }
-        }
-        unregisterTask(urlSchemeTask)
     }
     
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
