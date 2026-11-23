@@ -1980,7 +1980,7 @@
   </div>
 
   <!-- МОДАЛКА 2: AI СКАНЕР И ШТРИХКОД -->
-  <div id="scannerModal" class="sheet-backdrop z-[65]" onclick="if(event.target===this) closeScanner()">
+  <div id="scannerModal" class="sheet-backdrop z-[125]" onclick="if(event.target===this) closeScanner()">
     <div class="sheet-panel">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
 
@@ -3124,7 +3124,7 @@
 
   
   <!-- МОДАЛКА: РАЗОВАЯ ЗАМЕНА ПРОДУКТА В ПЛАНЕ («ЗАМЕНИТЬ СЕГОДНЯ») -->
-  <div id="mealPlanOverrideModal" class="sheet-backdrop z-[55]" onclick="if(event.target===this) closeMealPlanOverrideModal()">
+  <div id="mealPlanOverrideModal" class="sheet-backdrop z-[115]" onclick="if(event.target===this) closeMealPlanOverrideModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
       <div class="flex items-center justify-between mb-3">
@@ -3242,7 +3242,7 @@
 
   
   <!-- МОДАЛКА: БЫСТРЫЙ ВЕС / ШТУКИ ПО ТАПУ НА ПРОДУКТ -->
-  <div id="quickWeightModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeQuickWeightModal()">
+  <div id="quickWeightModal" class="sheet-backdrop" onclick="if(event.target===this) closeQuickWeightModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-2.5">
@@ -3297,7 +3297,7 @@
   </div>
 
   <!-- МОДАЛКА: ДОБАВЛЕНИЕ ПРОДУКТА В ПРИЕМ ПИЩИ -->
-  <div id="addMealProductModal" class="sheet-backdrop z-[55]" onclick="if(event.target===this) closeAddMealProductModal()">
+  <div id="addMealProductModal" class="sheet-backdrop z-[115]" onclick="if(event.target===this) closeAddMealProductModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-2.5">
@@ -3395,7 +3395,7 @@
   </div>
 
   <!-- МОДАЛКА: СОЗДАНИЕ НОВОГО ПРИЕМА ПИЩИ -->
-  <div id="addMealSlotModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeAddMealSlotModal()">
+  <div id="addMealSlotModal" class="sheet-backdrop" onclick="if(event.target===this) closeAddMealSlotModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-2.5">
@@ -3435,7 +3435,7 @@
   </div>
 
   <!-- МОДАЛКА: РЕДАКТИРОВАНИЕ СЛОТА ПРИЕМА ПИЩИ -->
-  <div id="editMealSlotModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeEditMealSlotModal()">
+  <div id="editMealSlotModal" class="sheet-backdrop" onclick="if(event.target===this) closeEditMealSlotModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-2.5">
@@ -3511,7 +3511,7 @@
   </div>
 
   <!-- МОДАЛКА: ДОБАВЛЕНИЕ ДОБАВКИ В ЧЕКЛИСТ ВИТАМИНОВ -->
-  <div id="addCustomVitaminModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeAddCustomVitaminModal()">
+  <div id="addCustomVitaminModal" class="sheet-backdrop" onclick="if(event.target===this) closeAddCustomVitaminModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-2.5">
@@ -3545,7 +3545,7 @@
   </div>
 
   <!-- МОДАЛКА: НАСТРОЙКА БАЗОВОГО ПЛАНА ПИТАНИЯ ТРЕНЕРА -->
-  <div id="editMealPlanTemplateModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeMealPlanSettingsModal()">
+  <div id="editMealPlanTemplateModal" class="sheet-backdrop" onclick="if(event.target===this) closeMealPlanSettingsModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
       <div class="flex items-center justify-between mb-3">
@@ -3628,7 +3628,7 @@
   </div>
 
   <!-- МОДАЛКА: НАСТРОЙКА ТРЕКЕРОВ ПРИВЫЧЕК И НОРМ -->
-  <div id="trackersConfigModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeTrackersConfigModal()">
+  <div id="trackersConfigModal" class="sheet-backdrop" onclick="if(event.target===this) closeTrackersConfigModal()">
     <div class="sheet-panel max-w-sm mx-auto max-h-[85vh] flex flex-col">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3 shrink-0"></div>
       <div class="flex items-center justify-between mb-3 shrink-0">
@@ -3712,7 +3712,7 @@
   </div>
 
   <!-- МОДАЛКА: ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ДНЯ ТРЕНИРОВКИ -->
-  <div id="confirmDeleteDayModal" class="sheet-backdrop z-50" onclick="if(event.target===this) closeConfirmDeleteDayModal()">
+  <div id="confirmDeleteDayModal" class="sheet-backdrop z-[140]" onclick="if(event.target===this) closeConfirmDeleteDayModal()">
     <div class="sheet-panel text-center max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
       <div class="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/25 flex items-center justify-center mx-auto mb-3 text-red-400">
@@ -3826,7 +3826,7 @@
   </div>
 
   <!-- МОДАЛКА: СОЗДАТЬ СВОЙ ПРОДУКТ -->
-  <div id="createCustomFoodModal" class="sheet-backdrop z-[65]" onclick="if(event.target===this) closeCreateCustomFoodModal()">
+  <div id="createCustomFoodModal" class="sheet-backdrop z-[125]" onclick="if(event.target===this) closeCreateCustomFoodModal()">
     <div class="sheet-panel max-w-sm mx-auto">
       <div class="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3"></div>
       <div class="flex items-center justify-between mb-3">
@@ -3893,7 +3893,7 @@
   </div>
 
   <!-- ПЛАВАЮЩИЙ УМНЫЙ ТАЙМЕР ОТДЫХА -->
-  <div id="restTimerFloatingBar" class="hidden fixed bottom-6 w-[92%] max-w-md z-50 pointer-events-auto">
+  <div id="restTimerFloatingBar" class="hidden fixed bottom-6 w-[92%] max-w-md z-[45] pointer-events-auto">
     <div class="bg-zinc-950/95 border border-white/20 backdrop-blur-2xl rounded-[28px] p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] space-y-2.5">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -14866,37 +14866,48 @@
       showUndoExerciseToast();
     }
 
+    let undoClearDataTimer = null;
+
     function showUndoExerciseToast() {
       if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+      if (undoClearDataTimer) { clearTimeout(undoClearDataTimer); undoClearDataTimer = null; }
       let toast = document.getElementById("undoExerciseToast");
       const timerBar = document.getElementById("restTimerFloatingBar");
       const timerVisible = Boolean(timerBar && !timerBar.classList.contains("hidden"));
       const bottomOffset = timerVisible
-        ? "calc(env(safe-area-inset-bottom,20px)+145px)"
-        : "calc(env(safe-area-inset-bottom,0px)+72px)";
+        ? "calc(env(safe-area-inset-bottom,20px)+172px)"
+        : "calc(env(safe-area-inset-bottom,0px)+84px)";
       if (!toast) {
         toast = document.createElement("div");
         toast.id = "undoExerciseToast";
-        toast.style.cssText = `position:fixed;bottom:${bottomOffset};left:50%;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:14px;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(16px);opacity:0;transition:opacity 0.22s ease,transform 0.22s ease,bottom 0.2s ease;white-space:nowrap;`;
+        toast.style.cssText = `position:fixed;bottom:${bottomOffset};left:50%;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:14px;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(16px);opacity:0;pointer-events:none;transition:opacity 0.22s ease,transform 0.22s ease,bottom 0.2s ease;white-space:nowrap;`;
         toast.innerHTML = '<span style="font-size:12px;font-family:ui-monospace,monospace;color:#d1d5db">Упражнение удалено</span><button onclick="undoDeleteExercise()" style="font-size:11px;font-weight:800;font-family:ui-monospace,monospace;color:var(--accent-cal,#E63946);background:none;border:none;padding:0;cursor:pointer;letter-spacing:0.04em">ВЕРНУТЬ</button>';
         document.body.appendChild(toast);
       } else {
         toast.style.bottom = bottomOffset;
+        toast.style.pointerEvents = "none";
       }
       requestAnimationFrame(() => {
+        if (!lastDeletedExercise) return;
         toast.style.opacity = "1";
         toast.style.transform = "translateX(-50%) translateY(0)";
+        toast.style.pointerEvents = "auto";
       });
       undoDeleteTimer = setTimeout(() => {
+        toast.style.pointerEvents = "none";
         toast.style.opacity = "0";
         toast.style.transform = "translateX(-50%) translateY(20px)";
-        setTimeout(() => { lastDeletedExercise = null; }, 300);
+        undoClearDataTimer = setTimeout(() => {
+          lastDeletedExercise = null;
+          undoClearDataTimer = null;
+        }, 300);
       }, 4500);
     }
 
     function undoDeleteExercise() {
       if (!lastDeletedExercise) return;
       if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+      if (undoClearDataTimer) { clearTimeout(undoClearDataTimer); undoClearDataTimer = null; }
       const { progId, variantKey, ex, idx } = lastDeletedExercise;
       lastDeletedExercise = null;
       const prog = state.workout.programs?.[progId];
@@ -14907,10 +14918,15 @@
       list.splice(idx, 0, ex);
       prog.variants[vk].exercises = list;
       if (vk === prog.activeVariant) prog.exercises = list;
+      if (typeof recalculateWeeklySetsFromPrograms === "function") recalculateWeeklySetsFromPrograms();
       saveState();
       renderWorkoutAll();
       const toast = document.getElementById("undoExerciseToast");
-      if (toast) { toast.style.opacity = "0"; toast.style.transform = "translateX(-50%) translateY(20px)"; }
+      if (toast) {
+        toast.style.pointerEvents = "none";
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(-50%) translateY(20px)";
+      }
       showToast("Упражнение возвращено");
     }
 
@@ -15818,6 +15834,27 @@
     }
     window.fetchWithTimeout = fetchWithTimeout;
 
+    function normalizeGeminiProxyUrl(val) {
+      let clean = String(val || "").trim();
+      if (!clean) return "";
+      if (!/^https?:\/\//i.test(clean)) {
+        clean = "https://" + clean;
+      }
+      return clean.replace(/\/+$/, "").replace(/\/v1beta\/?$/i, "").replace(/\/v1\/?$/i, "");
+    }
+    window.normalizeGeminiProxyUrl = normalizeGeminiProxyUrl;
+
+    function isCloudflareOrHtmlErrorPayload(rawStr, contentType = "") {
+      const cType = String(contentType || "").toLowerCase();
+      if (cType.includes("text/html")) return true;
+      const s = String(rawStr || "").trim();
+      if (!s) return false;
+      if (/^(<!doctype\s+html|<html\b)/i.test(s)) return true;
+      if (/cloudflare|attention required|error\s*(5\d\d|4\d\d)/i.test(s) && /<\/html>|<\/body>|<title>/i.test(s)) return true;
+      return false;
+    }
+    window.isCloudflareOrHtmlErrorPayload = isCloudflareOrHtmlErrorPayload;
+
     function getEffectiveGroqKey() {
       const gInput = document.getElementById("inputGroqApiKey");
       if (gInput && gInput.value && gInput.value.trim().length > 8) {
@@ -15831,7 +15868,7 @@
     }
 
     function getActiveRoutingChannel() {
-      const rawBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || "").trim();
+      const rawBase = normalizeGeminiProxyUrl(state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || "");
       const currentModel = String(lastActiveGeminiModel || "").toLowerCase();
       const isAlt = currentModel.includes("llama") || currentModel.includes("groq") || currentModel.includes("gemma") || currentModel.includes("deepseek");
 
@@ -16102,7 +16139,7 @@
     }
 
     function handleApiProxyInput(val) {
-      const clean = (val || "").trim().replace(/\/+$/, "").replace(/\/v1beta\/?$/i, "").replace(/\/v1\/?$/i, "");
+      const clean = normalizeGeminiProxyUrl(val);
       state.apiProxy = clean;
       state.customGeminiBaseUrl = clean;
       try {
@@ -16871,6 +16908,7 @@
           }
         } else {
           document.getElementById("scannedResultCard")?.classList.add("hidden");
+          pendingScannedProduct = null;
           window.pendingScannedProduct = null;
           showToast("Товар не найден в базе, введите вручную", true);
           if (!modal?.classList.contains("open")) {
@@ -16896,14 +16934,19 @@
       const handler = _pendingNativeFetches.get(reqId);
       if (!handler) return;
       _pendingNativeFetches.delete(reqId);
-      if (errStr && status >= 400) {
-        handler.reject(new Error(errStr));
-      } else {
-        try {
-          handler.resolve(JSON.parse(dataStr));
-        } catch (e) {
-          handler.resolve({ text: dataStr });
-        }
+      const code = Number(status) || 0;
+      if (errStr || code === 0 || code < 200 || code >= 400) {
+        handler.reject(new Error(errStr || `HTTP ${code}`));
+        return;
+      }
+      if (isCloudflareOrHtmlErrorPayload(dataStr)) {
+        handler.reject(new Error("Шлюз вернул HTML-страницу ошибки вместо JSON API"));
+        return;
+      }
+      try {
+        handler.resolve(JSON.parse(dataStr));
+      } catch (e) {
+        handler.resolve({ text: dataStr });
       }
     };
 
@@ -16947,6 +16990,7 @@
       const userText = parts.map(p => p.text || "").filter(Boolean).join("\n");
       const inlineDataPart = parts.find(p => p.inlineData && p.inlineData.data);
       const hasImage = Boolean(inlineDataPart);
+      const wantsJson = geminiPayload?.generationConfig?.responseMimeType === "application/json";
 
       let msgContent;
       if (hasImage) {
@@ -16998,7 +17042,7 @@
             messages: messages,
             temperature: 0.1
           };
-          if (!hasImage) {
+          if (!hasImage && wantsJson) {
             reqBody.response_format = { type: "json_object" };
           }
 
@@ -17053,9 +17097,9 @@
       // Динамический опрос доступных моделей Groq при model_not_found / does not exist
       if (isGroq && needDynamicLookup) {
         try {
-          const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+          const modelsRes = await fetchWithTimeout("https://api.groq.com/openai/v1/models", {
             headers: { "Authorization": `Bearer ${key}` }
-          });
+          }, 6000);
 
           if (modelsRes.status === 403) {
             throw new Error("Groq API заблокирован (403 Forbidden). Включите VPN или используйте зеркало");
@@ -17079,16 +17123,16 @@
                 messages: messages,
                 temperature: 0.1
               };
-              if (!hasImage) reqBody.response_format = { type: "json_object" };
+              if (!hasImage && wantsJson) reqBody.response_format = { type: "json_object" };
 
-              const dynRes = await fetch(endpoint, {
+              const dynRes = await fetchWithTimeout(endpoint, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                   "Authorization": `Bearer ${key}`
                 },
                 body: JSON.stringify(reqBody)
-              });
+              }, altTimeoutMs);
 
               if (dynRes.status === 403) {
                 throw new Error("Groq API заблокирован (403 Forbidden). Включите VPN или используйте зеркало");
@@ -17098,7 +17142,8 @@
                 const dynJson = await dynRes.json();
                 const content = dynJson.choices?.[0]?.message?.content || "{}";
                 window._lastUsedAlternativeModel = dynModel;
-                window._cachedGroqModel = dynModel;
+                if (hasImage) window._cachedGroqVisionModel = dynModel;
+                else window._cachedGroqTextModel = dynModel;
                 return {
                   candidates: [{
                     content: {
@@ -17118,8 +17163,8 @@
     }
 
     async function callGeminiWithFallback(payload) {
-      const keys = getAllApiKeys();
-      const groqKey = (state.groqApiKey || localStorage.getItem("form_groq_api_key") || "").trim();
+      const keys = getAllApiKeys().filter(k => !k.startsWith("gsk_") && !k.startsWith("sk-or-"));
+      const groqKey = getEffectiveGroqKey();
 
       if (keys.length === 0 && !groqKey) {
         throw new Error("Ключ не задан в настройках");
@@ -17144,9 +17189,9 @@
         }
       }
 
-      let rawBase = (state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || "").trim();
-      rawBase = rawBase.replace(/\/+$/, "").replace(/\/v1beta\/?$/i, "").replace(/\/v1\/?$/i, "");
-      const apiBase = rawBase || "https://generativelanguage.googleapis.com";
+      const apiBase = normalizeGeminiProxyUrl(
+        state.customGeminiBaseUrl || state.apiProxy || localStorage.getItem("form_gemini_base_url") || localStorage.getItem("form_gemini_proxy") || ""
+      ) || "https://generativelanguage.googleapis.com";
 
       let lastError = null;
       let hasLocationError = false;
@@ -17187,7 +17232,18 @@
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(modelPayload)
                 }, reqTimeoutMs);
-                data = await res.json().catch(() => ({}));
+                const cType = res.headers && typeof res.headers.get === "function" ? (res.headers.get("content-type") || "") : "";
+                const rawText = (typeof res.text === "function")
+                  ? await res.text()
+                  : JSON.stringify(await res.json().catch(() => ({})));
+                if (isCloudflareOrHtmlErrorPayload(rawText, cType)) {
+                  throw new Error("Шлюз вернул HTML-страницу ошибки вместо JSON API");
+                }
+                try {
+                  data = rawText ? JSON.parse(rawText) : {};
+                } catch (e) {
+                  data = {};
+                }
                 if (!res.ok) {
                   const errMsg = data?.error?.message || `HTTP ${res.status}`;
                   if (/location is not supported|unsupported location/i.test(errMsg)) {
@@ -17206,7 +17262,7 @@
                     throw new Error("Включите VPN или укажите Cloudflare шлюз в настройках API");
                   }
                 } else {
-                  if (/Таймаут сети|Load failed|Failed to fetch|NetworkError/i.test(fetchErr.message || "")) {
+                  if (/Таймаут сети|Load failed|Failed to fetch|NetworkError|HTML-страницу/i.test(fetchErr.message || "")) {
                     hasNetworkTimeout = true;
                   }
                   throw fetchErr;
@@ -20770,8 +20826,32 @@
       }
       delete meal.variants[vk];
       const remaining = Object.keys(meal.variants);
-      meal.activeVariant = remaining[0];
-      if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = remaining[0];
+      const fallbackVk = remaining[0];
+      meal.activeVariant = fallbackVk;
+      if (pendingEditSlotCtx) pendingEditSlotCtx.activeModalVariant = fallbackVk;
+
+      const isBf = (mealId === "breakfast" || mealId === "m_bf" || meal.type === "breakfast");
+      const syncChoice = (prog) => {
+        if (!prog || !prog.variantChoice || typeof prog.variantChoice !== "object") return;
+        const curChoice = prog.variantChoice[mealId];
+        if (curChoice === vk || (curChoice && !meal.variants[curChoice])) {
+          prog.variantChoice[mealId] = fallbackVk;
+        }
+        if (isBf) {
+          const bfChoice = prog.variantChoice.breakfast;
+          if (bfChoice === vk || (bfChoice && !meal.variants[bfChoice])) {
+            prog.variantChoice.breakfast = fallbackVk;
+          }
+        }
+      };
+
+      if (state.dailyMealPlanProgress && typeof state.dailyMealPlanProgress === "object") {
+        Object.values(state.dailyMealPlanProgress).forEach(syncChoice);
+      }
+      if (typeof getTodayProgress === "function") {
+        syncChoice(getTodayProgress());
+      }
+
       saveState();
       renderEditMealSlotVariantsManager(mealId);
       renderEditMealSlotProductsList(mealId);
@@ -23682,6 +23762,7 @@
       document.getElementById("scannedAlternativesBox")?.classList.add("hidden");
       const barcodeInput = document.getElementById("barcodeInput");
       if (barcodeInput) barcodeInput.value = "";
+      pendingScannedProduct = null;
       window.pendingScannedProduct = null;
       const confirmBtn = document.querySelector("#scannedResultCard button[onclick='confirmScannedProduct()']");
       if (confirmBtn) {
@@ -23701,6 +23782,9 @@
     window.openScanner = openScanner;
 
     function closeScanner() {
+      pendingScannedProduct = null;
+      window.pendingScannedProduct = null;
+      window._scannerReqToken = (window._scannerReqToken || 0) + 1;
       stopCamera();
       setScannerLoadingState(false);
       document.getElementById("scannerModal")?.classList.remove("open");
@@ -23829,7 +23913,10 @@
         return window.confirmScannedProduct();
       }
       if (!pendingScannedProduct) return;
-      addFoodEntryFrom100g(pendingScannedProduct);
+      const prod = pendingScannedProduct;
+      pendingScannedProduct = null;
+      window.pendingScannedProduct = null;
+      addFoodEntryFrom100g(prod);
       document.getElementById("scannedResultCard")?.classList.add("hidden");
       closeScanner();
     }
@@ -23857,13 +23944,24 @@
         return;
       }
 
+      const camSeq = (window._cameraStartSeq = (window._cameraStartSeq || 0) + 1);
       try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false
         });
+        const isModalOpen = Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
+        if (!isModalOpen || camSeq !== window._cameraStartSeq) {
+          try { if (stream && stream.getTracks) stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+          return;
+        }
+        videoStream = stream;
         video.srcObject = videoStream;
         await video.play();
+        if (!document.getElementById("scannerModal")?.classList.contains("open") || camSeq !== window._cameraStartSeq) {
+          forceStopScannerCamera();
+          return;
+        }
         video.classList.remove("hidden");
         preview.classList.add("hidden");
         placeholder.classList.add("hidden");
@@ -23884,6 +23982,7 @@
     }
 
     function forceStopScannerCamera() {
+      window._cameraStartSeq = (window._cameraStartSeq || 0) + 1;
       stopLiveBarcodeLoop();
       if (typeof Quagga !== "undefined" && typeof Quagga.stop === "function") {
         try { Quagga.stop(); } catch (e) {}
@@ -23915,26 +24014,33 @@
     }
 
     function compressImageFile(file, maxSide = 800, quality = 0.78) {
+      if (typeof window.compressImageFile === "function" && window.compressImageFile !== compressImageFile) {
+        return window.compressImageFile(file, maxSide, quality);
+      }
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error("Ошибка чтения файла"));
         reader.onload = () => {
           const img = new Image();
-          img.onerror = reject;
+          img.onerror = () => reject(new Error("Ошибка загрузки изображения"));
           img.onload = () => {
-            let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-            if (w > maxSide || h > maxSide) {
-              if (w > h) { h = Math.round((h * maxSide) / w); w = maxSide; }
-              else { w = Math.round((w * maxSide) / h); h = maxSide; }
+            try {
+              let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+              if (w > maxSide || h > maxSide) {
+                if (w > h) { h = Math.round((h * maxSide) / w); w = maxSide; }
+                else { w = Math.round((w * maxSide) / h); h = maxSide; }
+              }
+              const canvas = document.createElement("canvas");
+              canvas.width = w; canvas.height = h;
+              canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+              const compUrl = canvas.toDataURL("image/jpeg", quality);
+              const outImg = new Image();
+              outImg.onload = () => resolve({ dataUrl: compUrl, imgElement: outImg });
+              outImg.onerror = () => reject(new Error("Ошибка декодирования изображения"));
+              outImg.src = compUrl;
+            } catch (err) {
+              reject(err);
             }
-            const canvas = document.createElement("canvas");
-            canvas.width = w; canvas.height = h;
-            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-            const compUrl = canvas.toDataURL("image/jpeg", quality);
-            const outImg = new Image();
-            outImg.onload = () => resolve({ dataUrl: compUrl, imgElement: outImg });
-            outImg.onerror = () => resolve({ dataUrl: compUrl, imgElement: img });
-            outImg.src = compUrl;
           };
           img.src = reader.result;
         };
@@ -24050,6 +24156,7 @@
       const placeholder = document.getElementById("cameraPlaceholder");
       try {
         const { dataUrl, imgElement } = await compressImageFile(file, 768, 0.72);
+        if (!document.getElementById("scannerModal")?.classList.contains("open")) return;
         preview.src = dataUrl;
         preview.classList.remove("hidden");
         placeholder.classList.add("hidden");
@@ -24062,36 +24169,52 @@
     }
 
     async function processCapturedDataUrl(dataUrl, optionalImgEl) {
+      if (typeof window.processCapturedDataUrl === "function" && window.processCapturedDataUrl !== processCapturedDataUrl) {
+        return await window.processCapturedDataUrl(dataUrl, optionalImgEl);
+      }
+      const reqToken = (window._scannerReqToken = (window._scannerReqToken || 0) + 1);
+      const isScanStillValid = () => reqToken === window._scannerReqToken && Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
       setScannerLoadingState(true, { text: "Сканируем штрихкод..." });
       try {
         window._lastScannerBase64 = dataUrl;
         let imgElement = optionalImgEl || await new Promise((res, rej) => {
           const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
         });
+        if (!isScanStillValid()) return;
         const base64Data = dataUrl.split(",")[1];
         setScannerLoadingState(true, { text: "Сканируем штрихкод..." });
         const localBarcode = await detectBarcodeMultiPass(dataUrl, imgElement);
+        if (!isScanStillValid()) return;
         if (localBarcode && localBarcode.code) {
           drawHighlightedRegion(localBarcode.normBox, localBarcode.code);
           setScannerLoadingState(true, { text: `Штрихкод ${localBarcode.code}: ищем КБЖУ...`, barcode: localBarcode.code });
-          if (await fetchProductByBarcode(localBarcode.code, true)) return;
+          const found = await fetchProductByBarcode(localBarcode.code, true);
+          if (!isScanStillValid() || found) return;
         }
         setScannerLoadingState(true, { text: "Экспресс-чтение этикетки через ИИ..." });
-        await analyzeImageWithGemini(base64Data, "image/jpeg");
+        await analyzeImageWithGemini(base64Data, "image/jpeg", reqToken);
       } catch (err) {
-        showToast("Ошибка обработки кадра", true);
+        if (isScanStillValid()) showToast("Ошибка обработки кадра", true);
       } finally {
-        setScannerLoadingState(false);
+        if (reqToken === window._scannerReqToken) setScannerLoadingState(false);
       }
     }
 
-    async function analyzeImageWithGemini(base64Data, mimeType) {
+    async function analyzeImageWithGemini(base64Data, mimeType, callerReqToken = null) {
+      if (typeof window.analyzeImageWithGemini === "function" && window.analyzeImageWithGemini !== analyzeImageWithGemini) {
+        return await window.analyzeImageWithGemini(base64Data, mimeType, callerReqToken);
+      }
+      const reqToken = (callerReqToken !== null && callerReqToken !== undefined)
+        ? callerReqToken
+        : (window._scannerReqToken = (window._scannerReqToken || 0) + 1);
+      const isScanStillValid = () => reqToken === window._scannerReqToken && Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
       const prompt = `Считай с фото штрихкод (13 цифр в "barcode" и координаты [ymin,xmin,ymax,xmax] 0..1000 в "barcode_box") и КБЖУ на 100г. Строго JSON: {"name":"Название","weight":число_г,"cal100":число,"p100":число,"f100":число,"c100":число,"source":"Этикетка","barcode":"","barcode_box":[0,0,0,0]}`;
       try {
         const data = await callGemini3Flash({
           contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType || "image/jpeg", data: base64Data } }] }],
           generationConfig: { responseMimeType: "application/json" }
         });
+        if (!isScanStillValid()) return;
         const parsed = JSON.parse(cleanJsonString(data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}"));
         const cleanCode = parsed?.barcode ? String(parsed.barcode).replace(/\D/g, "") : "";
         let normBox = { x: 0.16, y: 0.36, w: 0.68, h: 0.25 };
@@ -24101,10 +24224,12 @@
         }
         if (cleanCode && isValidEANBarcode(cleanCode)) {
           drawHighlightedRegion(normBox, cleanCode);
-          if (await fetchProductByBarcode(cleanCode, true)) return;
+          const foundByCode = await fetchProductByBarcode(cleanCode, true);
+          if (!isScanStillValid() || foundByCode) return;
         } else {
           drawHighlightedRegion(normBox, "");
         }
+        if (!isScanStillValid()) return;
         if (parsed && parsed.name) {
           parsed.name = stripEmojis(parsed.name);
           const numMacro = (v, fb) => {
@@ -24166,11 +24291,13 @@
           return true;
         }
         document.getElementById("scannedResultCard")?.classList.add("hidden");
+        pendingScannedProduct = null;
         window.pendingScannedProduct = null;
         if (!silentIfNotFound) showToast(`Штрихкод ${cleanCode} не найден в базе`, true);
         return false;
       } catch (err) {
         document.getElementById("scannedResultCard")?.classList.add("hidden");
+        pendingScannedProduct = null;
         window.pendingScannedProduct = null;
         if (!silentIfNotFound) showToast(`Ошибка поиска штрихкода: ${err.message}`, true);
         return false;
@@ -28230,7 +28357,7 @@
       panel.addEventListener("touchstart", (e) => {
         if (e.touches.length !== 1) return;
         const target = e.target;
-        if (target.closest("input, textarea, select, video, audio, .no-swipe, button")) {
+        if (target.closest("input, textarea, select, video, audio, .no-swipe, button, .overflow-x-auto")) {
           cancelGesture = true;
           return;
         }
@@ -29447,15 +29574,20 @@
     window.compressImageFile = function(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error("Ошибка чтения файла"));
         reader.onload = () => {
           const img = new Image();
-          img.onerror = reject;
+          img.onerror = () => reject(new Error("Ошибка загрузки изображения"));
           img.onload = () => {
-            const croppedDataUrl = cropImageToViewfinder(img, 760, 680, 0.84);
-            const croppedImg = new Image();
-            croppedImg.onload = () => resolve({ dataUrl: croppedDataUrl, imgElement: croppedImg });
-            croppedImg.src = croppedDataUrl;
+            try {
+              const croppedDataUrl = cropImageToViewfinder(img, 760, 680, 0.84);
+              const croppedImg = new Image();
+              croppedImg.onerror = () => reject(new Error("Ошибка декодирования изображения"));
+              croppedImg.onload = () => resolve({ dataUrl: croppedDataUrl, imgElement: croppedImg });
+              croppedImg.src = croppedDataUrl;
+            } catch (cropErr) {
+              reject(cropErr);
+            }
           };
           img.src = reader.result;
         };
@@ -29529,13 +29661,24 @@
         return;
       }
 
+      const camSeq = (window._cameraStartSeq = (window._cameraStartSeq || 0) + 1);
       try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } },
           audio: false
         });
+        const isModalOpen = Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
+        if (!isModalOpen || camSeq !== window._cameraStartSeq) {
+          try { if (stream && stream.getTracks) stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+          return;
+        }
+        videoStream = stream;
         video.srcObject = videoStream;
         await video.play();
+        if (!document.getElementById("scannerModal")?.classList.contains("open") || camSeq !== window._cameraStartSeq) {
+          forceStopScannerCamera();
+          return;
+        }
         video.classList.remove("hidden");
         preview.classList.add("hidden");
         placeholder.classList.add("hidden");
@@ -29815,23 +29958,27 @@
 
     window.confirmScannedProduct = function() {
       if (!pendingScannedProduct) return;
+      const prod = pendingScannedProduct;
+      pendingScannedProduct = null;
+      window.pendingScannedProduct = null;
+
       const unitInput = document.getElementById("scannedPieceWeightInput");
-      const unitW = scannedPieceModeActive ? (parseFloat(unitInput ? unitInput.value : "") || pendingScannedProduct.pieceWeight || 5) : null;
-      const currentW = Math.max(1, Number(document.getElementById("scannedResWeightInput")?.value) || pendingScannedProduct.weight || 100);
+      const unitW = scannedPieceModeActive ? (parseFloat(unitInput ? unitInput.value : "") || prod.pieceWeight || 5) : null;
+      const currentW = Math.max(1, Number(document.getElementById("scannedResWeightInput")?.value) || prod.weight || 100);
 
       const finalized = {
-        name: pendingScannedProduct.name,
-        brand: pendingScannedProduct.brand || "",
-        cal100: pendingScannedProduct.cal100,
-        p100: pendingScannedProduct.p100,
-        f100: pendingScannedProduct.f100,
-        c100: pendingScannedProduct.c100,
+        name: prod.name,
+        brand: prod.brand || "",
+        cal100: prod.cal100,
+        p100: prod.p100,
+        f100: prod.f100,
+        c100: prod.c100,
         weight: currentW,
-        source: pendingScannedProduct.source,
+        source: prod.source,
         standardUnitWeight: unitW,
         pieceWeight: unitW,
         isPiece: scannedPieceModeActive,
-        packageNetWeight: pendingScannedProduct.packageNetWeight
+        packageNetWeight: prod.packageNetWeight
       };
 
       if (window._scannerTargetCtx && applyScannedProductToPlanModal(finalized)) {
@@ -29906,6 +30053,9 @@
     };
 
     window.processCapturedDataUrl = async function(dataUrl, optionalImgEl) {
+      const reqToken = (window._scannerReqToken = (window._scannerReqToken || 0) + 1);
+      const isScanStillValid = () => reqToken === window._scannerReqToken && Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
+
       clearScannerOverlay();
       setScannerBadgeText("");
       setScannerLoadingState(true, { text: "Обрабатываем снимок..." });
@@ -29915,13 +30065,14 @@
         let imgElement = optionalImgEl || await new Promise((res, rej) => {
           const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
         });
+        if (!isScanStillValid()) return;
         let base64Data = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
         base64Data = base64Data.trim().replace(/\s+/g, "");
 
         // Режим 'dish' (Блюдо / Порция): мгновенный вызов Vision без Quagga и без задержки 1.2с
         if (scannerMode === "dish") {
           setScannerLoadingState(true, { text: "Определяем блюдо и вес порции через ИИ..." });
-          await analyzeImageWithGemini(base64Data, "image/jpeg");
+          await analyzeImageWithGemini(base64Data, "image/jpeg", reqToken);
           return;
         }
 
@@ -29935,6 +30086,7 @@
           const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 1200));
           // Жесткий лимит 1.2с на Quagga в любом режиме, чтобы не зависать на изогнутых банках
           const localBarcode = await Promise.race([barcodePromise, timeoutPromise]);
+          if (!isScanStillValid()) return;
 
           if (localBarcode && localBarcode.code) {
             if (localBarcode.normBox && localBarcode.normBox.isReal) {
@@ -29947,6 +30099,7 @@
             if (bInput) bInput.value = localBarcode.code;
             setScannerLoadingState(true, { text: `Штрихкод ${localBarcode.code}: загружаем КБЖУ...`, barcode: localBarcode.code });
             const found = await fetchProductByBarcode(localBarcode.code, true);
+            if (!isScanStillValid()) return;
             if (found) return;
             setScannerLoadingState(true, { text: "Штрихкод не в базе: читаем этикетку через ИИ..." });
           }
@@ -29955,15 +30108,24 @@
         setScannerLoadingState(true, { text: scannerMode === "barcode"
           ? "Считываем состав и массу с упаковки..."
           : "Определяем продукт и вес порции через ИИ..." });
-        await analyzeImageWithGemini(base64Data, "image/jpeg");
+        await analyzeImageWithGemini(base64Data, "image/jpeg", reqToken);
       } catch (err) {
-        showToast("Ошибка обработки снимка", true);
+        if (isScanStillValid()) {
+          showToast("Ошибка обработки снимка", true);
+        }
       } finally {
-        setScannerLoadingState(false);
+        if (reqToken === window._scannerReqToken) {
+          setScannerLoadingState(false);
+        }
       }
     };
 
-    window.analyzeImageWithGemini = async function(base64Data, mimeType) {
+    window.analyzeImageWithGemini = async function(base64Data, mimeType, callerReqToken = null) {
+      const reqToken = (callerReqToken !== null && callerReqToken !== undefined)
+        ? callerReqToken
+        : (window._scannerReqToken = (window._scannerReqToken || 0) + 1);
+      const isScanStillValid = () => reqToken === window._scannerReqToken && Boolean(document.getElementById("scannerModal")?.classList.contains("open"));
+
       let cleanBase64 = String(base64Data || "").trim();
       if (cleanBase64.includes(",")) cleanBase64 = cleanBase64.split(",")[1];
       cleanBase64 = cleanBase64.replace(/\s+/g, "");
@@ -30030,6 +30192,7 @@ ${knownPiecesContext}
           }],
           generationConfig: { responseMimeType: "application/json" }
         });
+        if (!isScanStillValid()) return;
 
         const rawAiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const parsed = extractJsonFromAiResponse(rawAiText);
@@ -30076,7 +30239,9 @@ ${knownPiecesContext}
 
           const aiAlreadyHasValidMacros = Boolean(parsed && parsed.name && !hasInvalidZeroMacros(parsed));
           if (!aiAlreadyHasValidMacros) {
-            if (await fetchProductByBarcode(cleanCode, true)) return;
+            const foundByAiBarcode = await fetchProductByBarcode(cleanCode, true);
+            if (!isScanStillValid()) return;
+            if (foundByAiBarcode) return;
           } else {
             // ИИ уже считал название и КБЖУ с фото — не теряем время на лишний запрос в OFF, сразу кэшируем!
             if (!state.barcodeCache) state.barcodeCache = {};
@@ -30093,6 +30258,8 @@ ${knownPiecesContext}
             saveState();
           }
         }
+
+        if (!isScanStillValid()) return;
 
         if (parsed && parsed.name) {
           const normName = normalizeSearchText(parsed.name);
@@ -30151,6 +30318,7 @@ ${knownPiecesContext}
           showToast("Не удалось определить объект на фото", true);
         }
       } catch (err) {
+        if (!isScanStillValid()) return;
         const errMsg = String(err.message || "");
         if (errMsg.includes("VPN") || errMsg.includes("шлюз")) {
           showToast(errMsg, true);
@@ -30451,6 +30619,19 @@ ${knownPiecesContext}
       }
     }
 
+    function findScrollableAncestor(target, boundaryPanel) {
+      let node = (target && target.nodeType === 1) ? target : target?.parentElement;
+      while (node && node !== boundaryPanel && node !== document.body) {
+        const style = window.getComputedStyle(node);
+        const overflowY = style ? style.overflowY : "";
+        if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight + 1) {
+          return node;
+        }
+        node = node.parentElement;
+      }
+      return null;
+    }
+
     function initBottomSheetGestures() {
       document.querySelectorAll(".sheet-backdrop").forEach(backdrop => {
         const panel = backdrop.querySelector(".sheet-panel");
@@ -30464,6 +30645,8 @@ ${knownPiecesContext}
         let isDragging = false;
         let directionChecked = false;
         let isHeaderTouch = false;
+        let ignoreGesture = false;
+        let innerScroller = null;
 
         const handle = panel.querySelector(".w-10.h-1, [class*='h-1'][class*='rounded-full']");
         if (handle) {
@@ -30472,19 +30655,29 @@ ${knownPiecesContext}
 
         panel.addEventListener("touchstart", (e) => {
           if (e.touches.length !== 1) return;
+          const target = e.target;
+          if (target && target.closest && target.closest("input, textarea, select, video, audio")) {
+            ignoreGesture = true;
+            isDragging = false;
+            directionChecked = true;
+            innerScroller = null;
+            return;
+          }
+          ignoreGesture = false;
           startY = e.touches[0].clientY;
           startX = e.touches[0].clientX;
           currentY = startY;
           startTime = Date.now();
           isDragging = false;
           directionChecked = false;
+          innerScroller = findScrollableAncestor(target, panel);
 
           const rect = panel.getBoundingClientRect();
           isHeaderTouch = (startY - rect.top) < 65;
         }, { passive: true });
 
         panel.addEventListener("touchmove", (e) => {
-          if (e.touches.length !== 1) return;
+          if (ignoreGesture || e.touches.length !== 1) return;
           currentY = e.touches[0].clientY;
           const currentX = e.touches[0].clientX;
           const dy = currentY - startY;
@@ -30493,7 +30686,8 @@ ${knownPiecesContext}
           if (!directionChecked) {
             if (Math.abs(dy) > 5 || Math.abs(dx) > 5) {
               directionChecked = true;
-              if (dy > 0 && Math.abs(dy) > Math.abs(dx) && (panel.scrollTop <= 1 || isHeaderTouch)) {
+              const atTop = panel.scrollTop <= 1 && (!innerScroller || innerScroller.scrollTop <= 1);
+              if (dy > 0 && Math.abs(dy) > Math.abs(dx) && (isHeaderTouch || atTop)) {
                 isDragging = true;
               } else {
                 isDragging = false;
@@ -30509,7 +30703,7 @@ ${knownPiecesContext}
               panel.style.transform = `translateY(${dy}px)`;
               const opacity = Math.max(0.12, 1 - (dy / 440));
               backdrop.style.opacity = opacity;
-            } else if (panel.scrollTop <= 0) {
+            } else if (panel.scrollTop <= 0 && (!innerScroller || innerScroller.scrollTop <= 0)) {
               panel.style.transition = "none";
               panel.style.transform = `translateY(${dy * 0.16}px)`;
             }
@@ -30517,6 +30711,8 @@ ${knownPiecesContext}
         }, { passive: false });
 
         const finishDrag = () => {
+          ignoreGesture = false;
+          innerScroller = null;
           if (!isDragging) return;
           isDragging = false;
 
