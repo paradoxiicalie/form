@@ -22,6 +22,14 @@ final class RestActivityManager {
         ) { [weak self] _ in
             self?.cleanupExpiredActivities()
         }
+        // Немедленная остановка keep-alive ресурсов и Live Activity по внешнему сигналу (например с LiveActivityIntent)
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("FormStopRestTimerExternally"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.stopActivity()
+        }
     }
 
     private func runOnMain(_ work: @escaping () -> Void) {

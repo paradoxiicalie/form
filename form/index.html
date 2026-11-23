@@ -13054,11 +13054,22 @@
     }
     window.formatFoodDisplayParts = formatFoodDisplayParts;
 
-    function formatPortionLabel(item, w, pieceCount) {
+    function formatPortionLabel(item, w, pieceCount, hasExplicitWeight = false) {
       const weight = Math.round(Number(w) || 100);
       if (pieceCount) return `${pieceCount} шт (${weight}г)`;
+      if (hasExplicitWeight) return `${weight}г`;
       if (item?.portionLabel) return `${item.portionLabel} (${weight}г)`;
-      if (item?.isPiece) return `1 шт (${weight}г)`;
+      if (item?.isPiece) {
+        const singleW = Number(item.pieceWeight || item.standardUnitWeight || item.unitWeight || 0);
+        if (singleW > 0 && Math.abs(weight - singleW) >= 2) {
+          const estPcs = Math.round(weight / singleW);
+          if (estPcs > 1 && Math.abs(weight - estPcs * singleW) <= 4) {
+            return `${estPcs} шт (${weight}г)`;
+          }
+          return `${weight}г`;
+        }
+        return `1 шт (${weight}г)`;
+      }
       return `${weight}г`;
     }
     window.formatPortionLabel = formatPortionLabel;
@@ -13778,35 +13789,38 @@
     }
 
     function toggleSupplementToday(suppId) {
+      checkDayRollover();
       const supp = (state.supplements || []).find(s => s.id === suppId);
       if (!supp) return;
       if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
 
-      const wasTaken = !!state.supplementsTakenToday[suppId];
+      const isWhey = isWheySupplementId(suppId) || /прот/i.test(String(supp.name || ""));
+      const wasTaken = Boolean(state.supplementsTakenToday[suppId]);
       if (wasTaken) {
         delete state.supplementsTakenToday[suppId];
+        if (isWhey) setWheySupplementTaken(false);
         // Синхронизация с планом: убираем запись и снимаем отметку в плане
-        state.todayItems = (state.todayItems || []).filter(i => i.suppRefId !== suppId && !(suppId === "prot" && i.planItemId === "pw_whey"));
+        state.todayItems = (state.todayItems || []).filter(i => i.suppRefId !== suppId && !(isWhey && (i.planItemId === "pw_whey" || isWheySupplementId(i.suppRefId))));
         showToast(`Снято: ${supp.name}`);
       } else {
         state.supplementsTakenToday[suppId] = true;
         // Защита от дублирования протеина с блоком «После тренировки»
-        const alreadyLogged = suppId === "prot" && (state.todayItems || []).some(i => i.planItemId === "pw_whey" || i.suppRefId === "prot");
+        const alreadyLogged = isWhey && (state.todayItems || []).some(i => i.planItemId === "pw_whey" || isWheySupplementId(i.suppRefId));
         if (!alreadyLogged && ((Number(supp.cal) || 0) > 0 || (Number(supp.p) || 0) > 0 || (Number(supp.c) || 0) > 0 || (Number(supp.f) || 0) > 0)) {
           state.todayItems.push({
             id: "supp_entry_" + suppId + "_" + Date.now(),
             suppRefId: suppId,
-            planItemId: (suppId === "prot") ? "pw_whey" : undefined,
+            planItemId: isWhey ? "pw_whey" : undefined,
             name: supp.name,
-            weight: (suppId === "prot") ? 30 : 100,
+            weight: isWhey ? 30 : 100,
             cal: Math.round(Number(supp.cal) || 0),
             p: round1(Number(supp.p) || 0),
             f: round1(Number(supp.f) || 0),
             c: round1(Number(supp.c) || 0),
-            cal100: (suppId === "prot") ? 400 : (Number(supp.cal) || 0),
-            p100: (suppId === "prot") ? 75.0 : (Number(supp.p) || 0),
-            f100: (suppId === "prot") ? 6.0 : (Number(supp.f) || 0),
-            c100: (suppId === "prot") ? 10.0 : (Number(supp.c) || 0),
+            cal100: isWhey ? 400 : (Number(supp.cal) || 0),
+            p100: isWhey ? 75.0 : (Number(supp.p) || 0),
+            f100: isWhey ? 6.0 : (Number(supp.f) || 0),
+            c100: isWhey ? 10.0 : (Number(supp.c) || 0),
             meal: "snack",
             source: "Стек"
           });
@@ -14002,14 +14016,23 @@
       }
 
       let deltaW = 0;
+      let spanDays = 14;
       if (logs.length >= 2) {
-        const first = logs[Math.max(0, logs.length - 7)].weight;
-        const last = logs[logs.length - 1].weight;
-        deltaW = round1(last - first);
+        const firstEntry = logs[Math.max(0, logs.length - 7)];
+        const lastEntry = logs[logs.length - 1];
+        deltaW = round1(lastEntry.weight - firstEntry.weight);
+        if (firstEntry.date && lastEntry.date) {
+          const d1 = new Date(firstEntry.date + "T00:00:00");
+          const d2 = new Date(lastEntry.date + "T00:00:00");
+          const diffDays = Math.round((d2 - d1) / 86400000);
+          if (Number.isFinite(diffDays) && diffDays >= 1) {
+            spanDays = Math.max(3, diffDays);
+          }
+        }
       }
 
-      // 1 кг ткани ≈ 7700 ккал за 14 дней (~550 ккал/день)
-      const dailyEnergyDelta = Math.round((deltaW * 7700) / 14);
+      // 1 кг ткани ≈ 7700 ккал за реальный интервал дней
+      const dailyEnergyDelta = Math.round((deltaW * 7700) / spanDays);
       const estimatedRealTdee = Math.max(1400, Math.round(avgIntake - dailyEnergyDelta));
       const latestW = logs[logs.length - 1].weight;
       const formula = getBodyFormulaBaseline(latestW);
@@ -14017,9 +14040,21 @@
       const isBulking = goalMode > 1.05;
       const isCutting = goalMode < 0.95;
 
-      // Проверяем, была ли уже применена умная корректировка для этого замера веса
+      // Проверяем, была ли уже применена корректировка в текущем окне (кулдаун 7 дней / сдвиг веса < 0.25 кг)
       const adj = state.smartAdjustment;
-      const isAlreadyAdjusted = adj && (adj.applied || Math.abs(Number(adj.weight) - Number(latestW)) < 0.2 || adj.date === getTodayKey());
+      let daysSinceAdj = 999;
+      if (adj && adj.date) {
+        const adjD = new Date(adj.date + "T00:00:00");
+        const todayD = new Date(getTodayKey() + "T00:00:00");
+        const rawDays = Math.round((todayD - adjD) / 86400000);
+        if (Number.isFinite(rawDays)) daysSinceAdj = Math.max(0, rawDays);
+      }
+      const isAlreadyAdjusted = Boolean(
+        adj &&
+        adj.applied &&
+        daysSinceAdj < 7 &&
+        Math.abs(Number(adj.weight) - Number(latestW)) < 0.25
+      );
 
       let adviceHtml = "";
       if (logs.length === 1) {
@@ -16169,20 +16204,23 @@
         }
 
         if (found) {
-          const unitW = found.unitWeight || found.pieceWeight || found.defaultWeight || 100;
+          const unitW = isPiece
+            ? Number(found.pieceWeight || found.standardUnitWeight || found.unitWeight || found.defaultWeight || 100)
+            : Number(found.unitWeight || found.pieceWeight || found.standardUnitWeight || found.defaultWeight || 100);
           let finalW = fragWeight;
           if (!finalW) {
             finalW = isPiece ? Math.round(count * unitW) : (found.defaultWeight || unitW);
           }
+          const resolvedIsPiece = fragWeight ? false : (isPiece || Boolean(found.isPiece));
           const itemRes = {
-            name: stripEmojis(isPiece && count > 1 ? `${found.name} (${count} шт)` : found.name),
+            name: stripEmojis(isPiece && !fragWeight && count > 1 ? `${found.name} (${count} шт)` : found.name),
             cal100: Number(found.cal || found.cal100) || 0,
             p100: Number(found.p || found.p100) || 0,
             f100: Number(found.f || found.f100) || 0,
             c100: Number(found.c || found.c100) || 0,
             weight: finalW,
-            standardUnitWeight: unitW,
-            isPiece: isPiece || Boolean(found.unitWeight),
+            standardUnitWeight: resolvedIsPiece ? unitW : (found.standardUnitWeight || undefined),
+            isPiece: resolvedIsPiece,
             source: "База"
           };
           matchedList.push(itemRes);
@@ -16545,7 +16583,9 @@
       if (!m || typeof m !== "object") return 100;
       const pkg = Number(m.packageNetWeight);
       if (Number.isFinite(pkg) && pkg > 0) return Math.round(pkg);
-      const candidates = [m.unitWeight, m.defaultWeight, m.standardUnitWeight, m.weight];
+      const candidates = m.isPiece
+        ? [m.pieceWeight, m.standardUnitWeight, m.unitWeight, m.defaultWeight, m.weight]
+        : [m.unitWeight, m.defaultWeight, m.standardUnitWeight, m.weight];
       for (const raw of candidates) {
         const val = Number(raw);
         if (Number.isFinite(val) && val > 0 && Math.round(val) !== 100) {
@@ -17934,13 +17974,53 @@
     }
     window.computeItemsMacros = computeItemsMacros;
 
+    function computeMandatorySlotQuota(items) {
+      const mandatory = (items || []).filter(it => !isOptionalMealItem(it));
+      return computeItemsMacros(mandatory);
+    }
+
+    function recalcMealSlotQuotaFromTemplate(meal) {
+      if (!meal || meal.isSupplement) return;
+      let activeItems = [];
+      if (meal.hasVariants && meal.variants) {
+        const vk = meal.activeVariant || Object.keys(meal.variants)[0] || "A";
+        const vData = meal.variants[vk];
+        activeItems = Array.isArray(vData) ? vData : (vData?.items || []);
+      } else {
+        activeItems = meal.items || [];
+      }
+      const q = computeMandatorySlotQuota(activeItems);
+      if (q.cal > 0) {
+        meal.slotTargetMacros = q;
+      } else {
+        delete meal.slotTargetMacros;
+      }
+    }
+
     function ensureMealSlotTargetMacros(template) {
       if (!template || !Array.isArray(template.meals)) return;
       const coachPresetMeals = window.BUILTIN_MEAL_PLAN_PRESETS?.coach_2520?.meals;
 
       template.meals.forEach(meal => {
         if (!meal || meal.isSupplement) return;
-        if (meal.slotTargetMacros && typeof meal.slotTargetMacros === "object" && Number(meal.slotTargetMacros.cal) > 0) {
+        let currentItems = [];
+        if (meal.hasVariants && meal.variants) {
+          const vk = meal.activeVariant || Object.keys(meal.variants)[0] || "A";
+          const vData = meal.variants[vk];
+          currentItems = Array.isArray(vData) ? vData : (vData?.items || []);
+        } else {
+          currentItems = meal.items || [];
+        }
+        const hasExistingQuota = Boolean(meal.slotTargetMacros && typeof meal.slotTargetMacros === "object" && Number(meal.slotTargetMacros.cal) > 0);
+        if (hasExistingQuota) {
+          // Санитизируем старую квоту, если в ней раньше учитывались опциональные соусы
+          if (currentItems.some(isOptionalMealItem)) {
+            const fullQ = computeItemsMacros(currentItems);
+            const mandatoryQ = computeMandatorySlotQuota(currentItems);
+            if (mandatoryQ.cal > 0 && Math.abs(Number(meal.slotTargetMacros.cal) - fullQ.cal) <= 2 && Math.abs(fullQ.cal - mandatoryQ.cal) > 2) {
+              meal.slotTargetMacros = mandatoryQ;
+            }
+          }
           return;
         }
 
@@ -17956,7 +18036,7 @@
             } else {
               refItems = refMeal.items || [];
             }
-            const q = computeItemsMacros(refItems);
+            const q = computeMandatorySlotQuota(refItems);
             if (q.cal > 0) {
               meal.slotTargetMacros = q;
               return;
@@ -17969,17 +18049,9 @@
           return;
         }
 
-        // 2. Пользовательские / не-базовые слоты: инициализируем только при наличии базовых продуктов
-        let rawItems = [];
-        if (meal.hasVariants && meal.variants) {
-          const vk = meal.activeVariant || Object.keys(meal.variants)[0] || "A";
-          const vData = meal.variants[vk];
-          rawItems = Array.isArray(vData) ? vData : (vData?.items || []);
-        } else {
-          rawItems = meal.items || [];
-        }
-        if (Array.isArray(rawItems) && rawItems.length > 0) {
-          const q = computeItemsMacros(rawItems);
+        // 2. Пользовательские / не-базовые слоты: инициализируем без опциональных позиций
+        if (Array.isArray(currentItems) && currentItems.length > 0) {
+          const q = computeMandatorySlotQuota(currentItems);
           if (q.cal > 0) {
             meal.slotTargetMacros = q;
           }
@@ -18238,7 +18310,13 @@
           });
         }
         if (Array.isArray(state.customHistory)) {
+          const bootLocalDbMap = new Map();
+          (LOCAL_DB || []).forEach(dbItem => {
+            const k = normalizeSearchText(dbItem?.name);
+            if (k && !bootLocalDbMap.has(k)) bootLocalDbMap.set(k, dbItem);
+          });
           state.customHistory = state.customHistory.filter(h => !hasInvalidZeroMacros(h));
+          state.customHistory.forEach(h => sanitizeCustomHistoryEntry(h, bootLocalDbMap));
         }
         if (!state.restTimerSettings) {
           state.restTimerSettings = {
@@ -18341,11 +18419,24 @@
         return;
       }
       if (state.lastDate !== todayKey) {
-        if (state.todayItems && state.todayItems.length > 0) {
-          state.history[state.lastDate] = state.todayItems.slice();
+        if (!state.history || typeof state.history !== "object") state.history = {};
+        if (todayKey < state.lastDate) {
+          // Сдвиг часов/часового пояса назад: сохраняем незаписанное под lastDate, не затирая историю
+          if (state.todayItems && state.todayItems.length > 0) {
+            state.history[state.lastDate] = state.todayItems.slice();
+          }
+          state.todayItems = Array.isArray(state.history[todayKey]) ? state.history[todayKey].slice() : [];
+        } else {
+          if (state.todayItems && state.todayItems.length > 0) {
+            state.history[state.lastDate] = state.todayItems.slice();
+          }
+          state.todayItems = Array.isArray(state.history[todayKey]) ? state.history[todayKey].slice() : [];
         }
-        state.todayItems = [];
         state.supplementsTakenToday = {};
+        if (state.dailySteps && typeof state.dailySteps === "object") {
+          state.dailySteps.count = 0;
+          state.dailySteps.date = todayKey;
+        }
         state.lastDate = todayKey;
         saveState();
         renderAll();
@@ -18564,7 +18655,7 @@
           pHex: activeTheme.p || "#9CA3AF",
           cHex: activeTheme.c || "#C2593F",
           fHex: activeTheme.f || "#8C8275",
-          cal: Math.round(Math.max(0, totalCal - (typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0))),
+          cal: Math.round(Math.max(0, totalCal - ((state.dailySteps?.autoAddTarget && typeof calcStepBurn === "function") ? calcStepBurn(state.dailySteps?.count || 0) : 0))),
           targetCal: Math.max(500, Math.round(Number(state.targets?.cal) || 2000)),
           p: Math.round(totalP),
           targetP: Math.max(10, Math.round(Number(state.targets?.p) || 140)),
@@ -18737,6 +18828,7 @@
       state.dailySteps.lastSyncedAt = Date.now();
       saveState();
       renderStepsCard();
+      if (typeof renderAll === "function") renderAll();
       syncNativeWidget();
       if (isSilent !== true) {
         showToast(`✓ Шаги обновлены: ${newSteps.toLocaleString("ru-RU")}`);
@@ -18944,18 +19036,25 @@
     function syncUpdatedPlanItemInTodayItems(itemId, newWeight, itemData) {
       if (!Array.isArray(state.todayItems)) return;
       const loggedIdx = state.todayItems.findIndex(it => it.planItemId === itemId);
-      if (loggedIdx !== -1) {
+      if (loggedIdx !== -1 && itemData) {
         const w = Number(newWeight) || state.todayItems[loggedIdx].weight || 100;
-        const cal100 = Number(itemData.cal100) || 0;
-        const p100 = Number(itemData.p100) || 0;
-        const f100 = Number(itemData.f100) || 0;
-        const c100 = Number(itemData.c100) || 0;
+        const cal100 = Number(itemData.cal100 ?? state.todayItems[loggedIdx].cal100) || 0;
+        const p100 = Number(itemData.p100 ?? state.todayItems[loggedIdx].p100) || 0;
+        const f100 = Number(itemData.f100 ?? state.todayItems[loggedIdx].f100) || 0;
+        const c100 = Number(itemData.c100 ?? state.todayItems[loggedIdx].c100) || 0;
         state.todayItems[loggedIdx].weight = w;
         if (itemData.name) state.todayItems[loggedIdx].name = itemData.name;
+        state.todayItems[loggedIdx].cal100 = cal100;
+        state.todayItems[loggedIdx].p100 = p100;
+        state.todayItems[loggedIdx].f100 = f100;
+        state.todayItems[loggedIdx].c100 = c100;
         state.todayItems[loggedIdx].cal = Math.round((w * cal100) / 100);
         state.todayItems[loggedIdx].p = round1((w * p100) / 100);
         state.todayItems[loggedIdx].f = round1((w * f100) / 100);
         state.todayItems[loggedIdx].c = round1((w * c100) / 100);
+        if (itemData.isPiece !== undefined) state.todayItems[loggedIdx].isPiece = Boolean(itemData.isPiece);
+        if (itemData.standardUnitWeight !== undefined) state.todayItems[loggedIdx].standardUnitWeight = itemData.standardUnitWeight;
+        if (itemData.pieceWeight !== undefined) state.todayItems[loggedIdx].pieceWeight = itemData.pieceWeight;
       }
     }
 
@@ -19421,7 +19520,29 @@
       return (state.todayItems || []).some(item => item.planItemId === itemId);
     }
 
+    function isWheySupplementId(id) {
+      return id === "supp_whey" || id === "prot";
+    }
+
+    function getPrimaryWheySupplementId() {
+      const whey = (state.supplements || []).find(s => isWheySupplementId(s.id) || /прот/i.test(String(s.name || "")));
+      return whey ? whey.id : "supp_whey";
+    }
+
+    function setWheySupplementTaken(taken) {
+      if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
+      const wheySupps = (state.supplements || []).filter(s => isWheySupplementId(s.id) || /прот/i.test(String(s.name || "")));
+      const allIds = Array.from(new Set([...wheySupps.map(s => s.id), "supp_whey", "prot"]));
+      if (taken) {
+        wheySupps.forEach(s => { state.supplementsTakenToday[s.id] = true; });
+        if (wheySupps.length === 0) state.supplementsTakenToday["supp_whey"] = true;
+      } else {
+        allIds.forEach(k => delete state.supplementsTakenToday[k]);
+      }
+    }
+
     function toggleMealPlanItem(mealId, itemId) {
+      checkDayRollover();
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
@@ -19433,7 +19554,7 @@
       if (loggedIdx !== -1) {
         state.todayItems.splice(loggedIdx, 1);
         if (itemId === "pw_whey") {
-          if (state.supplementsTakenToday) delete state.supplementsTakenToday["prot"];
+          setWheySupplementTaken(false);
         }
         if (typeof showToast === "function") showToast("Снято: " + item.name);
       } else {
@@ -19456,11 +19577,10 @@
           meal: meal.type || "snack",
           fromPlan: true,
           planItemId: itemId,
-          suppRefId: (itemId === "pw_whey") ? "prot" : undefined
+          suppRefId: (itemId === "pw_whey") ? getPrimaryWheySupplementId() : undefined
         });
         if (itemId === "pw_whey") {
-          if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
-          state.supplementsTakenToday["prot"] = true;
+          setWheySupplementTaken(true);
         }
         if (typeof showToast === "function") showToast("✓ Засчитано: " + item.name);
       }
@@ -19472,6 +19592,7 @@
     window.toggleMealPlanItem = toggleMealPlanItem;
 
     function markWholeMealCompleted(mealId) {
+      checkDayRollover();
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
@@ -19481,21 +19602,23 @@
 
       // Filter out skipped items
       items = items.filter(it => !progress.skippedItems?.[it.id]);
+      const mandatoryItems = items.filter(it => !isOptionalMealItem(it));
+      const checkPool = mandatoryItems.length > 0 ? mandatoryItems : items;
 
-      const allLogged = items.length > 0 && items.every(it => isMealItemLogged(it.id));
+      const allLogged = checkPool.length > 0 && checkPool.every(it => isMealItemLogged(it.id));
       if (allLogged) {
-        // Uncheck all
+        // При снятии отметки «✓ Съедено» удаляем все записи приема, включая опциональные пункты
         items.forEach(it => {
           const idx = (state.todayItems || []).findIndex(x => x.planItemId === it.id);
           if (idx !== -1) {
             state.todayItems.splice(idx, 1);
-            if (it.id === "pw_whey" && state.supplementsTakenToday) delete state.supplementsTakenToday["prot"];
+            if (it.id === "pw_whey") setWheySupplementTaken(false);
           }
         });
         if (typeof showToast === "function") showToast("Прием пищи снят: " + meal.title);
       } else {
-        // Check all missing
-        items.forEach(it => {
+        // Массовое засчитывание затрагивает только обязательные позиции приема
+        checkPool.forEach(it => {
           if (!isMealItemLogged(it.id)) {
             const effective = progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it;
             const cal = Math.round((effective.weight * effective.cal100) / 100);
@@ -19517,11 +19640,10 @@
               meal: meal.type || "snack",
               fromPlan: true,
               planItemId: effective.id,
-              suppRefId: (effective.id === "pw_whey") ? "prot" : undefined
+              suppRefId: (effective.id === "pw_whey") ? getPrimaryWheySupplementId() : undefined
             });
             if (effective.id === "pw_whey") {
-              if (!state.supplementsTakenToday) state.supplementsTakenToday = {};
-              state.supplementsTakenToday["prot"] = true;
+              setWheySupplementTaken(true);
             }
           }
         });
@@ -19542,34 +19664,38 @@
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
       const progress = getTodayProgress();
-      const item = getActiveMealItem(meal, itemId, progress);
-      if (!item) return;
+      const activeItem = getActiveMealItem(meal, itemId, progress);
+      if (!activeItem) return;
 
       let rawTemplateItem = null;
       if (meal.hasVariants && meal.variants) {
         for (const v of Object.values(meal.variants)) {
-          const found = (v.items || []).find(i => i.id === itemId);
+          const vList = Array.isArray(v) ? v : (v?.items || []);
+          const found = vList.find(i => i.id === itemId);
           if (found) { rawTemplateItem = found; break; }
         }
       } else if (meal.items) {
         rawTemplateItem = meal.items.find(i => i.id === itemId);
       }
-      const stdItem = rawTemplateItem || item;
-      const standardWeight = Math.round(Number(stdItem.weight) || 100);
-      const standardPieces = Math.max(1, Math.round(Number(stdItem.pieceCount) || 1));
-      const pieceUnitWeight = (stdItem.isPiece && stdItem.pieceWeight)
-        ? stdItem.pieceWeight
-        : (stdItem.isPiece && standardPieces > 0 ? (standardWeight / standardPieces) : 33.3);
+      const baseTemplateItem = rawTemplateItem || activeItem;
+      const standardWeight = Math.round(Number(baseTemplateItem.weight) || 100);
+      const standardPieces = Math.max(1, Math.round(Number(baseTemplateItem.pieceCount) || 1));
 
-      const curOverride = progress.overrides?.[itemId];
-      const curWeight = curOverride ? (Number(curOverride.weight) || standardWeight) : (Number(item.weight) || standardWeight);
-      const curPieces = (curOverride && curOverride.pieceCount) ? Number(curOverride.pieceCount) : (Number(item.pieceCount) || standardPieces);
-      const isCustomGrams = Boolean(curOverride?.customGramsToday || (stdItem.isPiece && Math.abs(curWeight - Math.round(curPieces * pieceUnitWeight)) >= 1));
+      const activeIsPiece = Boolean(activeItem.isPiece);
+      const curWeight = Math.max(1, Math.round(Number(activeItem.weight) || standardWeight));
+      const curPieces = activeIsPiece
+        ? Math.max(1, Math.round(Number(activeItem.pieceCount) || 1))
+        : 1;
+      const pieceUnitWeight = (activeIsPiece && (activeItem.pieceWeight || activeItem.standardUnitWeight))
+        ? Number(activeItem.pieceWeight || activeItem.standardUnitWeight)
+        : (activeIsPiece && curPieces > 0 ? (curWeight / curPieces) : 33.3);
+      const isCustomGrams = Boolean(activeItem.customGramsToday || (activeIsPiece && Math.abs(curWeight - Math.round(curPieces * pieceUnitWeight)) >= 1));
 
       pendingQuickWeightCtx = {
         mealId,
         itemId,
-        item: stdItem,
+        item: activeItem,
+        baseTemplateItem,
         standardWeight,
         standardPieces,
         pieceUnitWeight,
@@ -19578,17 +19704,17 @@
         isCustomGrams
       };
 
-      document.getElementById("quickWeightItemName").textContent = stdItem.name || item.name;
+      document.getElementById("quickWeightItemName").textContent = activeItem.name || baseTemplateItem.name;
       document.getElementById("quickWeightGramsInput").value = pendingQuickWeightCtx.weight;
 
       const btnReset = document.getElementById("btnResetQuickWeight");
       if (btnReset) {
-        const normStr = stdItem.isPiece ? `${standardPieces} шт, ${standardWeight}г` : `${standardWeight}г`;
+        const normStr = baseTemplateItem.isPiece ? `${standardPieces} шт, ${standardWeight}г` : `${standardWeight}г`;
         btnReset.innerHTML = `<span>Сбросить к норме плана (${normStr})</span>`;
       }
 
       const pieceRow = document.getElementById("quickWeightPieceRow");
-      if (stdItem.isPiece) {
+      if (activeIsPiece) {
         pieceRow.classList.remove("hidden");
         document.getElementById("quickWeightPieceInput").value = pendingQuickWeightCtx.pieces;
       } else {
@@ -19660,7 +19786,8 @@
       if (progress.overrides && progress.overrides[ctx.itemId]) {
         delete progress.overrides[ctx.itemId];
       }
-      syncUpdatedPlanItemInTodayItems(ctx.itemId, ctx.standardWeight, ctx.item);
+      const baseItem = ctx.baseTemplateItem || ctx.item;
+      syncUpdatedPlanItemInTodayItems(ctx.itemId, ctx.standardWeight, baseItem);
       saveState();
       closeQuickWeightModal();
       renderCoachMealPlan();
@@ -19674,8 +19801,10 @@
       const it = pendingQuickWeightCtx.item;
       if (!it) return;
       const inp = document.getElementById("quickWeightGramsInput");
-      const w = Math.max(1, Math.round(Number(inp.value) || 100));
-      pendingQuickWeightCtx.weight = w;
+      const rawVal = inp ? inp.value : "";
+      const parsed = parseFloat(rawVal);
+      const w = (rawVal !== "" && Number.isFinite(parsed) && parsed >= 0) ? Math.round(parsed) : 0;
+      if (w > 0) pendingQuickWeightCtx.weight = w;
 
       const cal = Math.round((w * (it.cal100 || 0)) / 100);
       const p = round1((w * (it.p100 || 0)) / 100);
@@ -19709,14 +19838,19 @@
           delete progress.overrides[ctx.itemId];
         }
       } else {
+        const existingOverride = progress.overrides[ctx.itemId] || {};
         progress.overrides[ctx.itemId] = {
+          ...existingOverride,
           name: ctx.item.name,
           weight: newW,
           cal100: ctx.item.cal100,
           p100: ctx.item.p100,
           f100: ctx.item.f100,
           c100: ctx.item.c100,
-          isPiece: ctx.item.isPiece,
+          isPiece: Boolean(ctx.item.isPiece),
+          pieceWeight: ctx.item.isPiece ? (ctx.item.pieceWeight || ctx.pieceUnitWeight) : undefined,
+          standardUnitWeight: ctx.item.isPiece ? (ctx.item.standardUnitWeight || ctx.item.pieceWeight || ctx.pieceUnitWeight) : ctx.item.standardUnitWeight,
+          packageNetWeight: ctx.item.packageNetWeight,
           pieceCount: ctx.item.isPiece ? ctx.pieces : undefined,
           customGramsToday: isCustom ? newW : undefined,
           standardWeight: ctx.standardWeight
@@ -19745,7 +19879,7 @@
 
       // Реактивная синхронизация: если было съедено — убираем из дневника
       removePlanItemFromTodayItems(itemId);
-      if (itemId === "pw_whey" && state.supplementsTakenToday) delete state.supplementsTakenToday["prot"];
+      if (itemId === "pw_whey") setWheySupplementTaken(false);
 
       saveState();
       renderCoachMealPlan();
@@ -19795,6 +19929,7 @@
 
       // Также удаляем из дневника если было отмечено
       removePlanItemFromTodayItems(itemId);
+      recalcMealSlotQuotaFromTemplate(meal);
 
       saveState();
       renderCoachMealPlan();
@@ -20071,7 +20206,7 @@
         weight: defaultW,
         packageNetWeight: m.packageNetWeight || (defaultW !== 100 ? defaultW : undefined),
         isPiece: Boolean(m.isPiece),
-        pieceWeight: m.unitWeight || m.standardUnitWeight || undefined
+        pieceWeight: m.isPiece ? (m.pieceWeight || m.standardUnitWeight || m.unitWeight || undefined) : (m.pieceWeight || m.standardUnitWeight || undefined)
       };
       selectAddMealProductCandidate(item);
     }
@@ -20081,7 +20216,9 @@
       const sel = pendingAddProductCtx?.selectedItem;
       if (!sel) return;
       const inp = document.getElementById("addMealProductWeightInput");
-      const w = Math.max(1, Math.round(Number(inp?.value) || Number(sel.weight) || 100));
+      const rawVal = inp?.value ?? "";
+      const parsed = parseFloat(rawVal);
+      const w = (rawVal !== "" && Number.isFinite(parsed) && parsed >= 0) ? Math.round(parsed) : 0;
 
       const sumWEl = document.getElementById("addMealSumW");
       if (sumWEl) sumWEl.textContent = w;
@@ -20166,7 +20303,6 @@
       }
 
       if (isPermanent) {
-        const hadQuota = Boolean(meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0);
         if (meal.hasVariants) {
           const vk = (variantKey && variantKey !== "null") ? variantKey : (meal.activeVariant || "A");
           if (!meal.variants[vk]) meal.variants[vk] = { title: "Вариант " + vk, items: [] };
@@ -20179,7 +20315,7 @@
           if (!Array.isArray(meal.items)) meal.items = [];
           meal.items.push(newProd);
         }
-        if (!hadQuota) ensureMealSlotTargetMacros(template);
+        recalcMealSlotQuotaFromTemplate(meal);
       } else {
         newProd.isAddedToday = true;
         if (meal.hasVariants) {
@@ -20660,6 +20796,7 @@
         target.pieceCount = Math.max(1, Math.round(w / target.pieceWeight));
       }
       syncUpdatedPlanItemInTodayItems(itemId, w, target);
+      recalcMealSlotQuotaFromTemplate(meal);
       saveState();
       renderEditMealSlotProductsList(mealId);
       renderCoachMealPlan();
@@ -20695,7 +20832,7 @@
         activeItems = meal.items || [];
       }
 
-      const q = computeItemsMacros(activeItems);
+      const q = computeMandatorySlotQuota(activeItems);
       meal.slotTargetMacros = q;
       saveState();
       renderCoachMealPlan();
@@ -20924,6 +21061,7 @@
     }
 
     function addExternalDonorToMeal(mealId, donorKey, grams) {
+      checkDayRollover();
       const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
       const meal = (template.meals || []).find(m => m.id === mealId);
       if (!meal) return;
@@ -20939,7 +21077,9 @@
       const todayItemsForVar = getMealTodayAddedItems(meal, progress, activeVar);
       const prevCombined = rawItems.concat(todayItemsForVar);
       const prevActiveNonSkipped = prevCombined.filter(it => !progress.skippedItems?.[it.id]);
-      const allMealItemsWereLogged = prevActiveNonSkipped.length > 0 && prevActiveNonSkipped.every(it => isMealItemLogged(it.id));
+      const prevMandatory = prevActiveNonSkipped.filter(it => !isOptionalMealItem(it));
+      const prevCheckPool = prevMandatory.length > 0 ? prevMandatory : prevActiveNonSkipped;
+      const allMealItemsWereLogged = prevCheckPool.length > 0 && prevCheckPool.every(it => isMealItemLogged(it.id));
 
       const addW = Math.max(5, Math.round(Number(grams) || 20));
       const isPeanutMatch = (it) => {
@@ -21307,9 +21447,10 @@
         actualDailyF += mF;
         actualDailyC += mC;
 
+        const mandatoryRaw = (rawItems || []).filter(it => !isOptionalMealItem(it) || isMealItemLogged(it.id));
         const slotRef = meal.hasVariants
-          ? computeItemsMacros(rawItems || [])
-          : ((meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0) ? meal.slotTargetMacros : computeItemsMacros(rawItems || []));
+          ? computeItemsMacros(mandatoryRaw)
+          : ((meal.slotTargetMacros && Number(meal.slotTargetMacros.cal) > 0) ? meal.slotTargetMacros : computeItemsMacros(mandatoryRaw));
 
         mealSnapshots.push({
           meal,
@@ -21786,7 +21927,7 @@
                         <span class="text-[13px] font-medium leading-snug break-words ${isLogged ? 'text-zinc-400 line-through' : 'text-zinc-100'}">${escapeHtml(effective.name)}</span>
                         ${fatBadgeHtml}
                         ${effective.isOverridden ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] mono shrink-0 leading-none">Замена</span>' : ''}
-                        ${effective.optional ? '<span class="px-1.5 py-0.5 rounded bg-white/[0.06] text-zinc-400 text-[9px] mono shrink-0 leading-none">опция</span>' : ''}
+                        ${isOptionalMealItem(effective) ? '<span class="px-1.5 py-0.5 rounded bg-white/[0.06] text-zinc-400 text-[9px] mono shrink-0 leading-none">опция</span>' : ''}
                       </div>
                       <!-- Нижняя строка: вес, ккал, БЖУ слева + кнопки Замена/Пропуск справа -->
                       <div class="flex items-center justify-between gap-2 mt-1.5">
@@ -22062,7 +22203,7 @@
         weight: defaultW,
         packageNetWeight: m.packageNetWeight || (defaultW !== 100 ? defaultW : undefined),
         isPiece: Boolean(m.isPiece),
-        pieceWeight: m.unitWeight || m.standardUnitWeight || undefined
+        pieceWeight: m.isPiece ? (m.pieceWeight || m.standardUnitWeight || m.unitWeight || undefined) : (m.pieceWeight || m.standardUnitWeight || undefined)
       };
       selectOverrideCandidate(item);
     }
@@ -22119,8 +22260,10 @@
       const sel = pendingOverrideCtx.selectedItem;
       if (!sel) return;
       const inp = document.getElementById("overrideWeightInput");
-      const w = Math.max(1, Math.round(Number(inp.value) || Number(sel.weight) || 100));
-      pendingOverrideCtx.weight = w;
+      const rawVal = inp?.value ?? "";
+      const parsed = parseFloat(rawVal);
+      const w = (rawVal !== "" && Number.isFinite(parsed) && parsed >= 0) ? Math.round(parsed) : 0;
+      if (w > 0) pendingOverrideCtx.weight = w;
 
       const cal = Math.round((w * sel.cal100) / 100);
       const p = round1((w * sel.p100) / 100);
@@ -22210,6 +22353,7 @@
             if (idx !== -1) {
               targetList[idx] = { ...targetList[idx], ...replacementFields };
               updatedTemplate = true;
+              recalcMealSlotQuotaFromTemplate(meal);
             }
           }
         }
@@ -22256,9 +22400,18 @@
 
     function resetTodayOverride() {
       const itemId = pendingOverrideCtx.itemId;
+      const mealId = pendingOverrideCtx.mealId;
       const progress = getTodayProgress();
       if (progress.overrides && progress.overrides[itemId]) {
         delete progress.overrides[itemId];
+      }
+      if (mealId && itemId) {
+        const template = state.mealPlanTemplate || DEFAULT_MEAL_PLAN_TEMPLATE;
+        const meal = (template.meals || []).find(m => m.id === mealId);
+        const baseItem = meal ? getActiveMealItem(meal, itemId, progress) : null;
+        if (baseItem) {
+          syncUpdatedPlanItemInTodayItems(itemId, baseItem.weight, baseItem);
+        }
       }
       saveState();
       closeMealPlanOverrideModal();
@@ -22353,8 +22506,10 @@
       const tF = Math.max(10, Number(state.targets?.f) || 65);
       const tC = Math.max(10, Number(state.targets?.c) || 215);
 
-      // Шаги автоматически вычитаются из текущего наетого за день
-      const stepBurn = typeof calcStepBurn === "function" ? calcStepBurn(state.dailySteps?.count || 0) : 0;
+      // Шаги вычитаются только если активен тумблер компенсации шагов
+      const stepBurn = (state.dailySteps?.autoAddTarget && typeof calcStepBurn === "function")
+        ? calcStepBurn(state.dailySteps?.count || 0)
+        : 0;
       const netCal = Math.max(0, totalCal - stepBurn);
 
       document.getElementById("calEaten").textContent = netCal;
@@ -22693,8 +22848,50 @@
       return total;
     }
 
+    function sanitizeCustomHistoryEntry(h, localDbMap) {
+      if (!h || typeof h !== "object") return false;
+      let changed = false;
+      const key = normalizeSearchText(h.name);
+      const ref = localDbMap ? localDbMap.get(key) : null;
+      const refSingleW = Number(ref?.pieceWeight || ref?.standardUnitWeight || (ref?.isPiece ? ref?.unitWeight : 0) || 0);
+      const knownSingleW = Number(h.pieceWeight || (h.standardUnitWeight !== null ? h.standardUnitWeight : 0) || refSingleW || 0);
+
+      if (refSingleW > 0 && h.standardUnitWeight !== null) {
+        if (Number(h.standardUnitWeight) >= refSingleW * 1.8) {
+          const mult = Math.round(Number(h.standardUnitWeight) / refSingleW);
+          if (mult >= 2 && Math.abs(Number(h.standardUnitWeight) - mult * refSingleW) <= 4) {
+            h.standardUnitWeight = refSingleW;
+            changed = true;
+          }
+        }
+        if (Number(h.unitWeight) >= refSingleW * 1.8) {
+          const multU = Math.round(Number(h.unitWeight) / refSingleW);
+          if (multU >= 2 && Math.abs(Number(h.unitWeight) - multU * refSingleW) <= 4) {
+            h.unitWeight = Math.round(refSingleW);
+            if (h.isPiece || ref?.isPiece) h.pieceWeight = refSingleW;
+            changed = true;
+          }
+        }
+      } else if (knownSingleW > 0 && h.standardUnitWeight !== null && h.isPiece) {
+        if (Number(h.unitWeight) >= knownSingleW * 1.8) {
+          const mult = Math.round(Number(h.unitWeight) / knownSingleW);
+          if (mult >= 2 && Math.abs(Number(h.unitWeight) - mult * knownSingleW) <= 4) {
+            h.unitWeight = Math.round(knownSingleW);
+            h.pieceWeight = knownSingleW;
+            changed = true;
+          }
+        }
+      }
+      return changed;
+    }
+
     function getCombinedDatabase() {
       const map = new Map();
+      const localDbMap = new Map();
+      LOCAL_DB.forEach(dbItem => {
+        const k = normalizeSearchText(dbItem?.name);
+        if (k && !localDbMap.has(k)) localDbMap.set(k, dbItem);
+      });
       if (Array.isArray(state.customHistory)) {
         let historyCleaned = false;
         const validHistory = [];
@@ -22704,6 +22901,7 @@
             historyCleaned = true;
             return;
           }
+          if (sanitizeCustomHistoryEntry(item, localDbMap)) historyCleaned = true;
           validHistory.push(item);
           const key = normalizeSearchText(item.name);
           if (key) map.set(key, { ...item, isRecent: (item.useCount > 0) });
@@ -22736,8 +22934,13 @@
     }
 
     function renderFatSecretSearchItemHTML(item, idx, onclickCall, explicitWeight, pieceCount, compact = false) {
-      const unitW = Number(item.unitWeight || item.pieceWeight || item.standardUnitWeight || item.defaultWeight || 100);
-      const defaultPortionW = Number(item.unitWeight || item.defaultWeight || 100);
+      const isPieceLike = Boolean(item.isPiece || pieceCount);
+      const unitW = Number(isPieceLike
+        ? (item.pieceWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || item.unitWeight || item.defaultWeight || 100)
+        : (item.unitWeight || item.defaultWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || 100));
+      const defaultPortionW = Number(item.isPiece
+        ? (item.pieceWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || item.unitWeight || item.defaultWeight || 100)
+        : (item.unitWeight || item.defaultWeight || 100));
       const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : Math.round(defaultPortionW));
       const ratio = w / 100;
       const cal = Math.round((Number(item.cal ?? item.cal100 ?? 0)) * ratio);
@@ -22746,7 +22949,7 @@
       const c = round1((Number(item.c ?? item.c100 ?? 0)) * ratio);
 
       const { brand, displayTitle } = formatFoodDisplayParts(item);
-      const portionLabel = formatPortionLabel(item, w, pieceCount);
+      const portionLabel = formatPortionLabel(item, w, pieceCount, Boolean(explicitWeight));
 
       const brandHtml = brand
         ? `<span class="text-[9.5px] mono text-zinc-300 bg-white/[0.06] border border-white/10 px-1.5 py-0.5 rounded shrink-0">${escapeHtml(brand)}</span>`
@@ -22870,8 +23073,14 @@
     function renderLiveSuggestList(list, matches, explicitWeight, pieceCount, skipCreateBtn = false) {
       const itemsToRender = matches.slice(0, 15);
       list.innerHTML = itemsToRender.map((item, idx) => {
-        const unitW = Number(item.unitWeight || item.pieceWeight || item.standardUnitWeight || item.defaultWeight || 100);
-        const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : Math.round(item.unitWeight || item.defaultWeight || 100));
+        const isPieceLike = Boolean(item.isPiece || pieceCount);
+        const unitW = Number(isPieceLike
+          ? (item.pieceWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || item.unitWeight || item.defaultWeight || 100)
+          : (item.unitWeight || item.defaultWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || 100));
+        const defaultW = Number(item.isPiece
+          ? (item.pieceWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || item.unitWeight || item.defaultWeight || 100)
+          : (item.unitWeight || item.defaultWeight || 100));
+        const w = explicitWeight || (pieceCount ? Math.round(pieceCount * unitW) : Math.round(defaultW));
         return renderFatSecretSearchItemHTML(item, idx, `selectSuggestedItem(${idx}, ${w})`, explicitWeight, pieceCount, false);
       }).join("");
       if (!skipCreateBtn) {
@@ -22946,7 +23155,10 @@
     function selectSuggestedItem(idx, weight) {
       const item = (window._currentMatches || [])[idx];
       if (!item) return;
-      const w = weight || item.unitWeight || item.defaultWeight || 100;
+      const singlePieceW = item.isPiece
+        ? Number(item.pieceWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || item.unitWeight || 0)
+        : (item.standardUnitWeight !== null ? item.standardUnitWeight : null);
+      const w = weight || (item.isPiece && singlePieceW > 0 ? singlePieceW : (item.unitWeight || item.defaultWeight || 100));
       addFoodEntryFrom100g({
         name: item.name,
         brand: getFoodBrand(item),
@@ -22956,7 +23168,8 @@
         c100: Number(item.c ?? item.c100 ?? 0),
         weight: w,
         source: item.source || "",
-        standardUnitWeight: item.standardUnitWeight || item.pieceWeight,
+        standardUnitWeight: singlePieceW || undefined,
+        pieceWeight: (item.isPiece && singlePieceW > 0) ? singlePieceW : undefined,
         isPiece: Boolean(item.isPiece),
         packageNetWeight: item.packageNetWeight
       });
@@ -23435,8 +23648,19 @@
 
     function recalcScannedCard() {
       if (!pendingScannedProduct) return;
-      const w = Math.max(1, Number(document.getElementById("scannedResWeightInput").value) || 100);
-      pendingScannedProduct.weight = w;
+      const inp = document.getElementById("scannedResWeightInput");
+      const rawVal = inp ? inp.value : "";
+      const parsedW = parseFloat(rawVal);
+      const w = (rawVal !== "" && Number.isFinite(parsedW) && parsedW >= 0) ? parsedW : 0;
+      if (w > 0) pendingScannedProduct.weight = Math.round(w);
+      if (pendingScannedProduct.isPiece && pendingScannedProduct.baseName && pendingScannedProduct.pieceWeight > 0 && w > 0) {
+        const cnt = Math.max(1, Math.round(w / pendingScannedProduct.pieceWeight));
+        pendingScannedProduct.pieceCount = cnt;
+        pendingScannedProduct.name = `${pendingScannedProduct.baseName} (${cnt} шт)`;
+        const nameEl = document.getElementById("scannedResName");
+        if (nameEl) nameEl.textContent = pendingScannedProduct.name;
+        if (typeof updatePieceButtonsHighlight === "function") updatePieceButtonsHighlight(cnt);
+      }
       const ratio = w / 100;
       document.getElementById("scannedResCal").textContent = Math.round(pendingScannedProduct.cal100 * ratio);
       document.getElementById("scannedResP").textContent = round1(pendingScannedProduct.p100 * ratio);
@@ -23727,12 +23951,16 @@
         }
         if (parsed && parsed.name) {
           parsed.name = stripEmojis(parsed.name);
+          const numMacro = (v, fb) => {
+            const n = Number(v);
+            return (v !== null && v !== undefined && v !== "" && Number.isFinite(n) && n >= 0) ? n : fb;
+          };
           showScannedCard({
             name: parsed.name,
-            cal100: Number(parsed.cal100) || 120,
-            p100: Number(parsed.p100) || 6,
-            f100: Number(parsed.f100) || 4,
-            c100: Number(parsed.c100) || 14,
+            cal100: numMacro(parsed.cal100, 120),
+            p100: numMacro(parsed.p100, 0),
+            f100: numMacro(parsed.f100, 0),
+            c100: numMacro(parsed.c100, 0),
             weight: Number(parsed.weight) || 150,
             source: cleanCode ? `Штрихкод ${cleanCode}` : (parsed.source || "Скан")
           });
@@ -23806,10 +24034,25 @@
       const c100 = round1(Number(item.c100 ?? item.c ?? 0));
       if (cal100 <= 0 && p100 <= 0 && f100 <= 0 && c100 <= 0) return;
 
-      const resolvedWeight = Math.round(Number(item.unitWeight || item.defaultWeight || item.weight || item.standardUnitWeight || 100));
+      let existing = state.customHistory.find(h => normalizeSearchText(h.name) === normName);
+      const explicitPieceReset = (item.standardUnitWeight === null || item.isPiece === false);
+      const pieceUnitW = Number(item.pieceWeight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || 0);
+      const isPieceItem = explicitPieceReset
+        ? false
+        : Boolean(item.isPiece || (existing && existing.isPiece && item.isPiece === undefined));
+      const existingSinglePieceW = existing ? Number(existing.pieceWeight || existing.standardUnitWeight || 0) : 0;
+
+      let resolvedWeight = Math.round(Number(item.unitWeight || item.defaultWeight || item.weight || (item.standardUnitWeight !== null ? item.standardUnitWeight : 0) || 100));
+      if (isPieceItem) {
+        const singleW = pieceUnitW || existingSinglePieceW || 0;
+        if (singleW > 0) {
+          resolvedWeight = Math.round(singleW);
+        } else if (existing && existing.unitWeight > 0) {
+          resolvedWeight = existing.unitWeight;
+        }
+      }
       const brandVal = (item.brand !== undefined && item.brand !== "") ? item.brand : (getFoodBrand(item) || "");
 
-      let existing = state.customHistory.find(h => normalizeSearchText(h.name) === normName);
       if (existing) {
         existing.useCount = (existing.useCount || 0) + 1;
         existing.lastUsedAt = Date.now();
@@ -23819,10 +24062,25 @@
         existing.p = p100;
         existing.f = f100;
         existing.c = c100;
-        if (resolvedWeight > 0) existing.unitWeight = resolvedWeight;
-        if (item.standardUnitWeight) existing.standardUnitWeight = item.standardUnitWeight;
+        if (explicitPieceReset) {
+          existing.isPiece = false;
+          existing.standardUnitWeight = null;
+          delete existing.pieceWeight;
+          if (resolvedWeight > 0) existing.unitWeight = resolvedWeight;
+        } else {
+          if (item.isPiece !== undefined) existing.isPiece = Boolean(item.isPiece);
+          if (pieceUnitW > 0) {
+            existing.standardUnitWeight = pieceUnitW;
+            if (isPieceItem) existing.pieceWeight = pieceUnitW;
+          }
+          // Не перезаписываем единичный unitWeight поштучного продукта суммарным весом порции (например 110г за 2 яйца)
+          if (!isPieceItem && resolvedWeight > 0) {
+            existing.unitWeight = resolvedWeight;
+          } else if (isPieceItem && (pieceUnitW > 0 || !(existing.unitWeight > 0)) && resolvedWeight > 0) {
+            existing.unitWeight = resolvedWeight;
+          }
+        }
         if (item.portionLabel) existing.portionLabel = item.portionLabel;
-        if (item.isPiece !== undefined) existing.isPiece = Boolean(item.isPiece);
         if (item.packageNetWeight) existing.packageNetWeight = item.packageNetWeight;
       } else {
         state.customHistory.unshift({
@@ -23834,9 +24092,10 @@
           f: f100,
           c: c100,
           unitWeight: resolvedWeight > 0 ? resolvedWeight : 100,
-          standardUnitWeight: item.standardUnitWeight || null,
+          standardUnitWeight: explicitPieceReset ? null : (item.standardUnitWeight || null),
+          pieceWeight: (!explicitPieceReset && isPieceItem && pieceUnitW > 0) ? pieceUnitW : undefined,
           portionLabel: item.portionLabel || undefined,
-          isPiece: Boolean(item.isPiece),
+          isPiece: isPieceItem,
           packageNetWeight: item.packageNetWeight || null,
           savedToDb: true,
           useCount: 1,
@@ -23935,7 +24194,7 @@
       showToast(`Записано: ${name} (${Math.round(cal)} ккал)`);
     }
 
-    function addFoodEntryFrom100g({ name, brand, cal100, p100, f100, c100, weight, source, standardUnitWeight, isPiece, packageNetWeight, meal }) {
+    function addFoodEntryFrom100g({ name, brand, cal100, p100, f100, c100, weight, source, standardUnitWeight, pieceWeight, isPiece, packageNetWeight, meal }) {
       checkDayRollover();
       const w = Math.max(1, Number(weight) || 100), ratio = w / 100;
       const assignedMeal = meal || (currentMealFilter !== "all" ? currentMealFilter : getAutoMealType());
@@ -23953,12 +24212,13 @@
         c100: Number(c100) || 0,
         meal: assignedMeal,
         source: source || "",
-        standardUnitWeight: standardUnitWeight || undefined,
+        standardUnitWeight: standardUnitWeight === null ? null : (standardUnitWeight || undefined),
+        pieceWeight: pieceWeight || undefined,
         isPiece: Boolean(isPiece)
       });
 
       upsertCustomHistory({
-        name, brand, cal100, p100, f100, c100, unitWeight: Math.round(w), standardUnitWeight, isPiece, packageNetWeight
+        name, brand, cal100, p100, f100, c100, unitWeight: Math.round(w), standardUnitWeight, pieceWeight, isPiece, packageNetWeight
       });
 
       saveState();
@@ -23992,9 +24252,12 @@
 
       const normName = normalizeSearchText(item.name);
       const hist = (state.customHistory || []).find(h => normalizeSearchText(h.name) === normName);
-      const unitW = item.standardUnitWeight || (hist ? hist.standardUnitWeight : null);
+      const explicitDisabled = (item.standardUnitWeight === null || (hist && hist.standardUnitWeight === null));
+      const unitW = explicitDisabled ? null : (item.pieceWeight || item.standardUnitWeight || (hist ? (hist.pieceWeight || hist.standardUnitWeight) : null));
 
-      editPieceModeActive = Boolean(item.isPiece || (hist && hist.isPiece) || unitW);
+      editPieceModeActive = (item.isPiece !== undefined)
+        ? Boolean(item.isPiece)
+        : Boolean(hist && hist.isPiece && !explicitDisabled);
       const toggleBtn = document.getElementById("editPieceToggle");
       const box = document.getElementById("editPieceWeightBox");
       const input = document.getElementById("editPieceWeightInput");
@@ -24048,7 +24311,10 @@
     function updateEditPreview() {
       const item = state.todayItems.find(i => i.id === editingItemId);
       if (!item) return;
-      const ratio = Math.max(1, Number(document.getElementById("editItemWeight").value) || 100) / 100;
+      const rawVal = document.getElementById("editItemWeight")?.value ?? "";
+      const parsed = parseFloat(rawVal);
+      const w = (rawVal !== "" && Number.isFinite(parsed) && parsed >= 0) ? parsed : 0;
+      const ratio = w / 100;
       document.getElementById("editPrevCal").textContent = Math.round(item.cal100 * ratio);
       document.getElementById("editPrevP").textContent = `${round1(item.p100 * ratio)}г`;
       document.getElementById("editPrevF").textContent = `${round1(item.f100 * ratio)}г`;
@@ -24071,6 +24337,47 @@
       const unitW = editPieceModeActive ? (parseFloat(unitInput ? unitInput.value : "") || 5) : null;
       item.isPiece = editPieceModeActive;
       item.standardUnitWeight = unitW;
+      item.pieceWeight = editPieceModeActive ? unitW : undefined;
+
+      if (item.planItemId) {
+        const progress = getTodayProgress();
+        if (!progress.overrides) progress.overrides = {};
+        let foundInTodayAdded = false;
+        if (progress.todayAddedItems && typeof progress.todayAddedItems === "object") {
+          Object.values(progress.todayAddedItems).forEach(arr => {
+            if (!Array.isArray(arr)) return;
+            const added = arr.find(a => a.id === item.planItemId);
+            if (added) {
+              added.weight = item.weight;
+              added.isPiece = editPieceModeActive;
+              added.standardUnitWeight = unitW;
+              if (editPieceModeActive && unitW > 0) {
+                added.pieceWeight = unitW;
+                added.pieceCount = Math.max(1, Math.round(item.weight / unitW));
+              }
+              foundInTodayAdded = true;
+            }
+          });
+        }
+        if (!foundInTodayAdded) {
+          const prevOv = progress.overrides[item.planItemId] || {};
+          progress.overrides[item.planItemId] = {
+            ...prevOv,
+            name: prevOv.name || item.name,
+            weight: item.weight,
+            cal100: Number(prevOv.cal100 ?? item.cal100) || 0,
+            p100: Number(prevOv.p100 ?? item.p100) || 0,
+            f100: Number(prevOv.f100 ?? item.f100) || 0,
+            c100: Number(prevOv.c100 ?? item.c100) || 0,
+            isPiece: editPieceModeActive,
+            standardUnitWeight: unitW,
+            pieceWeight: editPieceModeActive ? unitW : undefined,
+            pieceCount: (editPieceModeActive && unitW > 0) ? Math.max(1, Math.round(item.weight / unitW)) : undefined,
+            customGramsToday: editPieceModeActive ? item.weight : undefined
+          };
+        }
+        if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
+      }
 
       upsertCustomHistory({
         name: item.name,
@@ -24078,7 +24385,9 @@
         p100: item.p100,
         f100: item.f100,
         c100: item.c100,
+        unitWeight: item.weight,
         standardUnitWeight: unitW,
+        pieceWeight: editPieceModeActive ? unitW : undefined,
         isPiece: editPieceModeActive
       });
 
@@ -24087,8 +24396,20 @@
     }
 
     function deleteEditingItem() {
-      state.todayItems = state.todayItems.filter(i => i.id !== editingItemId);
-      saveState(); renderAll(); closeEditModal();
+      const target = (state.todayItems || []).find(i => i.id === editingItemId);
+      state.todayItems = (state.todayItems || []).filter(i => i.id !== editingItemId);
+      if (target) {
+        if (target.suppRefId && state.supplementsTakenToday) {
+          delete state.supplementsTakenToday[target.suppRefId];
+        }
+        if (target.planItemId === "pw_whey" || isWheySupplementId(target.suppRefId)) {
+          setWheySupplementTaken(false);
+        }
+      }
+      saveState();
+      renderAll();
+      if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
+      closeEditModal();
     }
 
     function openSettings(initialTab) {
@@ -24498,7 +24819,14 @@
     function clearTodayConfirm() {
       state.todayItems = [];
       state.supplementsTakenToday = {};
-      saveState(); renderAll(); closeSettings();
+      const todayKey = getTodayKey();
+      if (state.dailyMealPlanProgress && state.dailyMealPlanProgress[todayKey]) {
+        delete state.dailyMealPlanProgress[todayKey];
+      }
+      saveState();
+      renderAll();
+      if (typeof renderCoachMealPlan === "function") renderCoachMealPlan();
+      closeSettings();
       showToast("Список за сегодня очищен");
     }
 
@@ -25601,8 +25929,17 @@
         daysSinceLastLog = Math.max(0, Math.round((nowD - lastD) / 86400000));
       }
       let deltaW = 0;
+      let deltaSpanDays = 14;
       if (logs.length >= 2) {
-        deltaW = round1(logs[logs.length - 1].weight - logs[Math.max(0, logs.length - 7)].weight);
+        const firstEntry = logs[Math.max(0, logs.length - 7)];
+        const lastEntry = logs[logs.length - 1];
+        deltaW = round1(lastEntry.weight - firstEntry.weight);
+        if (firstEntry.date && lastEntry.date) {
+          const d1 = new Date(firstEntry.date + "T00:00:00");
+          const d2 = new Date(lastEntry.date + "T00:00:00");
+          const diffDays = Math.round((d2 - d1) / 86400000);
+          if (Number.isFinite(diffDays) && diffDays >= 1) deltaSpanDays = diffDays;
+        }
       }
       const badge = logs.length === 0
         ? `<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400">Первый замер</span>`
@@ -25636,7 +25973,7 @@
               <div class="text-xs text-zinc-300 whitespace-nowrap shrink-0 flex items-center gap-1.5">
                 <span>Вес: <strong class="text-white text-sm mono font-bold">${latestW}</strong> кг</span>
                 <span class="text-zinc-500">·</span>
-                <span class="whitespace-nowrap">За 14д: <b class="text-white mono font-bold">${deltaW >= 0 ? '+' + deltaW : deltaW}</b> кг</span>
+                <span class="whitespace-nowrap">За ${deltaSpanDays}д: <b class="text-white mono font-bold">${deltaW >= 0 ? '+' + deltaW : deltaW}</b> кг</span>
               </div>
               <span class="text-[11px] font-medium underline shrink-0 whitespace-nowrap ml-auto" style="color:var(--accent-cal)">Ввести вес →</span>
             </div>
@@ -29027,8 +29364,13 @@
         return hNorm === normName || normName.includes(hNorm) || hNorm.includes(normName);
       });
 
-      let unitPieceW = (hist && hist.standardUnitWeight) ? hist.standardUnitWeight : inferPieceWeightIfNeeded(product.name, product.weight, product.pieceWeight);
-      const isPiece = Boolean(product.isPiece || (hist && hist.isPiece) || (hist && hist.standardUnitWeight) || unitPieceW > 0);
+      const histExplicitlyDisabled = Boolean(hist && hist.standardUnitWeight === null && product.isPiece === undefined);
+      let unitPieceW = histExplicitlyDisabled
+        ? 0
+        : ((hist && hist.standardUnitWeight) ? hist.standardUnitWeight : inferPieceWeightIfNeeded(product.name, product.weight, product.pieceWeight));
+      const isPiece = histExplicitlyDisabled
+        ? false
+        : Boolean(product.isPiece || (hist && hist.isPiece) || (hist && hist.standardUnitWeight) || unitPieceW > 0);
       const baseName = String(product.name || "Продукт").replace(/\s*\(\d+\s*шт\)/i, "").trim();
 
       const netW = product.packageNetWeight || (hist ? hist.packageNetWeight : null);
@@ -29487,12 +29829,17 @@ ${knownPiecesContext}
 
           drawHighlightedRegion(normBox, badgeTitle, false);
 
+          const numMacro = (v, fb) => {
+            const n = Number(v);
+            return (v !== null && v !== undefined && v !== "" && Number.isFinite(n) && n >= 0) ? n : fb;
+          };
+
           showScannedCard({
             name: parsed.name,
-            cal100: Number(parsed.cal100) || 130,
-            p100: Number(parsed.p100) || 7,
-            f100: Number(parsed.f100) || 5,
-            c100: Number(parsed.c100) || 15,
+            cal100: numMacro(parsed.cal100, 130),
+            p100: numMacro(parsed.p100, 0),
+            f100: numMacro(parsed.f100, 0),
+            c100: numMacro(parsed.c100, 0),
             weight: estW,
             packageNetWeight: netPackW,
             isPiece,
