@@ -35,16 +35,34 @@ final class WebViewModel: ObservableObject {
                     self.currentView = route
                 }
             }
-            if self.isPageLoaded, let wv = self.webView {
+            if let wv = self.webView {
                 let escapedRoute = route.replacingOccurrences(of: "'", with: "\\'")
-                wv.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)', false, true); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)', false, true); }") { _, error in
-                    if let error = error {
-                        print("[Form][NativeBar] navigate('\(route)') JS error: \(error.localizedDescription)")
+                let js = """
+                (function() {
+                    var fn = (typeof window.switchMainView === 'function') ? window.switchMainView : ((typeof switchMainView === 'function') ? switchMainView : null);
+                    if (fn) {
+                        fn('\(escapedRoute)', false, true);
+                        return 'OK';
+                    }
+                    return 'PENDING';
+                })();
+                """
+                wv.evaluateJavaScript(js) { result, error in
+                    if let status = result as? String, status == "OK" {
+                        self.isPageLoaded = true
+                        if self.pendingRoute == route {
+                            self.pendingRoute = nil
+                        }
+                    } else {
+                        self.pendingRoute = route
+                        if let error = error {
+                            print("[Form][NativeBar] navigate('\(route)') JS error: \(error.localizedDescription)")
+                        }
                     }
                 }
             } else {
                 self.pendingRoute = route
-                print("[Form][NativeBar] navigate('\(route)') queued: waiting for page load")
+                print("[Form][NativeBar] navigate('\(route)') queued: waiting for webView")
             }
         }
         if Thread.isMainThread {
@@ -846,19 +864,15 @@ struct WebView: UIViewRepresentable {
                 }
                 if let d = UserDefaults(suiteName: "group.com.macro.shared") {
                     d.set(0.0, forKey: "restTimerEndDate")
-                    if WebViewModel.shared.isPageLoaded {
-                        d.set(false, forKey: "restTimerStoppedExternally")
-                    }
+                    d.set(false, forKey: "restTimerStoppedExternally")
                     d.synchronize()
                     WidgetCenter.shared.reloadAllTimelines()
                 }
-                guard WebViewModel.shared.isPageLoaded else { return }
                 webView?.evaluateJavaScript(Self.stopRestTimerJS, completionHandler: nil)
             }
             
             let t2 = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak webView, weak self] _ in
-                guard WebViewModel.shared.isPageLoaded,
-                      let d = UserDefaults(suiteName: "group.com.macro.shared"),
+                guard let d = UserDefaults(suiteName: "group.com.macro.shared"),
                       d.bool(forKey: "restTimerStoppedExternally") else { return }
                 d.set(false, forKey: "restTimerStoppedExternally")
                 d.set(0.0, forKey: "restTimerEndDate")
@@ -917,8 +931,8 @@ struct WebView: UIViewRepresentable {
                      decisionHandler: @escaping (WKPermissionDecision) -> Void) {
             decisionHandler(.grant)
         }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+
+        private func markPageReadyAndFlushPendingRoute(webView: WKWebView) {
             self.currentWebView = webView
             WebViewModel.shared.isPageLoaded = true
             WebViewModel.shared.isModalOpen = false
@@ -929,6 +943,18 @@ struct WebView: UIViewRepresentable {
                     webView.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)', true, true); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)', true, true); }", completionHandler: nil)
                 }
             }
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            markPageReadyAndFlushPendingRoute(webView: webView)
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            markPageReadyAndFlushPendingRoute(webView: webView)
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            markPageReadyAndFlushPendingRoute(webView: webView)
             if let d = UserDefaults(suiteName: "group.com.macro.shared"),
                d.bool(forKey: "restTimerStoppedExternally") {
                 d.set(false, forKey: "restTimerStoppedExternally")
@@ -968,6 +994,17 @@ struct WebView: UIViewRepresentable {
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             guard message.name == "widgetBridge" || message.name == "iosBridge",
                   let dict = message.body as? [String: Any] else { return }
+
+            if !WebViewModel.shared.isPageLoaded {
+                WebViewModel.shared.isPageLoaded = true
+                if let route = WebViewModel.shared.pendingRoute {
+                    WebViewModel.shared.pendingRoute = nil
+                    let escapedRoute = route.replacingOccurrences(of: "'", with: "\\'")
+                    DispatchQueue.main.async { [weak wv = message.webView] in
+                        wv?.evaluateJavaScript("if (typeof window.switchMainView === 'function') { window.switchMainView('\(escapedRoute)', true, true); } else if (typeof switchMainView === 'function') { switchMainView('\(escapedRoute)', true, true); }", completionHandler: nil)
+                    }
+                }
+            }
             
             let action = dict["action"] as? String ?? "syncData"
             if action == "mainViewChanged" {
@@ -1597,10 +1634,16 @@ struct NativeLiquidGlassBottomBar: View {
     private var capsuleContent26: some View {
         let totalWidth: CGFloat = 196
         let height: CGFloat = 56
+        let pillWidth = (totalWidth - 8) / 2.0
         
         return ZStack {
             Capsule()
                 .fill(Color.black.opacity(0.015))
+            Capsule()
+                .fill(Color.white.opacity(0.16))
+                .frame(width: pillWidth, height: height - 8)
+                .offset(x: viewModel.currentView == "diet" ? -(pillWidth / 2.0) : (pillWidth / 2.0))
+                .animation(.spring(response: 0.32, dampingFraction: 0.82), value: viewModel.currentView)
             HStack(spacing: 0) {
                 tabItem26(title: "Рацион", icon: "fork.knife", key: "diet")
                 tabItem26(title: "Трени", icon: "dumbbell.fill", key: "split")
@@ -1608,7 +1651,7 @@ struct NativeLiquidGlassBottomBar: View {
         }
         .frame(width: totalWidth, height: height)
         .contentShape(Capsule())
-        .gesture(capsuleDragGesture(totalWidth: totalWidth))
+        .simultaneousGesture(capsuleDragGesture(totalWidth: totalWidth))
     }
     
     @available(iOS 26.0, *)
@@ -1627,23 +1670,28 @@ struct NativeLiquidGlassBottomBar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(4)
-        .background {
-            if isSelected {
-                Capsule()
-                    .fill(Color.white.opacity(0.16))
-                    .matchedGeometryEffect(id: "activeTabIndicator", in: glassNamespace)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if viewModel.currentView != key {
+                UISelectionFeedbackGenerator().selectionChanged()
+                viewModel.navigate(to: key)
             }
         }
-        .glassEffectID(isSelected ? "activeTab" : nil, in: glassNamespace)
     }
     
     private var capsuleContentFallback: some View {
         let totalWidth: CGFloat = 196
         let height: CGFloat = 56
+        let pillWidth = (totalWidth - 8) / 2.0
         
         return ZStack {
             Capsule()
                 .fill(Color.black.opacity(0.015))
+            Capsule()
+                .fill(Color.white.opacity(0.16))
+                .frame(width: pillWidth, height: height - 8)
+                .offset(x: viewModel.currentView == "diet" ? -(pillWidth / 2.0) : (pillWidth / 2.0))
+                .animation(.spring(response: 0.32, dampingFraction: 0.82), value: viewModel.currentView)
             HStack(spacing: 0) {
                 tabItemFallback(title: "Рацион", icon: "fork.knife", key: "diet")
                 tabItemFallback(title: "Трени", icon: "dumbbell.fill", key: "split")
@@ -1651,7 +1699,7 @@ struct NativeLiquidGlassBottomBar: View {
         }
         .frame(width: totalWidth, height: height)
         .contentShape(Capsule())
-        .gesture(capsuleDragGesture(totalWidth: totalWidth))
+        .simultaneousGesture(capsuleDragGesture(totalWidth: totalWidth))
     }
     
     @ViewBuilder
@@ -1669,11 +1717,11 @@ struct NativeLiquidGlassBottomBar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(4)
-        .background {
-            if isSelected {
-                Capsule()
-                    .fill(Color.white.opacity(0.16))
-                    .matchedGeometryEffect(id: "activeTabIndicatorFallback", in: glassNamespace)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if viewModel.currentView != key {
+                UISelectionFeedbackGenerator().selectionChanged()
+                viewModel.navigate(to: key)
             }
         }
     }

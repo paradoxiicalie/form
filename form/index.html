@@ -20757,6 +20757,41 @@
     }
     window.formatCleanVariantTag = formatCleanVariantTag;
 
+    function isWholeEggMealDonor(it) {
+      const lower = String(it?.name || "").toLowerCase();
+      if (/белок|белки|меланж/.test(lower)) return false;
+      return Boolean((it?.isPiece && /яйц/.test(lower)) || /яйцо\s+курин/.test(lower));
+    }
+
+    function pickMacroGramDonor(pool, macroKey, minThreshold, filterFn = null) {
+      const usable = (pool || []).filter(it => !isWholeEggMealDonor(it) && !isOptionalMealItem(it) && (!filterFn || filterFn(it)));
+      const nonPiece = usable.filter(it => !it.isPiece);
+      const candidates = nonPiece.length > 0 ? nonPiece : usable;
+
+      const passesPurity = it => {
+        if (minThreshold <= 0) return true;
+        const val = Number(it[macroKey]) || 0;
+        if (val < minThreshold) return false;
+        const fVal = Number(it.f100) || 0;
+        if (macroKey === "c100") return val > fVal * 1.5 && fVal <= 15;
+        if (macroKey === "p100") return val >= fVal * 1.2 && fVal <= 15;
+        return true;
+      };
+
+      const primary = candidates
+        .filter(passesPurity)
+        .sort((a, b) => (Number(b[macroKey]) || 0) - (Number(a[macroKey]) || 0));
+      if (primary[0]) return primary[0];
+
+      // Фоллбэк (< minThreshold) допустим только для убавления перебора (minThreshold <= 0)
+      if (minThreshold > 0) return null;
+
+      const fallback = candidates
+        .filter(it => Number(it[macroKey]) > 0)
+        .sort((a, b) => (Number(b[macroKey]) || 0) - (Number(a[macroKey]) || 0));
+      return fallback[0] || null;
+    }
+
     function buildMealDeltaBannerData(meal, progress, mealItems, rawMealItems) {
       let targetCal = 0, targetP = 0, targetF = 0, targetC = 0;
       if (meal.hasVariants) {
@@ -20822,30 +20857,12 @@
       let btnHtml = "";
       let isOverflow = false;
 
-      const isWholeEggItem = it => {
-        const lower = String(it?.name || "").toLowerCase();
-        if (/белок|белки|меланж/.test(lower)) return false;
-        return Boolean((it?.isPiece && /яйц/.test(lower)) || /яйцо\s+курин/.test(lower));
-      };
-      const pickGramDonor = (pool, macroKey, minThreshold, filterFn = null) => {
-        const usable = pool.filter(it => !isWholeEggItem(it) && !isOptionalMealItem(it) && (!filterFn || filterFn(it)));
-        const nonPiece = usable.filter(it => !it.isPiece);
-        const primary = (nonPiece.length > 0 ? nonPiece : usable)
-          .filter(it => Number(it[macroKey]) >= minThreshold)
-          .sort((a, b) => (b[macroKey] || 0) - (a[macroKey] || 0));
-        if (primary[0]) return primary[0];
-        const fallback = (nonPiece.length > 0 ? nonPiece : usable)
-          .filter(it => Number(it[macroKey]) > 0)
-          .sort((a, b) => (b[macroKey] || 0) - (a[macroKey] || 0));
-        return fallback[0] || null;
-      };
-
       const cleanMealName = formatCleanMealTitle(meal.title);
 
       if (deltaC >= 2.0 || deltaF >= 1.5) {
         isOverflow = true;
         if (deltaF >= 1.5 && deltaF >= deltaC) {
-          const donor = pickGramDonor(activeCandidates, "f100", 0, it => Number(it.weight) > 10);
+          const donor = pickMacroGramDonor(activeCandidates, "f100", 0, it => Number(it.weight) > 10);
           if (donor && Number(donor.f100) > 0) {
             const rawReduce = Math.max(5, Math.round(deltaF / (donor.f100 / 100)));
             const reduceGrams = Math.min(Math.max(5, Math.round(donor.weight - 5)), rawReduce);
@@ -20853,7 +20870,7 @@
             btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', -${reduceGrams})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${reduceGrams}г</button>`;
           }
         } else {
-          const donor = pickGramDonor(activeCandidates, "c100", 0, it => Number(it.weight) > 10);
+          const donor = pickMacroGramDonor(activeCandidates, "c100", 0, it => Number(it.weight) > 10);
           if (donor && Number(donor.c100) > 0) {
             const rawReduce = Math.max(5, Math.round(deltaC / (donor.c100 / 100)));
             const reduceGrams = Math.min(Math.max(5, Math.round(donor.weight - 5)), rawReduce);
@@ -20862,7 +20879,7 @@
           }
         }
       } else if (deltaF <= -1.5) {
-        const donor = pickGramDonor(activeCandidates, "f100", 10);
+        const donor = pickMacroGramDonor(activeCandidates, "f100", 10);
         if (donor && Number(donor.f100) >= 10) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaF) / (donor.f100 / 100)));
           recText = `${cleanMealName}: добрать жиры (+${neededGrams}г ${donor.name})`;
@@ -20873,14 +20890,14 @@
           btnHtml = `<button type="button" onclick="addExternalDonorToMeal('${meal.id}', 'peanut_paste_dopdrop', ${neededGrams})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${neededGrams}г</button>`;
         }
       } else if (deltaP <= -1.5) {
-        const donor = pickGramDonor(activeCandidates, "p100", 8);
+        const donor = pickMacroGramDonor(activeCandidates, "p100", 8);
         if (donor && Number(donor.p100) > 0) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaP) / (donor.p100 / 100)));
           recText = `${cleanMealName}: добрать белок (+${neededGrams}г ${donor.name})`;
           btnHtml = `<button type="button" onclick="applyMealCompensator('${meal.id}', '${donor.id}', ${neededGrams})" class="px-2.5 py-1 rounded-lg bg-[var(--accent-cal)]/15 hover:bg-[var(--accent-cal)]/25 border border-[var(--accent-cal)]/35 text-white font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">+${neededGrams}г</button>`;
         }
       } else if (deltaC <= -2.0) {
-        const donor = pickGramDonor(activeCandidates, "c100", 15);
+        const donor = pickMacroGramDonor(activeCandidates, "c100", 15);
         if (donor && Number(donor.c100) > 0) {
           const neededGrams = Math.max(5, Math.round(Math.abs(deltaC) / (donor.c100 / 100)));
           recText = `${cleanMealName}: добрать угли (+${neededGrams}г ${donor.name})`;
@@ -21118,18 +21135,27 @@
         `;
       }
 
-      const pickTargetMealSnapshot = (deficitKey) => {
-        const pool = mealSnapshots.filter(s => !s.isCompleted);
-        const candidatesPool = pool.length > 0 ? pool : mealSnapshots;
-        if (candidatesPool.length === 0) return null;
+      const getMealActiveCandidates = snap => (snap?.mealItems || [])
+        .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
+        .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
 
+      const pickTargetMealSnapshot = (deficitKey, macroKey = null, minThreshold = 0) => {
+        const pool = mealSnapshots.filter(s => !s.isCompleted);
+        const basePool = pool.length > 0 ? pool : mealSnapshots;
+        if (basePool.length === 0) return null;
+
+        let ordered = basePool.slice();
         if (deficitKey) {
-          const sorted = candidatesPool.slice().sort((a, b) => a[deficitKey] - b[deficitKey]);
-          if (sorted[0] && sorted[0][deficitKey] <= -1.0) {
-            return sorted[0];
-          }
+          const defSorted = basePool.filter(s => s[deficitKey] <= -1.0).sort((a, b) => a[deficitKey] - b[deficitKey]);
+          const rest = basePool.filter(s => !(s[deficitKey] <= -1.0));
+          ordered = defSorted.concat(rest);
         }
-        return pool[0] || mealSnapshots[mealSnapshots.length - 1];
+
+        if (macroKey && minThreshold > 0) {
+          const withDonor = ordered.find(s => Boolean(pickMacroGramDonor(getMealActiveCandidates(s), macroKey, minThreshold)));
+          if (withDonor) return withDonor;
+        }
+        return ordered[0] || mealSnapshots[mealSnapshots.length - 1];
       };
 
       let dailyRecText = "";
@@ -21147,19 +21173,17 @@
         if (destMealObj) {
           const destMeal = destMealObj.meal;
           const cleanDestTitle = formatCleanMealTitle(destMeal.title);
-          const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
-            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
+          const candidates = getMealActiveCandidates(destMealObj);
 
           if (dailyDeltaF >= 1.5 && dailyDeltaF >= dailyDeltaC) {
-            const donor = pickGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
+            const donor = pickMacroGramDonor(candidates, "f100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.f100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaF / (donor.f100 / 100))));
               dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> убавить жиры: <span class="text-red-300 font-semibold mono">-${red}г</span> ${escapeHtml(donor.name)}`;
               dailyActionBtn = `<button type="button" onclick="applyMealCompensator('${destMeal.id}', '${donor.id}', -${red})" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/35 text-red-300 font-bold mono text-[10.5px] active:scale-95 transition shrink-0 whitespace-nowrap">-${red}г</button>`;
             }
           } else {
-            const donor = pickGramDonor(candidates, "c100", 0, it => Number(it.weight) > 10);
+            const donor = pickMacroGramDonor(candidates, "c100", 0, it => Number(it.weight) > 10);
             if (donor && Number(donor.c100) > 0) {
               const red = Math.min(Math.max(5, Math.round(donor.weight - 5)), Math.max(5, Math.round(dailyDeltaC / (donor.c100 / 100))));
               dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> убавить угли: <span class="text-red-300 font-semibold mono">-${red}г</span> ${escapeHtml(donor.name)}`;
@@ -21168,14 +21192,12 @@
           }
         }
       } else if (dailyDeltaF <= -1.5) {
-        const destMealObj = pickTargetMealSnapshot("slotDeltaF");
+        const destMealObj = pickTargetMealSnapshot("slotDeltaF", "f100", 10) || pickTargetMealSnapshot("slotDeltaF");
         if (destMealObj) {
           const destMeal = destMealObj.meal;
           const cleanDestTitle = formatCleanMealTitle(destMeal.title);
-          const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
-            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
-          const donor = pickGramDonor(candidates, "f100", 10);
+          const candidates = getMealActiveCandidates(destMealObj);
+          const donor = pickMacroGramDonor(candidates, "f100", 10);
           if (donor && Number(donor.f100) >= 10) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaF) / (donor.f100 / 100)));
             dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> жиры: <span class="text-white font-semibold mono">+${needed}г</span> ${escapeHtml(donor.name)}`;
@@ -21187,14 +21209,12 @@
           }
         }
       } else if (dailyDeltaP <= -2.0) {
-        const destMealObj = pickTargetMealSnapshot("slotDeltaP");
+        const destMealObj = pickTargetMealSnapshot("slotDeltaP", "p100", 8);
         if (destMealObj) {
           const destMeal = destMealObj.meal;
           const cleanDestTitle = formatCleanMealTitle(destMeal.title);
-          const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
-            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
-          const donor = pickGramDonor(candidates, "p100", 8);
+          const candidates = getMealActiveCandidates(destMealObj);
+          const donor = pickMacroGramDonor(candidates, "p100", 8);
           if (donor && Number(donor.p100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaP) / (donor.p100 / 100)));
             dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> белок: <span class="text-white font-semibold mono">+${needed}г</span> ${escapeHtml(donor.name)}`;
@@ -21202,14 +21222,12 @@
           }
         }
       } else if (dailyDeltaC <= -3.0) {
-        const destMealObj = pickTargetMealSnapshot("slotDeltaC");
+        const destMealObj = pickTargetMealSnapshot("slotDeltaC", "c100", 15);
         if (destMealObj) {
           const destMeal = destMealObj.meal;
           const cleanDestTitle = formatCleanMealTitle(destMeal.title);
-          const candidates = (destMealObj.mealItems || [])
-            .filter(it => !progress.skippedItems?.[it.id] && !isOptionalMealItem(it))
-            .map(it => progress.overrides?.[it.id] ? { ...it, ...progress.overrides[it.id] } : it);
-          const donor = pickGramDonor(candidates, "c100", 15);
+          const candidates = getMealActiveCandidates(destMealObj);
+          const donor = pickMacroGramDonor(candidates, "c100", 15);
           if (donor && Number(donor.c100) > 0) {
             const needed = Math.max(5, Math.round(Math.abs(dailyDeltaC) / (donor.c100 / 100)));
             dailyRecText = `<span class="text-white font-semibold">${cleanDestTitle}</span> <span class="text-zinc-500">·</span> угли: <span class="text-white font-semibold mono">+${needed}г</span> ${escapeHtml(donor.name)}`;
