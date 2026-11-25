@@ -585,6 +585,7 @@
     #exModalTrack {
       display: flex;
       width: 200%;
+      height: 100%;
       align-items: stretch;
       will-change: transform;
       transform: translate3d(0, 0, 0);
@@ -595,12 +596,26 @@
     }
     .ex-modal-slide-panel {
       width: 50%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
       flex-shrink: 0;
       box-sizing: border-box;
       padding-left: 2px;
       padding-right: 2px;
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
+    }
+    #exerciseNotesModal .sheet-panel {
+      overflow-y: hidden;
+    }
+    #exNotesListContainer,
+    #exProgressionListContainer,
+    #progressionListContainer,
+    #progressionNotesContainer {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
     }
 
     .health-data-btn {
@@ -27120,9 +27135,10 @@
         progH = sH + lH + 20;
       }
 
-      // Ограничение по экрану (не более 72dvh), стабильный уровень высоты между вкладками
-      const maxScreenH = Math.round(window.innerHeight * 0.72);
-      const targetH = Math.min(maxScreenH, Math.max(notesH, progH, 480));
+      // Ограничение по экрану: чтобы шапка + subnav + viewport полностью влезали в 88dvh без скролла самого .sheet-panel
+      const availH = Math.round(window.innerHeight * 0.88) - 195;
+      const maxScreenH = Math.max(320, Math.min(Math.round(window.innerHeight * 0.68), availH));
+      const targetH = Math.min(maxScreenH, Math.max(notesH, progH, 420));
 
       if (targetH > 50) {
         viewport.style.height = `${targetH}px`;
@@ -29632,8 +29648,7 @@ ${knownPiecesContext}
           if (!directionChecked) {
             if (Math.abs(dy) > 5 || Math.abs(dx) > 5) {
               directionChecked = true;
-              const atTop = panel.scrollTop <= 1 && (!innerScroller || innerScroller.scrollTop <= 1);
-              if (dy > 0 && Math.abs(dy) > Math.abs(dx) && (isHeaderTouch || atTop)) {
+              if (dy > 0 && Math.abs(dy) > Math.abs(dx) && (isHeaderTouch || (!innerScroller && panel.scrollTop <= 1))) {
                 isDragging = true;
               } else {
                 isDragging = false;
@@ -29649,9 +29664,11 @@ ${knownPiecesContext}
               panel.style.transform = `translateY(${dy}px)`;
               const opacity = Math.max(0.12, 1 - (dy / 440));
               backdrop.style.opacity = opacity;
-            } else if (panel.scrollTop <= 0 && (!innerScroller || innerScroller.scrollTop <= 0)) {
+            } else {
               panel.style.transition = "none";
-              panel.style.transform = `translateY(${dy * 0.16}px)`;
+              backdrop.style.transition = "none";
+              panel.style.transform = "translateY(0)";
+              backdrop.style.opacity = "1";
             }
           }
         }, { passive: false });
