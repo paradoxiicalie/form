@@ -136,11 +136,13 @@ get_paired_device() {
         line=$(xcrun devicectl list devices 2>/dev/null | grep -i "available (paired)" | grep -i "iPhone" | head -n 1)
         if [[ -n "$line" ]]; then
             local dev_id
-            dev_id=$(echo "$line" | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -n 1)
+            dev_id=$(echo "$line" | grep -oE '([0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}|[0-9A-Fa-f]{40})' | head -n 1)
             local dev_name
             dev_name=$(echo "$line" | awk -F'   ' '{print $1}' | xargs)
-            echo "$dev_id|$dev_name"
-            return 0
+            if [[ -n "$dev_id" ]]; then
+                echo "$dev_id|$dev_name"
+                return 0
+            fi
         fi
         if [[ $i -lt $attempts ]]; then
             sleep 2

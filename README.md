@@ -2,30 +2,30 @@
 
 <p align="center">
   <strong>Brutalist Macro, Hypertrophy & Adaptive Metabolism Engine</strong><br>
-  iOS 26 Liquid Glass · Local-First (Zero Telemetry) · Atelier 85/10/5 Design System · Gemini 3 Flash Multimodal AI · Dynamic Island & WidgetKit
+  iOS 27 Liquid Glass · Local-First (Zero Telemetry) · Atelier 85/10/5 Design System · Gemini 3 Flash & Groq Multimodal AI · Dynamic Island & WidgetKit
 </p>
 
 <p align="center">
   <a href="https://paradoxiicalie.github.io/form/">
     <img src="https://img.shields.io/badge/ЗАПУСК_PWA-ОНЛАЙН_ВЕРСИЯ-E6DFD3?style=for-the-badge&labelColor=18181B&logo=googlechrome&logoColor=E6DFD3" alt="Открыть PWA" />
   </a>
-  <a href="#метод-a-сборка-из-исходников-в-xcode-эталонный-способ-для-ios">
+  <a href="#метод-a-сборка-из-исходников-в-xcode-рекомендуется-для-ios">
     <img src="https://img.shields.io/badge/СБОРКА_В_XCODE-ЭТАЛОННЫЙ_СПОСОБ-E6DFD3?style=for-the-badge&labelColor=18181B&logo=xcode&logoColor=E6DFD3" alt="Сборка Xcode" />
   </a>
   <a href="#03--развёртывание-и-установка">
     <img src="https://img.shields.io/badge/ИНСТРУКЦИЯ-УСТАНОВКА-E6DFD3?style=for-the-badge&labelColor=18181B&logo=readme&logoColor=E6DFD3" alt="Инструкция" />
   </a>
   <a href="https://github.com/paradoxiicalie/form/releases/tag/v2.0.0">
-    <img src="https://img.shields.io/badge/РЕЛИЗ-v2.0.0%20(iOS%2026)-73EC8B?style=for-the-badge&labelColor=18181B&logoColor=73EC8B" alt="Релиз v2.0.0" />
+    <img src="https://img.shields.io/badge/РЕЛИЗ-v2.0.0%20(iOS%2027)-73EC8B?style=for-the-badge&labelColor=18181B&logoColor=73EC8B" alt="Релиз v2.0.0" />
   </a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/АРХИТЕКТУРА-LOCAL--FIRST%20(ZERO%20TELEMETRY)-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Архитектура" />
   <img src="https://img.shields.io/badge/ДИЗАЙН-ATELIER%2085%2F10%2F5%20(7%20THEMES)-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Дизайн" />
-  <img src="https://img.shields.io/badge/НАВИГАЦИЯ-iOS%2026%20LIQUID%20GLASS-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Навигация" />
-  <img src="https://img.shields.io/badge/AI_CORE-GEMINI%203%20FLASH%20(VISION%20%26%20NLP)-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="AI Core" />
-  <img src="https://img.shields.io/badge/ПЛАТФОРМЫ-iOS%20(WIDGET%20%2B%20DYNAMIC%20ISLAND)%20%7C%20ANDROID%20%7C%20PWA-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Платформы" />
+  <img src="https://img.shields.io/badge/НАВИГАЦИЯ-iOS%2027%20LIQUID%20GLASS-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Навигация" />
+  <img src="https://img.shields.io/badge/AI_CORE-GEMINI%203%20FLASH%20%2B%20GROQ-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="AI Core" />
+  <img src="https://img.shields.io/badge/ПЛАТФОРМЫ-iOS%2026%2F27%20(WIDGET%20%2B%20DYNAMIC%20ISLAND)%20%7C%20ANDROID%20%7C%20PWA-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Платформы" />
   <img src="https://img.shields.io/badge/ЛИЦЕНЗИЯ-MIT-27272A?style=for-the-badge&labelColor=09090B&color=E4E4E7" alt="Лицензия" />
 </p>
 
@@ -58,31 +58,32 @@
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   FORM // SYSTEM ARCHITECTURE                          │
 ├────────────────────────────────────────────────────────────────────────┤
-│  SWIFTUI NATIVE SHELL (iOS 26 Liquid Glass Navigation + Gestures)       │
+│  SWIFTUI NATIVE SHELL (iOS 26 / 27 Liquid Glass Navigation + Gestures) │
 │  ├── ContentView.swift: GlassEffectContainer & .glassEffect            │
 │  ├── Floating Bar: [ Рацион (fork.knife) | Трени (dumbbell.fill) ]      │
-│  └── Action Button: Circular 54pt (viewfinder / plus)                  │
+│  ├── Action Button: Circular 56pt (viewfinder / plus)                  │
+│  └── Custom Media Scheme: FormMediaSchemeHandler (form-media://)       │
 ├────────────────────────────────────────────────────────────────────────┤
 │  SINGLE-PAGE APPLICATION WEB CORE (WebKit WKWebView Bridge)            │
 │  ├── Track Navigation: 60fps gesture swipes with curve synchronization │
 │  ├── Camera Segmented Controls: [ РАЦИОН // ДНЕВНИК // ПЛАН ]          │
 │  ├── Broken Neon Totem: 4-tier voltage flicker tied to daily progress  │
-│  ├── Multimodal Scanner: Realtime Quagga2 EAN-13 + Gemini 3 Flash AI   │
-│  ├── Nutrition Engine: Rolling 14-day TDEE + Mifflin-St Jeor BMR       │
-│  ├── Workout Engine: 4-day split, volume tracking & rest timer         │
+│  ├── Multimodal Scanner: Quagga2 EAN-13 + Gemini 3 Flash & Groq AI     │
+│  ├── Nutrition Engine: Curated RU DB + Rolling 14-day TDEE & Mifflin   │
+│  ├── Workout Engine: Custom splits, A/B/C variants, notes & rest timer │
 │  └── Toast Notification System: 3-tier collision layout & touch guard  │
 ├────────────────────────────────────────────────────────────────────────┤
-│  NATIVE SYSTEM EXTENSIONS                                              │
-│  ├── ActivityKit: Dynamic Island & Lock Screen Live Activity           │
+│  NATIVE SYSTEM EXTENSIONS & PERSISTENCE                                │
+│  ├── ActivityKit: Dynamic Island & Lock Screen Live Activity (+ Stop)  │
 │  ├── WidgetKit: Dashboard Medium-Widget (form:// deep links)           │
-│  ├── App Groups: Isolated UserDefaults replication                     │
+│  ├── Atomic Disk Backup: Documents/form_state_backup.json + NotesMedia │
 │  └── UserNotifications: 14-day scheduled local motivational alerts      │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### [ НАВИГАЦИЯ APPLE LIQUID GLASS (iOS 26) ]
-* **Нативный Liquid Glass бар:** Реализован на SwiftUI с использованием системных контейнеров iOS 26 `GlassEffectContainer` и модификатора `.glassEffect(...)`. Капсула навигации и отдельная круглая кнопка действия (`54 pt`) расположены в одной горизонтальной линии по референсу системных приложений iOS.
-* **Двусторонний мост синхронизации:** Изменение экранов в веб-слое мгновенно обновляет нативный Liquid Glass бар через `window.webkit.messageHandlers`, а нажатия на нативные кнопки гладко сдвигают веб-трек.
+#### [ НАВИГАЦИЯ APPLE LIQUID GLASS (iOS 26 / 27) ]
+* **Нативный Liquid Glass бар:** Реализован на SwiftUI с использованием системных контейнеров `GlassEffectContainer` и модификатора `.glassEffect(...)` (iOS 26 / iOS 27). Капсула навигации с пружинным индикатором и круглая кнопка действия (`56 pt`) расположены в одной горизонтальной линии по референсу системных приложений Apple.
+* **Двусторонний мост синхронизации:** Изменение экранов в веб-слое мгновенно обновляет нативный Liquid Glass бар через `window.webkit.messageHandlers`, а нажатия и жесты по нативным кнопкам сразу сдвигают веб-трек без ожидания внешних ресурсов.
 * **60fps жестовые свайпы:** Горизонтальное переключение между разделами «Рацион» и «Трени» с физикой TikTok/Instagram, защитой от рывков высоты (`prepareTracksForSwipe` / `lockInactiveTrackHeights`) и нулевым пустым скроллом.
 * **Сегментные контролы в стиле Камеры iOS:** Минималистичные плавающие переключатели подвкладок (`segmented-slider-container`) на чистом графитовом фоне с плавной скользящей плашкой.
 
@@ -95,9 +96,9 @@
   - **Tier 3 (≥ 90%):** Безупречное ровное неоновое свечение с двойным ореолом без мерцания.
 * **Коллекция из 8 кибер-глифов:** Алмаз, Призма, Пульс, Щит, Песочные часы, Атом, Сверхновая, Кибер-руна. При нажатии значок циклически переключается с тактильной отдачей Taptic Engine и 3D-анимацией переворота монеты на `transform` (без конфликта со свойствами мерцания).
 
-#### [ ОПТИЧЕСКИЙ МОДУЛЬ И AI-ЗРЕНИЕ (GEMINI 3 FLASH + QUAGGA2) ]
-* **Двухконтурный сканер штрихкодов:** Аппаратное распознавание EAN-13 через камеру в реальном времени с мгновенным обращением к базе OpenFoodFacts. При отсутствии данных или нулевом КБЖУ автоматически подключается Gemini 3 Flash для обогащения макронутриентов.
-* **Распознавание граммовок и массы нетто:** Автоматическое извлечение веса упаковки из штрихкода или этикетки с мгновенными чипами переключения «100 г» vs «Вся пачка».
+#### [ ОПТИЧЕСКИЙ МОДУЛЬ И AI-ЗРЕНИЕ (GEMINI 3 FLASH + GROQ + QUAGGA2) ]
+* **Двухконтурный сканер штрихкодов и база РФ:** Распознавание EAN-13 через камеру с обращением к локальной верифицированной базе продуктов РФ и OpenFoodFacts. При отсутствии данных подключается мультимодальный ИИ (Gemini 3 Flash / Groq с поддержкой Cloudflare Worker прокси) и сохраняет проверенные позиции в локальный кэш.
+* **Распознавание граммовок и поштучный учет:** Автоматическое извлечение массы нетто и веса 1 штуки с переключением режимов «граммы / штуки» и «100 г / вся пачка».
 * **Центрированный Dark-Glass лоадер:** Информативное окно ожидания (`#scannerLoading`, `z-40`) со спиннером в цвет темы, бейджем распознанного штрихкода в `.mono` и живым статусом («Ищем штрихкод в базе...», «Уточняем КБЖУ через ИИ...»).
 * **Защищенная кнопка ручного ввода:** Фиксированная геометрия `min-w-[68px]` исключает сдвиги соседних элементов при смене текста «Найти» на вращающийся спиннер.
 * **AI-анализ блюд на тарелке:** Визуальная оценка объема порции, детекция координат (`object_box`), определение веса и автоматическая раскладка по КБЖУ.
@@ -112,19 +113,19 @@
 #### [ МАКРОНУТРИЕНТЫ И АДАПТИВНЫЙ МЕТАБОЛИЗМ ]
 * **Адаптивный TDEE Engine:** Алгоритмический учет 14-дневного взвешивания и сопоставление с фактическим калоражем потребления для расчета индивидуального расхода энергии и защиты от метаболической адаптации.
 * **Калькулятор целевого баланса:** Динамический расчет BMR / TDEE по формуле Миффлина-Сан Жеора с фиксацией целей или ручным управлением.
-* **Тренер рациона и план питания:** Индивидуальные приемы пищи, чипы модификаторов блюд («Без жира», «Масло +5г», «Чистый белок»), трекер ежедневных полезных привычек и быстрый учет добавок в один тап.
+* **Тренер рациона и план питания:** Индивидуальные приемы пищи с вариантами, компенсатор отклонений по БЖУ с проверкой чистоты доноров, чипы модификаторов блюд и быстрый учет добавок в один тап.
 
 #### [ ТРЕНИРОВОЧНЫЙ ДВИЖОК И ГИПЕРТРОФИЯ ]
-* **Сплит-архитектура (Д1–Д4 + A/B/C варианты):** Гибкая привязка тренировок к дням недели с сохранением шаблонов и вариаций упражнений.
-* **Учет рабочих подходов:** Фиксация весов и повторений с автоматическим выделением **лучшего рабочего подхода дня**.
-* **Недельный мышечный объем:** Раздельный учет объема по **5 группам мышц** (Грудь, Спина, Ноги, Руки, Плечи) с визуальными шкалами недельного лимита.
-* **Умный таймер отдыха:** Автоматический старт обратного отсчета между подходами с калибровкой времени, кнопками `+30с / -30с`, звуковым сигналом и интеграцией в Dynamic Island.
+* **Сплит-архитектура (Д1–Д4 + A/B/C варианты):** Гибкая привязка тренировок к дням недели с сохранением шаблонов, пресетов каталога и заметок с локальным видео/фото (`form-media://`).
+* **Учет рабочих подходов:** Поддержка дробных весов (`1.25 кг`), фиксация весов и повторений с автоматическим выделением **лучшего рабочего подхода дня**.
+* **Недельный мышечный объем:** Раздельный учет объема по **5 группам мышц** (Грудь, Спина, Ноги, Плечи / Руки, Пресс / Кор) с визуальными шкалами недельного лимита.
+* **Умный таймер отдыха:** Автоматический старт обратного отсчета между подходами с калибровкой времени, кнопками `+30с / -30с`, звуковым сигналом и интерактивным управлением из Dynamic Island.
 
 #### [ СИСТЕМНАЯ ИНТЕГРАЦИЯ С iOS ]
-* **ActivityKit & Dynamic Island:** Живой таймер отдыха прямо в «динамическом острове» и на Always-On Display. Поддерживает компактные и расширенные режимы без расхода аккумулятора через нативный `Text(style: .timer)`.
+* **ActivityKit & Dynamic Island:** Живой таймер отдыха в Dynamic Island и на экране блокировки с интерактивной кнопкой остановки (`StopRestTimerIntent`) без расхода аккумулятора через нативный `Text(timerInterval:)`.
 * **WidgetKit Engine:** Нативный Medium-виджет в стиле приборной панели с глубокими ссылками (`form://diet` для питания и `form://split` для тренировок).
-* **App Groups Sync:** Мгновенный обмен данными между веб-движком и нативными расширениями через `UserDefaults(suiteName: "group.com.macro.shared")`.
-* **UserNotifications:** Локальные системные уведомления на 14 дней с генератором мотивационных фраз через Gemini.
+* **Atomic Disk Backup & App Groups:** Атомарное резервное копирование базы в `Documents/form_state_backup.json`, защищенное хранилище медиазаметок `NotesMedia` с асинхронным `WKURLSchemeHandler` и синхронизация виджета через `UserDefaults(suiteName: "group.com.macro.shared")`.
+* **UserNotifications:** Локальные системные уведомления на 14 дней с генератором мотивационных фраз.
 
 ---
 
@@ -132,7 +133,7 @@
 
 #### [ СРАВНИТЕЛЬНАЯ ТАБЛИЦА МЕТОДОВ ]
 
-| Метод | Требования | Срок действия | Liquid Glass (iOS 26) | Виджет iOS | Dynamic Island | Локальные пуши |
+| Метод | Требования | Срок действия | Liquid Glass (iOS 26 / 27) | Виджет iOS | Dynamic Island | Локальные пуши |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **A. Сборка в Xcode + Auto-Resign** | Mac + Xcode + Apple ID | **Бессрочно (Auto-Resign)** | **Да (100%)** | **Да (100%)** | **Да (Live Activity)** | **Да** |
 | **B. Progressive Web App (PWA)** | Safari / Chrome (без ПК) | **Бессрочно** | Веб-фоллбэк | — | — | — |
@@ -157,7 +158,7 @@
 5. Нажмите **Run** (`Cmd + R`) для компиляции и установки на устройство.
 
 ##### [ АВТОМАТИЧЕСКОЕ БЕСПРОВОДНОЕ ОБНОВЛЕНИЕ (AUTO-RESIGN DAEMON) ]
-В проект встроен автономный фоновый сервис **FORM // KEEP-ALIVE DAEMON**, который раз в 4 дня незаметно переподписывает и обновляет приложение по воздуху через Wi-Fi мост CoreDevice (`xcrun devicectl`).
+В проект встроен автономный фоновый сервис **FORM // KEEP-ALIVE DAEMON**, который каждые 2 дня проверяет и переподписывает профили основного приложения и `FormWidgetExtension` (с верификацией `codesign --verify --deep --strict`, атомарным lock-файлом и поддержкой UDID/CoreDevice в macOS 26 / 27 и Xcode 26 / 27), обновляя приложение по воздуху через `xcrun devicectl`.
 
 * **Установка и запуск фонового демона macOS (однократно):**
   ```bash
@@ -201,27 +202,27 @@
 ### 04 // ТЕХНИЧЕСКИЙ СТЕК
 
 ```text
-[ NATIVE iOS 26 ]      SwiftUI, GlassEffectContainer, .glassEffect, SF Symbols, WebKit WKWebView
-[ SYSTEM EXTENSIONS ]  ActivityKit (Dynamic Island Live Activities), WidgetKit, App Groups
-[ AI & MULTIMODAL ]    Google Gemini 3 Flash (gemini-3-flash-preview) Vision API & NLP Entity Parsing
-[ COMPUTER VISION ]    Quagga2 Realtime Barcode Engine + OpenFoodFacts REST API
+[ NATIVE iOS 26 / 27 ] SwiftUI, GlassEffectContainer, .glassEffect, SF Symbols, WKWebView, WKURLSchemeHandler
+[ SYSTEM EXTENSIONS ]  ActivityKit (Dynamic Island + AppIntents), WidgetKit, App Groups
+[ AI & MULTIMODAL ]    Google Gemini 3 Flash & Groq Vision/NLP + Cloudflare Worker Proxy
+[ COMPUTER VISION ]    Quagga2 Realtime Barcode Engine + Curated RU Food DB + OpenFoodFacts REST API
 [ FRONTEND CORE ]      Vanilla JavaScript (ES6+), HTML5, Tailwind CSS, SVG Canvas
-[ HARDWARE HAPTICS ]   Taptic Engine AudioContext + UIImpactFeedbackGenerator Bridge
-[ AUTOMATION ]         CoreDevice Tunnel (xcrun devicectl), launchd Keep-Alive Daemon, Auto-Resign
+[ HARDWARE HAPTICS ]   Taptic Engine AudioContext + UIImpactFeedbackGenerator / UISelectionFeedbackGenerator
+[ AUTOMATION ]         CoreDevice Tunnel (xcrun devicectl), launchd Keep-Alive Daemon, Auto-Resign (macOS 26/27)
 [ METABOLIC ENGINE ]   Adaptive 14-day Rolling TDEE, Dynamic BMR (Mifflin-St Jeor), 1RM Formula
-[ PERSISTENCE ]        W3C LocalStorage + Native UserDefaults Replication + JSON Snapshots
+[ PERSISTENCE ]        W3C LocalStorage + Atomic Disk Backup (form_state_backup.json) + NotesMedia Store
 ```
 
 ---
 
 ### 05 // ИСТОРИЯ РЕЛИЗОВ И ТЕГИ
 
-* **[v2.0.0](https://github.com/paradoxiicalie/form/releases/tag/v2.0.0):**
-  - Переход на нативный **Apple Liquid Glass (iOS 26)** в нижней навигации (`ContentView.swift`) с круглым Floating Action Button.
+* **[v2.0.0](https://github.com/paradoxiicalie/form/releases/tag/v2.0.0) (и актуальная ветка `main` под iOS 27 / macOS 27):**
+  - Нативный **Apple Liquid Glass (iOS 26 / 27)** в нижней навигации (`ContentView.swift`) с круглым Floating Action Button (`56 pt`), защитой от зависаний CDN и поддержкой жестов.
   - Полноценная цветовая система **Atelier 85/10/5** (7 авторских обсидиановых тем, строгий WCAG-контраст, табличные моноширинные числа).
+  - Атомарное дисковое резервирование (`form_state_backup.json`), локальное медиахранилище тренировочных заметок (`form-media://`), база продуктов РФ и жесткая валидация `Auto-Resign` под Xcode 27 / macOS 27.
   - Сбалансированный **Тотем дня** с 4-уровневым эффектом сломанного неона (`tier 0..3`), кольцом прогресса и 3D-анимацией флипа.
-  - Высокоточный **сканер штрихкодов** с центрированным стеклянным лоадером, защитой кнопки от скачков верстки и обогащением КБЖУ через Gemini 3 Flash.
-  - 3-уровневая адаптивная система **тостов** с изоляцией жестов и защитой от ghost-кликов на iOS.
+  - Высокоточный **сканер штрихкодов** с центрированным стеклянным лоадером, резервным каналом ИИ (Gemini 3 Flash / Groq) и 3-уровневой системой **тостов** с защитой от ghost-кликов.
 * **[v1.0.0](https://github.com/paradoxiicalie/form/releases/tag/v1.0.0):**
   - Базовый стабильный релиз Local-First PWA и нативной оболочки iOS с интеграцией виджетов WidgetKit, Dynamic Island и фоновым демоном Auto-Resign.
 
